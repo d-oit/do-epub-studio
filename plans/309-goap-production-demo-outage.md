@@ -1,6 +1,7 @@
 # GOAP-309: Production demo login and catalog outage on do-epub-studio.pages.dev
 
 **Status:** COMPLETE — W1, W2, W3, W4, and W5 addressed.
+**Date:** 2026-10-06
 **ADR:** this file carries the ADR (policy in §4) until promoted.
 
 ## 1. Analyze — measured production evidence (2026-10-04, headless Chrome against https://do-epub-studio.pages.dev)

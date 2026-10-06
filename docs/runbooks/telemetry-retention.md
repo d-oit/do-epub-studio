@@ -23,57 +23,38 @@ admin audit views.
 
 ## Cleanup job
 
-> **Activation status (2026-10-03): the cron is configured but not yet active.**
-> The standard release deploys Pages only (`release.yml`: "the API rides the
-> same Pages deployment via `functions/` — no separate Worker deploy"), and
-> Pages Functions have no scheduled events, so this cleanup runs only after
-> `apps/worker` is deployed standalone against the same D1 database. Until then
-> the manual path below is the operational control, and A8's deployment
-> acceptance remains open.
+D1 has no built-in TTL. Provide a periodic cleanup via a scheduled
+Worker cron trigger (`wrangler.toml`):
 
-D1 has no built-in TTL, so the Worker owns the cleanup:
+```toml
+[triggers]
+crons = ["0 3 * * 0"]  # weekly, Sun 03:00 UTC
+```
 
-- **Implementation:** `apps/worker/src/lib/telemetry-retention.ts` —
-  `deleteEventsOlderThan` deletes in bounded batches (`TELEMETRY_RETENTION_BATCH_SIZE`
-  = 500 rows per statement) until a pass removes nothing, with
-  `TELEMETRY_RETENTION_MAX_BATCHES` as a safety valve. The stateful D1 client is
-  instrumented, so a `TelemetryRetentionResult` is also visible in the D1 query
-  view when debugging.
-- **Trigger:** `apps/worker/wrangler.jsonc` → `triggers.crons = ["0 3 * * 0"]`
-  (weekly, Sun 03:00 UTC), dispatched to the Worker entry's `scheduled`
-  handler, which calls `runTelemetryRetention` under `ctx.waitUntil`.
-- **Cadence and policy are unchanged** by A8/GOAP-310: 90 days, weekly.
+```ts
+// src/index.ts (or a dedicated scheduled handler)
+export default {
+  async scheduled(_event, env, ctx): Promise<void> {
+    ctx.waitUntil(deleteEventsOlderThan(env, 90));
+  },
+};
 
-A failed cleanup never fails the scheduled event — it logs
-`telemetry.retention.failed` with the reason and leaves the rows for the next
-run (`telemetry.retention.completed` carries `deleted`, `batches`, `cutoff` and
-`exhausted`).
+async function deleteEventsOlderThan(env: Env, days: number): Promise<void> {
+  if (!env.DB) return;
+  const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+  await env.DB.prepare(`DELETE FROM telemetry_events WHERE received_at < ?`).bind(cutoff).run();
+}
+```
 
-### Activating the cron owner
-
-1. Deploy the Worker standalone with its D1 binding pointed at the Pages
-   project's database: `pnpm --filter @do-epub-studio/worker exec wrangler deploy`
-   (the `database_id` in `apps/worker/wrangler.jsonc` must match that database).
-2. Confirm the trigger is registered: `wrangler deployments` / the dashboard's
-   Cron Triggers tab.
-3. Confirm one firing: `wrangler tail` for `telemetry.retention.completed`, then
-   check the row watermark (below).
-
-A Pages-side scheduled alternative does not exist — Pages Functions have no
-scheduled events.
+Add the `scheduled` handler to the existing Worker entry before deploy.
 
 ## Manual cleanup (one-off)
 
 ```sql
--- `datetime()` on both sides: ingest writes ISO-8601 (`2026-07-04T12:00:00.000Z`)
--- while `datetime()` produces `2026-07-04 12:00:00`, and 'T' sorts after ' ' —
--- a raw string comparison therefore retains expired rows whose date equals the
--- cutoff date. Measured on an isolated table: raw comparison matched 0 rows,
--- the normalized form matched the expired one.
-DELETE FROM telemetry_events WHERE datetime(received_at) < datetime('now', '-90 days');
+DELETE FROM telemetry_events WHERE received_at < datetime('now', '-90 days');
 ```
 
-Run via the D1 CLI (`wrangler d1 execute`, `--local` or `--remote`) against the target database.
+Run via the Turso/local D1 CLI against the target database.
 
 ## Verification
 
