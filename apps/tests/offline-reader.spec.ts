@@ -334,14 +334,16 @@ test.describe('Offline reader', () => {
         : undefined;
       if (!sessionToken) throw new Error('Seeding needs the persisted session token');
 
-      const toBase64 = (bytes: Uint8Array): string => {
+      // Function declarations (not arrow consts): Codacy's Biome pass flags
+      // module-style arrow assignments inside page.evaluate bodies.
+      function toBase64(bytes: Uint8Array): string {
         let binary = '';
         for (const byte of bytes) binary += String.fromCharCode(byte);
         return btoa(binary);
-      };
+      }
 
       /** Mirror of `lib/offline/crypto.ts` so the seeded rows are readable. */
-      const encryptJSON = async (value: unknown, token: string): Promise<string> => {
+      async function encryptJSON(value: unknown, token: string): Promise<string> {
         const subtle = globalThis.crypto.subtle;
         const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
         const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
@@ -371,7 +373,7 @@ test.describe('Offline reader', () => {
         combined.set(iv, 16);
         combined.set(sealed, 28);
         return toBase64(combined);
-      };
+      }
 
       const items = [
         {
