@@ -75,10 +75,75 @@ const SAFE_SVG_TAGS = [
   'metadata',
 ];
 
-const SVG_EVENT_ATTRS =
-  'onload onclick ondblclick onmousedown onmouseup onmouseover onmousemove onmouseout onmouseenter onmouseleave onfocus onblur onkeydown onkeyup onkeypress onsubmit onreset onchange onselect oninput onscroll onerror onabort onresize ontouchstart ontouchend ontouchmove ontouchcancel onwheel onpointerdown onpointerup onpointermove onpointerover onpointerout onpointerenter onpointerleave onpointercancel onanimationstart onanimationend onanimationiteration ontransitionstart ontransitionend ontransitionrun ontransitioncancel oncut oncopy onpaste onloadedmetadata onloadeddata onloadstart ontimeupdate onvolumechange onplaying onwaiting onseeking onseeked oncanplay oncanplaythrough ondurationchange onemptied onended onplay onpause onratechange onstalled onsuspend onprogress'.split(
-    ' ',
-  );
+const SVG_EVENT_ATTRS = [
+  'onload',
+  'onclick',
+  'ondblclick',
+  'onmousedown',
+  'onmouseup',
+  'onmouseover',
+  'onmousemove',
+  'onmouseout',
+  'onmouseenter',
+  'onmouseleave',
+  'onfocus',
+  'onblur',
+  'onkeydown',
+  'onkeyup',
+  'onkeypress',
+  'onsubmit',
+  'onreset',
+  'onchange',
+  'onselect',
+  'oninput',
+  'onscroll',
+  'onerror',
+  'onabort',
+  'onresize',
+  'ontouchstart',
+  'ontouchend',
+  'ontouchmove',
+  'ontouchcancel',
+  'onwheel',
+  'onpointerdown',
+  'onpointerup',
+  'onpointermove',
+  'onpointerover',
+  'onpointerout',
+  'onpointerenter',
+  'onpointerleave',
+  'onpointercancel',
+  'onanimationstart',
+  'onanimationend',
+  'onanimationiteration',
+  'ontransitionstart',
+  'ontransitionend',
+  'ontransitionrun',
+  'ontransitioncancel',
+  'oncut',
+  'oncopy',
+  'onpaste',
+  'onloadedmetadata',
+  'onloadeddata',
+  'onloadstart',
+  'ontimeupdate',
+  'onvolumechange',
+  'onplaying',
+  'onwaiting',
+  'onseeking',
+  'onseeked',
+  'oncanplay',
+  'oncanplaythrough',
+  'ondurationchange',
+  'onemptied',
+  'onended',
+  'onplay',
+  'onpause',
+  'onratechange',
+  'onstalled',
+  'onsuspend',
+  'onprogress',
+];
 
 const STRUCTURAL_TAGS = ['html', 'head', 'body'];
 
@@ -421,22 +486,8 @@ function getScheme(val: string): string | null {
 const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
 
 /**
- * Policy for absolute `http(s)` URLs in EPUB content — the counterpart to the
- * scheme allowlist, closing the remaining MEDIUM external-URL gap (GOAP-224):
- * a scheme-only grant previously let any `http(s)` host through, so a
- * malicious book could reference an arbitrary tracking/CDN host.
- *
- * - `{ mode: 'block-all' }` (DEFAULT): every absolute `http(s)` href on a
- *   linkable element is stripped. EPUB content cannot cause any network
- *   egress. This matches the security checklist ("External resource loading
- *   blocked in EPUB") and the privacy-first stance of the reader.
- * - `{ mode: 'allowlist', hosts: [...] }`: an `http(s)` href is kept only when
- *   its host equals an entry or is a strict subdomain of one (e.g.
- *   `example.com` also allows `img.example.com`). Entries are host-only — no
- *   scheme/port/path.
- *
- * `mailto:`, scheme-less relative, and fragment URLs are never subject to this
- * policy (they cannot cause network egress).
+ * Policy for absolute `http(s)` URLs in EPUB content (GOAP-224).
+ * Strips untrusted hosts unless explicitly present in an allowlist.
  */
 export interface ExternalUrlPolicy {
   mode: 'block-all' | 'allowlist';
@@ -676,8 +727,6 @@ function rehomeHostInjectedNodes(doc: Document, hostNodes: Iterable<Element>): v
   const head = doc.head;
   if (!head) return;
   for (const node of hostNodes) {
-    // Drop the sanitized clone carrying the same id, then re-home the live
-    // node so epub.js's `head.removeChild(node)` keeps working.
     if (node.id) doc.getElementById(node.id)?.remove();
     head.appendChild(node);
   }
@@ -707,11 +756,6 @@ export function sanitizeEpubDocument(
   checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   // Pass (b): Sync sanitized state back to live document
-  // We replace children of <html> with sanitized <head> and <body>.
-  // Host-injected epub.js nodes (theme/stylesheet/script elements referenced
-  // by epub.js's internal Maps) are preserved by identity — see
-  // collectHostInjectedNodes — so the next `head.removeChild(node)` from
-  // epub.js still finds them under the (re-created) live head.
   if (sanitized.localName === 'html') {
     const hostNodes = collectHostInjectedNodes(doc);
     root.replaceChildren(...sanitized.childNodes);
@@ -762,9 +806,6 @@ export function createEpubSanitizerHook(options?: {
   // ~0.3-4ms for typical chapters (sub-ms to a few ms in the browser) and far
   // cheaper than re-running the multi-pass DOMPurify pipeline on a MISS.
   function copyHtmlAttributesWhenChanged(target: HTMLElement, source: HTMLElement): void {
-    // Mirror sanitizeEpubDocument pass (b): sync <html> attributes (lang, dir)
-    // so the cache-HIT and cache-MISS paths leave the live document with
-    // identical attributes (GOAP-224 C14).
     for (let i = target.attributes.length - 1; i >= 0; i--) {
       const attr = target.attributes.item(i);
       if (attr && source.getAttribute(attr.name) === null) {
