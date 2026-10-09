@@ -60,6 +60,11 @@
       "name": "EMAIL_SEND",
     },
   ],
+  "triggers": {
+    // A8/GOAP-310: the Worker owns the documented 90-day telemetry retention —
+    // weekly, Sun 03:00 UTC (runbook: docs/runbooks/telemetry-retention.md).
+    "crons": ["0 3 * * 0"],
+  },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1,

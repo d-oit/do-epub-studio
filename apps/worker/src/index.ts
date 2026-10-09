@@ -8,6 +8,7 @@ import { RateLimiterDO } from './lib/rate-limiter-do';
 import { app } from './app';
 import type { Env } from './lib/env';
 import { registerArgon2Wasm } from './lib/register-argon2-wasm';
+import { runTelemetryRetention } from './lib/telemetry-retention';
 
 export { RateLimiterDO };
 
@@ -39,5 +40,13 @@ export default {
       }),
       makeFetchHandler(),
     ).fetch(request, env, ctx);
+  },
+  /**
+   * A8/GOAP-310: the documented 90-day telemetry retention executes through
+   * this handler, declared in `wrangler.jsonc`'s `triggers.crons` (weekly,
+   * Sun 03:00 UTC). It never throws; failures are logged.
+   */
+  scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): void {
+    ctx.waitUntil(runTelemetryRetention(env));
   },
 };
