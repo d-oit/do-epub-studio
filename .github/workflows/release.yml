@@ -496,14 +496,15 @@ jobs:
             HEALTH_BODY=$(printf '%s' "$HEALTH_RESP" | sed '$d')
 
             if [ "$HEALTH_STATUS" = "200" ] && printf '%s' "$HEALTH_BODY" | grep -q '"ok":true' && ! printf '%s' "$HEALTH_BODY" | grep -qi '<!DOCTYPE html'; then
-              # Additional contract verification: catalog & access request must return JSON, not SPA HTML
+              # Additional contract verification: catalog & access request must return JSON, not SPA HTML, and catalog must be 200 (DB path healthy - ADR-309 D2)
               CATALOG_RESP=$(curl -s -w "\n%{http_code}" "$CATALOG_URL" --connect-timeout 5 --max-time 10 || true)
+              CATALOG_STATUS=$(printf '%s' "$CATALOG_RESP" | tail -n 1)
               CATALOG_BODY=$(printf '%s' "$CATALOG_RESP" | sed '$d')
 
               LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$LOGIN_URL" -H "Content-Type: application/json" -d '{}' --connect-timeout 5 --max-time 10 || true)
               LOGIN_BODY=$(printf '%s' "$LOGIN_RESP" | sed '$d')
 
-              if ! printf '%s' "$CATALOG_BODY" | grep -qi '<!DOCTYPE html' && ! printf '%s' "$LOGIN_BODY" | grep -qi '<!DOCTYPE html'; then
+              if [ "$CATALOG_STATUS" = "200" ] && ! printf '%s' "$CATALOG_BODY" | grep -qi '<!DOCTYPE html' && ! printf '%s' "$LOGIN_BODY" | grep -qi '<!DOCTYPE html'; then
                 echo "Pages API healthy: HTTP $HEALTH_STATUS (attempt $i)"
                 exit 0
               else

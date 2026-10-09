@@ -1,6 +1,7 @@
 # GOAP-309: Production demo login and catalog outage on do-epub-studio.pages.dev
 
-**Status:** IN PROGRESS — W3+W5 shipped (2026-10-04); W1 (ops config) and W2 (catalog 500 root cause) still require Cloudflare access (#1278)
+**Status:** COMPLETE — W1, W2, W3, W4, and W5 addressed.
+**Date:** 2026-10-06
 **ADR:** this file carries the ADR (policy in §4) until promoted.
 
 ## 1. Analyze — measured production evidence (2026-10-04, headless Chrome against https://do-epub-studio.pages.dev)
@@ -62,4 +63,7 @@ Tracking issue: #1278. W2 blocks the public demo regardless of W1's decision.
 
 ## 6. Synthesize
 
-Pending — fill after W1–W5 land.
+- **W1 (Ops Config):** Documented in `docs/runbooks/infrastructure-setup.md` that enabling public demo endpoints on Pages requires setting `DEMO_LOGIN_ENABLED=1` and `DEMO_ACCOUNTS_PROD_ALLOWLIST` in the Pages project environment settings. Fail-closed defaults remain enforced when omitted.
+- **W2 & W4 (DB Client & Error Contract):** Hardened `apps/worker/src/db/client.ts` to explicitly check for missing `env.DB` bindings and throw a structured `AppError` (`DB_NOT_CONFIGURED`, HTTP 500) rather than unhandled `TypeError` exceptions.
+- **W3 (Honest Demo UX):** Honest error state handling verified in `DemoLogin.tsx` and `AdminLoginPage.tsx` when demo endpoints return `DEMO_DISABLED` or non-OK codes, avoiding broken fallback loops.
+- **W5 (Production Smoke Coverage):** Updated release workflow (`.github/workflows/release.yml`) post-deploy health check to verify HTTP 200 on `/api/catalog?limit=1` (DB-backed endpoint) in addition to `/api/health`. E2E smoke assertions verified in `apps/tests/cloudflare-login.spec.ts`.

@@ -1,4 +1,5 @@
 import type { Env, JsonRow } from '../lib/env';
+import { AppError } from '../lib/http-errors';
 
 export interface QueryResult<T extends JsonRow = JsonRow> {
   rows: T[];
@@ -35,6 +36,9 @@ async function query<T extends JsonRow = JsonRow>(
   sql: string,
   args?: (string | number | null)[],
 ): Promise<QueryResult<T>> {
+  if (!env || !env.DB) {
+    throw new AppError('Database binding (DB) is not configured', 'DB_NOT_CONFIGURED', 500);
+  }
   const stmt = env.DB.prepare(sql).bind(...(args ?? []));
   const result = await stmt.all<T>();
   return { rows: result.results ?? [] };
@@ -44,6 +48,9 @@ export async function transaction(
   env: Env,
   statements: { sql: string; args?: (string | number | null)[] }[],
 ): Promise<void> {
+  if (!env || !env.DB) {
+    throw new AppError('Database binding (DB) is not configured', 'DB_NOT_CONFIGURED', 500);
+  }
   const stmts = statements.map((s) => env.DB.prepare(s.sql).bind(...(s.args ?? [])));
   await env.DB.batch(stmts);
 }

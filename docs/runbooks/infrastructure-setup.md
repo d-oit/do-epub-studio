@@ -129,14 +129,17 @@ Set on the Pages project (Settings → Environment variables; use secrets for
 sensitive values):
 
 ```text
-SESSION_SIGNING_SECRET   # random hex (signed URLs + token HMAC)
-INVITE_TOKEN_SECRET      # random hex (magic-link JWT signing)
-APP_BASE_URL             # https://do-epub-studio.pages.dev (frontend origin)
-ENVIRONMENT              # production
-WEBAUTHN_RP_ID           # do-epub-studio.pages.dev
-WEBAUTHN_ORIGIN          # https://do-epub-studio.pages.dev
-DEMO_LOGIN_ENABLED       # leave unset (fail-closed in production)
+SESSION_SIGNING_SECRET        # random hex (signed URLs + token HMAC)
+INVITE_TOKEN_SECRET           # random hex (magic-link JWT signing)
+APP_BASE_URL                  # https://do-epub-studio.pages.dev (frontend origin)
+ENVIRONMENT                   # production
+WEBAUTHN_RP_ID                # do-epub-studio.pages.dev
+WEBAUTHN_ORIGIN               # https://do-epub-studio.pages.dev
+DEMO_LOGIN_ENABLED            # set to 1 to enable public demo endpoints
+DEMO_ACCOUNTS_PROD_ALLOWLIST  # allowlist key/flag when enabling demo on Pages (ADR-244/309)
 ```
+
+> **Demo Login Policy (ADR-244 / ADR-309):** By default, demo endpoints fail-close (`403 DEMO_DISABLED`) in production-like environments (`CF_PAGES=1` or `ENVIRONMENT=production`). To explicitly enable the demo endpoints on a public Cloudflare Pages deployment (e.g. `do-epub-studio.pages.dev`), both `DEMO_LOGIN_ENABLED=1` and `DEMO_ACCOUNTS_PROD_ALLOWLIST` must be configured in the Pages project environment settings. If omitted, demo endpoints remain fail-closed.
 
 Secret generation:
 
