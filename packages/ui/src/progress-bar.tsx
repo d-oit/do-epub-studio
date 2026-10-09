@@ -4,6 +4,7 @@ export interface ProgressBarProps {
   label?: string;
   className?: string;
   showValue?: boolean;
+  ariaValueText?: string;
 }
 
 export function ProgressBar({
@@ -12,8 +13,13 @@ export function ProgressBar({
   label,
   className = '',
   showValue = false,
+  ariaValueText,
 }: ProgressBarProps) {
-  const percentage = Math.max(0, Math.min(100, (value / max) * 100));
+  const clampedValue = Math.max(0, Math.min(max, value));
+  const percentage = max > 0 ? (clampedValue / max) * 100 : 0;
+  const computedAriaValueText =
+    ariaValueText ?? (showValue ? `${Math.round(percentage)}%` : undefined);
+
   return (
     <div className={className}>
       {label && (
@@ -24,9 +30,10 @@ export function ProgressBar({
       )}
       <div
         role="progressbar"
-        aria-valuenow={value}
+        aria-valuenow={clampedValue}
         aria-valuemin={0}
         aria-valuemax={max}
+        aria-valuetext={computedAriaValueText}
         aria-label={label ?? 'Progress'}
         className="h-2 w-full overflow-hidden rounded-full bg-border"
       >
