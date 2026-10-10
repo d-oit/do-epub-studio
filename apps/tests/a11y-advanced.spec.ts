@@ -95,24 +95,26 @@ test.describe('Advanced accessibility — ARIA landmarks', () => {
     await page.goto('/login');
     const mainLandmark = page.locator('main, [role="main"]');
     const navLandmark = page.locator('nav, [role="navigation"]');
-    // Wait for the SPA to hydrate before counting: the app renders <main>
-    // synchronously on mount, so counting immediately after goto races
-    // React hydration on slow CI runners (issue #957 — flaky scheduled E2E).
+    // Wait for the SPA to hydrate before asserting: the app renders <main>
+    // synchronously on mount, so checking immediately after goto races React
+    // hydration on slow CI runners (issue #957 — flaky scheduled E2E).
+    //
+    // The assertion IS the retrying `toBeAttached`; re-counting afterwards and
+    // swallowing resolution errors (`count().catch(() => 0)`) turned a transient
+    // re-render into a phantom "no landmark" failure on WebKit.
     await expect(mainLandmark.or(navLandmark).first()).toBeAttached({ timeout: 30_000 });
-    const hasMain = await mainLandmark.count().catch(() => 0);
-    const hasNav = await navLandmark.count().catch(() => 0);
-    expect(hasMain + hasNav).toBeGreaterThanOrEqual(1);
+    await expect(mainLandmark.or(navLandmark)).not.toHaveCount(0);
   });
 
   test('@mobile admin books page has proper landmarks', async ({ page }) => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     const mainLandmark = page.locator('main, [role="main"]');
-    // Same hydration race as the login-page test: the admin route is
-    // lazy-loaded, so count only after the landmark attaches.
+    // Same hydration contract as the login-page test, plus: the admin route is
+    // lazy-loaded, so assert the attached landmark itself (retrying) instead of
+    // counting after the fact with a swallowed error.
     await expect(mainLandmark.first()).toBeAttached({ timeout: 30_000 });
-    const hasMain = await mainLandmark.count().catch(() => 0);
-    expect(hasMain).toBeGreaterThanOrEqual(1);
+    await expect(mainLandmark).not.toHaveCount(0);
   });
 });
 

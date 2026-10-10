@@ -16,6 +16,16 @@ import {
 test.describe('Accessibility audit (axe-core)', () => {
   test('@mobile login page has no critical accessibility violations', async ({ page }) => {
     await page.goto(`/login`);
+    // Scan the rendered page, not the pre-hydration shell: a scan that fires
+    // before React mounts measures a page that does not exist yet and reports
+    // zero violations for it (the vacuous-pass class E1 removed elsewhere).
+    await expect(page.getByRole('textbox', { name: /Password/i }).first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
+    });
+    await page.waitForTimeout(200);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
@@ -182,6 +192,15 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/audit');
+    // Same contract as the grants audit above: scan the populated page, never
+    // an empty table whose rows (and their status pills) have not loaded yet.
+    await expect(page.getByRole('table').first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.documentElement.classList.remove('dark');
+    });
+    await page.waitForTimeout(200);
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
