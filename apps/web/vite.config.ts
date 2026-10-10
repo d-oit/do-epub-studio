@@ -18,6 +18,36 @@ const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
 
 /**
+ * The single PWA manifest definition, served identically in dev (via the
+ * `app-identity-html` middleware below — vite-plugin-pwa does not serve the
+ * manifest in dev without `devOptions.enabled`) and in preview/production
+ * (written by VitePWA at build time). Keeping one object is load-bearing:
+ * a dev-only middleware that grew a `version` field the built manifest lacked
+ * is exactly how the scheduled E2E manifest assertion broke (GOAP-1006).
+ */
+const pwaManifest = {
+  name: appIdentity.name,
+  short_name: appIdentity.shortName,
+  description: appIdentity.description,
+  version: appVersion,
+  theme_color: '#ffffff',
+  background_color: '#ffffff',
+  display: 'standalone',
+  icons: [
+    {
+      src: 'pwa-192x192.png',
+      sizes: '192x192',
+      type: 'image/png',
+    },
+    {
+      src: 'pwa-512x512.png',
+      sizes: '512x512',
+      type: 'image/png',
+    },
+  ],
+};
+
+/**
  * lightningcss (the Tailwind v4 pipeline) rewrites a literal
  * `backdrop-filter` + `-webkit-backdrop-filter` pair down to the -webkit-
  * form only — its bundled browser data marks the standard property as
@@ -98,17 +128,7 @@ export default defineConfig({
         server.middlewares.use((req, res, next) => {
           if (req.url === '/manifest.webmanifest') {
             res.setHeader('Content-Type', 'application/manifest+json');
-            res.end(
-              JSON.stringify({
-                name: appIdentity.name,
-                short_name: appIdentity.shortName,
-                description: appIdentity.description,
-                version: appVersion,
-                theme_color: '#ffffff',
-                background_color: '#ffffff',
-                display: 'standalone',
-              }),
-            );
+            res.end(JSON.stringify(pwaManifest));
             return;
           }
           next();
@@ -124,26 +144,7 @@ export default defineConfig({
       // Only precache assets that actually ship from public/. favicon.ico has no
       // source (index.html references /favicon.svg), so it must not be listed.
       includeAssets: ['robots.txt', 'apple-touch-icon.png'],
-      manifest: {
-        name: appIdentity.name,
-        short_name: appIdentity.shortName,
-        description: appIdentity.description,
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
+      manifest: pwaManifest,
       strategies: 'injectManifest',
       // Build the SW as an IIFE (classic worker), NOT an ES module. The plugin's
       // client registers the SW with `type: 'classic'` in production, but Vite 8
