@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLogo, Button, Input } from '../../components/ui';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -10,44 +10,43 @@ const LOGIN_ROUTE = '/login';
 const MAX_INVITATION_TOKEN_LENGTH = 256;
 
 /**
- * Read the token, then scrub the fragment so the bearer token does not linger
- * in history, referrers or a shared screen.
+ * Read the token from the URL fragment and scrub it so the bearer token does
+ * not linger in history, referrers or a shared screen.
  *
- * The scrub is why this is not a plain read inside the effect: React 18
- * StrictMode double-invokes effects in development, so an effect-scoped read
- * took the token on the first pass, wiped the hash, and then read `null` on
- * the second. The page rendered "Invitation unavailable" for every invitee in
- * dev. Reading exactly once — as a lazy `useState` initialiser, so it happens
- * on the first render and never again — makes the value immune to a
- * double-invoked effect while still allowing the component to be re-rendered
- * with a fresh location in tests.
+ * The read is PURE and the scrub is deferred to an effect after commit. A
+ * render-phase scrub (the previous design, with a `useRef` guard) is a side
+ * effect during render: when React discards a render — a concurrent interrupt
+ * or a Suspense retry, both of which WebKit hit intermittently — the fragment
+ * was already wiped and the surviving instance read `null`, rendering
+ * "Invitation unavailable" for a valid invitation link. React 18 also
+ * double-invokes render-phase initialisers in development, which is the same
+ * hazard.
  */
 function readTokenFromFragment(): string | null {
   const raw = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : '';
   const token = new URLSearchParams(raw).get('token');
-  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   return token && token.length >= 32 && token.length <= MAX_INVITATION_TOKEN_LENGTH ? token : null;
+}
+
+function scrubTokenFromHistory(): void {
+  if (!window.location.hash) return;
+  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
 }
 
 export function AcceptInvitePage(): React.JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
-  // Read and scrub exactly once, on first render. This must NOT be an effect:
-  // React 18 StrictMode double-invokes effects, so an effect-scoped read took
-  // the token on the first pass, wiped the hash, and read null on the second --
-  // the page rendered "Invitation unavailable" for every invitee in dev.
-  //
-  // A `useState` lazy initialiser is not safe here either: React may invoke an
-  // initialiser twice, and this one has a side effect. A ref is initialised
-  // exactly once per component instance, so the read-and-scrub is genuinely
-  // once-only while a fresh mount still re-reads the fragment (which the
-  // component tests rely on).
-  const tokenRef = useRef<string | null | undefined>(undefined);
-  if (tokenRef.current === undefined) {
-    tokenRef.current = readTokenFromFragment();
-  }
-  const token = tokenRef.current;
+  // Read the token on the first render — a pure read, so a discarded render
+  // cannot consume it and a double-invoked initialiser returns the same value
+  // (the fragment is untouched until the effect runs).
+  const [token] = useState(readTokenFromFragment);
+  // Scrub the bearer token only after this instance is committed. Idempotent:
+  // StrictMode's double-invoked effects no-op on the second pass, and a
+  // discarded render never reaches this point.
+  useEffect(() => {
+    scrubTokenFromHistory();
+  }, []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
