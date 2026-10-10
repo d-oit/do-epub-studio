@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { encryptJSON } from '../web/src/lib/offline/crypto';
 import { createMinimalEpub } from './fixtures';
 
 const TEST_EPUB = createMinimalEpub(
@@ -222,9 +223,26 @@ test.describe('Reader Progress Persistence', () => {
     //    exactly what the app's own offline persist path writes (see
     //    useEpubProgress — saveProgress with synced:false + queue entry).
 
+    //    The row must be ENCRYPTED like the real one: db.ts encryptEntry keeps
+    //    only id/bookId/synced in the clear and hides everything else in
+    //    encryptedPayload, and decryptEntry refuses to surface rows that carry
+    //    sensitive fields in the clear (S2, #1284). A plaintext seed would be
+    //    ignored by the offline fallback, which is the correct security
+    //    behaviour — the test encrypts with the app's own crypto instead of
+    //    weakening it.
+    const progressCiphertext = await encryptJSON(
+      {
+        cfi: updatedCfi,
+        percentage: 75,
+        lastRead: Date.now(),
+        mutationId: 'offline-mut-progress-75',
+      },
+      'mock-token',
+    );
+
     // Durably store the new progress in IndexedDB
     await page.evaluate(
-      async ({ bid, cfi, percentage }) => {
+      async ({ bid, encryptedPayload }) => {
         const DB_NAME = 'do-epub-studio';
         const STORE_NAME = 'progress';
         const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -237,18 +255,15 @@ test.describe('Reader Progress Persistence', () => {
           store.put({
             id: `${bid}-progress`,
             bookId: bid,
-            cfi,
-            percentage,
-            lastRead: Date.now(),
             synced: false,
-            mutationId: 'offline-mut-progress-75',
+            encryptedPayload,
           });
           tx.oncomplete = () => resolve();
           tx.onerror = () => reject(tx.error);
         };
         await promise;
       },
-      { bid: bookId, cfi: updatedCfi, percentage: 75 },
+      { bid: bookId, encryptedPayload: progressCiphertext },
     );
     // 5. Simulate server unreachability WITHOUT killing document navigation:
     //    abort the progress API (the established @pwa pattern in

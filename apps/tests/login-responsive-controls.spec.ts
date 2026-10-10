@@ -263,13 +263,21 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         const toggle = page.locator('button[aria-controls="password"]');
 
         await passwordInput.scrollIntoViewIfNeeded();
-        const passwordBox = await passwordInput.boundingBox();
-        const toggleBox = await toggle.boundingBox();
-
-        expect(
-          isContained(toggleBox!, passwordBox!, 2),
-          `${errorCtx}: toggle contained in password field in dark mode`,
-        ).toBe(true);
+        // The theme flip re-lays out the page and web fonts may still swap, so
+        // a single post-click snapshot can catch the transition mid-flight
+        // (observed flaky at 812x375 on CI). Re-measure until the containment
+        // holds — the geometry invariant itself is still enforced, only the
+        // race with the layout change is removed.
+        await expect
+          .poll(
+            async () => {
+              const passwordBox = await passwordInput.boundingBox();
+              const toggleBox = await toggle.boundingBox();
+              return isContained(toggleBox!, passwordBox!, 2);
+            },
+            { message: `${errorCtx}: toggle contained in password field in dark mode` },
+          )
+          .toBe(true);
 
         const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth > window.innerWidth + 1,
