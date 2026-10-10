@@ -102,7 +102,7 @@ function AuditTable({ data, page, total, onPrev, onNext }: AuditTableProps) {
                 {log.actorEmail || t('admin.audit.systemActor')}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground-muted">
-                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-semantic-info/20 text-semantic-info">
+                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-semantic-info/20 text-semantic-info-text">
                   {log.action}
                 </span>
               </td>

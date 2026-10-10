@@ -13,15 +13,17 @@ describe('Design Tokens', () => {
 
     // Check for some specific tokens
     expect(cssContent).toContain('--color-background: oklch(97.6% 0.011 84)');
-    // Adjusted during a11y audit (WCAG 2 AA contrast vs #ffffff >= 4.5:1)
-    expect(cssContent).toContain('--color-accent: oklch(55% 0.15 52)');
+    // Adjusted during a11y audits (WCAG 2 AA contrast as TEXT: 52% lightness
+    // keeps >= 4.5:1 on the page surface, the 55% value measured 3.72:1 once
+    // the P3 wide-gamut override mapped it).
+    expect(cssContent).toContain('--color-accent: oklch(52% 0.15 52)');
   });
 
   it('implements wide-gamut P3 overrides', () => {
     const cssContent = fs.readFileSync(CSS_PATH, 'utf-8');
 
     expect(cssContent).toContain('@media (color-gamut: p3)');
-    expect(cssContent).toContain('--color-accent: oklch(57% 0.17 52)');
+    expect(cssContent).toContain('--color-accent: oklch(52% 0.17 52)');
   });
 
   it('follows Tailwind v4 @layer architecture', () => {
