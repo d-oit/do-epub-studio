@@ -613,7 +613,8 @@ jobs:
   bench:
     name: Benchmark
     # ADR-277 / GOAP-277 A1: same fail-closed guard as `e2e-smoke` and
-    # `build`. ADR-218's blocking ">20% ops/s regression fails CI" check runs
+    # `build`. ADR-218's blocking ops/s regression check (threshold + combined
+    # rme noise bars, ADR-312) runs
     # in this job, and it was skipped in 7/7 sampled runs while the scope
     # filter matched — i.e. the gate has never blocked anything. Scope filter
     # unchanged: docs-only PRs still skip.
@@ -668,7 +669,8 @@ jobs:
           gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md --edit-last 2>/dev/null || \
             gh pr comment ${{ github.event.pull_request.number }} --body-file bench_comment.md
 
-      # Blocking per ADR-218: >20% ops/s regression on any benchmark fails the CI check.
+      # Blocking per ADR-218 (threshold refined by ADR-312): an ops/s drop that
+      # clears both the threshold and the combined base+head rme fails the CI check.
       - name: Check for regression
         if: github.event_name == 'pull_request'
         run: |

@@ -64,6 +64,12 @@ Regressions exceeding the existing 20% threshold in
 allows bypass with maintainer approval and a linked issue containing the
 baseline measurement justifying the override.
 
+**Amended by ADR-312 (2026-10-10):** the threshold is 30%, and a drop fails
+only when it also exceeds the combined relative margin of error (rme) of the
+baseline and head runs — the 20% band was narrower than the observed runner
+noise (rme up to ±28%, unrelated benchmarks swinging ±15–20% in a single
+comparison). See `plans/312-adr-benchmark-regression-gate-noise.md`.
+
 ### 4. Single authoritative budget model
 
 The raw-byte `bundleSize` section in `.performance-budgets.json` is removed.
@@ -159,4 +165,5 @@ Revisit this decision when:
 - The reader route becomes Lighthouse-auditable (auth fixture lands) — may relax
   static budget reliance
 - Benchmark blocking causes excessive friction after 2 weeks of operation
-  (then tune threshold, not silently disable the gate)
+  (then tune threshold, not silently disable the gate) — **exercised
+  2026-10-10: threshold tuned to 30% + combined-rme noise bars by ADR-312**
