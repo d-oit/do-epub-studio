@@ -350,6 +350,17 @@ const SVG_ALLOWED_ATTRS = [
   'aria-current',
 ];
 
+const EPUB_ADD_ATTR = [
+  ...SVG_ALLOWED_ATTRS,
+  'content',
+  'name',
+  'property',
+  'rel',
+  'href',
+  'src',
+  'type',
+];
+
 function buildPurifyConfig(): Config {
   return {
     // Explicit allowlist — only known-safe SVG tags survive (no HTML tags).
@@ -475,22 +486,8 @@ function getScheme(val: string): string | null {
 const ALLOWED_SCHEMES = new Set(['http', 'https', 'mailto']);
 
 /**
- * Policy for absolute `http(s)` URLs in EPUB content — the counterpart to the
- * scheme allowlist, closing the remaining MEDIUM external-URL gap (GOAP-224):
- * a scheme-only grant previously let any `http(s)` host through, so a
- * malicious book could reference an arbitrary tracking/CDN host.
- *
- * - `{ mode: 'block-all' }` (DEFAULT): every absolute `http(s)` href on a
- *   linkable element is stripped. EPUB content cannot cause any network
- *   egress. This matches the security checklist ("External resource loading
- *   blocked in EPUB") and the privacy-first stance of the reader.
- * - `{ mode: 'allowlist', hosts: [...] }`: an `http(s)` href is kept only when
- *   its host equals an entry or is a strict subdomain of one (e.g.
- *   `example.com` also allows `img.example.com`). Entries are host-only — no
- *   scheme/port/path.
- *
- * `mailto:`, scheme-less relative, and fragment URLs are never subject to this
- * policy (they cannot cause network egress).
+ * Policy for absolute `http(s)` URLs in EPUB content (GOAP-224).
+ * Strips untrusted hosts unless explicitly present in an allowlist.
  */
 export interface ExternalUrlPolicy {
   mode: 'block-all' | 'allowlist';
@@ -694,17 +691,21 @@ export function sanitizeDom(
 
   // To match querySelectorAll('*') behavior, we skip the root element itself.
   let el = walker.nextNode() as Element | null;
-  let nodeCount = 0;
 
-  while (el) {
-    if (deadline !== undefined && ++nodeCount % TREEWALKER_CHECK_INTERVAL === 0) {
-      checkDeadline(deadline, 'epub-sanitize', timeoutMs ?? SANITIZE_TIMEOUT_MS, traceId);
+  if (deadline === undefined) {
+    while (el) {
+      if (el.hasAttributes()) sanitizeElementAttributes(el, policy);
+      el = walker.nextNode() as Element | null;
     }
-
-    if (el.hasAttributes()) {
-      sanitizeElementAttributes(el, policy);
+  } else {
+    let nodeCount = 0;
+    while (el) {
+      if (++nodeCount % TREEWALKER_CHECK_INTERVAL === 0) {
+        checkDeadline(deadline, 'epub-sanitize', timeoutMs ?? SANITIZE_TIMEOUT_MS, traceId);
+      }
+      if (el.hasAttributes()) sanitizeElementAttributes(el, policy);
+      el = walker.nextNode() as Element | null;
     }
-    el = walker.nextNode() as Element | null;
   }
 }
 
@@ -722,16 +723,14 @@ export function sanitizeDom(
  * weaken sanitization: EPUB-controlled markup is still fully rebuilt from the
  * sanitized clone; only trusted host nodes are re-homed.
  */
-function collectHostInjectedNodes(doc: Document): Element[] {
-  return doc.head ? Array.from(doc.head.querySelectorAll('[id^="epubjs-injected-"]')) : [];
+function collectHostInjectedNodes(doc: Document): NodeListOf<Element> | Element[] {
+  return doc.head ? doc.head.querySelectorAll('[id^="epubjs-injected-"]') : [];
 }
 
-function rehomeHostInjectedNodes(doc: Document, hostNodes: Element[]): void {
+function rehomeHostInjectedNodes(doc: Document, hostNodes: Iterable<Element>): void {
   const head = doc.head;
   if (!head) return;
   for (const node of hostNodes) {
-    // Drop the sanitized clone carrying the same id, then re-home the live
-    // node so epub.js's `head.removeChild(node)` keeps working.
     if (node.id) doc.getElementById(node.id)?.remove();
     head.appendChild(node);
   }
@@ -752,7 +751,7 @@ export function sanitizeEpubDocument(
   // Pass (a): DOMPurify allowlist on a clone
   const sanitized = DOMPurify.sanitize(root, {
     ALLOWED_TAGS: EPUB_ALLOWED_TAGS,
-    ADD_ATTR: [...SVG_ALLOWED_ATTRS, 'content', 'name', 'property', 'rel', 'href', 'src', 'type'],
+    ADD_ATTR: EPUB_ADD_ATTR,
     FORBID_ATTR: SVG_EVENT_ATTRS,
     RETURN_DOM: true,
     WHOLE_DOCUMENT: true,
@@ -761,20 +760,18 @@ export function sanitizeEpubDocument(
   checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   // Pass (b): Sync sanitized state back to live document
-  // We replace children of <html> with sanitized <head> and <body>.
-  // Host-injected epub.js nodes (theme/stylesheet/script elements referenced
-  // by epub.js's internal Maps) are preserved by identity — see
-  // collectHostInjectedNodes — so the next `head.removeChild(node)` from
-  // epub.js still finds them under the (re-created) live head.
-  if (sanitized.tagName.toLowerCase() === 'html') {
+  if (sanitized.localName === 'html') {
     const hostNodes = collectHostInjectedNodes(doc);
-    root.replaceChildren(...Array.from(sanitized.childNodes));
+    root.replaceChildren(...sanitized.childNodes);
     // Also sync attributes of <html> (like lang, dir)
-    for (const attr of Array.from(root.attributes)) {
-      root.removeAttribute(attr.name);
+    for (let i = root.attributes.length - 1; i >= 0; i--) {
+      const attr = root.attributes.item(i);
+      if (attr) root.removeAttribute(attr.name);
     }
-    for (const attr of Array.from(sanitized.attributes)) {
-      root.setAttribute(attr.name, attr.value);
+    const sanitizedAttrs = sanitized.attributes;
+    for (let i = 0; i < sanitizedAttrs.length; i++) {
+      const attr = sanitizedAttrs.item(i);
+      if (attr) root.setAttribute(attr.name, attr.value);
     }
     rehomeHostInjectedNodes(doc, hostNodes);
   } else {
@@ -813,14 +810,16 @@ export function createEpubSanitizerHook(options?: {
   // ~0.3-4ms for typical chapters (sub-ms to a few ms in the browser) and far
   // cheaper than re-running the multi-pass DOMPurify pipeline on a MISS.
   function copyHtmlAttributesWhenChanged(target: HTMLElement, source: HTMLElement): void {
-    // Mirror sanitizeEpubDocument pass (b): sync <html> attributes (lang, dir)
-    // so the cache-HIT and cache-MISS paths leave the live document with
-    // identical attributes (GOAP-224 C14).
-    for (const attr of Array.from(target.attributes)) {
-      if (source.getAttribute(attr.name) === null) target.removeAttribute(attr.name);
+    for (let i = target.attributes.length - 1; i >= 0; i--) {
+      const attr = target.attributes.item(i);
+      if (attr && source.getAttribute(attr.name) === null) {
+        target.removeAttribute(attr.name);
+      }
     }
-    for (const attr of Array.from(source.attributes)) {
-      target.setAttribute(attr.name, attr.value);
+    const srcAttrs = source.attributes;
+    for (let i = 0; i < srcAttrs.length; i++) {
+      const attr = srcAttrs.item(i);
+      if (attr) target.setAttribute(attr.name, attr.value);
     }
   }
 
@@ -859,7 +858,7 @@ export function createEpubSanitizerHook(options?: {
         // Preserve host-injected epub.js nodes across the splice (see
         // collectHostInjectedNodes) — same contract as the MISS path.
         const hostNodes = collectHostInjectedNodes(doc);
-        root.replaceChildren(...Array.from(cachedRoot.childNodes));
+        root.replaceChildren(...cachedRoot.childNodes);
         copyHtmlAttributesWhenChanged(root, cachedRoot);
         rehomeHostInjectedNodes(doc, hostNodes);
         const timeoutMs = options?.timeoutMs ?? SANITIZE_TIMEOUT_MS;
