@@ -77,3 +77,30 @@ Reproduced locally at `main` (`65685ac5`) with the lane's own environment
 - The pre-existing flake taxonomy beyond the four specs above (the lane's other
   721 tests passed).
 - Chromatic's `UI Tests` baseline backlog (non-required check, human decision).
+
+## Follow-up (2026-10-10, after the merge): the axe audits were vacuous
+
+A dispatched `ci.yml` run on the merged main (`f4b5da81`, run 38058085694)
+showed the four repaired specs green — and two _new_ failures in the same lane:
+
+| Spec                                            | Symptom                                                                                                                            | Root cause                                                                                                                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `accessibility-audit.spec.ts` (login page)      | `color-contrast` 3.72:1 on the `/help` "Learn more" link where the wide-gamut (`@media (color-gamut: p3)`) accent override applies | the audit scanned **before the page rendered** — a pre-hydration scan measures an empty document and reports zero violations, so the old pass was vacuous; the real defect appears once the scan is honest |
+| `accessibility-audit.spec.ts` (admin audit log) | `color-contrast` 1.99:1 on the action pill (`bg-semantic-info/20 text-semantic-info`)                                              | same vacuity (rows loaded after the scan) **plus** a real token defect: the info colour as text on its own 20 % tint                                                                                       |
+| `a11y-advanced.spec.ts:107` (webkit)            | `mainLandmark.count()` 0 after `toBeAttached` passed                                                                               | `count().catch(() => 0)` swallowed a transient resolution error during a re-render and turned it into a phantom "no landmark" failure                                                                      |
+
+Fixes (this change):
+
+1. **Deterministic scans** — both audit tests now wait for the rendered
+   contract (`Password` field visible / the audit table visible), `networkidle`,
+   a forced light theme and a 200 ms settle, exactly like the grants audit that
+   was already honest.
+2. **Contrast** — `--color-semantic-info-text` (per theme) for the pill/status
+   text in `AuditLogPage` and `GrantList`; the light-theme `--color-accent` and
+   its P3 override drop to 52 % lightness so the help link holds ≥ 4.5:1 even
+   when the wide-gamut mapping applies.
+3. **Landmark assertions** — the retrying `toBeAttached`/`not.toHaveCount(0)`
+   pair replaces the count-then-swallow pattern.
+
+Verified locally: `accessibility-audit` + `a11y-advanced` **16/16 on chromium**
+and **64/64 across firefox, iphone, pixel, webkit and pwa-chromium**.

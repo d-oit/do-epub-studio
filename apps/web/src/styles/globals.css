@@ -39,7 +39,10 @@
     --color-background-tertiary: oklch(94.5% 0.012 82);
     --color-foreground: oklch(22% 0.02 62);
     --color-foreground-muted: oklch(35% 0.02 66);
-    --color-accent: oklch(55% 0.15 52);
+    /* Text-safe: 52% lightness keeps >= 4.5:1 on surface and on #ffffff —
+       the axe audits (accessibility-audit.spec.ts) read this token as text in
+       the help link; 55% measured 3.72:1 on the P3-mapped twin. */
+    --color-accent: oklch(52% 0.15 52);
     --color-accent-success: oklch(70% 0.15 150);
     --color-accent-warning: oklch(75% 0.15 80);
     --color-accent-error: oklch(53% 0.2 25);
@@ -68,6 +71,10 @@
     --color-semantic-warning: oklch(76.9% 0.165 70.1);
     --color-semantic-error: oklch(53% 0.208 25.3);
     --color-semantic-info: oklch(71.5% 0.126 215.2);
+    /* Text-safe variant: --color-semantic-info on its own 20% tint fails
+       WCAG 2 AA (1.99:1). Used where the semantic colour is the TEXT, never
+       for fills/borders (axe audit: accessibility-audit.spec.ts). */
+    --color-semantic-info-text: oklch(48% 0.1 215.2);
 
     /* Border variants */
     --color-border-light: oklch(96% 0.014 84);
@@ -154,18 +161,19 @@
   /* Wide-gamut P3 overrides */
   @media (color-gamut: p3) {
     :root {
-      --color-accent: oklch(57% 0.17 52);
+      --color-accent: oklch(52% 0.17 52);
       --color-accent-success: oklch(70% 0.2 150);
       --color-accent-warning: oklch(75% 0.2 80);
       --color-accent-error: oklch(52% 0.25 25);
       --color-accent-secondary: oklch(54.1% 0.28 293);
-      --color-primary-500: oklch(57% 0.17 52);
+      --color-primary-500: oklch(52% 0.17 52);
       --color-primary-600: oklch(49% 0.16 55);
       --color-primary-700: oklch(42% 0.145 58);
       --color-semantic-success: oklch(69.6% 0.18 162.5);
       --color-semantic-warning: oklch(76.9% 0.2 70.1);
       --color-semantic-error: oklch(63.7% 0.25 25.3);
       --color-semantic-info: oklch(71.5% 0.16 215.2);
+      --color-semantic-info-text: oklch(48% 0.1 215.2);
       --color-border: oklch(92% 0.01 0);
     }
   }
@@ -210,6 +218,7 @@
     --color-semantic-warning: oklch(80% 0.18 70.1);
     --color-semantic-error: oklch(70% 0.22 25.3);
     --color-semantic-info: oklch(75% 0.16 215.2);
+    --color-semantic-info-text: oklch(80% 0.13 215.2);
 
     /* Border variants */
     --color-border-light: oklch(23% 0.013 70);
@@ -253,6 +262,7 @@
     --color-semantic-warning: oklch(70% 0.15 85);
     --color-semantic-error: oklch(60% 0.2 25);
     --color-semantic-info: oklch(65% 0.12 215);
+    --color-semantic-info-text: oklch(45% 0.1 215);
 
     /* Border variants */
     --color-border-light: oklch(95% 0.04 85);
@@ -718,6 +728,7 @@
   --color-semantic-warning: var(--color-semantic-warning);
   --color-semantic-error: var(--color-semantic-error);
   --color-semantic-info: var(--color-semantic-info);
+  --color-semantic-info-text: var(--color-semantic-info-text);
   --font-display: var(--font-display);
   --text-xs: var(--text-xs);
   --text-sm: var(--text-sm);

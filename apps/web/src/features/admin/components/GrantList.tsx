@@ -113,7 +113,7 @@ export function GrantList({
                 >
                   <td className="px-4 py-3 text-sm text-foreground">{grant.email}</td>
                   <td className="px-4 py-3 text-sm">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-info/20 text-semantic-info">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-semantic-info/20 text-semantic-info-text">
                       {modeLabel(grant.mode)}
                     </span>
                   </td>
@@ -158,7 +158,7 @@ export function GrantList({
                         <>
                           <button
                             onClick={() => onEdit(grant)}
-                            className="touch-target px-2 py-0.5 text-semantic-info hover:opacity-80"
+                            className="touch-target px-2 py-0.5 text-semantic-info-text hover:opacity-80"
                           >
                             {t('grants.actions.edit')}
                           </button>
