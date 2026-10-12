@@ -110,6 +110,12 @@ gh run watch <run-id> --exit-zero
 gh run list --branch <branch> --status failure
 ```
 
+### Deploy Integrations (Vercel / Cloudflare Pages)
+
+- **Every push — force-pushes included — and every merge to main triggers a build per connected project, and Vercel's Hobby plan caps free deployments** (`api-deployments-free-per-day`). Exhaust it and Vercel reports `Deployment rate limited — retry in 24 hours` (or `Deployment has failed — run npx vercel inspect <dpl> --logs`) on main and PR heads alike until the window rolls. Batch fixes into **one push per revision** and count merges as pushes; exploratory re-pushes buy nothing and can cost the whole quota.
+- **Read the three states**: `Deployment has completed` = green; `rate limited` = quota, never code; `Deployment has failed` = inspect the named deployment before blaming the tree — a quota-window casualty can read this way.
+- **Both integrations are non-required** (ADR-286 set; only Codacy is ruleset-required): merge on required-green + not-BEHIND + zero unresolved threads (precedent: #1304 merged with Chromatic's non-required `UI Tests` pending), retry deployments from the dashboard after the window, never `--admin`/`--auto`. Validate serving independently of check states: `curl -sS -o /dev/null -w '%{http_code}\n' https://do-epub-studio.pages.dev` and `curl -sS https://do-epub-studio.pages.dev/api/health` (expect `{"ok":true,…}`).
+
 ## Common Patterns
 
 ### Feature Branch Flow
