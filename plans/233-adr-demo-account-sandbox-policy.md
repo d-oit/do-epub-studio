@@ -84,3 +84,13 @@ Rejected. E2E fixtures mock APIs and are not an operational account lifecycle.
 - Reseeding revokes prior demo sessions.
 - Demo admin cannot modify non-demo content unless explicitly configured for a
   throwaway preview database.
+
+## Amendment D: Documented demo passwords and the no-tracked-passwords rule
+
+ADR-244 Amendment C publishes documented, non-secret demo passwords for the
+reserved demo accounts (`apps/web/src/config/demo-config.ts:21-26`, surfaced
+via `help.demoReader` / `help.demoAdmin` and autofill), overriding decision 3's
+operator-provided-passwords rule for those accounts only. The original threat
+model stands: no server secrets in browser code, no demo data in migrations
+(rejected alternatives above are unchanged), and the Worker fail-closed gates
+(GOAP-309 D1) remain the security boundary.

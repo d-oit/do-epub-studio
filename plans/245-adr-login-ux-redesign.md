@@ -62,6 +62,12 @@ screens): the documented credentials remain public, but are now surfaced
 through progressive disclosure (autofill + the toggle) instead of a static
 line. The `/help` page still lists the full credential sets verbatim.
 
+**Fail-closed rendering (GOAP-309 D1):** on a structured `DEMO_DISABLED` the
+block renders `login.demoUnavailable` (`apps/web/src/i18n/en.ts:45-46`,
+13 catalogs) in a `role=alert` region (`DemoLogin.tsx:112-119`) instead of the
+demo actions; the fallback covers transport-level failures only. Unit proof
+`LoginPage.test.tsx:533-551`, `AdminLoginPage.test.tsx:426-441`.
+
 **Autofill mechanism (reader):** the reader form is an uncontrolled
 `useActionState` + `FormData` form; converting it to controlled state would
 break the form-action pattern. Autofill therefore writes `ref.current.value`
