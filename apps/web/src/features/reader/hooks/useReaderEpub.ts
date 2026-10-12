@@ -1,14 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Book, Rendition, NavItem } from '@intity/epub-js';
-import { EpubCFI } from '@intity/epub-js';
 import type { EpubRenditionInternals } from '../lib/epub-internals';
 import type { PageDirection, ReaderZoom } from '../../../stores';
-import { collectSpineSections } from '../../../lib/epub-sections';
-import {
-  createEpubLoader,
-  createEpubSanitizerHook,
-  createExternalUrlGuardHook,
-} from '@do-epub-studio/reader-core';
+import { createEpubLoader } from '@do-epub-studio/reader-core';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import {
   logClientEvent,
@@ -28,30 +22,17 @@ import {
 } from '@do-epub-studio/reader-core';
 import {
   applyFixedLayoutZoomStyle,
-  createFixedLayoutContentHooks,
-  createFixedLayoutZoomHook,
+  collectSpineItems,
   createRelocatedSetup,
   createThemeApplier,
   isSystemDark,
+  parseableCfi,
+  registerRenditionContentHooks,
+  resolveBookDirection,
 } from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
 import { resolveBookPresentation, resolveEffectiveSpread } from '../lib/epub-presentation';
-import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
-
-/**
- * A stored CFI can be unparseable (legacy or corrupt progress), and epub.js
- * throws that from inside its display queue as an unhandled error. Validate
- * once here; an unparseable value is dropped so the reader starts cleanly.
- */
-function parseableCfi(cfi: string | undefined): string | undefined {
-  if (!cfi) return undefined;
-  try {
-    const parsed: unknown = new EpubCFI(cfi);
-    return parsed instanceof EpubCFI ? cfi : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { PrefetchManager } from '../../../lib/prefetch-manager';
 
 export function useReaderEpub(
   epubUrl: string | null,
@@ -145,24 +126,14 @@ export function useReaderEpub(
 
         // Initialize PrefetchManager with spine items (either build shape —
         // `book.sections` in the ESM build, `book.spine` in dist; GOAP-295).
-        const spineItems: SpineItem[] = [];
-        for (const item of collectSpineSections<{ href?: string }>(book)) {
-          if (item.href) {
-            spineItems.push({ href: item.href });
-          }
-        }
+        const spineItems = collectSpineItems(book);
         if (spineItems.length > 0) {
           const prefetchManager = new PrefetchManager();
           prefetchManager.setSpine(spineItems);
           prefetchManagerRef.current = prefetchManager;
         }
 
-        const bookDirection: PageDirection =
-          book.packaging?.direction === 'rtl'
-            ? 'rtl'
-            : book.packaging?.direction === 'ltr'
-              ? 'ltr'
-              : 'default';
+        const bookDirection: PageDirection = resolveBookDirection(book);
         directionRef.current = bookDirection;
         setBookDirection(bookDirection);
         const presentation = await resolveBookPresentation(book, meta);
@@ -188,24 +159,13 @@ export function useReaderEpub(
         });
         renditionRef.current = rendition;
 
-        // Security: Mandatory sanitization of all EPUB content
-        const { hook: baseSanitizer } = createEpubSanitizerHook();
-        rendition.hooks.content.register(baseSanitizer);
-        // Fetch-level egress guard backstop: strict CSP so the browser refuses
-        // external subresource fetches even if a URL evades the sanitizer.
-        rendition.hooks.content.register(createExternalUrlGuardHook().hook);
-
-        if (fixedLayout) {
-          const contentHooks = createFixedLayoutContentHooks(fixedLayoutViewport);
-          if (fixedLayoutViewport) {
-            rendition.hooks.content.register(contentHooks.applyViewportMeta);
-          }
-          rendition.hooks.content.register(contentHooks.lockOverflow);
-          // Apply the user-chosen zoom to every fresh content document.
-          // The current zoom is read from `zoomRef` (kept fresh by the effect
-          // above) so changes propagate via the spread re-display.
-          rendition.hooks.content.register(createFixedLayoutZoomHook(zoomRef));
-        }
+        // Security: mandatory sanitization + fetch-level egress guard backstop,
+        // plus the fixed-layout viewport/overflow/zoom hooks (see the helper).
+        registerRenditionContentHooks(rendition, {
+          fixedLayout,
+          fixedLayoutViewport,
+          zoomRef,
+        });
 
         applyThemesRef.current(rendition);
 

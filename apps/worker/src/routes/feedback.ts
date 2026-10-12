@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import type { Env, JsonRow } from '../lib/env';
+import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
@@ -12,97 +12,12 @@ import {
 } from '@do-epub-studio/schema';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
-import {
-  currentReferenceRevisions,
-  resolveProvenance,
-  type ItemProvenance,
-} from '../lib/feedback-provenance';
+import { currentReferenceRevisions } from '../lib/feedback-provenance';
 import { readerAuth } from '../middleware/auth';
 import { NotFoundError, ForbiddenError, AppError } from '../lib/http-errors';
+import { readerItem, type FeedbackRow, type ReplyRow } from './feedback-dto';
 
 export const feedbackRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
-
-interface FeedbackRow extends JsonRow {
-  [key: string]: string | number | null | undefined;
-  id: string;
-  book_id: string;
-  book_file_id: string | null;
-  source_sha256: string | null;
-  chapter_ref: string | null;
-  cfi: string | null;
-  selected_text: string | null;
-  prefix: string | null;
-  suffix: string | null;
-  kind: string;
-  category: string;
-  body: string;
-  reference_revisions: string | null;
-  anchor_state: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface ReplyRow extends JsonRow {
-  id: string;
-  feedback_id: string;
-  author_email: string;
-  author_role: string;
-  body: string;
-  created_at: string;
-}
-
-function toAnchor(row: FeedbackRow): Record<string, string | null> {
-  return {
-    bookFileId: row.book_file_id,
-    chapterRef: row.chapter_ref,
-    cfi: row.cfi,
-    selectedText: row.selected_text,
-    prefix: row.prefix,
-    suffix: row.suffix,
-  };
-}
-
-function toReaderDTO(
-  row: FeedbackRow,
-  replies: ReplyRow[] = [],
-  replyCount = 0,
-  provenance: ItemProvenance,
-): Record<string, unknown> {
-  return {
-    id: row.id,
-    kind: row.kind,
-    category: row.category,
-    body: row.body,
-    proposedText: row.proposed_text,
-    anchor: toAnchor(row),
-    anchorState: provenance.anchorState,
-    referenceRevisions: provenance.pinnedReferences,
-    referencesDrifted: provenance.referencesDrifted,
-    status: row.status,
-    isOwn: true,
-    replyCount,
-    replies: replies.map((r) => ({
-      id: r.id,
-      body: r.body,
-      authorRole: r.author_role,
-      isOwn: true,
-      createdAt: r.created_at,
-    })),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-/** A reader-facing item with its read-time provenance resolved. */
-async function readerItem(
-  env: Env,
-  row: FeedbackRow,
-  replies: ReplyRow[] = [],
-  replyCount = 0,
-  baseline?: Record<string, number>,
-): Promise<Record<string, unknown>> {
-  return toReaderDTO(row, replies, replyCount, await resolveProvenance(env, row, baseline));
-}
 
 async function resolveCanComment(env: Env, auth: AuthContext, bookId: string): Promise<boolean> {
   // Use session capabilities if bookId matches session, otherwise re-fetch

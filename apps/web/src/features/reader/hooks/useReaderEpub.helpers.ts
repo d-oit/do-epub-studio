@@ -1,21 +1,25 @@
 import type { MutableRefObject } from 'react';
-import type { Rendition, Contents } from '@intity/epub-js';
+import type { Book, Rendition, Contents } from '@intity/epub-js';
+import { EpubCFI } from '@intity/epub-js';
 import type {
   AnnotationAdapter,
   HighlightRecord,
   CommentRecord,
 } from '@do-epub-studio/reader-core';
+import { createEpubSanitizerHook, createExternalUrlGuardHook } from '@do-epub-studio/reader-core';
 import {
   FONT_SIZES,
   LINE_HEIGHTS,
   type Theme,
   type FontSize,
+  type PageDirection,
   type ReaderZoom,
   type ReadingProgress,
 } from '../../../stores';
 import type { FontFamily } from '../../../stores/preferences';
 import type { TocItem } from '../lib/epub-init';
-import type { PrefetchManager } from '../../../lib/prefetch-manager';
+import type { PrefetchManager, SpineItem } from '../../../lib/prefetch-manager';
+import { collectSpineSections } from '../../../lib/epub-sections';
 import { createRelocatedHandler } from './useEpubProgress';
 import { countWords } from '../../../lib/offline/reading-insights';
 import { getPrefersReducedMotion } from '../../../lib/reduced-motion';
@@ -233,4 +237,73 @@ export function createRelocatedSetup({
   // flush() on unmount so the final position is not lost.
   progressFlushRef.current = relocatedHandler.flush;
   return relocatedHandler.onRelocated;
+}
+
+/**
+ * A stored CFI can be unparseable (legacy or corrupt progress), and epub.js
+ * throws that from inside its display queue as an unhandled error. Validate
+ * once here; an unparseable value is dropped so the reader starts cleanly.
+ */
+export function parseableCfi(cfi: string | undefined): string | undefined {
+  if (!cfi) return undefined;
+  try {
+    const parsed: unknown = new EpubCFI(cfi);
+    return parsed instanceof EpubCFI ? cfi : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Prefetch spine items (either build shape — `book.sections` in the ESM build,
+ * `book.spine` in dist; GOAP-295). Returns an empty list for a lone href-less
+ * item so the caller can skip setting up the manager.
+ */
+export function collectSpineItems(book: Book): SpineItem[] {
+  const items: SpineItem[] = [];
+  for (const item of collectSpineSections<{ href?: string }>(book)) {
+    if (item.href) {
+      items.push({ href: item.href });
+    }
+  }
+  return items;
+}
+
+/** Book-level reading direction, with `default` for anything unset/unknown. */
+export function resolveBookDirection(book: Book): PageDirection {
+  return book.packaging?.direction === 'rtl'
+    ? 'rtl'
+    : book.packaging?.direction === 'ltr'
+      ? 'ltr'
+      : 'default';
+}
+
+/**
+ * Registers the mandatory content hooks on a fresh rendition: EPUB
+ * sanitization plus the fetch-level egress guard backstop (strict CSP so the
+ * browser refuses external subresource fetches even if a URL evades the
+ * sanitizer), and — for fixed-layout books — the viewport meta, overflow lock
+ * and zoom hook. The current zoom is read from `zoomRef` so changes propagate
+ * via the spread re-display.
+ */
+export function registerRenditionContentHooks(
+  rendition: Rendition,
+  options: {
+    fixedLayout: boolean;
+    fixedLayoutViewport?: string | null;
+    zoomRef: MutableRefObject<ReaderZoom>;
+  },
+): void {
+  const { fixedLayout, fixedLayoutViewport, zoomRef } = options;
+  const { hook: baseSanitizer } = createEpubSanitizerHook();
+  rendition.hooks.content.register(baseSanitizer);
+  rendition.hooks.content.register(createExternalUrlGuardHook().hook);
+
+  if (!fixedLayout) return;
+  const contentHooks = createFixedLayoutContentHooks(fixedLayoutViewport);
+  if (fixedLayoutViewport) {
+    rendition.hooks.content.register(contentHooks.applyViewportMeta);
+  }
+  rendition.hooks.content.register(contentHooks.lockOverflow);
+  rendition.hooks.content.register(createFixedLayoutZoomHook(zoomRef));
 }
