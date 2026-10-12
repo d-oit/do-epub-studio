@@ -37,6 +37,7 @@ if [[ "$WRITABLE" == "1" && ! -f "$CONFIG_FILE" ]]; then
       "**/storybook-static/**",
       "**/playwright-report/**",
       "**/test-results/**",
+      "scripts/web-ui/fixtures/**",
       "apps/worker/src/worker-configuration.d.ts"
     ],
     "ignoreValues": [
