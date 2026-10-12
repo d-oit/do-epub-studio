@@ -95,7 +95,11 @@ if (ssot) {
   }
 
   // --- 2. Each vitest.config.ts derives thresholds from the SSOT JSON. ---
-  const IMPORT_LINE = "import coverageThresholds from '../../coverage-thresholds.json';";
+  // The import must carry the JSON import attribute (`with { type: 'json' }`):
+  // without it every test run prints the Vite config-loader warning, and
+  // AGENTS.md Tier 2 #6 requires warnings to be fixed at their source.
+  const IMPORT_RE =
+    /^import coverageThresholds from '\.\.\/\.\.\/coverage-thresholds\.json' with \{ type: 'json' \};$/m;
   for (const pkg of PKG_NAMES) {
     const cfgPath = path.join(root, PACKAGES[pkg], 'vitest.config.ts');
     if (!fs.existsSync(cfgPath)) {
@@ -103,8 +107,10 @@ if (ssot) {
       continue;
     }
     const src = fs.readFileSync(cfgPath, 'utf8');
-    if (!src.includes(IMPORT_LINE)) {
-      fail(`${PACKAGES[pkg]}/vitest.config.ts: missing SSOT import (expected exactly: ${IMPORT_LINE})`);
+    if (!IMPORT_RE.test(src)) {
+      fail(
+        `${PACKAGES[pkg]}/vitest.config.ts: missing SSOT import (expected exactly: import coverageThresholds from '../../coverage-thresholds.json' with { type: 'json' };)`,
+      );
     }
     for (const metric of METRICS) {
       const ref = `coverageThresholds['${pkg}'].${metric}`;
