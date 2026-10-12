@@ -343,7 +343,7 @@ jobs:
           mv test-metrics-node${{ matrix.node-version }}-test.json test-metrics-node${{ matrix.node-version }}.json 2>/dev/null || true
 
       - name: Upload verification output
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: verification-output-node${{ matrix.node-version }}
@@ -351,7 +351,7 @@ jobs:
           retention-days: 7
 
       - name: Upload test metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-metrics-node${{ matrix.node-version }}
@@ -479,7 +479,7 @@ jobs:
 
       - name: Upload baseline metrics
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: baseline-metrics-node${{ matrix.node-version }}
           path: |
@@ -490,14 +490,14 @@ jobs:
         run: npx --yes @cyclonedx/cyclonedx-npm@4.2.1 --ignore-npm-errors --output-format json --output-file sbom.cyclonedx.json
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: sbom-node${{ matrix.node-version }}
           path: sbom.cyclonedx.json
           retention-days: 7
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: build-dist-node${{ matrix.node-version }}
           path: apps/web/dist/
@@ -558,14 +558,14 @@ jobs:
         run: PLAYWRIGHT_MODE=preview npx playwright test --grep @pwa --project=pwa-chromium
 
       - name: Upload startup metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: startup-metrics
           path: startup-metrics.json
           retention-days: 1
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report-smoke
@@ -573,7 +573,7 @@ jobs:
           retention-days: 7
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-results-smoke
@@ -618,7 +618,7 @@ jobs:
           warning_on_retry: true
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: playwright-report-full
@@ -626,7 +626,7 @@ jobs:
           retention-days: 30
 
       - name: Upload test results
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
           name: test-results-full
@@ -759,7 +759,7 @@ jobs:
             gh pr comment "$PR_NUMBER" --body-file performance_report.md
 
       - name: Upload Turbo metrics
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: turbo-metrics
           path: |
