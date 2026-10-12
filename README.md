@@ -27,7 +27,7 @@ do-epub-studio/
 ## Core Stack
 
 - **Frontend**: React 19 + Vite 8 + Tailwind 4 + Zustand 5
-- **Backend**: Cloudflare Workers + D1 (production; local dev uses a libSQL/Turso-compatible runtime via `apps/worker/wrangler.jsonc`) + R2
+- **Backend**: Cloudflare Workers + D1 (production; local dev uses Wrangler's local D1 emulation) + R2
 - **Language**: TypeScript 6 (Strict Mode)
 - **Testing**: Vitest 4 + Playwright 1.59+ (Chromium + WebKit in PR smoke CI)
 - **Tooling**: Turborepo 2.9 + pnpm 10
@@ -46,8 +46,7 @@ do-epub-studio/
 - Node.js v22+ LTS
 - pnpm 10+
 - Git
-- Wrangler CLI (`npm install -g wrangler@latest`)
-- Turso CLI (optional, for local DB management)
+- Wrangler (installed as a devDependency; no global install needed)
 
 ### Setup
 

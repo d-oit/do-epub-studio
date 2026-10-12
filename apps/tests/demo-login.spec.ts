@@ -66,7 +66,7 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     await page.getByRole('button', { name: 'Try the demo' }).click();
 
-    // ADR-309 D1 (#1279): a structured DEMO_DISABLED renders the localized
+    // GOAP-309 D1 (#1279): a structured DEMO_DISABLED renders the localized
     // "demo not available on this deployment" state — the server's raw message
     // is deliberately not surfaced and the access-request fallback is not
     // attempted. Assert the alert region's real copy.

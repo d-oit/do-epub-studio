@@ -436,7 +436,7 @@ describe('AdminLoginPage', () => {
       await waitFor(() => {
         expect(screen.getByText('login.demoUnavailable')).toBeInTheDocument();
       });
-      // ADR-309 D1: a policy refusal must not spam the standard-login fallback.
+      // GOAP-309 D1: a policy refusal must not spam the standard-login fallback.
       expect(vi.mocked(apiRequest).mock.calls).toHaveLength(1);
       expect(vi.mocked(apiRequest).mock.calls[0]?.[0]).toBe('/api/demo/admin-login');
     });

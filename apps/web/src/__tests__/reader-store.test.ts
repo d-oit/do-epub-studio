@@ -120,7 +120,7 @@ describe('useReaderStore', () => {
       };
       useReaderStore.getState().addHighlight(highlight);
       useReaderStore.getState().updateHighlight('1', { note: 'Updated note' });
-      expect(useReaderStore.getState().highlights[0].note).toBe('Updated note');
+      expect(useReaderStore.getState().highlights[0]?.note).toBe('Updated note');
     });
   });
 
@@ -179,7 +179,7 @@ describe('useReaderStore', () => {
       useReaderStore.getState().addComment(parent);
       useReaderStore.getState().addComment(reply);
       expect(useReaderStore.getState().comments).toHaveLength(1);
-      expect(useReaderStore.getState().comments[0].replies).toHaveLength(1);
+      expect(useReaderStore.getState().comments[0]?.replies).toHaveLength(1);
     });
 
     it('updates comment', () => {
@@ -200,7 +200,7 @@ describe('useReaderStore', () => {
       };
       useReaderStore.getState().addComment(comment);
       useReaderStore.getState().updateComment('1', { body: 'Updated' });
-      expect(useReaderStore.getState().comments[0].body).toBe('Updated');
+      expect(useReaderStore.getState().comments[0]?.body).toBe('Updated');
     });
 
     it('sets comments', () => {
@@ -371,7 +371,7 @@ describe('useReaderStore', () => {
         winner: 'local',
         merged: { id: 'h1', note: 'local' },
       });
-      expect(useReaderStore.getState().conflicts[0].resolved).toBe(true);
+      expect(useReaderStore.getState().conflicts[0]?.resolved).toBe(true);
     });
 
     it('returns null for already resolved conflict', () => {

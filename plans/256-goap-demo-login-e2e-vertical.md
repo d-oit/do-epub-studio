@@ -94,3 +94,15 @@ everywhere the Worker entry serves traffic — including production `wrangler de
 - The live spec is local/live-only and not wired into CI (no Wrangler stack in
   the CI e2e job) by design; CI's mocked demo suite (E2E_DEMO_LOGIN) is
   untouched.
+
+## Follow-up (GOAP-309 honest state + DB-backed smoke)
+
+The live lane predates the fail-closed honest state: a `DEMO_DISABLED` response
+must render `login.demoUnavailable` (`apps/web/src/i18n/en.ts:45-46`) without
+touching the fallback (GOAP-309 D1, `DemoLogin.tsx:55-66`), and the D2 smoke
+lane lives in `apps/tests/cloudflare-login.spec.ts` plus
+`.github/workflows/release.yml:499` (catalog 200 JSON, GOAP-309 D2). Tracking
+issue #1278 closed after PRs #1279/#1293. The local D1 seed recipe in §Steps
+follows the official local-development flow (`wrangler d1 migrations apply
+--local`, Miniflare-backed `wrangler dev`):
+https://developers.cloudflare.com/d1/best-practices/local-development/

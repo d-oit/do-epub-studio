@@ -50,6 +50,12 @@ and `/api/catalog` returns 200 JSON.
 - **D1:** Demo buttons must not render a dead end. If the server fail-closes
   the demo, the UI either hides the demo block or explains the state. A
   prominent button that always errors is a defect, not a security posture.
+  Shipped (PR #1279) as the `login.demoUnavailable` honest state
+  (`apps/web/src/i18n/en.ts:45-46`, 13 catalogs): `DemoLogin.tsx:55-66` and
+  `AdminLoginPage.tsx:58-64` map a structured `DEMO_DISABLED` to that copy;
+  the access-request / standard-login fallback covers transport-level failures
+  only, never a policy refusal. Button visibility stays UI-only
+  (`VITE_DEMO_LOGIN_ENABLED`, ADR-244); the Worker gate is authoritative.
 - **D2:** Production smoke coverage must include at least one DB-backed read
   endpoint (`/api/catalog?limit=1`), not only `/api/health`.
 - **D3:** Enabling the demo on the public Pages deployment is an explicit,
@@ -60,10 +66,11 @@ and `/api/catalog` returns 200 JSON.
 ## 5. Coordinate / Execute
 
 Tracking issue: #1278. W2 blocks the public demo regardless of W1's decision.
+Closed 2026-10-09 after PRs #1279 (honest state) and #1293 (outage repair).
 
 ## 6. Synthesize
 
 - **W1 (Ops Config):** Documented in `docs/runbooks/infrastructure-setup.md` that enabling public demo endpoints on Pages requires setting `DEMO_LOGIN_ENABLED=1` and `DEMO_ACCOUNTS_PROD_ALLOWLIST` in the Pages project environment settings. Fail-closed defaults remain enforced when omitted.
 - **W2 & W4 (DB Client & Error Contract):** Hardened `apps/worker/src/db/client.ts` to explicitly check for missing `env.DB` bindings and throw a structured `AppError` (`DB_NOT_CONFIGURED`, HTTP 500) rather than unhandled `TypeError` exceptions.
-- **W3 (Honest Demo UX):** Honest error state handling verified in `DemoLogin.tsx` and `AdminLoginPage.tsx` when demo endpoints return `DEMO_DISABLED` or non-OK codes, avoiding broken fallback loops.
+- **W3 (Honest Demo UX):** Honest error state handling verified in `DemoLogin.tsx` and `AdminLoginPage.tsx` when demo endpoints return `DEMO_DISABLED` or non-OK codes, avoiding broken fallback loops. Shipped copy `login.demoUnavailable` ("The demo is not available on this deployment. Sign in with your own credentials or request access from the book owner.", `en.ts:45-46`, 13 catalogs); unit proof `LoginPage.test.tsx:533-551`, `AdminLoginPage.test.tsx:426-441`.
 - **W5 (Production Smoke Coverage):** Updated release workflow (`.github/workflows/release.yml`) post-deploy health check to verify HTTP 200 on `/api/catalog?limit=1` (DB-backed endpoint) in addition to `/api/health`. E2E smoke assertions verified in `apps/tests/cloudflare-login.spec.ts`.

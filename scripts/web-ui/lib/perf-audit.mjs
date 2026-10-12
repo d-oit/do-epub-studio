@@ -106,6 +106,19 @@ export function evaluateBudgets(metrics, budgets = DEFAULT_BUDGETS) {
 }
 
 /**
+ * Metrics that were not measured. `evaluateBudgets` stays a pure comparison —
+ * null/undefined values are not breaches there. This answers the different
+ * question "was there anything to compare?" so a run with no usable Lighthouse
+ * values cannot read as "budgets met" (F6, GOAP-290).
+ * @param {{ performanceScore?: number|null, lcpMs?: number|null, cls?: number|null, tbtMs?: number|null }} metrics
+ * @param {string[]} keys
+ * @returns {string[]} budget keys without a finite numeric value.
+ */
+export function missingMetrics(metrics, keys = Object.keys(DEFAULT_BUDGETS)) {
+  return keys.filter((key) => !Number.isFinite(metrics[key]));
+}
+
+/**
  * Run Lighthouse against one URL and evaluate budgets.
  * @param {{ url: string, budgets?: string | Record<string, number>, chromePath?: string }} options
  * @returns {Promise<{ findings: Array<object>, metrics: object } | { skipped: string }>}

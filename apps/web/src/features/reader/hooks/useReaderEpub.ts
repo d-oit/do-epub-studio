@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Book, Rendition, NavItem } from '@intity/epub-js';
-import type { EpubBookInternals, EpubRenditionInternals } from '../lib/epub-internals';
+import { EpubCFI } from '@intity/epub-js';
+import type { EpubRenditionInternals } from '../lib/epub-internals';
 import type { PageDirection, ReaderZoom } from '../../../stores';
+import { collectSpineSections } from '../../../lib/epub-sections';
 import {
   createEpubLoader,
-  parseAccessibilityFromOpf,
-  parseFixedLayoutFromOpf,
   createEpubSanitizerHook,
   createExternalUrlGuardHook,
 } from '@do-epub-studio/reader-core';
@@ -35,7 +35,23 @@ import {
   isSystemDark,
 } from './useReaderEpub.helpers';
 import { applyDirectionAndWritingMode, type TocItem, type BookInfo } from '../lib/epub-init';
+import { resolveBookPresentation, resolveEffectiveSpread } from '../lib/epub-presentation';
 import { PrefetchManager, type SpineItem } from '../../../lib/prefetch-manager';
+
+/**
+ * A stored CFI can be unparseable (legacy or corrupt progress), and epub.js
+ * throws that from inside its display queue as an unhandled error. Validate
+ * once here; an unparseable value is dropped so the reader starts cleanly.
+ */
+function parseableCfi(cfi: string | undefined): string | undefined {
+  if (!cfi) return undefined;
+  try {
+    const parsed: unknown = new EpubCFI(cfi);
+    return parsed instanceof EpubCFI ? cfi : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export function useReaderEpub(
   epubUrl: string | null,
@@ -73,6 +89,10 @@ export function useReaderEpub(
   const prefetchManagerRef = useRef<PrefetchManager | null>(null);
   const progressFlushRef = useRef<(() => Promise<void>) | null>(null);
   const loaderRef = useRef<ReturnType<typeof createEpubLoader> | null>(null);
+  // Progress updates on every relocation; use the latest value for initial display
+  // without tearing down and rebuilding the active EPUB rendition.
+  const progressCfiRef = useRef(progressCfi);
+  progressCfiRef.current = progressCfi;
   const onNavigateToAnnotationRef = useRef(onNavigateToAnnotation);
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const directionRef = useRef<PageDirection>('default');
@@ -123,15 +143,15 @@ export function useReaderEpub(
         setToc(tocItems);
         tocRef.current = tocItems;
 
-        // Initialize PrefetchManager with spine items
-        const spineLike = (book as EpubBookInternals<{ href: string }>).spine;
-        if (spineLike) {
-          const spineItems: SpineItem[] = [];
-          spineLike.each((item) => {
-            if (item.href) {
-              spineItems.push({ href: item.href });
-            }
-          });
+        // Initialize PrefetchManager with spine items (either build shape —
+        // `book.sections` in the ESM build, `book.spine` in dist; GOAP-295).
+        const spineItems: SpineItem[] = [];
+        for (const item of collectSpineSections<{ href?: string }>(book)) {
+          if (item.href) {
+            spineItems.push({ href: item.href });
+          }
+        }
+        if (spineItems.length > 0) {
           const prefetchManager = new PrefetchManager();
           prefetchManager.setSpine(spineItems);
           prefetchManagerRef.current = prefetchManager;
@@ -145,64 +165,19 @@ export function useReaderEpub(
               : 'default';
         directionRef.current = bookDirection;
         setBookDirection(bookDirection);
-        let fixedLayout = false;
-        let fixedLayoutSpread: string | undefined;
-        let fixedLayoutViewport: string | undefined;
-        try {
-          const metaMap = meta as Map<string, string>;
-          const bookInfo: BookInfo = {
-            title: metaMap.get('title') ?? '',
-            creator: metaMap.get('creator'),
-            publisher: metaMap.get('publisher'),
-            language: metaMap.get('language'),
-            description: metaMap.get('description'),
-          };
-          const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
-          if (pkgMeta?.get('layout') === 'pre-paginated') {
-            fixedLayout = true;
-            fixedLayoutSpread = pkgMeta.get('spread') ?? undefined;
-            fixedLayoutViewport = pkgMeta.get('viewport') ?? undefined;
-          }
-          try {
-            const opfPath = (book as EpubBookInternals<{ href: string }>).container?.fullPath;
-            if (opfPath && book.archive) {
-              const opfXml = await book.archive.getText('/' + opfPath);
-              if (opfXml) {
-                const fl = parseFixedLayoutFromOpf(opfXml);
-                if (fl && !fixedLayout) {
-                  fixedLayout = fl.layout === 'pre-paginated';
-                  fixedLayoutSpread = fixedLayoutSpread ?? fl.spread;
-                  fixedLayoutViewport = fixedLayoutViewport ?? fl.viewport;
-                }
-                bookInfo.accessibility = parseAccessibilityFromOpf(opfXml);
-              }
-            }
-          } catch {
-            // accessibility metadata is optional
-          }
-          if (fixedLayout) {
-            fixedLayoutRef.current = true;
-            setIsFixedLayout(true);
-          }
-
-          setMetadata(bookInfo);
-        } catch {
-          // book metadata is optional
+        const presentation = await resolveBookPresentation(book, meta);
+        const { bookInfo, fixedLayout, fixedLayoutSpread, fixedLayoutViewport } = presentation;
+        if (fixedLayout) {
+          fixedLayoutRef.current = true;
+          setIsFixedLayout(true);
         }
+        setMetadata(bookInfo);
 
-        const effectiveSpread = fixedLayout
-          ? fixedLayoutSpread === 'none'
-            ? 'none'
-            : fixedLayoutSpread === 'both'
-              ? 'both'
-              : fixedLayoutSpread === 'landscape'
-                ? 'landscape'
-                : bookDirection === 'rtl'
-                  ? 'right'
-                  : 'auto'
-          : bookDirection === 'rtl'
-            ? 'right'
-            : 'auto';
+        const effectiveSpread = resolveEffectiveSpread(
+          fixedLayout,
+          fixedLayoutSpread,
+          bookDirection,
+        );
 
         const rendition = book.renderTo(viewer, {
           width: '100%',
@@ -242,7 +217,35 @@ export function useReaderEpub(
           readerDirection !== 'default' ? readerDirection : bookDirection,
           readerWritingMode,
         );
-        await rendition.display(progressCfi);
+        const initialProgressCfi = progressCfiRef.current;
+        const displayCfi = parseableCfi(initialProgressCfi);
+        if (initialProgressCfi && !displayCfi) {
+          logClientEvent({
+            level: 'warn',
+            event: 'reader.progress_cfi_invalid',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            metadata: { bookId },
+          });
+        }
+        try {
+          await rendition.display(displayCfi);
+        } catch (error) {
+          // A parseable CFI can still dangle after the book file changes
+          // (content replaced): epub.js rejects asynchronously. Never blank
+          // the reader on it — fall back to the first section and record why.
+          logClientEvent({
+            level: 'warn',
+            event: 'reader.display_fallback',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            error:
+              error instanceof Error
+                ? { name: error.name, message: error.message }
+                : { name: 'Error', message: String(error) },
+          });
+          await rendition.display();
+        }
         if (!active) return;
 
         const initialLocation = rendition.location;
@@ -354,7 +357,6 @@ export function useReaderEpub(
     viewerRef,
     sessionToken,
     bookId,
-    progressCfi,
     setCurrentChapter,
     setError,
     setProgress,

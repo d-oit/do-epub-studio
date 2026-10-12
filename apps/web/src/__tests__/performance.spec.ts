@@ -231,7 +231,10 @@ test.describe('Performance', () => {
         navEntries: { domInteractive: number; loadEventEnd: number }[],
       ) => {
         const fcp = paintEntries.find((entry) => entry.name === 'first-contentful-paint');
+        // Runs inside the page: the Node-side `defined` helper is not
+        // serialised into this context, so guard locally.
         const navigation = navEntries[0];
+        if (!navigation) throw new Error('expected a navigation entry');
         return {
           fcp: fcp ? fcp.startTime : null,
           domInteractive: navigation.domInteractive,

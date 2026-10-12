@@ -24,6 +24,8 @@
 //
 // The DB transport is injectable for tests: `db(sql, args) -> { rows }`. Run
 // standalone, it builds a @libsql/client connection from TURSO_DATABASE_URL.
+// Locally, point that at the D1 sqlite file — see docs/setup-local.md §4
+// "Demo accounts".
 
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';

@@ -73,7 +73,8 @@ export function createThemeApplier({
     };
     if (!fixedLayoutRef.current) {
       bodyStyles['font-size'] = FONT_SIZES[readerFontSize];
-      bodyStyles['line-height'] = LINE_HEIGHTS[readerLineHeight];
+      const lineHeightCss = LINE_HEIGHTS[readerLineHeight];
+      if (lineHeightCss) bodyStyles['line-height'] = lineHeightCss;
       bodyStyles['font-family'] =
         readerFontFamily === 'serif'
           ? 'serif'

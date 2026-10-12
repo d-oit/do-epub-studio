@@ -199,3 +199,12 @@ Decisions:
 3. **E2E coverage:** new tests sign in as the demo reader and demo admin via
    the standard email+password forms and assert navigation into the app.
 4. **Non-production only:** production fail-closed behavior is unchanged.
+
+## Amendment D: GOAP-309 fail-closed honest state
+
+A structured `DEMO_DISABLED` renders `login.demoUnavailable`
+(`apps/web/src/i18n/en.ts:45-46`, 13 catalogs) via `DemoLogin.tsx:55-66` and
+`AdminLoginPage.tsx:58-64`; the access-request / standard-login fallback covers
+transport-level failures only (GOAP-309 D1). Out of scope here by reference:
+button visibility stays UI-only (`VITE_DEMO_LOGIN_ENABLED`; the Worker gate is
+authoritative) and release-time smoke is GOAP-309 D2.

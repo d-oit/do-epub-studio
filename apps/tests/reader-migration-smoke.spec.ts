@@ -62,7 +62,9 @@ test.describe('Reader migration smoke', () => {
     });
     await mockReaderApi(page, {
       bookSlug: TEST_USER.bookSlug,
-      epubUrl: 'http://127.0.0.1:0/test/epub',
+      // Chromium blocks port 0 outright, so this must be a routable fake URL;
+      // the fixture intercepts the path above.
+      epubUrl: 'https://example.com/smoke-test.epub',
       epubBuffer: EPUB_BUFFER,
       loginResponse: LOGIN_RESPONSE,
     });
@@ -77,6 +79,15 @@ test.describe('Reader migration smoke', () => {
   });
 
   test('@mobile navigates next chapter and asserts section changed', async ({ page }) => {
+    // Start from the beginning: a restored CFI is a separate concern, and the
+    // keyboard walk below is deterministic only from a known location.
+    await page.route('**/api/books/*/progress', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { locator: { cfi: null }, progressPercent: 0 } }),
+      });
+    });
     await loginAsReader(page, TEST_USER.bookSlug);
 
     await expect(page.getByRole('heading', { name: 'Smoke Test Book' })).toBeVisible({
@@ -94,21 +105,12 @@ test.describe('Reader migration smoke', () => {
       });
 
     const initialText = await getBodyText();
+    expect(initialText).toContain('CHAPTER ONE CONTENT');
 
-    if (initialText !== null) {
-      // Navigate to next chapter via keyboard
-      await page.keyboard.press('ArrowRight');
-      await page.waitForTimeout(2000);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(getBodyText, { timeout: 10000 }).toContain('CHAPTER TWO CONTENT');
 
-      const afterNext = await getBodyText();
-      expect(afterNext).not.toBe(initialText);
-
-      // Navigate back to previous chapter
-      await page.keyboard.press('ArrowLeft');
-      await page.waitForTimeout(2000);
-
-      const afterPrev = await getBodyText();
-      expect(afterPrev).toBe(initialText);
-    }
+    await page.keyboard.press('ArrowLeft');
+    await expect.poll(getBodyText, { timeout: 10000 }).toContain('CHAPTER ONE CONTENT');
   });
 });

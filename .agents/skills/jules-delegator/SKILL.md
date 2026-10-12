@@ -86,8 +86,9 @@ jules
 **`google-labs-jules[bot]` does not produce conventional commit messages.**
 It writes prose ("I've hardened the `check-adr-compliance.sh` …") that
 fails `commitlint` (header-max-length, type-empty, subject-empty). See
-ADR-008 and PR #505 run 27086771117. **Never push a Jules session's branch
-without normalization.**
+PR #505 run 27086771117 and the risk note in
+`plans/archive/093-goap-phase-a-jules-in-book-search.md`. **Never push a Jules
+session's branch without normalization.**
 
 After `jules remote pull --session <id>`, before pushing or letting any
 PR open:
@@ -161,4 +162,4 @@ The rewriter:
 - `references/cli-reference.md` - Detailed CLI command reference.
 - `AGENTS.md` - Repository standards and quality gates.
 - `scripts/normalize-commits.sh` - Commit-message rewriter for Jules branches.
-- `ADR-008` - Why this step is mandatory.
+- `plans/archive/093-goap-phase-a-jules-in-book-search.md` - Why this step is mandatory (bot prose commits fail `commitlint`).

@@ -8,7 +8,7 @@ pre-existing issues … must be fixed in the current changeset")
 (`Scheduled Cross-browser E2E`), most recently run
 [38037282055](https://github.com/d-oit/do-epub-studio/actions/runs/38037282055)
 (16 failed / 721 passed).
-**Related:** ADR-218, ADR-312, ADR-309 (D1), GOAP-1000/1003 (E1), S2 of #1284
+**Related:** ADR-218, ADR-312, GOAP-309 (D1), GOAP-1000/1003 (E1), S2 of #1284
 (PR #1284, commit `0203c067`), `agents-docs/LEARNINGS.md`
 
 ## Goal
@@ -27,7 +27,7 @@ Reproduced locally at `main` (`65685ac5`) with the lane's own environment
 | Spec                                    | Symptom                                                                                            | Root cause                                                                                                                                                                                                                                                                 |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `app-identity-responsive.spec.ts:26`    | `manifest.version` — `Expected "0.1.0", Received undefined` (all 3 browsers)                       | `#1284` (E1) replaced the guarded/vacuous block with a hard assertion; the built `dist/manifest.webmanifest` never carried `version` because `0203c067` had added it only to the dev-only `configureServer` middleware                                                     |
-| `demo-login.spec.ts:54`                 | `getByText('Demo login is not available.')` not visible                                            | `#1279` (ADR-309 D1) intentionally renders the localized `login.demoUnavailable` copy via `role="alert"`; the spec still expected the old raw server message                                                                                                               |
+| `demo-login.spec.ts:54`                 | `getByText('Demo login is not available.')` not visible                                            | `#1279` (GOAP-309 D1) intentionally renders the localized `login.demoUnavailable` copy via `role="alert"`; the spec still expected the old raw server message                                                                                                              |
 | `reader-progress.spec.ts:138`           | wait for `reader.progress_loaded … "source":"offline"` times out; telemetry shows `source=default` | `#1284` (S2) made `decryptEntry` refuse plaintext rows with sensitive fields; the spec seeded a **plaintext** progress row, so the offline fallback correctly ignored it                                                                                                   |
 | `login-responsive-controls.spec.ts:247` | `toggle contained in password field` false (chromium, both CI attempts; also flaky locally)        | single post-click `boundingBox()` snapshot races the theme-flip layout change                                                                                                                                                                                              |
 | `invitation-flow.spec.ts` (webkit)      | "Invitation unavailable" instead of the password form; 2 failed + 2 flaky locally over 4 repeats   | `AcceptInvitePage` scrubbed `location.hash` **during render** (ref-guarded). React can execute a render it later discards (concurrent interrupt / Suspense retry): the fragment was already wiped when the surviving instance read it. WebKit hits the race intermittently |
@@ -40,7 +40,7 @@ Reproduced locally at `main` (`65685ac5`) with the lane's own environment
    manifest in dev without `devOptions.enabled`). The field can no longer drift
    between lanes.
 2. **Honest-state assertion** (`apps/tests/demo-login.spec.ts`): assert the
-   `role="alert"` region carries the ADR-309 D1 copy — same behaviour, real
+   `role="alert"` region carries the GOAP-309 D1 copy — same behaviour, real
    contract.
 3. **Encrypted seed** (`apps/tests/reader-progress.spec.ts`): encrypt the
    progress payload with the app's own `encryptJSON` (Node-side import from

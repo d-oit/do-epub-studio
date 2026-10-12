@@ -3,8 +3,11 @@ import { renderHook, act, cleanup, waitFor } from '@testing-library/react';
 import { useReaderEpub } from './useReaderEpub';
 import type { Theme, FontSize } from '../../../stores';
 
+// Stable `t` identity: a fresh function per render re-runs the init effect
+// (its dep array includes `t`), looping display calls in these tests.
+const mockT = (key: string): string => key;
 vi.mock('../../../hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (key: string) => key, locale: 'en' }),
+  useTranslation: () => ({ t: mockT, locale: 'en' }),
 }));
 
 vi.mock('../../../lib/api', () => ({
@@ -81,7 +84,12 @@ const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted
   };
 });
 
-vi.mock('@intity/epub-js', () => ({ default: mockEpubFn }));
+vi.mock('@intity/epub-js', async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  // The hook validates stored CFIs with the real EpubCFI parser; only the
+  // book factory is stubbed.
+  return { ...actual, default: mockEpubFn };
+});
 
 const mockReaderStore: Record<string, unknown> = {
   setProgress: vi.fn(),
@@ -177,6 +185,109 @@ describe('useReaderEpub', () => {
     await waitFor(() => {
       expect(mockRendition.display).toHaveBeenCalled();
     });
+  });
+
+  it('uses the latest progress CFI without recreating the rendition', async () => {
+    const refs = createRefs();
+    const onNavigate = vi.fn();
+    // apps/web targets ES2022, so keep this controlled loader gate in executor form.
+    let releaseLoad!: () => void;
+    const loadPromise = new Promise<void>((resolve) => {
+      releaseLoad = resolve;
+    });
+    const loader = {
+      load: vi.fn(() => loadPromise),
+      getBook: vi.fn(() => mockBook),
+      destroy: vi.fn(),
+    };
+    createEpubLoaderMock.mockReturnValueOnce(loader);
+    mockRendition.display.mockResolvedValue(undefined);
+    const initialProps: { progressCfi: string | undefined } = { progressCfi: undefined };
+
+    const { rerender } = renderHook(
+      ({ progressCfi }: { progressCfi?: string }) =>
+        useReaderEpub(
+          'http://test.epub',
+          refs.viewerRef,
+          refs.rootRef,
+          refs.highlightsRef,
+          refs.commentsRef,
+          onNavigate,
+          progressCfi,
+        ),
+      { initialProps },
+    );
+
+    await waitFor(() => expect(loader.load).toHaveBeenCalled());
+    rerender({ progressCfi: 'epubcfi(/6/999!/4)' });
+    await act(async () => {
+      releaseLoad();
+      await loadPromise;
+    });
+
+    await waitFor(() => expect(mockRendition.display).toHaveBeenCalledWith('epubcfi(/6/999!/4)'));
+    expect(createEpubLoaderMock).toHaveBeenCalledTimes(1);
+    expect(mockBook.renderTo).toHaveBeenCalledTimes(1);
+    expect(loader.destroy).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the first section when the stored CFI cannot be displayed', async () => {
+    const refs = createRefs();
+    const onNavigate = vi.fn();
+    mockRendition.display
+      .mockRejectedValueOnce(new Error('stale cfi'))
+      .mockResolvedValue(undefined);
+
+    renderHook(() =>
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+        'epubcfi(/6/999!/4)',
+      ),
+    );
+
+    await waitFor(() => {
+      expect(mockRendition.display).toHaveBeenCalledTimes(2);
+    });
+    expect(mockRendition.display).toHaveBeenNthCalledWith(1, 'epubcfi(/6/999!/4)');
+    expect(mockRendition.display).toHaveBeenNthCalledWith(2);
+    const { logClientEvent } = await import('../../../lib/client-logger');
+    expect(vi.mocked(logClientEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'reader.display_fallback' }),
+    );
+  });
+
+  it('drops an unparseable stored CFI instead of displaying it', async () => {
+    const refs = createRefs();
+    const onNavigate = vi.fn();
+    mockRendition.display.mockResolvedValue(undefined);
+
+    renderHook(() =>
+      useReaderEpub(
+        'http://test.epub',
+        refs.viewerRef,
+        refs.rootRef,
+        refs.highlightsRef,
+        refs.commentsRef,
+        onNavigate,
+        'epubcfi(/6/4)',
+      ),
+    );
+
+    await waitFor(() => {
+      expect(mockRendition.display).toHaveBeenCalledTimes(1);
+    });
+    // The invalid value never reaches epub.js (which would throw inside its
+    // display queue as an unhandled error).
+    expect(mockRendition.display).toHaveBeenCalledWith(undefined);
+    const { logClientEvent } = await import('../../../lib/client-logger');
+    expect(vi.mocked(logClientEvent)).toHaveBeenCalledWith(
+      expect.objectContaining({ event: 'reader.progress_cfi_invalid' }),
+    );
   });
 
   it('does not initialize when epubUrl is null', async () => {

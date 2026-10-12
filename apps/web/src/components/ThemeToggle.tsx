@@ -18,16 +18,25 @@ export function ThemeToggle() {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
+  const label = resolvedTheme === 'dark' ? t('theme.toggle.light') : t('theme.toggle.dark');
+
   return (
     <IconButton
       onClick={toggleTheme}
       variant="ghost"
-      aria-label={resolvedTheme === 'dark' ? t('theme.toggle.light') : t('theme.toggle.dark')}
+      aria-label={label}
+      title={label}
       className="w-10 h-10 flex items-center justify-center"
     >
       {resolvedTheme === 'dark' ? (
         // Sun icon for switching to light mode
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -37,7 +46,13 @@ export function ThemeToggle() {
         </svg>
       ) : (
         // Moon icon for switching to dark mode
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"

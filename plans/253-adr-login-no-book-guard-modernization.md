@@ -42,7 +42,9 @@ pairs down to the `-webkit-` form only, leaving Firefox without glass blur
    `bookSlug`, render a localized inline notice above the credentials form and
    disable the submit button. Demo login stays enabled. Recovery mode is
    token-driven and unaffected. The server-side `MISSING_BOOK` guard remains
-   as defense-in-depth for direct API clients.
+   as defense-in-depth for direct API clients. On `DEMO_DISABLED` the demo
+   block renders the GOAP-309 honest state (`login.demoUnavailable`) — the
+   guard never hides the demo entry point.
 2. **Keep the #1028 two-layer contract.** Transport schema tolerates absent
    `bookSlug`; access/recovery endpoints own the semantic requirement
    (`MISSING_BOOK`). Documented here as intentional; demo endpoints remain

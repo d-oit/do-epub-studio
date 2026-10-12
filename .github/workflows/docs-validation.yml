@@ -102,3 +102,6 @@ jobs:
 
       - name: Validate ADR index (ADR-083)
         run: node scripts/check-adr-index.mjs
+
+      - name: Validate plan references (ADR-083)
+        run: node scripts/check-plan-references.mjs

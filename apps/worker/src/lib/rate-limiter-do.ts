@@ -48,6 +48,9 @@ export class RateLimiterDO extends DurableObject {
 
     const checkMatch = matchBounded(/^\/check\/([^/]+)\/([^/]+)$/, path, 1024);
     if (request.method === 'GET' && checkMatch) {
+      const key = checkMatch[1];
+      const scope = checkMatch[2];
+      if (!key || !scope) return new Response('Not found', { status: 404 });
       const maxRequests = parseInt(
         url.searchParams.get('maxRequests') ?? String(DEFAULT_CONFIG.maxRequests),
         10,
@@ -56,7 +59,7 @@ export class RateLimiterDO extends DurableObject {
         url.searchParams.get('windowMs') ?? String(DEFAULT_CONFIG.windowMs),
         10,
       );
-      return this.handleCheck(checkMatch[1], checkMatch[2], { maxRequests, windowMs });
+      return this.handleCheck(key, scope, { maxRequests, windowMs });
     }
 
     return new Response('Not found', { status: 404 });

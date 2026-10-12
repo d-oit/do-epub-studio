@@ -4,6 +4,7 @@ import { AdminBookResponsesPage } from './BooksPage';
 import { MemoryRouter } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import { validateEpub } from '@do-epub-studio/shared/src/epub-validator';
+import { defined } from '../../__tests__/helpers';
 
 vi.mock('../../hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k }),
@@ -132,7 +133,7 @@ describe('AdminBookResponsesPage — create modal', () => {
     });
     fireEvent.click(screen.getByText('admin.createBook'));
     const authorInput = screen.getAllByRole('textbox')[1];
-    fireEvent.change(authorInput, { target: { value: 'New Author' } });
+    fireEvent.change(defined(authorInput), { target: { value: 'New Author' } });
     expect(authorInput).toHaveValue('New Author');
   });
 
@@ -148,7 +149,7 @@ describe('AdminBookResponsesPage — create modal', () => {
     });
     fireEvent.click(screen.getByText('admin.createBook'));
     const select = screen.getAllByRole('combobox')[0];
-    fireEvent.change(select, { target: { value: 'public' } });
+    fireEvent.change(defined(select), { target: { value: 'public' } });
     expect(select).toHaveValue('public');
   });
 

@@ -3,7 +3,8 @@
 **Date:** 2026-08-14
 **Status:** ✅ COMPLETED (merged as PR #978, commit e8bfa29)
 **Baseline:** `main` @ `3bd190d` (post GOAP-237, PR #977)
-**Related:** Plans 226–237; ADR-219/ADR-234 closure records; ADR-INDEX
+**Related:** Plans 226–237; plan 219 (`plans/archive/219-goap-wave3-4-implementation.md`)
+and ADR-234 closure records; ADR-INDEX
 
 ## Goal
 

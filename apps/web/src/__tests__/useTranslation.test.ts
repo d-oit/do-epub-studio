@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useLocaleStore } from '../stores/locale';
+import * as i18n from '../i18n';
 
 vi.mock('../i18n', () => ({
   translate: vi.fn((key: string, _locale: string, params?: Record<string, string | number>) => {
@@ -18,7 +19,7 @@ vi.mock('../i18n', () => ({
     }
     return result;
   }),
-  ensureLocale: vi.fn(() => Promise.resolve()),
+  ensureLocale: vi.fn(() => Promise.resolve(true)),
   availableLocales: vi.fn(() => [
     { code: 'en', label: 'English' },
     { code: 'de', label: 'Deutsch' },
@@ -37,7 +38,8 @@ vi.mock('../i18n', () => ({
 }));
 
 beforeEach(() => {
-  useLocaleStore.setState({ locale: 'en' });
+  useLocaleStore.setState({ locale: 'en', localeStatus: 'ready', localeAttempt: 0 });
+  vi.mocked(i18n.ensureLocale).mockResolvedValue(true);
 });
 
 describe('useTranslation', () => {
@@ -90,5 +92,59 @@ describe('useTranslation', () => {
     });
 
     expect(useLocaleStore.getState().locale).toBe('fr');
+  });
+
+  it('reports a failed chunk load instead of leaving the locale claimed as loaded', async () => {
+    // A failed dynamic import must not reject (unhandled rejection) and must not
+    // report `ready`: the tree keeps English fallback text, so the store says
+    // `failed` and the document language stays honest (A9/GOAP-306).
+    vi.mocked(i18n.ensureLocale).mockResolvedValueOnce(false);
+
+    const { result } = renderHook(() => useTranslation());
+    await act(async () => {
+      result.current.setLocale('ar');
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // The hook reports what is rendered; the store keeps the requested locale.
+    expect(result.current.locale).toBe('en');
+    expect(useLocaleStore.getState().locale).toBe('ar');
+    expect(useLocaleStore.getState().localeStatus).toBe('failed');
+    // Fallback text is the intentional policy — it stays English, as when loading.
+    expect(result.current.t('app.title')).toBe('d.o.EPUB Studio');
+  });
+
+  it('mounts late or again after a failure without reloading', async () => {
+    // The reload must belong to an explicit retry, not to mounting: a consumer
+    // that appears after the failure (lazy route, late panel) used to see
+    // `failedLocale === locale` and reload on its own (A9/GOAP-306 review).
+    vi.mocked(i18n.ensureLocale).mockResolvedValue(false);
+    const reload = vi.fn();
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload },
+    });
+
+    try {
+      const first = renderHook(() => useTranslation());
+      await act(async () => {
+        first.result.current.setLocale('ar');
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(useLocaleStore.getState().localeStatus).toBe('failed');
+
+      // A second consumer mounted after the failure: still no reload.
+      const second = renderHook(() => useTranslation());
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(reload).not.toHaveBeenCalled();
+      expect(second.result.current.locale).toBe('en');
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+    }
   });
 });

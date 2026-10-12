@@ -30,23 +30,23 @@ describe('Admin Routes — GET /books/:id/grants pagination', () => {
     mockQueryAll.mockResolvedValue([]);
     const res = await fetchGrants();
     expect(res.status).toBe(200);
-    const sql = mockQueryAll.mock.calls[0][1] as string;
+    const sql = mockQueryAll.mock.calls[0]?.[1] as string;
     expect(sql).toMatch(/LIMIT \? OFFSET \?/);
-    expect(mockQueryAll.mock.calls[0][2] as unknown[]).toEqual(['book-1', 1000, 0]);
+    expect(mockQueryAll.mock.calls[0]?.[2] as unknown[]).toEqual(['book-1', 1000, 0]);
   });
 
   it('respects the limit param', async () => {
     mockQueryAll.mockResolvedValue([]);
     const res = await fetchGrants('?limit=25');
     expect(res.status).toBe(200);
-    expect(mockQueryAll.mock.calls[0][2] as unknown[]).toEqual(['book-1', 25, 0]);
+    expect(mockQueryAll.mock.calls[0]?.[2] as unknown[]).toEqual(['book-1', 25, 0]);
   });
 
   it('applies the offset param', async () => {
     mockQueryAll.mockResolvedValue([]);
     const res = await fetchGrants('?limit=10&offset=30');
     expect(res.status).toBe(200);
-    expect(mockQueryAll.mock.calls[0][2] as unknown[]).toEqual(['book-1', 10, 30]);
+    expect(mockQueryAll.mock.calls[0]?.[2] as unknown[]).toEqual(['book-1', 10, 30]);
   });
 
   it('rejects an over-large limit (clamped via schema validation)', async () => {

@@ -4,7 +4,7 @@
  * Cloudflare's `caches.default` is a per-colo cache that survives
  * Worker deployments and is shared across all origins in the zone. For
  * public, read-mostly routes (catalog, public book metadata) we
- * short-circuit the request before hitting Turso.
+ * short-circuit the request before hitting D1.
  *
  * Reference: ADR-112 (stream upload + edge cache), Plan 198-F3 (cross-isolate cache).
  */

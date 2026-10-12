@@ -7,28 +7,14 @@ This guide walks you through setting up d.o.EPUB Studio for local development.
 - **Node.js** v22.x (LTS)
 - **pnpm** >= 10 (the project uses `pnpm@10.33.0` -- configured in `package.json`)
 - **Git**
-- **Wrangler CLI** (Cloudflare Workers dev tool)
-- **Turso CLI** (for local database management)
+
+Wrangler ships as a devDependency and is invoked through `pnpm` — no global
+install is needed.
 
 Install pnpm globally if you do not have it:
 
 ```bash
 npm install -g pnpm@latest
-```
-
-Install the Wrangler CLI globally:
-
-```bash
-npm install -g wrangler@latest
-```
-
-Install the Turso CLI:
-
-```bash
-# macOS/Linux
-curl -sSfL https://get.tur.so/install.sh | bash
-# Windows (PowerShell)
-iex (irm https://get.tur.so/install.ps1)
 ```
 
 ## 2. Clone and Install
@@ -53,13 +39,15 @@ cp apps/worker/.dev.vars.example apps/worker/.dev.vars
 
 Required variables in `apps/worker/.dev.vars`:
 
-| Variable                 | Description                                                           |
-| ------------------------ | --------------------------------------------------------------------- |
-| `TURSO_DATABASE_URL`     | Turso database URL (e.g. `libsql://do-epub-studio-your-org.turso.io`) |
-| `TURSO_AUTH_TOKEN`       | Auth token for the Turso database                                     |
-| `SESSION_SIGNING_SECRET` | Secret for signing session tokens                                     |
-| `INVITE_TOKEN_SECRET`    | Secret for signing invite tokens                                      |
-| `APP_BASE_URL`           | Base URL of the web app (default: `http://127.0.0.1:5173`)            |
+| Variable                 | Description                                                |
+| ------------------------ | ---------------------------------------------------------- |
+| `SESSION_SIGNING_SECRET` | Secret for signing session tokens                          |
+| `INVITE_TOKEN_SECRET`    | Secret for signing invite tokens                           |
+| `APP_BASE_URL`           | Base URL of the web app (default: `http://127.0.0.1:5173`) |
+
+The worker's runtime database is D1 and needs no connection secret. The
+`TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` entries in `.dev.vars.example` are
+only for the optional demo-account seed (see §4, "Demo accounts").
 
 For production deployments, these values are set as Wrangler secrets (not committed to git).
 
@@ -67,26 +55,58 @@ For production deployments, these values are set as Wrangler secrets (not commit
 
 If needed, create `apps/web/.env.local` for frontend-specific overrides. The web app reads the worker URL at runtime; by default it calls the local Wrangler dev server.
 
-## 4. Database Setup (Turso)
+## 4. Database Setup (D1)
 
-### Option A: Local Turso database
+The worker's runtime database is Cloudflare D1 (`env.DB`). Local development
+uses Wrangler's local D1 emulation, and the schema migrations live in
+`packages/schema/migrations/` (wired through `migrations_dir` in
+`apps/worker/wrangler.jsonc`). No database server or account is needed.
+
+Apply the migrations to the local state used by `pnpm dev`:
 
 ```bash
-# Create a local Turso database (if you do not have one)
-turso db create do-epub-studio-local
-
-# Run migrations
 pnpm db:migrate:local
 ```
 
-### Option B: Remote Turso database
-
-Point `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` in `.dev.vars` to an existing Turso database.
-
-### Verify the database connection
+Check which migrations are applied:
 
 ```bash
 pnpm db:check
+```
+
+Both commands run Wrangler from `apps/worker/`, so they operate on the same
+local D1 state as `wrangler dev`; re-running is safe. Production migrations are
+an operator action documented in
+[`docs/runbooks/infrastructure-setup.md`](./runbooks/infrastructure-setup.md).
+
+### Demo accounts (optional)
+
+The demo-login sandbox seed (`scripts/seed-demo-accounts.mjs`, ADR-233) speaks
+the libsql/SQLite protocol and is pointed at the local D1 sqlite file. Apply
+migrations first and seed **before** starting `wrangler dev` (sqlite
+contention):
+
+```bash
+TURSO_DATABASE_URL=file:apps/worker/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite \
+DEMO_ACCOUNTS_ENABLED=1 DEMO_ADMIN_PASSWORD=... \
+pnpm exec node scripts/seed-demo-accounts.mjs
+```
+
+Find `<hash>.sqlite` under
+`apps/worker/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/` after the
+first `pnpm db:migrate:local` or `wrangler dev` run. The seed is idempotent and
+fails closed in production-like environments.
+
+### Spelling/grammar review (optional, LanguageTool)
+
+Story/logic review runs fully in the browser. Spelling/grammar review needs a
+deployment-local LanguageTool server (ADR-274); without one the panel honestly
+reports those categories as unavailable:
+
+```bash
+scripts/dev/languagetool.sh   # starts LanguageTool on 127.0.0.1:8081
+# then in apps/web/.env.local:
+VITE_LANGUAGETOOL_URL=http://127.0.0.1:8081
 ```
 
 ## 5. R2 Bucket Setup
@@ -209,7 +229,8 @@ Per `AGENTS.md`, the quality gate **must** pass before every commit. There are n
 
 ### Wrangler dev fails to start
 
-- Ensure `wrangler` is installed: `npm list -g wrangler`
+- Ensure dependencies are installed: `pnpm install` (Wrangler is a
+  devDependency; no global install is used).
 - Check that `apps/worker/.dev.vars` exists and has valid values.
 - Make sure port `8787` is not in use.
 
@@ -218,11 +239,13 @@ Per `AGENTS.md`, the quality gate **must** pass before every commit. There are n
 - Ensure port `5173` is not in use.
 - Check that all workspace packages are installed: `pnpm install`
 
-### Turso migration fails
+### D1 migrations fail
 
-- Verify `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` in `.dev.vars`.
-- Run `pnpm db:check` to confirm connectivity.
-- For local databases, ensure `turso` CLI is installed and the database exists.
+- Run `pnpm db:migrate:local` (it uses the worker package's Wrangler config and
+  local state) and read the Wrangler error output.
+- Run `pnpm db:check` to list applied/pending migrations.
+- The runtime database is D1; `TURSO_DATABASE_URL` is unrelated to migrations
+  and is only used by the optional demo-account seed.
 
 ### Type errors in workspace packages
 
