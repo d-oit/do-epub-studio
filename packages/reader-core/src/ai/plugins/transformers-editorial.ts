@@ -62,12 +62,31 @@ import {
   buildChapters,
   extractAssistantText,
   isPromptEcho,
-  mapProgressEvent,
   parseCandidates,
   resolveCitation,
 } from './transformers-editorial-format';
 // Prompt construction is its own module (ADR-278 LOC cap); MAX_FINDINGS lives there.
 import { buildMessages, MAX_FINDINGS } from './transformers-editorial-prompt';
+// Device resolution + the dynamic-import loader live in the runtime seam;
+// re-exported so callers and tests keep importing them from the engine module.
+import {
+  defaultLoader,
+  portableBackendFor,
+  resolveInferenceDevice,
+  type DeviceSelectionDeps,
+  type GenerationOptions,
+  type TextGenerationPipe,
+  type TransformersLoader,
+} from './transformers-runtime';
+export { resolveInferenceDevice } from './transformers-runtime';
+export type {
+  ChatMessage,
+  DeviceSelectionDeps,
+  GenerationOptions,
+  TextGenerationPipe,
+  TransformersLoader,
+  TransformersLoaderSpec,
+} from './transformers-runtime';
 
 /** Categories this engine answers (ADR-999 D4 story/logic scope). */
 export const TRANSFORMERS_EDITORIAL_CATEGORIES: readonly EditorialCategory[] = ['story', 'logic'];
@@ -101,42 +120,6 @@ export const GENERATION_OPTIONS: GenerationOptions = {
  * 6 (not 3): GOAP-273 B2 lever (d); deadline-bounded, so extras cost nothing.
  */
 const MAX_GENERATION_ATTEMPTS = 6;
-
-export interface TransformersLoaderSpec {
-  model: string;
-  dtype: TransformersDtype;
-  device: TransformersDevice;
-  /** Overrides the Hugging Face Hub host (test/mirror seam); null = default. */
-  remoteHost: string | null;
-  onProgress: (progress: ModelLoadProgress) => void;
-}
-
-export interface ChatMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface GenerationOptions {
-  max_new_tokens: number;
-  do_sample: boolean;
-  temperature?: number;
-  // No `repetition_penalty` field on purpose: transformers applies it to
-  // prompt tokens too (see GENERATION_OPTIONS) — do not re-add.
-}
-
-/** Minimal structural shape of a Transformers.js text-generation pipeline. */
-export interface TextGenerationPipe {
-  (messages: ChatMessage[], options: GenerationOptions): Promise<unknown>;
-}
-
-/** Test seam: replaces the dynamic `@huggingface/transformers` import. */
-export type TransformersLoader = (spec: TransformersLoaderSpec) => Promise<TextGenerationPipe>;
-
-/** Injectable probes behind `device: 'auto'` (test seams). */
-export interface DeviceSelectionDeps {
-  gpuProbe?: () => Promise<unknown>;
-  isNode?: boolean;
-}
 
 export interface TransformersEditorialPluginOptions {
   model?: string;
@@ -183,87 +166,6 @@ export interface TransformersEditorialPlugin extends AiPlugin {
   };
 }
 
-/**
- * Device selection. v4 validates per runtime: browsers accept
- * {wasm, webgpu, …}, Node accepts {cpu, webgpu, cuda} — passing the wrong one
- * throws `Unsupported device`. So `auto` mirrors that: WebGPU when an adapter
- * can actually be acquired, otherwise the portable backend for this runtime
- * (browser WASM; Node `cpu` → onnxruntime-node, whose prebuilt Linux/x64
- * binding ships in the tarball — no build script executes).
- */
-export async function resolveInferenceDevice(
-  option: TransformersDevice | 'auto',
-  deps: DeviceSelectionDeps = {},
-): Promise<TransformersDevice> {
-  if (option !== 'auto') return option;
-  const probe = deps.gpuProbe ?? defaultGpuProbe;
-  try {
-    const adapter = await probe();
-    if (adapter) return 'webgpu';
-  } catch {
-    // No adapter — fall through to the portable backend.
-  }
-  return (deps.isNode ?? isNodeRuntime()) ? 'cpu' : 'wasm';
-}
-
-async function defaultGpuProbe(): Promise<unknown> {
-  const nav: unknown = typeof navigator === 'object' ? navigator : null;
-  const gpu =
-    nav && typeof nav === 'object' && 'gpu' in nav
-      ? (nav as { gpu?: { requestAdapter?: () => Promise<unknown> } }).gpu
-      : undefined;
-  if (!gpu?.requestAdapter) return null;
-  return gpu.requestAdapter();
-}
-
-/**
- * Runtime detection matching Transformers.js's own `IS_NODE_ENV` probe — both
- * key off `process.versions.node`, so device resolution agrees with the
- * vocabulary the loaded build validates against. Walked as `unknown` because
- * bundlers may define a partial `process` in the browser.
- */
-function isNodeRuntime(): boolean {
-  const proc: unknown = typeof process === 'undefined' ? undefined : process;
-  if (typeof proc !== 'object' || proc === null) return false;
-  const versions: unknown = (proc as { versions?: unknown }).versions;
-  if (typeof versions !== 'object' || versions === null) return false;
-  return typeof (versions as { node?: unknown }).node === 'string';
-}
-
-/**
- * Default loader: the ONLY place `@huggingface/transformers` is referenced.
- * Dynamic on purpose — the module (and its ~1 MB of engine code) must stay out
- * of every static import graph so the bundle baseline does not move and the
- * code itself is fetched only when the user asks for the engine.
- */
-const defaultLoader: TransformersLoader = async (spec) => {
-  const mod = await import('@huggingface/transformers');
-  // v4 reads `env.remoteHost` from the file resolver; passing it as a
-  // pipeline option would be silently ignored.
-  if (spec.remoteHost) mod.env.remoteHost = spec.remoteHost;
-  const pipe = await mod.pipeline('text-generation', spec.model, {
-    dtype: spec.dtype,
-    device: spec.device,
-    // ORT's CPU memory arena caches allocation across token steps. Measured
-    // cost of keeping it: +1486 MB RSS spike per review vs +460 MB without,
-    // which drove `available` into the container kill band on 8 GB/no-swap
-    // hosts mid-corpus-run (live corpus worker death, LEARNINGS #546). The
-    // arena only amortizes per-step allocator reuse — noise at 0.5B scale;
-    // surviving the run is not.
-    session_options: { enableCpuMemArena: false },
-    progress_callback: (event: unknown) => {
-      const mapped = mapProgressEvent(event);
-      if (mapped) spec.onProgress(mapped);
-    },
-  });
-  // Transformers.js types the text-generation pipeline loosely; narrow to the
-  // structural shape this adapter relies on instead of `any`.
-  if (typeof pipe !== 'function') {
-    throw new Error('text-generation pipeline did not initialize as a callable');
-  }
-  return pipe as unknown as TextGenerationPipe;
-};
-
 export function createTransformersEditorialPlugin(
   options: TransformersEditorialPluginOptions = {},
 ): TransformersEditorialPlugin {
@@ -309,7 +211,7 @@ export function createTransformersEditorialPlugin(
           // closed rather than silently degrading (ADR-999 honest states).
           const canFallback = requested === 'auto' && resolved === 'webgpu';
           if (!canFallback) throw primary;
-          chosen = (selection.isNode ?? isNodeRuntime()) ? 'cpu' : 'wasm';
+          chosen = portableBackendFor(selection);
           loaded = await attempt(chosen);
         }
         pipe = loaded;

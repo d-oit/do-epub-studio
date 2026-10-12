@@ -6,16 +6,12 @@ import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
 // EPUB validator (jszip) is lazy-loaded: only needed at book-upload time,
 // keeps it out of the admin-route entry chunk (bundle budget ADR-107 §3).
-import { LocaleSwitcher } from '../../components/LocaleSwitcher';
-import { Button, ConfirmDialog } from '../../components/ui';
+import { ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal } from './components/BookCreateModal';
 import { BookEditModal } from './components/BookEditModal';
 import { useAdminStepUp } from './step-up';
-import { Breadcrumb } from '../../components/navigation';
-
-/** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
-const ADMIN_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
+import { BooksPageHeader } from './BooksPageHeader';
 
 interface CreateBookResponse {
   id: string;
@@ -95,10 +91,6 @@ export function AdminBookResponsesPage() {
 
   const handleViewGrants = (book: BookResponse) => {
     void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
-  };
-
-  const handleBackToReader = () => {
-    void navigate('/login');
   };
 
   const openEditModal = (book: BookResponse) => {
@@ -313,42 +305,9 @@ export function AdminBookResponsesPage() {
     }
   };
 
-  // biome-ignore lint/correctness/useQwikValidLexicalScope: React app, not Qwik
-  const handleAuditNav = () => {
-    void navigate('/admin/audit');
-  };
-
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
-      <Breadcrumb
-        items={[
-          { labelKey: 'admin.breadcrumb.home', href: ADMIN_ROUTES.admin },
-          { labelKey: 'admin.breadcrumb.books' },
-        ]}
-      />
-      <header className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[var(--color-rule)] pb-6">
-        <div>
-          <h1 className="text-balance-tight font-display text-3xl leading-tight text-foreground md:text-4xl">
-            {t('admin.books.title')}
-          </h1>
-          <button
-            onClick={handleBackToReader}
-            className="touch-target mt-1 inline-flex items-center px-2 py-0.5 text-sm text-accent hover:opacity-80"
-          >
-            &larr; {t('admin.books.backToReader')}
-          </button>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button onClick={() => setIsCreateModalOpen(true)}>{t('admin.createBook')}</Button>
-          <button
-            onClick={handleAuditNav}
-            className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
-          >
-            {t('admin.books.viewAuditLogs')}
-          </button>
-          <LocaleSwitcher />
-        </div>
-      </header>
+      <BooksPageHeader onCreateClick={() => setIsCreateModalOpen(true)} />
 
       {error && (
         <div className="mb-6 p-4 bg-semantic-error/10 border border-semantic-error/30 rounded-sm text-semantic-error">

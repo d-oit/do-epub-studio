@@ -200,8 +200,21 @@ if (ssot) {
   } catch (e) {
     fail(`scripts/gate-manifest.json unreadable: ${e.message}`);
   }
-  const gate = fs.readFileSync(path.join(root, 'scripts/quality_gate.sh'), 'utf8');
-  if (!gate.includes('validate-coverage-parity.sh')) {
+  // The gate may invoke the validator directly or through a phase lib it
+  // actually `source`s (scripts/lib/quality_gate_*.sh — the ADR-278 extraction
+  // pattern). An unsourced lib must not satisfy this check.
+  const gatePath = path.join(root, 'scripts/quality_gate.sh');
+  const gate = fs.readFileSync(gatePath, 'utf8');
+  const sourcedLibs = [...gate.matchAll(/source\s+"\$REPO_ROOT\/([^"]+)"/g)].map((m) => m[1]);
+  const gateSources = [gatePath, ...sourcedLibs.map((rel) => path.join(root, rel))];
+  const invokesParity = gateSources.some((file) => {
+    try {
+      return fs.readFileSync(file, 'utf8').includes('validate-coverage-parity.sh');
+    } catch {
+      return false;
+    }
+  });
+  if (!invokesParity) {
     fail('scripts/quality_gate.sh: does not invoke validate-coverage-parity.sh');
   }
 }

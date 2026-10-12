@@ -58,12 +58,32 @@ printf '%s═══════════════════════�
 # Check local gate has all required phases
 LOCAL_CHECKS=$(jq -r '.local.checks[]' "$MANIFEST" 2>/dev/null)
 printf '\n%s▸ Local gate checks:%s\n' "$BLUE" "$NC"
+# A phase may be invoked directly by the gate or by a phase lib the gate
+# actually `source`s (scripts/lib/quality_gate_*.sh — the ADR-278 extraction
+# pattern). Only sourced files count: an unsourced lib must not satisfy this.
+GATE_FILE="$REPO_ROOT/scripts/quality_gate.sh"
+PHASE_FILES=("$GATE_FILE")
+while IFS= read -r sourced; do
+  [[ -n "$sourced" ]] && PHASE_FILES+=("$REPO_ROOT/$sourced")
+done < <(grep -oE 'source "\$REPO_ROOT/[^"]+"' "$GATE_FILE" 2>/dev/null \
+  | sed -E 's/.*\$REPO_ROOT\/([^"]+)"/\1/')
+
+phase_is_invoked() {
+  local check="$1" file
+  for file in "${PHASE_FILES[@]}"; do
+    if [[ -f "$file" ]] && grep -q -- "$check" "$file" 2>/dev/null; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 while IFS= read -r check; do
   [[ -z "$check" ]] && continue
-  if grep -q "$check" "$REPO_ROOT/scripts/quality_gate.sh" 2>/dev/null; then
+  if phase_is_invoked "$check"; then
     printf '  %s✓%s %s\n' "$GREEN" "$NC" "$check"
   else
-    printf '  %s✗%s %s (not found in quality_gate.sh)\n' "$RED" "$NC" "$check"
+    printf '  %s✗%s %s (not found in quality_gate.sh or its sourced phase libs)\n' "$RED" "$NC" "$check"
     FAILED=1
   fi
 done <<< "$LOCAL_CHECKS"
