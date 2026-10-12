@@ -49,6 +49,14 @@ printf '%sValidating coverage threshold parity...%s\n' "${BLUE}" "${NC}"
 if ! "$REPO_ROOT/scripts/validate-coverage-parity.sh"; then FAILED=1; fi
 echo ""
 
+# --- Gate parity manifest (ADR-283/ADR-287) ---
+# Runs here too (not only in the CI jobs): this validator greps the gate for
+# every phase id the manifest claims, so a phase moved into a sourced lib used
+# to fail only in CI. Keeping it local makes the gate self-consistent.
+printf '%sValidating gate parity manifest...%s\n' "${BLUE}" "${NC}"
+if ! bash "$REPO_ROOT/scripts/validate-gate-parity.sh"; then FAILED=1; fi
+echo ""
+
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
 if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then

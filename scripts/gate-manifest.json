@@ -12,7 +12,8 @@
       "design",
       "check-loc",
       "format:check",
-      "coverage-parity"
+      "coverage-parity",
+      "gate-parity"
     ]
   },
   "pr": {
