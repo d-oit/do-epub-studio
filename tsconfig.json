@@ -2,7 +2,9 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
+  "include": ["*.ts", "scripts/**/*.ts", "apps/tests/**/*.ts"],
+  "exclude": ["node_modules", "**/dist/**", "**/coverage/**", "**/playwright-report/**"]
 }

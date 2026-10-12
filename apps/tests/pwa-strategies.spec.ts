@@ -118,13 +118,13 @@ test.describe('PWA Caching Strategies', () => {
     await context.setOffline(true);
 
     // Fetch while offline - it should succeed from cache
-    const data = await page.evaluate(async () => {
+    const data = (await page.evaluate(async () => {
       const res = await fetch('/api/books/test-list');
       return await res.json();
-    });
+    })) as { ok: boolean; data: Array<{ id: string; title: string }> };
 
     expect(data.ok).toBe(true);
-    expect(data.data[0].title).toBe('Cached Book');
+    expect(data.data[0]?.title).toBe('Cached Book');
 
     await context.setOffline(false);
   });

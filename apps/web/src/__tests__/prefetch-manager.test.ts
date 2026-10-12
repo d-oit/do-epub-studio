@@ -223,7 +223,7 @@ describe('PrefetchManager', () => {
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
-      expect(createdLinks[0].fetchPriority).toBe('low');
+      expect(createdLinks[0]?.fetchPriority).toBe('low');
     });
 
     it('should create link with rel=prefetch', async () => {
@@ -236,7 +236,7 @@ describe('PrefetchManager', () => {
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
-      expect(createdLinks[0].rel).toBe('prefetch');
+      expect(createdLinks[0]?.rel).toBe('prefetch');
     });
 
     it('should create link with as=fetch', async () => {
@@ -249,7 +249,7 @@ describe('PrefetchManager', () => {
       manager.onChapterChange('chapter1.html');
       await vi.advanceTimersByTimeAsync(500);
       expect(createdLinks.length).toBe(1);
-      expect(createdLinks[0].as).toBe('fetch');
+      expect(createdLinks[0]?.as).toBe('fetch');
     });
   });
 

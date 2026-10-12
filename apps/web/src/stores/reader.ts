@@ -46,6 +46,8 @@ export interface Highlight {
   color: string;
   createdAt: string;
   updatedAt: string;
+  syncState?: 'pending' | 'failed';
+  syncError?: string;
 }
 
 export interface Comment {
@@ -63,6 +65,8 @@ export interface Comment {
   updatedAt: string;
   resolvedAt: string | null;
   replies?: Comment[];
+  syncState?: 'pending' | 'failed';
+  syncError?: string;
 }
 
 interface ReaderState {
@@ -161,7 +165,8 @@ function rebuildTree(
     flat.push(c);
     if (c.replies) {
       for (let i = c.replies.length - 1; i >= 0; i--) {
-        stack.push(c.replies[i]);
+        const reply = c.replies[i];
+        if (reply) stack.push(reply);
       }
     }
   }
@@ -202,7 +207,9 @@ function rebuildTree(
  * one-way (`reader → auth`) and no import cycle is introduced through the API
  * client graph.
  */
-useAuthStore.subscribe((state, previousState) => {
+// `?.` because tests replace the auth store with a partial double; zustand's
+// real store always exposes `subscribe`.
+useAuthStore.subscribe?.((state, previousState) => {
   if (previousState.isAuthenticated && !state.isAuthenticated) {
     useReaderStore.getState().reset();
   }
@@ -248,7 +255,10 @@ export const useReaderStore = create<ReaderState>((set) => ({
   removeBookmark: (id) =>
     set((state) => ({ bookmarks: state.bookmarks.filter((b) => b.id !== id) })),
   setBookmarks: (bookmarks) => set({ bookmarks }),
-  addHighlight: (highlight) => set((state) => ({ highlights: [highlight, ...state.highlights] })),
+  addHighlight: (highlight) =>
+    set((state) => ({
+      highlights: [highlight, ...state.highlights.filter((h) => h.id !== highlight.id)],
+    })),
   removeHighlight: (id) =>
     set((state) => ({ highlights: state.highlights.filter((h) => h.id !== id) })),
   setHighlights: (highlights) => set({ highlights }),
@@ -258,11 +268,12 @@ export const useReaderStore = create<ReaderState>((set) => ({
     })),
   addComment: (comment) =>
     set((state) => {
+      const filtered = state.comments.filter((c) => c.id !== comment.id);
       if (!comment.parentCommentId) {
-        return { comments: [...state.comments, comment] };
+        return { comments: [...filtered, comment] };
       }
 
-      const allComments = rebuildTree(state.comments, comment);
+      const allComments = rebuildTree(filtered, comment);
       return { comments: allComments };
     }),
   updateComment: (id, updates) =>

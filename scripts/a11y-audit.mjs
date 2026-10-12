@@ -16,10 +16,9 @@ if (routes.length === 0) {
 const base = process.env.WEB_AUDIT_BASE_URL ?? 'http://127.0.0.1:3000';
 const impactFloor = process.env.WEB_AUDIT_A11Y_IMPACT_FLOOR ?? 'serious';
 
-let chromium;
-try {
-  ({ chromium } = await import('playwright'));
-} catch {
+const { loadChromium } = await import('./web-ui/lib/playwright.mjs');
+const chromium = await loadChromium();
+if (!chromium) {
   console.log('SKIP: playwright is not installed in this workspace');
   process.exit(0);
 }
@@ -27,7 +26,11 @@ try {
 const { auditAccessibility } = await import('./web-ui/lib/a11y-audit.mjs');
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage();
+  // axe-core/playwright 4.13 rejects pages created via `browser.newPage()`
+  // ("Please use browser.newContext()") — the masked defect F2 hid until
+  // configured runs reached browser work.
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const findings = [];
   for (const route of routes) {
     await page.goto(new URL(route, base).toString(), { waitUntil: 'networkidle' });

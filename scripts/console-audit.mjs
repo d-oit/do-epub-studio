@@ -16,10 +16,9 @@ if (routes.length === 0) {
 }
 const base = process.env.WEB_AUDIT_BASE_URL ?? 'http://127.0.0.1:3000';
 
-let chromium;
-try {
-  ({ chromium } = await import('playwright'));
-} catch {
+const { loadChromium } = await import('./web-ui/lib/playwright.mjs');
+const chromium = await loadChromium();
+if (!chromium) {
   console.log('SKIP: playwright is not installed in this workspace');
   process.exit(0);
 }

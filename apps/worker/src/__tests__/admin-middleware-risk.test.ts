@@ -89,7 +89,7 @@ describe('admin-middleware suspicious-device-change risk (ADR-234 item 7)', () =
 
     const calls = findRiskCalls('risk_suspicious_device_change');
     expect(calls).toHaveLength(1);
-    const entry = calls[0][1];
+    const entry = calls[0]?.[1];
     expect(entry.entityId).toBe('user-1');
     expect(entry.payload).toMatchObject({
       facility: 'risk',
@@ -172,7 +172,7 @@ describe('admin-middleware suspicious-device-change risk (ADR-234 item 7)', () =
 
     const calls = findRiskCalls('risk_suspicious_device_change');
     expect(calls).toHaveLength(1);
-    expect(calls[0][1].payload).toMatchObject({
+    expect(calls[0]?.[1]?.payload).toMatchObject({
       facility: 'risk',
       deviceLabelHash: 'dev-new',
       priorSessionCount: 1,

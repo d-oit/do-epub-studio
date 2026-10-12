@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
-import { apiRequest } from '../../lib/api/index';
 import { setupZombieDetection } from '../../lib/offline/permissions';
-import { AnnotationToolbar, extractSelectionData, CommentsPanel } from './components/annotations';
+import {
+  HighlightToolbarLayer,
+  extractSelectionData,
+  CommentsPanel,
+} from './components/annotations';
 import { FeedbackComposerModal } from './components/annotations/FeedbackComposerModal';
 import {
   useReaderUI,
@@ -16,6 +19,7 @@ import {
   useOptimisticAnnotationStore,
   useReaderDataLoader,
   useReaderLogout,
+  useBookFileUrl,
 } from './hooks';
 import { useFeedbackComposer } from './hooks/useFeedbackComposer';
 import {
@@ -35,7 +39,7 @@ import { NotificationPanel } from './components/notifications/NotificationPanel'
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 import { initAiPlugins } from '../../lib/ai-plugins';
 
-// Reader route owns AI features (GOAP-318): registering here keeps the
+// Reader route owns AI features (GOAP-262, issue #318): registering here keeps the
 // reader-core extension point out of the shared entry graph, honoring the
 // ADR-107 route boundary rules (catalog/admin/auth must not import
 // reader-core). Idempotent.
@@ -43,7 +47,6 @@ initAiPlugins();
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
-  const navigate = useNavigate();
 
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const bookId = useAuthStore((s) => s.bookId);
@@ -123,10 +126,24 @@ export function ReaderPage() {
 
   const rootRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
-  const bookFileIdRef = useRef<string | null>(null);
 
-  const [epubUrl, setEpubUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  /**
+   * A5/GOAP-300: resolve the signed book-file URL, caching it encrypted at rest
+   * so an offline reload can still open the book. A failed *online* request
+   * (revoked or expired capability) must surface as an error rather than
+   * silently reading the stale cached URL.
+   */
+  const { epubUrl, bookFileIdRef } = useBookFileUrl({
+    sessionToken,
+    bookSlug,
+    bookId,
+    unavailableMessage: t('reader.notAvailable'),
+    onResolved: markInsightsLoaded,
+    onLoadingChange: setIsLoading,
+    onError: (message) => setError(message),
+  });
 
   // Ref to the navigation callback so it can be passed to useReaderEpub
   // (declared below) without a temporal-dead-zone error. The callback is
@@ -256,7 +273,16 @@ export function ReaderPage() {
         frame.contentDocument?.removeEventListener('mouseup', onMouseUp);
       }
     };
-  }, [epubUrl, isCommentMode, setSelection, currentChapterRef, renditionRef, rootRef, viewerRef]);
+  }, [
+    epubUrl,
+    isCommentMode,
+    setSelection,
+    currentChapterRef,
+    renditionRef,
+    bookFileIdRef,
+    rootRef,
+    viewerRef,
+  ]);
 
   useEffect(() => {
     if (!bookId) return;
@@ -269,47 +295,6 @@ export function ReaderPage() {
       setPermissionStatus('invalid');
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
-
-  useEffect(() => {
-    if (!sessionToken || !bookSlug) {
-      void navigate('/login');
-      return;
-    }
-    const controller = new AbortController();
-    let aborted = false;
-    setIsLoading(true);
-    const fetch = async () => {
-      try {
-        // Sessions are bound to the book UUID; assertBookAccess compares the
-        // URL param against auth.bookId with no slug fallback, so file-url
-        // must be addressed by id like every other reader API call.
-        const data = await apiRequest<{ url: string; fileId?: string }>(
-          `/api/books/${bookId}/file-url`,
-          {
-            method: 'POST',
-            token: sessionToken,
-            body: JSON.stringify({}),
-            signal: controller.signal,
-          },
-        );
-        bookFileIdRef.current = data.fileId ?? null;
-        setEpubUrl(data.url);
-        markInsightsLoaded();
-      } catch (err) {
-        if (!controller.signal.aborted)
-          setError((err as Error).message || t('reader.notAvailable'));
-      } finally {
-        if (!aborted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    void fetch();
-    return () => {
-      aborted = true;
-      controller.abort();
-    };
-  }, [sessionToken, bookSlug, bookId, navigate, setError, t, markInsightsLoaded]);
 
   useEffect(() => {
     return () => {
@@ -437,34 +422,29 @@ export function ReaderPage() {
         />
       )}
       {selection && capabilities?.canHighlight && (
-        <AnnotationToolbar
+        <HighlightToolbarLayer
           selection={selection}
-          onHighlight={(color) => {
-            void handleCreateHighlight(color, selection);
-            setSelection(null);
-          }}
+          canHighlight={capabilities.canHighlight ?? false}
+          canComment={capabilities.canComment ?? false}
+          locale={locale}
+          onHighlight={handleCreateHighlight}
           onComment={() => {
             setShowCommentInput(true);
             setIsCommentMode(true);
           }}
-          onFeedback={(kind) => {
-            feedback.openComposer(kind, selection);
-          }}
+          onFeedback={(kind) => feedback.openComposer(kind, selection)}
           onClose={() => {
             setSelection(null);
             setShowCommentInput(false);
             setIsCommentMode(false);
           }}
-          locale={locale}
-          canHighlight={capabilities?.canHighlight ?? false}
-          canComment={capabilities?.canComment ?? false}
         />
       )}
       <CommentInputModal
         isOpen={showCommentInput && !!selection}
         selection={selection}
-        onSubmit={(text) => {
-          void handleCreateComment(text, selection);
+        onSubmit={async (text) => {
+          await handleCreateComment(text, selection);
           setSelection(null);
           setShowCommentInput(false);
           setIsCommentMode(false);

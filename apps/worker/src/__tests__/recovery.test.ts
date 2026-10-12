@@ -112,7 +112,7 @@ describe('Access Recovery Routes', () => {
 
       expect(res.status).toBe(200);
       expect(captureSend).toHaveBeenCalledTimes(1);
-      const message = captureSend.mock.calls[0][0] as {
+      const message = captureSend.mock.calls[0]?.[0] as {
         context?: { traceId: string; spanId?: string };
       };
       expect(message.context).toBeDefined();

@@ -190,15 +190,15 @@ describe('Editorial Feedback Routes (reader)', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(200);
-    const sql = String(mockQueryAll.mock.calls[0][1]);
+    const sql = String(mockQueryAll.mock.calls[0]?.[1]);
     expect(sql).toMatch(/submitter_email = \?/);
-    expect(mockQueryAll.mock.calls[0][2]).toContain('user@example.com');
+    expect(mockQueryAll.mock.calls[0]?.[2]).toContain('user@example.com');
     // The reader list renders replies inline, so the creator's answer must
     // travel with the list rather than waiting for a detail fetch.
     const payload: { data: Array<{ replies: Array<{ body: string }>; replyCount: number }> } =
       await res.json();
-    expect(payload.data[0].replies.map((r) => r.body)).toEqual(['Accepted.']);
-    expect(payload.data[0].replyCount).toBe(1);
+    expect(payload.data[0]?.replies.map((r) => r.body)).toEqual(['Accepted.']);
+    expect(payload.data[0]?.replyCount).toBe(1);
   });
 
   it('pins the book’s reference revisions at submit, so a later edit is detectable', async () => {
@@ -285,8 +285,8 @@ describe('Editorial Feedback Routes (reader)', () => {
     const payload: {
       data: Array<{ referencesDrifted: boolean; referenceRevisions: Record<string, number> }>;
     } = await res.json();
-    expect(payload.data[0].referenceRevisions).toEqual({ 'ref-1': 2 });
-    expect(payload.data[0].referencesDrifted).toBe(true);
+    expect(payload.data[0]?.referenceRevisions).toEqual({ 'ref-1': 2 });
+    expect(payload.data[0]?.referencesDrifted).toBe(true);
   });
 
   it('returns 404 (not 403) for another reader’s item', async () => {

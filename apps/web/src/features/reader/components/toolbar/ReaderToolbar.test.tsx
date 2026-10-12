@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, act, fireEvent } from '@testing-library/react';
 import { ReaderToolbar } from './ReaderToolbar';
 import { useReaderStore } from '../../../../stores/reader';
+import { defined } from '../../../../__tests__/helpers';
 
 // Mock translation
 vi.mock('../../../../hooks/useTranslation', () => ({
@@ -431,7 +432,7 @@ describe('ReaderToolbar', () => {
     const menuButton = screen.getByLabelText('More Options');
     fireEvent.click(menuButton);
     const settingsBtns = screen.getAllByText('Settings');
-    fireEvent.click(settingsBtns[settingsBtns.length - 1].closest('button') as HTMLElement);
+    fireEvent.click(settingsBtns[settingsBtns.length - 1]?.closest('button') as HTMLElement);
     expect(mockProps.onToggleSettings).toHaveBeenCalled();
   });
 
@@ -440,7 +441,7 @@ describe('ReaderToolbar', () => {
     const menuButton = screen.getByLabelText('More Options');
     fireEvent.click(menuButton);
     const signOutBtns = screen.getAllByText('Sign Out');
-    fireEvent.click(signOutBtns[signOutBtns.length - 1]);
+    fireEvent.click(defined(signOutBtns[signOutBtns.length - 1]));
     expect(mockProps.onLogout).toHaveBeenCalled();
   });
 
@@ -517,7 +518,7 @@ describe('ReaderToolbar', () => {
     expect(items.length).toBeGreaterThan(1);
 
     // Focus first menuitem, fire ArrowDown → should move to second
-    items[0].focus();
+    items[0]?.focus();
     await act(async () => {
       fireEvent.keyDown(menu, { key: 'ArrowDown' });
       await Promise.resolve();
@@ -528,7 +529,7 @@ describe('ReaderToolbar', () => {
   it('ArrowUp wraps to last menuitem from first', async () => {
     const menu = await openOverflowMenu();
     const items = menuItemsOf(menu);
-    items[0].focus();
+    items[0]?.focus();
     await act(async () => {
       fireEvent.keyDown(menu, { key: 'ArrowUp' });
       await Promise.resolve();
@@ -539,7 +540,7 @@ describe('ReaderToolbar', () => {
   it('Home moves focus to first menuitem', async () => {
     const menu = await openOverflowMenu();
     const items = menuItemsOf(menu);
-    items[items.length - 1].focus();
+    items[items.length - 1]?.focus();
     await act(async () => {
       fireEvent.keyDown(menu, { key: 'Home' });
       await Promise.resolve();
@@ -550,7 +551,7 @@ describe('ReaderToolbar', () => {
   it('End moves focus to last menuitem', async () => {
     const menu = await openOverflowMenu();
     const items = menuItemsOf(menu);
-    items[0].focus();
+    items[0]?.focus();
     await act(async () => {
       fireEvent.keyDown(menu, { key: 'End' });
       await Promise.resolve();

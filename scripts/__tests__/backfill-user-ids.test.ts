@@ -7,12 +7,22 @@ import { backfillUserIds, USER_LINK_TABLES, BATCH_LIMIT } from '../backfill-user
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const workerRequire = createRequire(resolve(__dirname, '../../apps/worker/package.json'));
 
+/** SQL transport shape the script's JSDoc contract declares. */
+type SqlRunner = (
+  sql: string,
+  args?: Array<string | number | null>,
+) => Promise<{ rowsAffected?: number }>;
+
 // Mocked db that captures SQL and returns a full batch on the first pass per
 // table (to exercise the loop) and 0 on subsequent passes (drain).
-function makeMockDb() {
-  const calls = [];
-  const counters = {};
-  const db = async (sql) => {
+function makeMockDb(): {
+  db: SqlRunner;
+  calls: string[];
+  counters: Record<string, number>;
+} {
+  const calls: string[] = [];
+  const counters: Record<string, number> = {};
+  const db: SqlRunner = async (sql) => {
     calls.push(sql);
     const hit = USER_LINK_TABLES.find((t) => sql.includes(`UPDATE ${t.table} AS t`));
     if (!hit) return { rowsAffected: 0 };
@@ -24,7 +34,7 @@ function makeMockDb() {
 }
 
 describe('backfill-user-ids.mjs (ADR-231)', () => {
-  let prevExitCode;
+  let prevExitCode: typeof process.exitCode;
   beforeEach(() => {
     prevExitCode = process.exitCode;
   });
@@ -63,7 +73,7 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
   });
 
   it('errors when no db runner is provided', async () => {
-    const result = await backfillUserIds({});
+    const result = await backfillUserIds({ db: undefined as unknown as SqlRunner });
     expect(result.ok).toBe(false);
     expect(process.exitCode).toBe(1);
   });
@@ -73,7 +83,10 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
     function setup() {
       const { createClient } = workerRequire('@libsql/client');
       const client = createClient({ url: 'file::memory:' });
-      const db = async (sql, args = []) => client.execute({ sql, args });
+      const db: SqlRunner = async (sql, args = []) => {
+        const res = await client.execute({ sql, args });
+        return { rowsAffected: res.rowsAffected };
+      };
       return { client, db };
     }
 
@@ -97,7 +110,9 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
       expect(first.ok).toBe(true);
 
       const rows = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id')).rows;
-      const byId = Object.fromEntries(rows.map((r) => [r.id, r.user_id]));
+      const byId = Object.fromEntries(
+        rows.map((r: { id: string; user_id: string | null }) => [r.id, r.user_id]),
+      );
       // Matched (case-insensitively) got the user id; orphan stayed NULL.
       expect(byId['h-match']).toBe('u1');
       expect(byId['h-orphan']).toBeNull();
@@ -106,7 +121,9 @@ describe('backfill-user-ids.mjs (ADR-231)', () => {
       const second = await backfillUserIds({ db });
       expect(second.ok).toBe(true);
       const rows2 = (await client.execute('SELECT id, user_id FROM highlights ORDER BY id')).rows;
-      const byId2 = Object.fromEntries(rows2.map((r) => [r.id, r.user_id]));
+      const byId2 = Object.fromEntries(
+        rows2.map((r: { id: string; user_id: string | null }) => [r.id, r.user_id]),
+      );
       expect(byId2['h-match']).toBe('u1');
       expect(byId2['h-orphan']).toBeNull();
       expect(second.totalChanged).toBe(0);

@@ -4,14 +4,22 @@ import { type Page, expect } from '@playwright/test';
  * Standard viewport sizes for regression testing.
  * Includes 'tablet-sm' (640x960) to cover the Tailwind 'sm' breakpoint boundary
  * where header controls and labels wrap between mobile and tablet viewports.
+ *
+ * ADR-246 / F7 (GOAP-290): the size set matches
+ * `scripts/web-ui/lib/audit.mjs` (same 13 sizes) so the browser lane and the
+ * web-ui sensor lane cover identical viewports. Labels stay local per matrix.
  */
 export const VIEWPORT_MATRIX = [
   { label: 'mobile-sm', width: 320, height: 568 },
+  { label: 'mobile-android', width: 360, height: 800 },
   { label: 'mobile-md', width: 375, height: 812 },
   { label: 'mobile-lg', width: 390, height: 844 },
+  { label: 'mobile-xl', width: 412, height: 915 },
   { label: 'tablet-sm', width: 640, height: 960 },
   { label: 'tablet', width: 768, height: 1024 },
+  { label: 'tablet-lg', width: 820, height: 1180 },
   { label: 'laptop', width: 1024, height: 768 },
+  { label: 'laptop-lg', width: 1280, height: 720 },
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'large-desktop', width: 1920, height: 1080 },
   { label: 'landscape-mobile', width: 812, height: 375 },

@@ -1,5 +1,5 @@
 /**
- * AI opt-in consent gate (issue #318, GOAP-318).
+ * AI opt-in consent gate (issue #318, plan 262).
  *
  * AI features are off by default. A capability may run only after the user
  * explicitly opts in; the choice is persisted via an injectable storage

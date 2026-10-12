@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { defined } from './helpers';
 
 vi.mock('../db/client', () => ({
   queryFirst: vi.fn(),
@@ -49,7 +50,7 @@ describe('reset token governance (ADR-232)', () => {
       traceId: 't',
     });
     expect(token).toMatch(/^[0-9a-f]{64}$/);
-    const [, sql, args] = mockExecute.mock.calls[0];
+    const [, sql, args] = defined(mockExecute.mock.calls[0]);
     expect(sql).toContain('INSERT INTO password_reset_tokens');
     // The raw token must never be persisted — only its hash.
     expect(args).not.toContain(token);
@@ -64,7 +65,7 @@ describe('reset token governance (ADR-232)', () => {
       email: 'a@b.com',
       bookId: 'book-1',
     });
-    const [, insertSql, args] = mockExecute.mock.calls[0];
+    const [, insertSql, args] = defined(mockExecute.mock.calls[0]);
     expect(insertSql).toContain('book_id');
     // book_id is the last bound column after request_trace_id.
     expect(args?.[8]).toBe('book-1');
@@ -89,7 +90,7 @@ describe('reset token governance (ADR-232)', () => {
         bookId: 'book-1',
       },
     });
-    const [, selectSql] = mockQueryFirst.mock.calls[0];
+    const [, selectSql] = defined(mockQueryFirst.mock.calls[0]);
     expect(selectSql).toContain('book_id');
   });
 

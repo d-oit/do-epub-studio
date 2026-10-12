@@ -130,7 +130,6 @@ describe('CatalogPage', () => {
     await waitFor(() => {
       expect(mockApiRequest).toHaveBeenCalledWith(expect.stringContaining('q=orwell'));
     });
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- mock.calls[0] is unknown
     const call = mockApiRequest.mock.calls[0]?.[0] as string;
     expect(call).toContain('author=Orwell');
     expect(call).toContain('language=en');

@@ -1,5 +1,5 @@
-import { expect, type Page, type Route } from '@playwright/test';
-import { deflateSync } from 'zlib';
+import { expect, type BrowserContext, type Page, type Route } from '@playwright/test';
+import { deflateRawSync } from 'zlib';
 
 // ---------------------------------------------------------------------------
 // CRC32 (standalone, no external deps)
@@ -105,7 +105,9 @@ export function createMinimalEpub(
   for (const file of files) {
     const nameB = Buffer.from(file.name);
     const raw = file.data;
-    const compressed = file.method === 0 ? raw : deflateSync(raw);
+    // ZIP entries of method 8 hold *raw* deflate streams; the zlib-wrapped
+    // `deflateSync` output corrupts every entry (epub parse then hangs).
+    const compressed = file.method === 0 ? raw : deflateRawSync(raw);
     const crc = crc32(raw);
 
     const lh = Buffer.alloc(30);
@@ -272,18 +274,22 @@ export interface MockRouteOptions {
   loginResponse?: typeof LOGIN_RESPONSE;
   demoLoginResponse?: typeof DEMO_READER_RESPONSE;
   includeBookmarks?: boolean;
+  includeFeedback?: boolean;
   includeLogout?: boolean;
   includeInsights?: boolean;
   comments?: unknown[];
 }
 
-export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
+export async function mockReaderApi(
+  pageOrContext: Page | BrowserContext,
+  opts: MockRouteOptions = {},
+) {
   const bookSlug = opts.bookSlug ?? TEST_USER.bookSlug;
   const hasCustomEpubUrl = opts.epubUrl !== undefined;
   const epubUrl = opts.epubUrl ?? `https://example.com/${bookSlug}.epub`;
   const loginResp = opts.loginResponse ?? LOGIN_RESPONSE;
 
-  await page.route('**/api/access/request', async (route: Route) => {
+  await pageOrContext.route('**/api/access/request', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -293,7 +299,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
 
   // ADR-244: demo reader session entry point. Same DTO shape as /api/access/request.
   if (opts.demoLoginResponse) {
-    await page.route('**/api/demo/reader-login', async (route: Route) => {
+    await pageOrContext.route('**/api/demo/reader-login', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -302,7 +308,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   }
 
-  await page.route('**/api/books/*/file-url', async (route: Route) => {
+  await pageOrContext.route('**/api/books/*/file-url', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -317,8 +323,15 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   // the nightly scheduled E2E lane (issue #957). Tests that pass an explicit
   // epubUrl WITHOUT epubBuffer opt out here and exercise real-network behavior.
   if (opts.epubBuffer || !hasCustomEpubUrl) {
-    const epubPattern = epubUrl.startsWith('http') ? `**/${bookSlug}.epub` : `**${epubUrl}`;
-    await page.route(epubPattern, async (route: Route) => {
+    // A custom http(s) URL may carry its own path (e.g.
+    // `http://127.0.0.1:0/test/offline-annotations.epub`), so match on the
+    // pathname rather than assuming the default `<slug>.epub` file name.
+    const epubPattern = hasCustomEpubUrl
+      ? epubUrl.startsWith('http')
+        ? `**${new URL(epubUrl).pathname}`
+        : `**${epubUrl}`
+      : `**/${bookSlug}.epub`;
+    await pageOrContext.route(epubPattern, async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/epub+zip',
@@ -327,7 +340,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   }
 
-  await page.route('**/api/books/*/progress', async (route: Route) => {
+  await pageOrContext.route('**/api/books/*/progress', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -335,7 +348,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   });
 
-  await page.route('**/api/books/*/highlights', async (route: Route) => {
+  await pageOrContext.route('**/api/books/*/highlights', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -343,7 +356,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   });
 
-  await page.route('**/api/books/*/comments', async (route: Route) => {
+  await pageOrContext.route('**/api/books/*/comments', async (route: Route) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -354,7 +367,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   const bookmarks: Array<{ id: string; locator: unknown; label?: string; createdAt: string }> = [];
 
   if (opts.includeBookmarks !== false) {
-    await page.route('**/api/books/*/bookmarks**', async (route: Route) => {
+    await pageOrContext.route('**/api/books/*/bookmarks**', async (route: Route) => {
       const method = route.request().method();
       if (method === 'POST') {
         const body = (route.request().postDataJSON() || {}) as {
@@ -393,7 +406,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   }
 
-  await page.route('**/api/notifications**', async (route: Route) => {
+  await pageOrContext.route('**/api/notifications**', async (route: Route) => {
     const origin = route.request().headers()['origin'] || '*';
     if (route.request().method() === 'OPTIONS') {
       await route.fulfill({
@@ -418,7 +431,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
     });
   });
   if (opts.includeFeedback !== false) {
-    await page.route('**/api/books/*/feedback', async (route: Route) => {
+    await pageOrContext.route('**/api/books/*/feedback', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -428,7 +441,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   }
 
   if (opts.includeInsights) {
-    await page.route('**/api/books/*/insights', async (route: Route) => {
+    await pageOrContext.route('**/api/books/*/insights', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -438,7 +451,7 @@ export async function mockReaderApi(page: Page, opts: MockRouteOptions = {}) {
   }
 
   if (opts.includeLogout !== false) {
-    await page.route('**/api/access/logout', async (route: Route) => {
+    await pageOrContext.route('**/api/access/logout', async (route: Route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -709,4 +722,62 @@ export async function loginAsAdmin(page: Page) {
   // Wait for the admin books page to mount instead of networkidle — background
   // fetches keep the network busy under parallel load (issue #957 flakiness).
   await expect(page.locator('main#main-content')).toBeVisible({ timeout: 20000 });
+}
+
+/**
+ * Selects `text` inside the reader's EPUB iframe by building a DOM Range over
+ * the matching text node and dispatching a `mouseup`, so the annotation
+ * toolbar sees a real selection (restored with the A1 offline-annotations
+ * spec, GOAP-311).
+ */
+export async function selectReaderPassage(page: Page, text: string): Promise<void> {
+  const iframeLocator = page
+    .locator('div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe')
+    .first();
+  await iframeLocator.waitFor({ state: 'attached', timeout: 15000 });
+
+  const selected = await page.evaluate((targetText) => {
+    const iframes = Array.from(
+      document.querySelectorAll<HTMLIFrameElement>(
+        'div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe',
+      ),
+    );
+    for (const iframe of iframes) {
+      const doc = iframe.contentDocument;
+      const win = iframe.contentWindow;
+      if (!doc || !win) continue;
+
+      const paragraph = Array.from(doc.querySelectorAll('p')).find((item) =>
+        item.textContent?.includes(targetText),
+      );
+      if (!paragraph) continue;
+
+      const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+      let node: Node | null = walker.nextNode();
+      while (node) {
+        const content = node.textContent ?? '';
+        const index = content.indexOf(targetText);
+        if (index !== -1) {
+          const range = doc.createRange();
+          range.setStart(node, index);
+          range.setEnd(node, index + targetText.length);
+          const selection = win.getSelection();
+          if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+            win.dispatchEvent(
+              new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
+            );
+            return true;
+          }
+        }
+        node = walker.nextNode();
+      }
+    }
+    return false;
+  }, text);
+
+  if (!selected) {
+    throw new Error(`Target text "${text}" not found in iframe to select`);
+  }
 }

@@ -2,6 +2,7 @@ export * from './dtos';
 export * from './schemas';
 export * from './errors';
 export * from './telemetry';
+export * from './redact';
 export * from './safe-regex';
 export * from './timeout';
 // NOTE: './epub-validator' is intentionally NOT re-exported here. It pulls in

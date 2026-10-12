@@ -49,7 +49,7 @@ visible, focused, loaded, and not idle.
 ### Storage
 
 - **Local:** IndexedDB store `readingInsights` keyed by `[bookId, date]`
-- **Server:** Turso table `reading_insights` with daily buckets per book/reader
+- **Server:** D1 table `reading_insights` with daily buckets per book/reader
 
 ### Server-Side
 
@@ -77,7 +77,7 @@ interface ReadingInsightEntry {
 }
 ```
 
-### Server (Turso)
+### Server (D1)
 
 ```sql
 CREATE TABLE reading_insights (

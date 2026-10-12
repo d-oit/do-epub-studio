@@ -265,7 +265,7 @@ test.describe('Cloudflare deployment checks', () => {
     expect(response.headers()['content-type']).toContain('application/json');
     const bodyText = await response.text();
     expect(bodyText).not.toContain('<!DOCTYPE html');
-    // ADR-309 D2: the smoke lane must prove the DB-backed path, not just
+    // GOAP-309 D2: the smoke lane must prove the DB-backed path, not just
     // JSON — /api/health stays 200 while the catalog 500s when the Pages
     // D1 binding/migrations are broken (GOAP-309 W2, issue #1278).
     expect(

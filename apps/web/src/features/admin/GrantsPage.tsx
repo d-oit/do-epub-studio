@@ -186,7 +186,7 @@ function GrantsView({
       mode: grant.mode,
       commentsAllowed: grant.commentsAllowed,
       offlineAllowed: grant.offlineAllowed,
-      expiresAt: grant.expiresAt ? grant.expiresAt.split('T')[0] : '',
+      expiresAt: grant.expiresAt ? (grant.expiresAt.split('T')[0] ?? '') : '',
     });
     setIsModalOpen(true);
   };

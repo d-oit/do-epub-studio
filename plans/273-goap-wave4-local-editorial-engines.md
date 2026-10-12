@@ -75,3 +75,29 @@ engine, timeout, refusal and incomplete analysis.
 - **Milestone flips are reporting-only**: any PR that touches
   `qualification.ts` must show `hasEngine()` evidence in the same diff or the
   availability claim is dishonest by construction.
+
+## Integration boundary (2026-09-30 audit — no code changed)
+
+GOAP-290 / `analysis/feature-docs-harness-audit.md` re-read this plan's
+deliverables without running them. The qualified A/B milestones (including
+B2's 2026-09-29 acceptance with the residual 300 s timeouts) and the
+intentionally deferred cloud C status stand unchanged. Three boundaries are
+recorded so downstream claims stay accurate:
+
+- **F1 — the app does not yet dispatch these engines.**
+  `AssistancePanel.runCheck` still calls the engine-less
+  `createLocalEditorialPlugin()` with empty input, and the LanguageTool
+  adapter has no app registration, so no app-level review can produce findings
+  today. Engine qualification ≠ app integration; the corrective
+  recommendation and acceptance test live in the audit report.
+- **F8 — progress drift.** GOAP-999's AI-03 row carried older 1.5B/q4 prose
+  and a "0.5B rejected" reading that predates B2's retuning to
+  `Qwen2.5-0.5B-Instruct` (q8, sampling, 300 s bound). The model must not be
+  reverted and the qualified milestone must not be reopened on that stale
+  text; human creator style review remains the open part of AI-03.
+- **F10 — [INFERENCE] deployment surface.** The enforced CSP
+  (`apps/web/public/_headers:2`) restricts `connect-src` to self + Cloudflare
+  while ORT `wasmPaths` and the on-demand model download are external. No
+  production-browser proof exists that those fetches succeed under the
+  enforced CSP; this audit records a deployment acceptance requirement and
+  does not change CSP or asset ownership.

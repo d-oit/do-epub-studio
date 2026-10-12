@@ -158,9 +158,8 @@ Root `package.json`:
     "test:e2e:smoke": "playwright test --grep @smoke",
     "verify:fast": "pnpm lint && pnpm typecheck && pnpm --filter @do-epub-studio/web test:unit -- src/features/reader/components/annotations src/features/admin",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
-    "db:migrate:local": "node scripts/db-migrate-local.mjs",
-    "db:migrate:prod": "node scripts/db-migrate-prod.mjs",
-    "db:check": "node scripts/db-check.mjs"
+    "db:migrate:local": "pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations apply do-epub-studio --local",
+    "db:check": "pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations list do-epub-studio --local"
   }
 }
 ```
@@ -207,7 +206,7 @@ A change is done only when:
 | Agent             | Scope                                                             |
 | ----------------- | ----------------------------------------------------------------- |
 | Architecture      | validates ADRs, checks module boundaries, prevents coupling drift |
-| Backend           | Worker routes, Turso repositories, auth/session, R2 signed URLs   |
+| Backend           | Worker routes, D1 repositories, auth/session, R2 signed URLs      |
 | Frontend          | reader UI, admin UI, Zustand stores, responsive UX                |
 | EPUB              | EPUB.js integration, CFI anchors, TOC and locator logic           |
 | Offline           | service worker, IndexedDB, cache strategy, sync queue             |

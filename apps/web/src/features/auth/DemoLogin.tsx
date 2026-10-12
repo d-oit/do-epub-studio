@@ -52,7 +52,7 @@ export function useDemoLogin() {
       setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
     } catch (primaryErr) {
-      // ADR-309 D1: a structured DEMO_DISABLED means the server fail-closed
+      // GOAP-309 D1: a structured DEMO_DISABLED means the server fail-closed
       // the demo on this deployment — show an honest state instead of
       // spamming the access-request fallback (which 500s against the same
       // gates). The fallback only covers transport-level failures (HTML SPA

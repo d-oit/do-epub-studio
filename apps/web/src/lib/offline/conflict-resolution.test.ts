@@ -178,7 +178,7 @@ describe('Conflict Resolution', () => {
 
       const pending = getPendingConflicts('book-1');
       expect(pending).toHaveLength(1);
-      expect(pending[0].bookId).toBe('book-1');
+      expect(pending[0]?.bookId).toBe('book-1');
     });
 
     it('should not return resolved conflicts', () => {
@@ -295,7 +295,7 @@ describe('Conflict Resolution', () => {
 
       const pending = getPendingConflicts();
       expect(pending).toHaveLength(1);
-      expect(pending[0].id).toBe(c2!.id);
+      expect(pending[0]?.id).toBe(c2!.id);
     });
   });
 
@@ -373,8 +373,8 @@ describe('Conflict Resolution', () => {
         entityId: 'annotation-1',
         resolved: false,
       });
-      expect(pending[0].localVersion).toEqual(localVersion);
-      expect(pending[0].remoteVersion).toEqual(remoteVersion);
+      expect(pending[0]?.localVersion).toEqual(localVersion);
+      expect(pending[0]?.remoteVersion).toEqual(remoteVersion);
     });
 
     it('purges resolve + clear from the durable store', async () => {

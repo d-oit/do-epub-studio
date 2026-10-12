@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { useLocaleStore } from '../stores/locale';
+import { defined } from './helpers';
 
 describe('Security Posture (Web)', () => {
   it('asserts session token is persisted in localStorage with correct key', () => {
@@ -46,7 +47,7 @@ describe('Security Posture (Web)', () => {
     const cspMatch = content.match(/Content-Security-Policy: ([^;]+(?:; [^;]+)*);/);
     if (!cspMatch) throw new Error('CSP header not found');
 
-    const csp = cspMatch[1];
+    const csp = defined(cspMatch[1]);
 
     // Compensating control 1: Strict script-src (no 'unsafe-inline', no 'unsafe-eval')
     // Note: 'wasm-unsafe-eval' is permitted per docs/security-posture.md

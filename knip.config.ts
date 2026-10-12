@@ -34,9 +34,10 @@ const config: KnipConfig = {
     '.': {
       entry: ['commitlint.config.{js,ts,mjs,cjs}'],
       project: [],
-      // knip's vitest plugin cannot load vitest.workspace.ts (defineWorkspace
-      // unavailable in that context, known issue). Disable root config loading
-      // so individual workspace vitest configs are still found.
+      // The root has no vitest config of its own (each workspace project runs
+      // its own; the removed `vitest.workspace.ts` used `defineWorkspace`, which
+      // vitest 4 dropped). Keep root config loading off so per-package configs
+      // are still found by knip's vitest plugin.
       vitest: { config: [] },
       // These are all consumed via CLI or config files that knip doesn't trace.
       ignoreDependencies: [

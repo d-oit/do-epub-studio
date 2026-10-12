@@ -5,7 +5,7 @@ import { useLocaleStore } from '../../stores/locale';
 
 describe('useDocumentLocale', () => {
   beforeEach(() => {
-    useLocaleStore.setState({ locale: 'en' });
+    useLocaleStore.setState({ locale: 'en', localeStatus: 'ready', localeAttempt: 0 });
     const html = document.documentElement;
     html.removeAttribute('lang');
     html.removeAttribute('dir');
@@ -49,5 +49,31 @@ describe('useDocumentLocale', () => {
     unmount();
     expect(document.documentElement.lang).toBe('fr');
     expect(document.documentElement.dir).toBe('rtl');
+  });
+
+  it('does not claim a locale whose dictionary never loaded', () => {
+    // A9/GOAP-306: after a failed chunk load the tree renders the English
+    // fallback, so `lang`/`dir` must describe English — not the failed choice.
+    renderHook(() => useDocumentLocale());
+    act(() => {
+      useLocaleStore.setState({ locale: 'ar', localeStatus: 'failed' });
+    });
+    expect(document.documentElement.lang).toBe('en');
+    expect(document.documentElement.dir).toBe('ltr');
+
+    // Retry succeeds → the document switches to the locale actually rendered.
+    act(() => {
+      useLocaleStore.setState({ locale: 'ar', localeStatus: 'ready' });
+    });
+    expect(document.documentElement.lang).toBe('ar');
+    expect(document.documentElement.dir).toBe('rtl');
+  });
+
+  it('stays on English while a locale chunk is still loading', () => {
+    renderHook(() => useDocumentLocale());
+    act(() => {
+      useLocaleStore.setState({ locale: 'de', localeStatus: 'loading' });
+    });
+    expect(document.documentElement.lang).toBe('en');
   });
 });

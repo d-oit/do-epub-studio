@@ -1,8 +1,8 @@
 // audit.browser.test.mjs — rendered Playwright coverage for the web-ui pack.
 // The test intentionally skips when Playwright or its browser is unavailable;
-// CI installs both explicitly and treats this path as a required check.
+// CI runs it in the `Web UI Audit Suite` job with Chromium installed
+// (GOAP-294). That context is not yet in the ADR-286 required-check set.
 
-import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -11,30 +11,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { auditMatrix } from './lib/audit.mjs';
 import { auditVisual } from './lib/visual-audit.mjs';
+import { loadChromium } from './lib/playwright.mjs';
 
-const require = createRequire(import.meta.url);
 const projectRoot = fileURLToPath(new URL('../../', import.meta.url));
 const fixturesRoot = fileURLToPath(new URL('./fixtures/', import.meta.url));
-
-function loadChromium() {
-  // `playwright` (the bare package) is not a dependency here — this workspace
-  // declares `@playwright/test`, which re-exports the same `chromium` handle.
-  // Requiring the bare name resolved to nothing, so this helper always returned
-  // null and the browser suite self-skipped without ever saying why. knip's
-  // "unlisted dependency" finding is what surfaced it.
-  //
-  // Both candidates are tried so the file still works when vendored into a
-  // workspace that depends on bare `playwright`.
-  for (const specifier of ['@playwright/test', 'playwright']) {
-    try {
-      const resolved = require(specifier);
-      if (resolved?.chromium) return resolved.chromium;
-    } catch {
-      // Try the next candidate.
-    }
-  }
-  return null;
-}
 
 async function serveFixtures() {
   const server = createServer(async (request, response) => {
@@ -70,7 +50,7 @@ const matrix = [
 ];
 
 test('browser: rendered fixtures cover clean, overlap, contrast, and baseline isolation', async (t) => {
-  const chromium = loadChromium();
+  const chromium = await loadChromium();
   if (!chromium) {
     t.skip('SKIP: playwright is not installed in this workspace');
     return;
