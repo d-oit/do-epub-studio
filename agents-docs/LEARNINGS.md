@@ -65,6 +65,13 @@
 - **A small instruct model echoes a schema sketch verbatim**: given `"category":"story|logic"` in the prompt, Qwen2.5-0.5B answers `"category": "story|logic"`. Show a _filled_ example instead; 0.5B also paraphrases quotes rather than citing them, so every claim fails the grounding check. 1.5B is the smallest quantisation that cites verbatim.
 - **React `act(...)` warning _counts_ are not a usable baseline — ratchet on file identity instead**: the same revision reported 13 (single file), 34 (full suite, custom reporter) and 82 (full suite, verbose reporter) `act(...)` warnings, because the count depends on how much async work lands after a test body under load. `onUserConsoleLog` cannot attribute a warning either (`origin` is undefined, `taskId` is an opaque hash), so the sensor belongs in the test setup file, where `expect.getState().testPath` identifies the emitting file and an `afterAll` throw fails exactly that file. (Implemented in `apps/web/src/test-utils/react-warning-guard.ts`.)
 
+### Cloudflare Pages
+
+- **Pages `EventContext` is not Hono's `ExecutionContext`**: adapt `waitUntil` and `passThroughOnException` explicitly; `context.ctx` is not a Pages API.
+- **CSP reports use `application/csp-report`**: Hono's JSON validator rejects that media type; parse the raw request body and validate the result with the schema.
+- **Pages preview configuration inherits `pages_build_output_dir`**: redeclare non-inheritable D1/KV bindings and vars under `[env.preview]`, but keep the build directory top-level.
+- **Zod startup configuration requires a direct Zod v4 dependency**: without it, `apps/web` can resolve an unrelated Zod v3 and `z.config({ jitless: true })` does not typecheck.
+
 ### CI / Tooling
 
 - **`rolldownOptions: { output: {` brace-count pitfall**: A "cosmetic" whitespace edit collapsing `rolldownOptions: {      output: {` to `rolldownOptions: {` silently deletes the `output:` opener while the two closing braces (`output` then `rolldownOptions`) remain — so the object tree nests `server:`/`manualChunks` incorrectly and only the BUILD + knip config-load fail (not `tsc`/`lint`, which skip `vite.config.ts`). When "normalizing" a single-line multi-brace allocation, recount every closer; verify with `pnpm --filter web build`, not typecheck.
