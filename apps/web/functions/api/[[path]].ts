@@ -25,12 +25,23 @@ import { registerArgon2Wasm } from '../../../worker/src/lib/register-argon2-wasm
 interface PagesFunctionContext {
   request: Request;
   env: Env;
-  ctx: ExecutionContext;
+  waitUntil(promise: Promise<unknown>): void;
+  passThroughOnException(): void;
 }
 
 export async function onRequest(context: PagesFunctionContext): Promise<Response> {
   // Register the pre-compiled Argon2 wasm modules before the Hono app runs so
   // password hashing (argon2-wasm-edge) works on Pages. Idempotent and cheap.
   await registerArgon2Wasm();
-  return app.fetch(context.request, context.env, context.ctx);
+
+  const executionCtx = {
+    waitUntil: (promise: Promise<unknown>) => {
+      context.waitUntil(promise);
+    },
+    passThroughOnException: () => {
+      context.passThroughOnException();
+    },
+    props: {},
+  };
+  return app.fetch(context.request, context.env, executionCtx as ExecutionContext);
 }
