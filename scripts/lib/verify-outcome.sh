@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Outcome mapping for the VERIFY phase.
 #
-# verify.sh reports three states, and only a REAL failure may destroy work:
+# A failed check may destroy work only when this run created the PR. Existing
+# PRs carry review history and belong to their current reviewers, so keep their
+# branch and commit in place even when a check fails.
 #   0  every check passed
 #   1  at least one check failed
 #   2  inconclusive — the run timed out, no checks ever appeared, or the GitHub
@@ -17,11 +19,17 @@ VERIFY_OUTCOME_PASSED=0
 VERIFY_OUTCOME_FAILED=1
 VERIFY_OUTCOME_INCONCLUSIVE=2
 
-# decide_verify_action <verify-exit-code> -> prints "passed" | "rollback" | "keep"
+# decide_verify_action <verify-exit-code> [existing-pr] -> prints "passed" | "rollback" | "preserve" | "keep"
 decide_verify_action() {
     case "${1:-}" in
         "$VERIFY_OUTCOME_PASSED") echo "passed" ;;
-        "$VERIFY_OUTCOME_FAILED") echo "rollback" ;;
+        "$VERIFY_OUTCOME_FAILED")
+            if [[ -n "${2:-}" ]]; then
+                echo "preserve"
+            else
+                echo "rollback"
+            fi
+            ;;
         *) echo "keep" ;;
     esac
 }

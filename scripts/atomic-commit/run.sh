@@ -272,7 +272,7 @@ main() {
     VERIFY_EXIT=0
     "$SCRIPT_DIR/verify.sh" "$PR_NUMBER" "$TIMEOUT" || VERIFY_EXIT=$?
 
-    case "$(decide_verify_action "$VERIFY_EXIT")" in
+    case "$(decide_verify_action "$VERIFY_EXIT" "${EXISTING_PR:-}")" in
         passed)
             ;;
         rollback)
@@ -280,6 +280,12 @@ main() {
             rollback_pr
             rollback_push
             rollback_commit
+            exit $E_CHECKS
+            ;;
+        preserve)
+            error "CI checks failed on existing PR #$PR_NUMBER"
+            warn "Leaving the existing PR, pushed commit, and branch in place."
+            warn "Fix the failed check and push an update; nothing was rolled back."
             exit $E_CHECKS
             ;;
         *)
