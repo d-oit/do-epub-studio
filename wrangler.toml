@@ -17,6 +17,22 @@ id = "5328daf8b5de4c0da83ac97ee4cc9ea4"
 
 [vars]
 APP_BASE_URL = "https://do-epub-studio.pages.dev"
+ENVIRONMENT = "production"
+WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
+WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
+WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "do-epub-studio"
+database_id = "dd47f3de-9ea0-4a00-898d-c49cc0dd271f"
+
+[[env.preview.kv_namespaces]]
+binding = "CACHE_KV"
+id = "5328daf8b5de4c0da83ac97ee4cc9ea4"
+
+[env.preview.vars]
+APP_BASE_URL = "https://do-epub-studio.pages.dev"
 ENVIRONMENT = "preview"
 DEMO_LOGIN_ENABLED = "1"
 DEMO_ACCOUNTS_PROD_ALLOWLIST = "demo-preview"
