@@ -1,3 +1,5 @@
+import '../zod-config';
+
 export * from './common';
 export * from './password';
 export * from './mfa';
