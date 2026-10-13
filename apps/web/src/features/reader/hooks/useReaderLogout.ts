@@ -25,7 +25,14 @@ async function teardownDeviceData(): Promise<void> {
       });
     }
   } catch (purgeErr) {
-    console.error('Device data teardown failed during logout', purgeErr);
+    const error = purgeErr instanceof Error ? purgeErr : new Error(String(purgeErr));
+    logClientEvent({
+      level: 'error',
+      event: 'reader.logout_cleanup_failed',
+      traceId: createTraceId(),
+      spanId: createSpanId(),
+      error: { name: error.name, message: error.message, stack: error.stack },
+    });
   }
 }
 
