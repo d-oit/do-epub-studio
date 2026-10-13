@@ -106,7 +106,6 @@ describe('apiRequest 401 handling', () => {
   });
 });
 
-
 describe('apiRequest non-JSON response parsing', () => {
   beforeEach(() => {
     vi.clearAllMocks();

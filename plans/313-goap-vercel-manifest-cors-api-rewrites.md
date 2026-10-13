@@ -6,6 +6,7 @@
 ## 1. Problem Description
 
 When deploying to Vercel (e.g. preview deployments with Vercel Deployment Protection / SSO):
+
 1. **Manifest CORS Error:** `login:1 Access to manifest at 'https://vercel.com/sso-api?url=...' (redirected from '.../manifest.webmanifest') from origin '...' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.`
 2. **API 404 & Parse Error:** Requests to `/api/demo/reader-login` and `/api/access/request` on Vercel deployments hit static file routing (or SSO redirects) and return 404 HTML pages (`"The page c..."`), which causes `apiRequest` in `apps/web/src/lib/api/core.ts` to throw `SyntaxError: Unexpected token 'T', "The page c"... is not valid JSON`.
 
