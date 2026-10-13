@@ -112,6 +112,10 @@ ALLOWED_SHAS=(
 # Appended 2026-10-12 — actions/upload-artifact v7.0.2, SHA verified against the upstream v7 tag via the GitHub API (replaces the v4.6.2 pin whose Node-20 runtime is deprecated) — ADR-247
     "actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9"
 # Appended 2026-10-13 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d"
+    "github/codeql-action/analyze@24c54180a607b1449ed407dd24f251e4e9147c8d"
+    "github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d"
+    "chromaui/action@38afd264ef2241136f12d039093c2724748bec08"
     "actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333"
 )
 
