@@ -147,7 +147,10 @@ was changed).
   still reported a clean sign-out. It now emits `reader.logout_cleanup_failed`
   through the structured client logger; sign-out still completes.
 - Proof: `apps/web/src/__tests__/useReaderLogout.test.tsx`. The purge-failure
-  case fails on the prior implementation and passes on this one. Full web unit
-  suite: 150 files / 1478 tests pass.
-- Remaining: a user-visible cleanup-failure notice is not yet shown on the
-  login redirect. Purge-failure reporting is structured-log only.
+  case fails on the prior implementation and passes on this one. A purge
+  failure now redirects to `/login?cleanup=failed`, and the login page shows
+  the translated `login.logoutCleanupFailed` notice in its alert slot (a real
+  login error still takes precedence). The key is present in all 13 locales
+  and passes the i18n parity test. Full web unit suite: 150 files / 1481 tests.
+- Translation review: the 12 non-English strings were written without native
+  review and need a fluent reviewer before release.

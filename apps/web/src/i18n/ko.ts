@@ -78,6 +78,8 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': '라이트 모드로 전환',
   'reader.notAvailable': '도서를 사용할 수 없습니다',
   'reader.loadError': '도서 로딩 실패',
+  'login.logoutCleanupFailed':
+    '로그아웃되었지만 이 기기에서 오프라인 읽기 데이터를 완전히 지우지 못했습니다. 공용 기기를 사용하기 전에 브라우저에서 사이트 데이터를 지우세요.',
   'reader.settings': '설정',
   'reader.settings.close': '닫기',
   'reader.moreOptions': '추가 옵션',

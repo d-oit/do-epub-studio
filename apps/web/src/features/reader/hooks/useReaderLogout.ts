@@ -12,7 +12,7 @@ import { useAuthStore } from '../../../stores/auth';
  * and — in the PWA lane — any service-worker copy of it. A purge failure is
  * reported, never swallowed into a false "signed out cleanly".
  */
-async function teardownDeviceData(): Promise<void> {
+async function teardownDeviceData(): Promise<boolean> {
   try {
     await clearAllEncryptedData();
     if (typeof window !== 'undefined' && 'caches' in window) {
@@ -24,6 +24,7 @@ async function teardownDeviceData(): Promise<void> {
         cacheName: 'book-content',
       });
     }
+    return true;
   } catch (purgeErr) {
     const error = purgeErr instanceof Error ? purgeErr : new Error(String(purgeErr));
     logClientEvent({
@@ -33,6 +34,7 @@ async function teardownDeviceData(): Promise<void> {
       spanId: createSpanId(),
       error: { name: error.name, message: error.message, stack: error.stack },
     });
+    return false;
   }
 }
 
@@ -62,9 +64,9 @@ export function useReaderLogout(): () => Promise<void> {
         error: { name: error.name, message: error.message, stack: error.stack },
       });
     } finally {
-      await teardownDeviceData();
+      const cleaned = await teardownDeviceData();
       logout();
-      void navigate('/login');
+      void navigate(cleaned ? '/login' : '/login?cleanup=failed');
     }
   }, [logout, navigate, sessionToken]);
 }

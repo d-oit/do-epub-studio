@@ -78,6 +78,8 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Cambiar a modo claro',
   'reader.notAvailable': 'Libro no disponible',
   'reader.loadError': 'Error al cargar el libro',
+  'login.logoutCleanupFailed':
+    'Se cerró tu sesión, pero este dispositivo no pudo borrar por completo tus datos de lectura sin conexión. Borra los datos del sitio en tu navegador antes de usar un dispositivo compartido.',
   'reader.settings': 'Ajustes',
   'reader.settings.close': 'Cerrar',
   'reader.moreOptions': 'M\u00e1s opciones',

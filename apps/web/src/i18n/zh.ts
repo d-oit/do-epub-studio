@@ -71,6 +71,8 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': '切换到浅色模式',
   'reader.notAvailable': '书籍不可用',
   'reader.loadError': '加载书籍失败',
+  'login.logoutCleanupFailed':
+    '您已退出登录，但此设备无法完全清除您的离线阅读数据。在共用设备上使用前，请在浏览器中清除网站数据。',
   'reader.settings': '设置',
   'reader.settings.close': '关闭',
   'reader.moreOptions': '更多选项',

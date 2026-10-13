@@ -625,4 +625,27 @@ describe('LoginPage', () => {
       expect(link).not.toHaveAttribute('target', '_blank');
     });
   });
+
+  describe('logout cleanup notice', () => {
+    it('shows the cleanup-failure notice after a logout whose device purge failed', () => {
+      mockUseSearchParams.mockReturnValue([new URLSearchParams('cleanup=failed'), vi.fn()]);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('login.logoutCleanupFailed');
+    });
+
+    it('shows no alert on a plain login page visit', () => {
+      mockUseSearchParams.mockReturnValue([new URLSearchParams(), vi.fn()]);
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+  });
 });

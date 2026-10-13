@@ -78,6 +78,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'ライトモードに切り替え',
   'reader.notAvailable': '書籍が利用できません',
   'reader.loadError': '書籍の読み込みに失敗しました',
+  'login.logoutCleanupFailed':
+    'ログアウトしましたが、このデバイスではオフライン読書データを完全に削除できませんでした。共有デバイスを使う前に、ブラウザでサイトデータを削除してください。',
   'reader.settings': '設定',
   'reader.settings.close': '閉じる',
   'reader.moreOptions': 'その他のオプション',
