@@ -84,6 +84,8 @@ export const en = {
   'theme.toggle.light': 'Switch to light mode',
   'reader.notAvailable': 'Book not available',
   'reader.loadError': 'Failed to load book',
+  'login.logoutCleanupFailed':
+    'You were signed out, but this device could not fully clear your offline reading data. Clear site data in your browser before using a shared device.',
   'reader.settings': 'Settings',
   'reader.settings.close': 'Close',
   'reader.moreOptions': 'More options',

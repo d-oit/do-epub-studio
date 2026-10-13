@@ -79,6 +79,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Schakel naar lichte modus',
   'reader.notAvailable': 'Boek niet beschikbaar',
   'reader.loadError': 'Kan boek niet laden',
+  'login.logoutCleanupFailed':
+    'U bent uitgelogd, maar dit apparaat kon de offline leesgegevens niet volledig wissen. Wis de sitegegevens in uw browser voordat u een gedeeld apparaat gebruikt.',
   'reader.settings': 'Instellingen',
   'reader.settings.close': 'Sluiten',
   'reader.moreOptions': 'Meer opties',

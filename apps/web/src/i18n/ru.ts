@@ -78,6 +78,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Переключить на светлую тему',
   'reader.notAvailable': 'Книга недоступна',
   'reader.loadError': 'Ошибка загрузки книги',
+  'login.logoutCleanupFailed':
+    'Вы вышли из системы, но на этом устройстве не удалось полностью очистить офлайн-данные чтения. Очистите данные сайта в браузере перед использованием общего устройства.',
   'reader.settings': 'Настройки',
   'reader.settings.close': 'Закрыть',
   'reader.moreOptions': 'Ещё',

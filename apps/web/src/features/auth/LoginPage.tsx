@@ -116,6 +116,7 @@ export function LoginPage() {
 
   const helpLink = useMemo(() => resolveHelpUrl(), []);
 
+  const cleanupFailed = searchParams.get('cleanup') === 'failed';
   const formError = isRecoveryMode ? recoveryState.error : loginState.error;
   const isRecoverySuccess = isRecoveryMode && recoveryState.success;
 
@@ -159,13 +160,13 @@ export function LoginPage() {
             <section data-testid="login-card" className="glass-card w-full p-5 sm:p-6">
               <LoginCardHeader isRecoveryMode={isRecoveryMode} bookSlug={bookSlug} />
 
-              {formError && (
+              {(formError || cleanupFailed) && (
                 <div
                   role="alert"
                   aria-live="polite"
                   className="mb-6 p-3 bg-accent-error/10 border border-accent-error/30 rounded-lg text-sm text-accent-error"
                 >
-                  {formError}
+                  {formError ?? t('login.logoutCleanupFailed')}
                 </div>
               )}
 

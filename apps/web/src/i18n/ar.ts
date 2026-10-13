@@ -77,6 +77,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'التبديل إلى الوضع الفاتح',
   'reader.notAvailable': 'الكتاب غير متاح',
   'reader.loadError': 'فشل تحميل الكتاب',
+  'login.logoutCleanupFailed':
+    'تم تسجيل خروجك، لكن تعذّر على هذا الجهاز مسح بيانات القراءة بلا اتصال بالكامل. امسح بيانات الموقع من متصفحك قبل استخدام جهاز مشترك.',
   'reader.settings': 'الإعدادات',
   'reader.settings.close': 'إغلاق',
   'reader.moreOptions': 'خيارات أخرى',

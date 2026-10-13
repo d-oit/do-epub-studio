@@ -79,6 +79,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Zum hellen Modus wechseln',
   'reader.notAvailable': 'Buch nicht verfügbar',
   'reader.loadError': 'Buch konnte nicht geladen werden',
+  'login.logoutCleanupFailed':
+    'Sie wurden abgemeldet, aber auf diesem Gerät konnten die Offline-Lesedaten nicht vollständig gelöscht werden. Löschen Sie die Website-Daten im Browser, bevor Sie ein gemeinsam genutztes Gerät verwenden.',
   'reader.settings': 'Einstellungen',
   'reader.settings.close': 'Schließen',
   'reader.moreOptions': 'Weitere Optionen',

@@ -79,6 +79,8 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Mudar para modo claro',
   'reader.notAvailable': 'Livro não disponível',
   'reader.loadError': 'Falha ao carregar livro',
+  'login.logoutCleanupFailed':
+    'Você foi desconectado, mas este dispositivo não conseguiu limpar totalmente seus dados de leitura offline. Limpe os dados do site no navegador antes de usar um dispositivo compartilhado.',
   'reader.settings': 'Configurações',
   'reader.settings.close': 'Fechar',
   'reader.moreOptions': 'Mais opções',

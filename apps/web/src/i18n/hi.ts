@@ -78,6 +78,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'लाइट मोड पर स्विच करें',
   'reader.notAvailable': 'पुस्तक उपलब्ध नहीं',
   'reader.loadError': 'पुस्तक लोड करने में विफल',
+  'login.logoutCleanupFailed':
+    'आप साइन आउट हो गए हैं, लेकिन इस डिवाइस से ऑफ़लाइन पढ़ने का डेटा पूरी तरह हटाया नहीं जा सका। साझा डिवाइस उपयोग करने से पहले अपने ब्राउज़र में साइट डेटा साफ़ करें।',
   'reader.settings': 'सेटिंग्स',
   'reader.settings.close': 'बंद करें',
   'reader.moreOptions': 'अधिक विकल्प',

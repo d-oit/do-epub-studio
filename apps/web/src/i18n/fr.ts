@@ -79,6 +79,8 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'theme.toggle.light': 'Passer au mode clair',
   'reader.notAvailable': 'Livre indisponible',
   'reader.loadError': 'Impossible de charger le livre',
+  'login.logoutCleanupFailed':
+    "Vous êtes déconnecté, mais cet appareil n'a pas pu effacer entièrement vos données de lecture hors ligne. Effacez les données du site dans votre navigateur avant d'utiliser un appareil partagé.",
   'reader.settings': 'Paramètres',
   'reader.settings.close': 'Fermer',
   'reader.moreOptions': "Plus d'options",
