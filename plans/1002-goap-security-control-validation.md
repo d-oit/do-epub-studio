@@ -140,3 +140,14 @@ was changed).
 - **S3.** unchanged — evidence collection only. Runtime/deployed validation
   remains outstanding for S1/S2 race and revocation questions; no cross-account
   readability or severity claim is made.
+
+### S1 follow-up (2026-10-13): honest device-cleanup failure
+
+- `useReaderLogout` previously caught a purge failure with `console.error` and
+  still reported a clean sign-out. It now emits `reader.logout_cleanup_failed`
+  through the structured client logger; sign-out still completes.
+- Proof: `apps/web/src/__tests__/useReaderLogout.test.tsx`. The purge-failure
+  case fails on the prior implementation and passes on this one. Full web unit
+  suite: 150 files / 1478 tests pass.
+- Remaining: a user-visible cleanup-failure notice is not yet shown on the
+  login redirect. Purge-failure reporting is structured-log only.
