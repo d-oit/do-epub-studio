@@ -105,3 +105,35 @@ describe('apiRequest 401 handling', () => {
     expect(logoutMock).not.toHaveBeenCalled();
   });
 });
+
+
+describe('apiRequest non-JSON response parsing', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('handles HTML 404 response by logging api.parse-error and throwing annotated Error', async () => {
+    const htmlFetch = vi.fn(() =>
+      Promise.resolve(
+        new Response('<html><body>The page cannot be found</body></html>', {
+          status: 404,
+          headers: { 'Content-Type': 'text/html', 'x-trace-id': 'trace-123' },
+        }),
+      ),
+    );
+    vi.stubGlobal('fetch', htmlFetch);
+
+    let caughtError: (Error & { status?: number; traceId?: string }) | null = null;
+    try {
+      await apiRequest('/api/demo/reader-login');
+    } catch (err) {
+      caughtError = err as Error & { status?: number; traceId?: string };
+    }
+
+    expect(caughtError).not.toBeNull();
+    expect(caughtError?.message).toBe('Invalid server response');
+    expect(caughtError?.status).toBe(404);
+    expect(caughtError?.traceId).toBe('trace-123');
+    expect(events()).toContain('api.parse-error');
+  });
+});

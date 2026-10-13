@@ -168,7 +168,11 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
           metadata: { endpoint, status: response.status },
           error: { name: (error as Error).name, message: (error as Error).message },
         });
-        throw new Error('Invalid server response', { cause: error });
+        const parseErr = new Error('Invalid server response', { cause: error });
+        const annotated = parseErr as Error & { status?: number; traceId?: string };
+        annotated.status = response.status;
+        annotated.traceId = response.headers.get('x-trace-id') ?? traceId;
+        throw parseErr;
       }
       if (!data.ok) {
         const errorMessage = data.error?.message ?? 'Request failed';
