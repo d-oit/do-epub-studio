@@ -71,7 +71,7 @@ done < <(grep -oE 'source "\$REPO_ROOT/[^"]+"' "$GATE_FILE" 2>/dev/null \
 phase_is_invoked() {
   local check="$1" file
   for file in "${PHASE_FILES[@]}"; do
-    if [[ -f "$file" ]] && grep -q -- "$check" "$file" 2>/dev/null; then
+    if [[ -f "$file" ]] && grep -qF -- "$check" "$file" 2>/dev/null; then
       return 0
     fi
   done
