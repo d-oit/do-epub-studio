@@ -17,7 +17,9 @@ id = "5328daf8b5de4c0da83ac97ee4cc9ea4"
 
 [vars]
 APP_BASE_URL = "https://do-epub-studio.pages.dev"
-ENVIRONMENT = "production"
+ENVIRONMENT = "preview"
+DEMO_LOGIN_ENABLED = "1"
+DEMO_ACCOUNTS_PROD_ALLOWLIST = "demo-preview"
 WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
 WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
 WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
