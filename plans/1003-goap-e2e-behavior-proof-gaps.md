@@ -168,8 +168,12 @@ Removing a Worker route cannot disprove a mocked browser test.
 - **E3.** `apps/tests/creator-workspace.spec.ts` covers assignment-gated
   navigation, direct workspace reload with feedback provenance labels, and the
   visible 403/unassigned states (3 chromium tests passing). The real-stack
-  authorization journey (submitter-only/private feedback visibility) is still
-  future work per the item text; mocks cannot certify authorization.
+  authorization journey (submitter-only/private feedback visibility) is now
+  delivered by `apps/tests/creator-real-stack.spec.ts` against a live
+  `wrangler dev` worker seeded by `scripts/seed-creator-journey.mjs` (3/3
+  passing). Negative control: deleting the creator assignment fails the
+  creator test while submitter and outsider tests still pass. Mocks alone
+  cannot certify this; the spec exercises the real Worker and D1.
 - **E4.** `reader-annotations-and-admin.spec.ts` drives bookmark
   create→reload→delete→reload persistence and asserts parsed Markdown export
   content (selected book present, second book absent) via the existing local

@@ -97,6 +97,22 @@ Find `<hash>.sqlite` under
 first `pnpm db:migrate:local` or `wrangler dev` run. The seed is idempotent and
 fails closed in production-like environments.
 
+### Creator authorization journey (optional, real stack)
+
+Proves creator, submitter and outsider feedback visibility against a running
+worker (GOAP-1003 E3 follow-up). Seed the local D1 file after migrations, then
+start `wrangler dev` on port 8787 and run the spec:
+
+```bash
+TURSO_DATABASE_URL=file:apps/worker/.wrangler/state/v3/d1/miniflare-D1DatabaseObject/<hash>.sqlite \
+  node scripts/seed-creator-journey.mjs
+CREATOR_JOURNEY_WORKER_URL=http://127.0.0.1:8787 \
+  pnpm exec playwright test apps/tests/creator-real-stack.spec.ts --project=chromium
+```
+
+The seed is local-only and refuses production-like environments. The spec is
+skipped unless `CREATOR_JOURNEY_WORKER_URL` is set.
+
 ### Spelling/grammar review (optional, LanguageTool)
 
 Story/logic review runs fully in the browser. Spelling/grammar review needs a
