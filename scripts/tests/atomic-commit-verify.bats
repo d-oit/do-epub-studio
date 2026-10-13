@@ -84,12 +84,13 @@ STUB
     [[ "$output" == *"INCONCLUSIVE"* ]]
 }
 
-@test "only a real failure maps to the destructive rollback" {
+@test "only a failed check on a newly created PR maps to destructive rollback" {
     # shellcheck source=scripts/lib/verify-outcome.sh
     source "$BATS_TEST_DIRNAME/../lib/verify-outcome.sh"
 
     [ "$(decide_verify_action 0)" = "passed" ]
     [ "$(decide_verify_action 1)" = "rollback" ]
+    [ "$(decide_verify_action 1 existing-pr)" = "preserve" ]
     # Timeouts, unknown exit codes and a missing argument must never roll back.
     [ "$(decide_verify_action 2)" = "keep" ]
     [ "$(decide_verify_action 7)" = "keep" ]

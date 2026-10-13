@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CspReportSchema, AuditQuerySchema } from '../schemas';
+import { CspReportSchema, AuditQuerySchema } from '../index';
 
 describe('CspReportSchema', () => {
   it('accepts valid CSP report', () => {
@@ -10,6 +10,32 @@ describe('CspReportSchema', () => {
       },
     });
     expect(result['csp-report']['document-uri']).toBe('https://example.com/page');
+  });
+
+  it('parses reports without dynamic Function compilation', () => {
+    const originalFunction = globalThis.Function;
+    let succeeded: boolean;
+
+    try {
+      globalThis.Function = new Proxy(originalFunction, {
+        apply: () => {
+          throw new Error('Function calls are blocked');
+        },
+        construct: () => {
+          throw new Error('Function construction is blocked');
+        },
+      });
+      succeeded = CspReportSchema.safeParse({
+        'csp-report': {
+          'document-uri': 'https://example.com/page',
+          'violated-directive': "script-src 'self'",
+        },
+      }).success;
+    } finally {
+      globalThis.Function = originalFunction;
+    }
+
+    expect(succeeded).toBe(true);
   });
 
   it('accepts report with optional fields', () => {

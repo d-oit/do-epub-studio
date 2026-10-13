@@ -70,7 +70,7 @@
 - **Pages `EventContext` is not Hono's `ExecutionContext`**: adapt `waitUntil` and `passThroughOnException` explicitly; `context.ctx` is not a Pages API.
 - **CSP reports use `application/csp-report`**: Hono's JSON validator rejects that media type; parse the raw request body and validate the result with the schema.
 - **Pages preview configuration inherits `pages_build_output_dir`**: redeclare non-inheritable D1/KV bindings and vars under `[env.preview]`, but keep the build directory top-level.
-- **Zod startup configuration requires a direct Zod v4 dependency**: without it, `apps/web` can resolve an unrelated Zod v3 and `z.config({ jitless: true })` does not typecheck.
+- **Zod v4's first parse uses `new Function` unless configured jitless**: the setting is global to the imported Zod instance, so configure it through the shared schema package entry used by both browser and Worker consumers; the package owning that config must declare Zod v4 directly.
 
 ### CI / Tooling
 
