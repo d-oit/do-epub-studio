@@ -192,9 +192,14 @@ export async function reanchorByText(
       normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
         ? normalizedTargetGeneral
         : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
-    // Use match() instead of matchAll() to reduce object allocations and deduplicate
-    const matchedWords = targetToProcess.match(/[\p{L}\p{N}]{4,}/gu) || [];
-    words = [...new Set(matchedWords)];
+    // Use exec() streaming loop to populate Set directly without allocating intermediate match arrays
+    const wordSet = new Set<string>();
+    const wordRegex = /[\p{L}\p{N}]{4,}/gu;
+    let match: RegExpExecArray | null;
+    while ((match = wordRegex.exec(targetToProcess)) !== null) {
+      wordSet.add(match[0]);
+    }
+    words = Array.from(wordSet);
   }
 
   const threshold = options.fuzzyThreshold ?? 0.7;
@@ -206,18 +211,18 @@ export async function reanchorByText(
       try {
         const cached = await getCachedData(href);
         if (cached.wordSet === undefined) {
-          cached.wordSet = new Set();
+          const wordSet = new Set<string>();
           const contentToProcess =
             cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
               ? cached.lower
               : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
-          // Use match() instead of matchAll() to reduce object allocations
-          const matches = contentToProcess.match(/[\p{L}\p{N}]{4,}/gu);
-          if (matches) {
-            for (const m of matches) {
-              cached.wordSet.add(m);
-            }
+          // Use exec() streaming loop to populate Set directly without allocating intermediate match arrays
+          const wordRegex = /[\p{L}\p{N}]{4,}/gu;
+          let match: RegExpExecArray | null;
+          while ((match = wordRegex.exec(contentToProcess)) !== null) {
+            wordSet.add(match[0]);
           }
+          cached.wordSet = wordSet;
         }
 
         let matchCount = 0;
