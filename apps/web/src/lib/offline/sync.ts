@@ -46,7 +46,9 @@ export function generateMutationId(): string {
 
 function calculateDelay(attempt: number): number {
   const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-  return Math.min(delay, MAX_DELAY_MS);
+  const capped = Math.min(delay, MAX_DELAY_MS);
+  const jitter = Math.floor(Math.random() * (capped * 0.25));
+  return capped + jitter;
 }
 
 export async function queueSync(
@@ -72,7 +74,17 @@ export async function queueFeedbackSubmission(payload: FeedbackSyncPayload): Pro
 
 function ensureDrain(): Promise<void> {
   if (drainPromise) return drainPromise;
-  drainPromise = attemptSync().finally(() => {
+  const drain = async (): Promise<void> => {
+    if (typeof navigator !== 'undefined' && 'locks' in navigator && navigator.locks?.request) {
+      await navigator.locks.request('offline-sync-queue', { ifAvailable: true }, async (lock) => {
+        if (!lock) return;
+        await attemptSync();
+      });
+    } else {
+      await attemptSync();
+    }
+  };
+  drainPromise = drain().finally(() => {
     drainPromise = null;
   });
   return drainPromise;
@@ -101,7 +113,7 @@ async function attemptSync(): Promise<void> {
   for (const item of sorted) {
     if (!navigator.onLine) return;
     if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
-    if (processed.has(item.id)) continue;
+    if (processed.has(item.id) || item.permanentError) continue;
 
     const isAnnotationCreation =
       item.type === 'annotation' &&
@@ -309,6 +321,19 @@ async function attemptSync(): Promise<void> {
       });
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
+    } else if (result.permanent) {
+      item.permanentError = true;
+      item.error = result.error;
+      await updateSyncQueueItem(item);
+      processed.add(item.id);
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.item.permanent_failure',
+        metadata: { itemId: item.id, type: item.type, error: result.error },
+      });
+      continue;
     } else {
       if (capturedToken && capturedToken !== useAuthStore.getState().sessionToken) {
         return;
@@ -416,4 +441,16 @@ export function setupOnlineListener(): () => void {
     }
     cancelPendingRetry();
   };
+}
+
+export async function retrySyncItem(id: string): Promise<void> {
+  const queue = await getSyncQueue();
+  const item = queue.find((i) => i.id === id);
+  if (!item) return;
+  item.attempts = 0;
+  item.permanentError = false;
+  item.error = undefined;
+  item.createdAt = Date.now();
+  await updateSyncQueueItem(item);
+  await syncAll();
 }

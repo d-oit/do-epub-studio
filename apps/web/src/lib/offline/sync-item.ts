@@ -56,6 +56,7 @@ export async function syncFeedback(item: SyncQueueItem): Promise<void> {
 export type ItemSyncResult = SyncResult & {
   annotation?: AnnotationCreateResult;
   detail?: string;
+  permanent?: boolean;
 };
 
 export async function syncItem(
@@ -112,6 +113,9 @@ export async function syncItem(
       return { success: false, error: 'permission_revoked' };
     }
 
+    if (status && status >= 400 && status < 500 && status !== 409 && status !== 429) {
+      return { success: false, error: message, permanent: true };
+    }
     if (message.includes('revoked')) {
       return { success: false, error: 'permission_revoked' };
     }

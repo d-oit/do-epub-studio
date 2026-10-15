@@ -89,7 +89,7 @@ export async function decryptEntry<T>(
 
 const PROGRESS_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
 export const ANNOTATION_PLAINTEXT = ['id', 'bookId', 'synced'] as const;
-export const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
+export const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt', 'permanentError'] as const;
 const READING_INSIGHT_PLAINTEXT = ['bookId', 'date'] as const;
 const PERMISSION_PLAINTEXT = ['bookId'] as const;
 const BOOK_FILE_PLAINTEXT = ['bookId', 'cachedAt'] as const;

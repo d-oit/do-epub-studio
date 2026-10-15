@@ -45,6 +45,7 @@ export interface SyncQueueItem {
   attempts: number;
   lastAttempt?: number;
   error?: string;
+  permanentError?: boolean;
 }
 
 export interface ReadingInsightEntry {
