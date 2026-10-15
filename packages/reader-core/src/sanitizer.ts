@@ -172,6 +172,25 @@ export function sanitizeDom(
   const ownerDoc = root.ownerDocument || (root.nodeType === Node.DOCUMENT_NODE ? root : null);
   if (!ownerDoc) return;
 
+  const styleElements = root.querySelectorAll('style');
+  for (let i = 0; i < styleElements.length; i++) {
+    const styleEl = styleElements.item(i);
+    if (styleEl && styleEl.textContent) {
+      styleEl.textContent = sanitizeCssText(styleEl.textContent, policy);
+    }
+  }
+
+  const annotationXmls = root.querySelectorAll('annotation-xml');
+  for (let i = 0; i < annotationXmls.length; i++) {
+    const annEl = annotationXmls.item(i);
+    if (annEl) {
+      const scripts = annEl.querySelectorAll('script');
+      for (let j = 0; j < scripts.length; j++) {
+        scripts.item(j)?.remove();
+      }
+    }
+  }
+
   const walker = ownerDoc.createTreeWalker(root, 1 /* NodeFilter.SHOW_ELEMENT */);
   let el = walker.nextNode() as Element | null;
   let nodeCount = 0;
@@ -179,17 +198,6 @@ export function sanitizeDom(
   while (el) {
     if (deadline !== undefined && ++nodeCount % TREEWALKER_CHECK_INTERVAL === 0) {
       checkDeadline(deadline, 'epub-sanitize', timeoutMs ?? SANITIZE_TIMEOUT_MS, traceId);
-    }
-
-    if (el.localName === 'style' && el.textContent) {
-      el.textContent = sanitizeCssText(el.textContent, policy);
-    }
-
-    if (el.localName === 'annotation-xml') {
-      const scripts = el.querySelectorAll('script');
-      for (const script of scripts) {
-        script.remove();
-      }
     }
 
     if (el.hasAttributes()) {
