@@ -348,6 +348,204 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     await contextB.close();
   });
 
+  test('@pwa two tabs: Web Locks serialize drains without duplicate mutations', async ({
+    browser,
+  }) => {
+    const bookSlug = 'sync-two-tab-single-flight';
+    const loginResponse = createLoginResponse(bookSlug);
+    const epubBuffer = createMinimalEpub(
+      [
+        {
+          id: 'c1',
+          href: 'chapter1.xhtml',
+          title: 'Chapter 1',
+          body: '<p>TWO TAB SINGLE FLIGHT PASSAGE for sync test.</p>',
+        },
+      ],
+      { title: 'Two Tab Sync Book', identifier: 'urn:uuid:two-tab-sync' },
+    );
+    const epubUrl = `http://127.0.0.1:0/test/${bookSlug}.epub`;
+    const comments: ServerCommentDTO[] = [];
+    const mutationRequests = new Map<string, number>();
+    let offline = false;
+    let releaseFirstPost: (() => void) | undefined;
+    let markFirstPostStarted: (() => void) | undefined;
+    const firstPostGate = new Promise<void>((resolve) => {
+      releaseFirstPost = resolve;
+    });
+    const firstPostStarted = new Promise<void>((resolve) => {
+      markFirstPostStarted = resolve;
+    });
+
+    const context = await browser.newContext();
+    await mockReaderApi(context, {
+      bookSlug,
+      epubUrl,
+      epubBuffer,
+      loginResponse,
+      includeFeedback: true,
+    });
+    await context.route('**/api/books/*/comments', async (route, request) => {
+      if (offline) {
+        await route.abort('internetdisconnected');
+        return;
+      }
+      if (request.method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: true, data: comments }),
+        });
+        return;
+      }
+      if (request.method() !== 'POST') {
+        await route.fallback();
+        return;
+      }
+
+      const payload: unknown = request.postDataJSON();
+      if (
+        typeof payload !== 'object' ||
+        payload === null ||
+        !('body' in payload) ||
+        typeof payload.body !== 'string'
+      ) {
+        await route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({ ok: false, error: 'Invalid comment request' }),
+        });
+        return;
+      }
+
+      const mutationId =
+        'mutationId' in payload && typeof payload.mutationId === 'string'
+          ? payload.mutationId
+          : `anon-cm-${Date.now()}`;
+      const locator =
+        'locator' in payload && typeof payload.locator === 'object' && payload.locator !== null
+          ? payload.locator
+          : null;
+      const chapterRef =
+        locator && 'chapterRef' in locator && typeof locator.chapterRef === 'string'
+          ? locator.chapterRef
+          : null;
+      const cfiRange =
+        locator && 'cfi' in locator && typeof locator.cfi === 'string' ? locator.cfi : null;
+      const selectedText =
+        locator && 'selectedText' in locator && typeof locator.selectedText === 'string'
+          ? locator.selectedText
+          : null;
+      const visibility =
+        'visibility' in payload && typeof payload.visibility === 'string'
+          ? payload.visibility
+          : 'shared';
+      const count = (mutationRequests.get(mutationId) ?? 0) + 1;
+      mutationRequests.set(mutationId, count);
+      if (count === 1 && mutationRequests.size === 1) {
+        markFirstPostStarted?.();
+        await firstPostGate;
+      }
+
+      const existing = comments.find((comment) => comment.mutationId === mutationId);
+      const comment = existing ?? {
+        id: `server-cm-${comments.length + 1}`,
+        displayName: 'reader',
+        isOwn: true,
+        chapterRef,
+        cfiRange,
+        selectedText,
+        body: payload.body,
+        status: 'open',
+        visibility,
+        parentCommentId: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        resolvedAt: null,
+        mutationId,
+      };
+      if (!existing) comments.push(comment);
+
+      await route.fulfill({
+        status: existing ? 200 : 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: comment }),
+      });
+    });
+
+    const pageA = await context.newPage();
+    const pageB = await context.newPage();
+    suppressWorkboxErrors(pageA);
+    suppressWorkboxErrors(pageB);
+
+    try {
+      await loginAsReader(pageA, bookSlug);
+      await loginAsReader(pageB, bookSlug);
+      await expect.poll(() => getChapterText(pageA), { timeout: 30000 }).toContain('SINGLE FLIGHT');
+      await expect.poll(() => getChapterText(pageB), { timeout: 30000 }).toContain('SINGLE FLIGHT');
+
+      offline = true;
+      await context.setOffline(true);
+      const offlineComments = [
+        { page: pageA, commentText: 'Offline comment from tab A' },
+        { page: pageB, commentText: 'Offline comment from tab B' },
+      ];
+      for (const { page, commentText } of offlineComments) {
+        await selectReaderPassage(page, 'TWO TAB SINGLE FLIGHT PASSAGE');
+        await page
+          .locator('button')
+          .filter({ hasText: /^Comment$/ })
+          .click();
+        const modal = page.getByRole('dialog', { name: 'Comment' });
+        await expect(modal).toBeVisible();
+        await modal.getByRole('textbox').fill(commentText);
+        await modal.getByRole('button', { name: 'Comment' }).click();
+        await expect(modal).not.toBeVisible();
+      }
+
+      await expect
+        .poll(
+          async () => {
+            const database = await readOfflineDatabase(pageA);
+            const queue = await decryptQueueItems(database.queue, loginResponse.data.sessionToken);
+            return queue.filter((item) => item.type === 'annotation').length;
+          },
+          { timeout: 10000 },
+        )
+        .toBe(2);
+
+      offline = false;
+      await context.setOffline(false);
+      await firstPostStarted;
+      await expect
+        .poll(
+          async () =>
+            pageA.evaluate(
+              async () =>
+                (await navigator.locks.query()).pending.filter(
+                  (lock) => lock.name === 'offline-sync-queue',
+                ).length,
+            ),
+          {
+            timeout: 10000,
+            message: 'The second tab should wait for the active cross-tab sync lock',
+          },
+        )
+        .toBeGreaterThan(0);
+
+      releaseFirstPost?.();
+      await expect.poll(() => comments.length, { timeout: 20000 }).toBe(2);
+      expect(mutationRequests.size).toBe(2);
+      expect([...mutationRequests.values()]).toEqual([1, 1]);
+      expect(comments.map((comment) => comment.body)).toEqual(
+        expect.arrayContaining(['Offline comment from tab A', 'Offline comment from tab B']),
+      );
+    } finally {
+      releaseFirstPost?.();
+      await context.close();
+    }
+  });
+
   test('@pwa interrupted sync: offline queued mutations retry after initial failure and settle exactly once', async ({
     page,
     context,

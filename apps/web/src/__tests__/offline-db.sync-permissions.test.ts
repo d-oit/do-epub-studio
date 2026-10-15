@@ -14,6 +14,8 @@ import {
   type SyncQueueItem,
   type PermissionCache,
 } from '../lib/offline/db';
+import { failAnnotationCreation, getAnnotations } from '../lib/offline/annotation-mutations';
+import { useAuthStore } from '../stores/auth';
 
 const TEST_TOKEN = 'test-session-token-for-offline-db';
 
@@ -107,6 +109,48 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       const queue = await getSyncQueue();
       expect(queue[0]?.attempts).toBe(2);
       expect(queue[0]?.error).toBe('Network error');
+    });
+
+    it('persists a failed annotation in annotations and removes it from sync queue', async () => {
+      const previousAuthState = useAuthStore.getState();
+      useAuthStore.setState({ sessionToken: TEST_TOKEN });
+      const item: SyncQueueItem = {
+        id: 'failed-annotation',
+        type: 'annotation',
+        payload: {
+          action: 'create',
+          bookId: 'book-1',
+          annotation: {
+            id: 'local-annotation-1',
+            bookId: 'book-1',
+            type: 'highlight',
+            cfi: 'epubcfi(/6/4)',
+            createdAt: 123,
+          },
+        },
+        mutationId: 'mutation-failed-annotation',
+        createdAt: 123,
+        attempts: 5,
+      };
+
+      try {
+        await addToSyncQueue(item);
+        await failAnnotationCreation(item, 'Access denied', TEST_TOKEN);
+      } finally {
+        useAuthStore.setState(previousAuthState);
+      }
+
+      const queue = await getSyncQueue();
+      expect(queue).toHaveLength(0);
+      const annotations = await getAnnotations('book-1');
+      expect(annotations).toEqual([
+        expect.objectContaining({
+          id: 'local-annotation-1',
+          mutationId: 'mutation-failed-annotation',
+          synced: false,
+          syncError: 'Access denied',
+        }),
+      ]);
     });
 
     it('should encrypt queue payload when token is set', async () => {

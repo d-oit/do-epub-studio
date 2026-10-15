@@ -4,6 +4,7 @@ import {
   ConflictType,
   ConflictResolutionStrategy,
   detectConflict,
+  recordConflict,
   resolveWithLWW,
   resolveConflict,
   getPendingConflicts,
@@ -375,6 +376,32 @@ describe('Conflict Resolution', () => {
       });
       expect(pending[0]?.localVersion).toEqual(localVersion);
       expect(pending[0]?.remoteVersion).toEqual(remoteVersion);
+    });
+    it('durably records a server-confirmed conflict despite different timestamps', async () => {
+      const local = { cfi: 'local-cfi', percentage: 40 };
+      const remote = { cfi: 'remote-cfi', percentage: 70, revision: 3 };
+      const conflict = recordConflict(
+        ConflictType.ProgressUpdate,
+        local,
+        remote,
+        1000,
+        2000,
+        'book-1',
+        'book-1',
+      );
+      await flushConflictWrites();
+
+      __clearConflictCache();
+      await hydrateConflicts();
+
+      expect(getPendingConflicts('book-1')).toEqual([
+        expect.objectContaining({
+          id: conflict.id,
+          localVersion: local,
+          remoteVersion: remote,
+          resolved: false,
+        }),
+      ]);
     });
 
     it('purges resolve + clear from the durable store', async () => {

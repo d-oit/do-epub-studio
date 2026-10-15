@@ -173,7 +173,12 @@ test.describe('Edge Cases & Error Handling', () => {
         const res = await fetch('/api/books/my-test-book/progress', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ locator: { cfi: 'epubcfi(/6/4!/4)' }, progressPercent: 0.5 }),
+          body: JSON.stringify({
+            mutationId: '00000000-0000-4000-8000-000000000001',
+            baseRevision: 0,
+            locator: { cfi: 'epubcfi(/6/4!/4)' },
+            progressPercent: 50,
+          }),
         });
         outcomes.push({ action: 'progress', ok: res.ok });
       } catch {

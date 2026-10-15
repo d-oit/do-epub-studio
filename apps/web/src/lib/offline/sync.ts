@@ -15,12 +15,10 @@ import { markFeedbackDraft } from './feedback-drafts';
 import { clearAllPermissions } from './permissions';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
-import { ConflictType, clearResolvedConflicts, type ConflictRecord } from './conflict-resolution';
-import type { ProgressSyncPayload } from './progress-conflict';
+import { clearResolvedConflicts } from './conflict-resolution';
+import { MAX_RETRY_ATTEMPTS, calculateRetryDelay } from './sync-policy';
+import { sortByMutationDependency } from './sync-order';
 
-const MAX_RETRY_ATTEMPTS = 5;
-const BASE_DELAY_MS = 1000;
-const MAX_DELAY_MS = 30000;
 let onPermissionRevoked: ((bookId: string) => void) | null = null;
 let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
 let drainPromise: Promise<void> | null = null;
@@ -42,11 +40,6 @@ export function resetDrainPromise(): void {
 
 export function generateMutationId(): string {
   return uuidv4();
-}
-
-function calculateDelay(attempt: number): number {
-  const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-  return Math.min(delay, MAX_DELAY_MS);
 }
 
 export async function queueSync(
@@ -72,7 +65,16 @@ export async function queueFeedbackSubmission(payload: FeedbackSyncPayload): Pro
 
 function ensureDrain(): Promise<void> {
   if (drainPromise) return drainPromise;
-  drainPromise = attemptSync().finally(() => {
+  const drain = async (): Promise<void> => {
+    if (typeof navigator !== 'undefined' && 'locks' in navigator && navigator.locks?.request) {
+      await navigator.locks.request('offline-sync-queue', async () => {
+        await attemptSync();
+      });
+    } else {
+      await attemptSync();
+    }
+  };
+  drainPromise = drain().finally(() => {
     drainPromise = null;
   });
   return drainPromise;
@@ -87,6 +89,38 @@ function isCurrentSyncSession(sessionToken: string | null, bookId: string | null
   return current.sessionToken === sessionToken && current.bookId === bookId;
 }
 
+function isAnnotationCreation(item: SyncQueueItem): boolean {
+  const payload = item.payload;
+  if (item.type !== 'annotation' || typeof payload !== 'object' || payload === null) return false;
+  return !('action' in payload) || payload.action === 'create';
+}
+
+async function persistTerminalFailure(
+  item: SyncQueueItem,
+  annotationCreation: boolean,
+  sessionToken: string | null,
+  bookId: string | null,
+): Promise<void> {
+  if (!isCurrentSyncSession(sessionToken, bookId)) return;
+
+  const detail = item.error ?? 'Sync failed';
+  item.error = detail;
+  item.permanentError = true;
+
+  if (annotationCreation && sessionToken) {
+    await failAnnotationCreation(item, detail, sessionToken);
+    const readerState = useReaderStore.getState();
+    if (bookId && readerState.currentChapter !== null) {
+      const localId = `local-annotation-${item.mutationId}`;
+      readerState.updateHighlight(localId, { syncState: 'failed', syncError: detail });
+      readerState.updateComment(localId, { syncState: 'failed', syncError: detail });
+    }
+    return;
+  }
+
+  await updateSyncQueueItem(item);
+}
+
 async function attemptSync(): Promise<void> {
   if (!navigator.onLine) return;
 
@@ -95,43 +129,18 @@ async function attemptSync(): Promise<void> {
   if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
   if (!snapshot || snapshot.length === 0) return;
 
-  const sorted = [...snapshot].sort((a, b) => a.createdAt - b.createdAt);
+  const sorted = sortByMutationDependency(snapshot);
   const processed = new Set<string>();
 
   for (const item of sorted) {
     if (!navigator.onLine) return;
     if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
-    if (processed.has(item.id)) continue;
+    if (processed.has(item.id) || item.permanentError) continue;
 
-    const isAnnotationCreation =
-      item.type === 'annotation' &&
-      item.payload &&
-      typeof item.payload === 'object' &&
-      (('action' in item.payload && (item.payload as { action?: string }).action === 'create') ||
-        !('action' in item.payload));
-
+    const annotationCreation = isAnnotationCreation(item);
     if (item.attempts >= MAX_RETRY_ATTEMPTS) {
-      if (isAnnotationCreation && capturedToken) {
-        if (capturedToken === useAuthStore.getState().sessionToken) {
-          await failAnnotationCreation(item, item.error ?? 'Sync failed', capturedToken);
-          processed.add(item.id);
-          const readerState = useReaderStore.getState();
-          if (capturedBookId && readerState.currentChapter !== null) {
-            const localId = `local-annotation-${item.mutationId}`;
-            readerState.updateHighlight(localId, {
-              syncState: 'failed',
-              syncError: item.error ?? 'Sync failed',
-            });
-            readerState.updateComment(localId, {
-              syncState: 'failed',
-              syncError: item.error ?? 'Sync failed',
-            });
-          }
-        }
-      } else {
-        await removeSyncQueueItem(item.id);
-        processed.add(item.id);
-      }
+      await persistTerminalFailure(item, annotationCreation, capturedToken, capturedBookId);
+      processed.add(item.id);
       logClientEvent({
         level: 'warn',
         traceId: createTraceId(),
@@ -149,7 +158,7 @@ async function attemptSync(): Promise<void> {
     if (!isCurrentSyncSession(capturedToken, capturedBookId)) return;
 
     if (result.success) {
-      if (isAnnotationCreation && result.annotation && capturedToken) {
+      if (annotationCreation && result.annotation && capturedToken) {
         if (capturedToken !== useAuthStore.getState().sessionToken) {
           return;
         }
@@ -210,13 +219,21 @@ async function attemptSync(): Promise<void> {
       } else {
         await removeSyncQueueItem(item.id);
         processed.add(item.id);
-        await markAsSynced(item.type, item.mutationId);
+        await markAsSynced(item.type, item.mutationId, result.progress);
       }
 
       if (item.type === 'progress') {
         const payload = item.payload as { bookId?: string };
         if (payload?.bookId) {
           clearResolvedConflicts(payload.bookId);
+          if (payload.bookId === capturedBookId && result.progress) {
+            const reader = useReaderStore.getState();
+            reader.setProgress({
+              ...reader.progress,
+              revision: result.progress.revision,
+              updatedAt: result.progress.updatedAt,
+            });
+          }
         }
       }
 
@@ -270,6 +287,19 @@ async function attemptSync(): Promise<void> {
       });
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
+    } else if (result.error === 'session_expired') {
+      logClientEvent({
+        level: 'warn',
+        traceId,
+        spanId,
+        event: 'sync.session_expired',
+        metadata: { itemId: item.id, type: item.type },
+      });
+      await clearAllPermissions();
+      item.error = result.detail ?? 'Session expired. Sign in to resume sync.';
+      await updateSyncQueueItem(item);
+      processed.add(item.id);
+      return;
     } else if (result.error === 'permission_revoked') {
       logClientEvent({
         level: 'error',
@@ -287,9 +317,23 @@ async function attemptSync(): Promise<void> {
         }
       }
 
-      await removeSyncQueueItem(item.id);
+      item.permanentError = true;
+      item.error = result.detail ?? 'Permission revoked';
+      await updateSyncQueueItem(item);
       processed.add(item.id);
-      return;
+    } else if (result.error === 'conflict_persist_failed') {
+      item.permanentError = true;
+      item.error =
+        'Progress conflict could not be recorded locally; the original item remains available for export or retry.';
+      await updateSyncQueueItem(item);
+      processed.add(item.id);
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.conflict_persist_failed',
+        metadata: { itemId: item.id, type: item.type },
+      });
     } else if (result.error === 'conflict_remote_unavailable') {
       logClientEvent({
         level: 'warn',
@@ -309,6 +353,19 @@ async function attemptSync(): Promise<void> {
       });
       await removeSyncQueueItem(item.id);
       processed.add(item.id);
+    } else if (result.permanent) {
+      item.permanentError = true;
+      item.error = result.error;
+      await updateSyncQueueItem(item);
+      processed.add(item.id);
+      logClientEvent({
+        level: 'error',
+        traceId,
+        spanId,
+        event: 'sync.item.permanent_failure',
+        metadata: { itemId: item.id, type: item.type, error: result.error },
+      });
+      continue;
     } else {
       if (capturedToken && capturedToken !== useAuthStore.getState().sessionToken) {
         return;
@@ -317,6 +374,20 @@ async function attemptSync(): Promise<void> {
       item.attempts++;
       item.lastAttempt = Date.now();
       item.error = result.error;
+
+      if (item.attempts >= MAX_RETRY_ATTEMPTS) {
+        await persistTerminalFailure(item, annotationCreation, capturedToken, capturedBookId);
+        processed.add(item.id);
+        logClientEvent({
+          level: 'warn',
+          traceId,
+          spanId,
+          event: 'sync.item.exceeded_max_retries',
+          metadata: { itemId: item.id, type: item.type, attempts: item.attempts },
+        });
+        continue;
+      }
+
       await updateSyncQueueItem(item);
 
       logClientEvent({
@@ -332,7 +403,7 @@ async function attemptSync(): Promise<void> {
         },
       });
 
-      const delay = calculateDelay(item.attempts);
+      const delay = calculateRetryDelay(item.attempts);
       cancelPendingRetry();
       retryTimeoutId = setTimeout(() => {
         retryTimeoutId = null;
@@ -341,39 +412,6 @@ async function attemptSync(): Promise<void> {
       return;
     }
   }
-}
-export async function resendProgressFromConflict(conflict: ConflictRecord): Promise<void> {
-  if (conflict.type !== ConflictType.ProgressUpdate) return;
-
-  const local = conflict.localVersion as Partial<ProgressSyncPayload> | null;
-  const mutationId = typeof local?.mutationId === 'string' ? local.mutationId : '';
-  if (
-    !local ||
-    mutationId === '' ||
-    typeof local.bookId !== 'string' ||
-    typeof local.cfi !== 'string' ||
-    typeof local.percentage !== 'number'
-  ) {
-    logClientEvent({
-      level: 'warn',
-      traceId: createTraceId(),
-      spanId: createSpanId(),
-      event: 'sync.conflict_resend.skipped_malformed',
-      metadata: { conflictId: conflict.id, type: conflict.type },
-    });
-    return;
-  }
-
-  await queueSync(
-    'progress',
-    {
-      bookId: local.bookId,
-      cfi: local.cfi,
-      percentage: local.percentage,
-      mutationId,
-    },
-    mutationId,
-  );
 }
 
 export function setupOnlineListener(): () => void {
@@ -416,4 +454,16 @@ export function setupOnlineListener(): () => void {
     }
     cancelPendingRetry();
   };
+}
+
+export async function retrySyncItem(id: string): Promise<void> {
+  const queue = await getSyncQueue();
+  const item = queue.find((i) => i.id === id);
+  if (!item) return;
+  item.attempts = 0;
+  item.permanentError = false;
+  item.error = undefined;
+  item.createdAt = Date.now();
+  await updateSyncQueueItem(item);
+  await syncAll();
 }

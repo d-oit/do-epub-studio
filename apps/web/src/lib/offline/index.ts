@@ -2,6 +2,7 @@ export * from './db';
 export * from './annotation-mutations';
 export * from './sync-item';
 export * from './sync';
+export * from './progress-conflict-actions';
 export * from './permissions';
 export * from './conflict-resolution';
 export * from './crypto';

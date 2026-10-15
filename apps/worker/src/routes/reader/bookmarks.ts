@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
-import { queryAll, execute } from '../../db/client';
+import { queryAll, queryFirst, execute } from '../../db/client';
 import { BookmarkCreateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
@@ -82,23 +82,62 @@ bookmarksRouter.post(
       throw new ForbiddenError('Access denied');
     }
 
+    const mutationId = body.mutationId ?? null;
     const id = crypto.randomUUID();
     const locatorJson = JSON.stringify(body.locator);
     const now = new Date().toISOString();
 
-    await execute(
+    const inserted = await queryFirst<BookmarkRow>(
       c.env,
-      `INSERT INTO bookmarks (id, book_id, user_email, locator_json, label, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, bookId, auth.email, locatorJson, body.label ?? null, now],
+      `INSERT INTO bookmarks (id, book_id, user_email, mutation_id, locator_json, label, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(mutation_id) WHERE mutation_id IS NOT NULL DO NOTHING
+       RETURNING *`,
+      [id, bookId, auth.email, mutationId, locatorJson, body.label ?? null, now],
     );
+
+    if (inserted) {
+      return c.json(
+        {
+          ok: true,
+          data: { id, locator: body.locator, label: body.label, createdAt: now },
+        },
+        201,
+      );
+    }
+
+    if (!mutationId) throw new Error('Failed to insert bookmark');
+
+    const existing = await queryFirst<BookmarkRow>(
+      c.env,
+      `SELECT * FROM bookmarks WHERE mutation_id = ?`,
+      [mutationId],
+    );
+
+    if (!existing) throw new Error('Failed to find conflicting bookmark');
+    if (existing.book_id !== bookId || existing.user_email !== auth.email) {
+      throw new ForbiddenError('Access denied');
+    }
+
+    const locator = await parseLocatorRow(
+      c.env,
+      existing.locator_json,
+      { entityType: 'bookmark', entityId: existing.id, bookId },
+      c.executionCtx,
+    );
+    if (!locator) throw new Error('Failed to parse conflicting bookmark locator');
 
     return c.json(
       {
         ok: true,
-        data: { id, locator: body.locator, label: body.label, createdAt: now },
+        data: {
+          id: existing.id,
+          locator,
+          label: existing.label ?? undefined,
+          createdAt: existing.created_at,
+        },
       },
-      201,
+      200,
     );
   },
 );

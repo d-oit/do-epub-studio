@@ -6,6 +6,7 @@ export async function fetchProgress(bookId: string, token: string): Promise<Read
     locator: { cfi?: string } | null;
     progressPercent: number;
     updatedAt?: string;
+    revision?: number;
   }>(`/api/books/${bookId}/progress`, {
     method: 'GET',
     token,
@@ -15,5 +16,6 @@ export async function fetchProgress(bookId: string, token: string): Promise<Read
     locator: data.locator ? { cfi: data.locator.cfi || '' } : null,
     progressPercent: data.progressPercent,
     updatedAt: data.updatedAt || null,
+    revision: data.revision ?? 0,
   };
 }

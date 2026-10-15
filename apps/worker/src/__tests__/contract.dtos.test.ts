@@ -117,12 +117,19 @@ describe('Shared DTO schema round-trips', () => {
     const cfi = (JSON.parse(p.locatorJson) as { cfi: string }).cfi;
     expect(
       ProgressUpdateSchema.safeParse({
+        mutationId: '00000000-0000-4000-8000-000000000001',
+        baseRevision: 0,
         locator: { ...msLocator, cfi },
         progressPercent: p.progressPercent,
       }).success,
     ).toBe(true);
     expect(
-      ProgressUpdateSchema.safeParse({ locator: msLocator, progressPercent: 101 }).success,
+      ProgressUpdateSchema.safeParse({
+        mutationId: '00000000-0000-4000-8000-000000000001',
+        baseRevision: 0,
+        locator: msLocator,
+        progressPercent: 101,
+      }).success,
     ).toBe(false);
   });
 

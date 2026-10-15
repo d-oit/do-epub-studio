@@ -11,7 +11,10 @@ import {
   type ConflictRecord,
   type ConflictType,
 } from '../../../../lib/offline/conflict-resolution';
-import { resendProgressFromConflict } from '../../../../lib/offline/sync';
+import {
+  acceptRemoteProgressFromConflict,
+  resendProgressFromConflict,
+} from '../../../../lib/offline/progress-conflict-actions';
 
 const CONFLICT_TYPE_LABELS: Record<ConflictType, TranslationKeys> = {
   progress_update: 'reader.conflicts.type.progress_update',
@@ -118,14 +121,14 @@ export function ConflictResolutionPanel() {
       resolveManualConflict(conflictId, resolution);
       if (bookId) clearResolvedConflicts(bookId);
       storeResolveConflict(conflictId, resolution);
-      // REL-03: "keep local" must re-send the losing write — the sync queue
-      // item was removed when the conflict was recorded, so without an
-      // explicit resend the server never learns of the chosen position.
-      // Dismiss resolves as local (existing semantics) and resends for the
-      // same reason.
-      if (resolution === 'local') {
-        const conflict = conflicts.find((c) => c.id === conflictId);
-        if (conflict) void resendProgressFromConflict(conflict);
+      // A local choice retries against the fetched server revision. A remote
+      // choice updates the displayed and cached position when this conflict is
+      // still the visible local progress.
+      const conflict = conflicts.find((candidate) => candidate.id === conflictId);
+      if (conflict && resolution === 'local') {
+        void resendProgressFromConflict(conflict);
+      } else if (conflict) {
+        void acceptRemoteProgressFromConflict(conflict);
       }
     },
     [storeResolveConflict, bookId, conflicts],

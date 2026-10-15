@@ -1,4 +1,6 @@
 import { Spinner } from '@do-epub-studio/ui';
+import { SyncRecoveryPanel } from '../../../../components/SyncRecoveryPanel';
+import { useReaderStore } from '../../../../stores/reader';
 
 interface ReaderViewerProps {
   isLoading: boolean;
@@ -8,7 +10,6 @@ interface ReaderViewerProps {
   viewerRef: React.RefObject<HTMLDivElement | null>;
   notAvailableText: string;
 }
-
 export function ReaderViewer({
   isLoading,
   epubUrl,
@@ -17,6 +18,7 @@ export function ReaderViewer({
   viewerRef,
   notAvailableText,
 }: ReaderViewerProps) {
+  const pendingSyncCount = useReaderStore((state) => state.pendingSyncCount);
   return (
     <main id="main-content" className="pt-14 pb-20">
       {error && (
@@ -24,6 +26,11 @@ export function ReaderViewer({
           <div className="p-3 bg-accent-error/10 border border-accent-error rounded text-sm text-accent-error">
             {error}
           </div>
+        </div>
+      )}
+      {pendingSyncCount > 0 && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SyncRecoveryPanel pendingCount={pendingSyncCount} />
         </div>
       )}
       {isLoading ? (

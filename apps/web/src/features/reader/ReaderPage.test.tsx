@@ -107,7 +107,13 @@ describe('ReaderPage Panels', () => {
       bookmarks: [],
       error: null,
       isLoading: false,
+      pendingSyncCount: 0,
     });
+  });
+  it('exposes sync recovery from the reader route when items are pending', async () => {
+    useReaderStore.setState({ pendingSyncCount: 2 });
+    await renderReaderPage();
+    expect(screen.getByRole('button', { name: '2 pending syncs' })).toBeInTheDocument();
   });
 
   it('enforces panel mutual exclusivity', async () => {

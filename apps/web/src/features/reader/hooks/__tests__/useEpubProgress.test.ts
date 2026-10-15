@@ -1,12 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createRelocatedHandler, PROGRESS_PUT_DEBOUNCE_MS } from '../useEpubProgress';
-import { useReaderStore } from '../../../../stores/reader';
+import { useReaderStore, type ReadingProgress } from '../../../../stores/reader';
 
 vi.mock('../../../../lib/api', () => ({
-  apiRequest: vi.fn().mockResolvedValue({}),
+  apiRequest: vi.fn().mockResolvedValue({
+    revision: 1,
+    updatedAt: '2025-01-01T00:00:00Z',
+  }),
 }));
 
 vi.mock('../../../../lib/offline', () => ({
+  getProgress: vi.fn().mockResolvedValue(undefined),
   saveProgress: vi.fn().mockResolvedValue(undefined),
   queueSync: vi.fn().mockResolvedValue(undefined),
   generateMutationId: vi.fn().mockReturnValue('test-mutation-id'),
@@ -17,9 +21,12 @@ vi.mock('../../../../lib/client-logger', () => ({
 }));
 
 import { apiRequest } from '../../../../lib/api';
-import { saveProgress } from '../../../../lib/offline';
+import { getProgress, generateMutationId, queueSync, saveProgress } from '../../../../lib/offline';
+import { useAuthStore } from '../../../../stores/auth';
 function makeHandler() {
-  const setProgress = vi.fn();
+  const setProgress = vi.fn((progress: ReadingProgress) =>
+    useReaderStore.getState().setProgress(progress),
+  );
   const setCurrentChapter = vi.fn();
   const onChapterChange = vi.fn();
   const markPageRead = vi.fn();
@@ -48,25 +55,39 @@ function setOnline(value: boolean): void {
   Object.defineProperty(navigator, 'onLine', { value, configurable: true, writable: true });
 }
 
-function lastPutBody(): { locator: { cfi: string }; progressPercent: number } {
+interface ProgressPutBody {
+  locator: { cfi: string };
+  progressPercent: number;
+  mutationId: string;
+  baseRevision: number;
+  dependsOnMutationId?: string;
+}
+
+function lastPutBody(): ProgressPutBody {
   const call = vi.mocked(apiRequest).mock.calls.at(-1);
   const [, options] = call as unknown as [string, { body: string }];
-  return JSON.parse(options.body) as { locator: { cfi: string }; progressPercent: number };
+  return JSON.parse(options.body) as ProgressPutBody;
 }
 
 function lastPutCfi(): string {
-  const call = vi.mocked(apiRequest).mock.calls.at(-1);
-  const [, options] = call as unknown as [string, { body: string }];
-  const parsed = JSON.parse(options.body) as { locator: { cfi: string }; progressPercent: number };
-  return parsed.locator.cfi;
+  return lastPutBody().locator.cfi;
 }
 
 describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(apiRequest).mockResolvedValue({
+      revision: 1,
+      updatedAt: '2025-01-01T00:00:00Z',
+    });
+    vi.mocked(getProgress).mockResolvedValue(undefined);
+    vi.mocked(generateMutationId).mockReturnValue('test-mutation-id');
     vi.useFakeTimers();
     setOnline(true);
-    useReaderStore.setState({ progress: { locator: null, progressPercent: 0, updatedAt: null } });
+    useReaderStore.setState({
+      progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
+    });
+    useAuthStore.setState({ sessionToken: null, bookId: null });
   });
 
   afterEach(() => {
@@ -127,6 +148,74 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
 
     expect(saveProgress).toHaveBeenCalledTimes(2);
     expect(apiRequest).not.toHaveBeenCalled();
+  });
+  it('chains offline progress updates through the previous pending mutation', async () => {
+    setOnline(false);
+    useReaderStore.setState({
+      progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 7 },
+    });
+    const firstMutationId = '00000000-0000-4000-8000-000000000001';
+    const secondMutationId = '00000000-0000-4000-8000-000000000002';
+    vi.mocked(generateMutationId)
+      .mockReturnValueOnce(firstMutationId)
+      .mockReturnValueOnce(secondMutationId);
+    vi.mocked(getProgress).mockResolvedValueOnce(undefined).mockResolvedValueOnce({
+      id: 'book-1-progress',
+      bookId: 'book-1',
+      cfi: 'epubcfi(/6/4)',
+      percentage: 10,
+      lastRead: Date.now(),
+      synced: false,
+      mutationId: firstMutationId,
+      baseRevision: 7,
+    });
+    const { handler } = makeHandler();
+
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/4)', percentage: 0.1, href: 'ch1.xhtml' },
+    });
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' },
+    });
+
+    expect(queueSync).toHaveBeenNthCalledWith(
+      1,
+      'progress',
+      expect.objectContaining({ baseRevision: 7 }),
+      firstMutationId,
+    );
+    expect(queueSync).toHaveBeenNthCalledWith(
+      2,
+      'progress',
+      expect.objectContaining({
+        baseRevision: 7,
+        dependsOnMutationId: firstMutationId,
+      }),
+      secondMutationId,
+    );
+  });
+
+  it('sends the acknowledged server revision and advances the reader revision', async () => {
+    useAuthStore.setState({ sessionToken: 'token-123', bookId: 'book-1' });
+    useReaderStore.setState({
+      progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 7 },
+    });
+    vi.mocked(apiRequest).mockResolvedValue({
+      revision: 8,
+      updatedAt: '2025-01-02T00:00:00Z',
+    });
+    const { handler } = makeHandler();
+
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/8)', percentage: 0.2, href: 'ch1.xhtml' },
+    });
+    await handler.flush();
+
+    expect(lastPutBody()).toMatchObject({ baseRevision: 7 });
+    expect(useReaderStore.getState().progress).toMatchObject({
+      revision: 8,
+      updatedAt: '2025-01-02T00:00:00Z',
+    });
   });
 
   it('keeps the pending debounce window from firing after flush() grabbed it', async () => {

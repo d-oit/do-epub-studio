@@ -4,18 +4,28 @@ import {
   syncAll,
   setupOnlineListener,
   cancelPendingRetry,
-  setPermissionRevokedCallback,
   generateMutationId,
   resetDrainPromise,
-  resendProgressFromConflict,
+  setPermissionRevokedCallback,
 } from './sync';
+import {
+  resendProgressFromConflict,
+  acceptRemoteProgressFromConflict,
+} from './progress-conflict-actions';
 import * as db from './db';
 import type { SyncQueueItem } from './db';
 import { api, apiRequest } from '../api';
-import { clearAllPermissions } from './permissions';
-import { ConflictType, type ConflictRecord } from './conflict-resolution';
-import { useAuthStore } from '../../stores/auth';
 import { createHighlight } from '../api/annotations';
+import { clearAllPermissions } from './permissions';
+import {
+  ConflictType,
+  type ConflictRecord,
+  getPendingConflicts,
+  clearAllConflicts,
+  flushConflictWrites,
+} from './conflict-resolution';
+import { useAuthStore } from '../../stores/auth';
+import { useReaderStore } from '../../stores/reader';
 
 vi.mock('uuid', () => ({
   v4: () => 'test-uuid-1234',
@@ -24,12 +34,15 @@ vi.mock('uuid', () => ({
 vi.mock('./db', () => ({
   addToSyncQueue: vi.fn(),
   getSyncQueue: vi.fn(),
+  getProgress: vi.fn().mockResolvedValue(undefined),
   removeSyncQueueItem: vi.fn(),
   updateSyncQueueItem: vi.fn(),
   getUnsyncedProgress: vi.fn(),
   getUnsyncedAnnotations: vi.fn(),
   saveProgress: vi.fn(),
   saveAnnotation: vi.fn(),
+  saveConflicts: vi.fn().mockResolvedValue(undefined),
+  getAllConflicts: vi.fn().mockResolvedValue([]),
   // conflict-resolution re-exports this const from ./db; the mock replaces
   // the whole module, so the values must be mirrored here for the resend tests.
   ConflictType: {
@@ -77,12 +90,14 @@ vi.mock('@do-epub-studio/shared', () => ({
 }));
 
 describe('sync', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
     cancelPendingRetry();
     resetDrainPromise();
-    setPermissionRevokedCallback(null as unknown as (bookId: string) => void);
+    setPermissionRevokedCallback(() => {});
+    clearAllConflicts();
+    await flushConflictWrites();
   });
 
   afterEach(() => {
@@ -191,7 +206,10 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockResolvedValue({} as unknown as Response);
+      vi.mocked(apiRequest).mockResolvedValue({
+        revision: 1,
+        updatedAt: '2025-01-01T00:00:00Z',
+      });
       vi.mocked(db.getUnsyncedProgress).mockResolvedValue([
         {
           id: 'p1',
@@ -210,14 +228,77 @@ describe('sync', () => {
         'm1',
       );
       await vi.waitFor(() => {
-        expect(api.put).toHaveBeenCalledWith('/api/books/b1/progress', {
-          locator: { cfi: 'cfi-1' },
-          progressPercent: 50,
-          mutationId: 'm1',
+        expect(apiRequest).toHaveBeenCalledWith('/api/books/b1/progress', {
+          method: 'PUT',
+          body: JSON.stringify({
+            locator: { cfi: 'cfi-1' },
+            progressPercent: 50,
+            mutationId: 'm1',
+            baseRevision: 0,
+          }),
         });
       });
       await vi.waitFor(() => {
         expect(db.removeSyncQueueItem).toHaveBeenCalledWith('item-1');
+      });
+    });
+    it('syncs dependent progress mutations in predecessor order', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'child-item',
+          type: 'progress',
+          payload: {
+            bookId: 'b1',
+            cfi: 'child-cfi',
+            percentage: 80,
+            mutationId: 'm-child',
+            baseRevision: 0,
+            dependsOnMutationId: 'm-parent',
+          },
+          mutationId: 'm-child',
+          createdAt: 100,
+          attempts: 0,
+        },
+        {
+          id: 'parent-item',
+          type: 'progress',
+          payload: {
+            bookId: 'b1',
+            cfi: 'parent-cfi',
+            percentage: 20,
+            mutationId: 'm-parent',
+            baseRevision: 0,
+          },
+          mutationId: 'm-parent',
+          createdAt: 200,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
+      vi.mocked(apiRequest)
+        .mockResolvedValueOnce({ revision: 1, updatedAt: '2025-01-01T00:00:00Z' })
+        .mockResolvedValueOnce({ revision: 2, updatedAt: '2025-01-02T00:00:00Z' });
+
+      await syncAll();
+
+      expect(apiRequest).toHaveBeenNthCalledWith(1, '/api/books/b1/progress', {
+        method: 'PUT',
+        body: JSON.stringify({
+          locator: { cfi: 'parent-cfi' },
+          progressPercent: 20,
+          mutationId: 'm-parent',
+          baseRevision: 0,
+        }),
+      });
+      expect(apiRequest).toHaveBeenNthCalledWith(2, '/api/books/b1/progress', {
+        method: 'PUT',
+        body: JSON.stringify({
+          locator: { cfi: 'child-cfi' },
+          progressPercent: 80,
+          mutationId: 'm-child',
+          baseRevision: 0,
+          dependsOnMutationId: 'm-parent',
+        }),
       });
     });
 
@@ -232,7 +313,7 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue(new Error('Network error'));
+      vi.mocked(apiRequest).mockRejectedValue(new Error('Network error'));
 
       await queueSync(
         'progress',
@@ -246,56 +327,166 @@ describe('sync', () => {
       });
     });
 
-    it('handles permission revocation on 401', async () => {
+    it('keeps jittered retry delay within the exponential delay window', async () => {
       vi.mocked(db.getSyncQueue).mockResolvedValue([
         {
-          id: 'item-5',
+          id: 'item-retry-delay',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'retry-delay' },
+          mutationId: 'retry-delay',
+          createdAt: 400,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(apiRequest).mockRejectedValue(new Error('Network error'));
+
+      const timerSpy = vi.spyOn(globalThis, 'setTimeout');
+      try {
+        await queueSync(
+          'progress',
+          { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'retry-delay' },
+          'retry-delay',
+        );
+
+        await vi.waitFor(
+          () =>
+            expect(
+              timerSpy.mock.calls.some(
+                ([, delay]) => typeof delay === 'number' && delay >= 1500 && delay <= 2500,
+              ),
+            ).toBe(true),
+          { timeout: 400, interval: 10 },
+        );
+
+        const retryTimer = timerSpy.mock.calls.find(
+          ([, delay]) => typeof delay === 'number' && delay >= 1500 && delay <= 2500,
+        );
+        if (!retryTimer || typeof retryTimer[1] !== 'number') {
+          throw new Error('Retry timer was not scheduled');
+        }
+        const retryDelay = retryTimer[1];
+        expect(retryDelay).toBeGreaterThanOrEqual(1500);
+        expect(retryDelay).toBeLessThanOrEqual(2500);
+      } finally {
+        timerSpy.mockRestore();
+      }
+    });
+
+    it('retains queued work and stops the drain when a session expires', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'expired-session-item',
           type: 'progress',
           payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm5' },
           mutationId: 'm5',
           createdAt: 500,
           attempts: 0,
         },
-      ]);
-      const err = Object.assign(new Error('Unauthorized'), { status: 401 });
-      vi.mocked(api.put).mockRejectedValue(err);
-
-      const mockCallback = vi.fn();
-      setPermissionRevokedCallback(mockCallback);
-
-      await queueSync(
-        'progress',
-        { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm5' },
-        'm5',
-      );
-      await vi.waitFor(() => {
-        expect(clearAllPermissions).toHaveBeenCalled();
-      });
-      expect(mockCallback).toHaveBeenCalledWith('b1');
-      expect(db.removeSyncQueueItem).toHaveBeenCalledWith('item-5');
-    });
-
-    it('handles permission revocation on 403', async () => {
-      vi.mocked(db.getSyncQueue).mockResolvedValue([
         {
-          id: 'item-6',
+          id: 'later-valid-item',
           type: 'progress',
-          payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm6' },
-          mutationId: 'm6',
+          payload: { bookId: 'b1', cfi: 'later-cfi', percentage: 60, mutationId: 'm-later' },
+          mutationId: 'm-later',
           createdAt: 600,
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue(Object.assign(new Error('Forbidden'), { status: 403 }));
-
-      await queueSync(
-        'progress',
-        { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm6' },
-        'm6',
+      vi.mocked(apiRequest).mockRejectedValueOnce(
+        Object.assign(new Error('Unauthorized'), { status: 401 }),
       );
-      await vi.waitFor(() => {
-        expect(clearAllPermissions).toHaveBeenCalled();
-      });
+
+      await syncAll();
+
+      expect(clearAllPermissions).toHaveBeenCalled();
+      expect(db.removeSyncQueueItem).not.toHaveBeenCalled();
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'expired-session-item',
+          error: expect.stringContaining('Unauthorized'),
+        }),
+      );
+      expect(db.updateSyncQueueItem).not.toHaveBeenCalledWith(
+        expect.objectContaining({ permanentError: true }),
+      );
+      expect(apiRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it('retains a forbidden item as failed and continues with later work', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'forbidden-item',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'blocked-cfi', percentage: 50, mutationId: 'm6' },
+          mutationId: 'm6',
+          createdAt: 600,
+          attempts: 0,
+        },
+        {
+          id: 'later-valid-item',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'valid-cfi', percentage: 70, mutationId: 'm7' },
+          mutationId: 'm7',
+          createdAt: 700,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(Object.assign(new Error('Forbidden'), { status: 403 }))
+        .mockResolvedValueOnce({ revision: 1, updatedAt: '2025-01-01T00:00:00Z' });
+      const mockCallback = vi.fn();
+      setPermissionRevokedCallback(mockCallback);
+
+      await syncAll();
+
+      expect(clearAllPermissions).toHaveBeenCalled();
+      expect(mockCallback).toHaveBeenCalledWith('b1');
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'forbidden-item',
+          permanentError: true,
+          error: 'Forbidden',
+        }),
+      );
+      expect(db.removeSyncQueueItem).toHaveBeenCalledWith('later-valid-item');
+      expect(apiRequest).toHaveBeenCalledTimes(2);
+    });
+
+    it('marks a validation failure and continues with later valid items', async () => {
+      vi.mocked(db.getSyncQueue).mockResolvedValue([
+        {
+          id: 'invalid-progress-item',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'invalid-cfi', percentage: 150, mutationId: 'm8' },
+          mutationId: 'm8',
+          createdAt: 800,
+          attempts: 0,
+        },
+        {
+          id: 'later-valid-item',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'valid-cfi', percentage: 70, mutationId: 'm9' },
+          mutationId: 'm9',
+          createdAt: 900,
+          attempts: 0,
+        },
+      ]);
+      vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(Object.assign(new Error('Invalid progress'), { status: 422 }))
+        .mockResolvedValueOnce({ revision: 1, updatedAt: '2025-01-01T00:00:00Z' });
+
+      await syncAll();
+
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'invalid-progress-item',
+          permanentError: true,
+          error: 'Invalid progress',
+        }),
+      );
+      expect(db.removeSyncQueueItem).toHaveBeenCalledWith('later-valid-item');
+      expect(apiRequest).toHaveBeenCalledTimes(2);
     });
 
     it('does not treat a generic permission message as revocation', async () => {
@@ -309,7 +500,7 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue(new Error('permission denied'));
+      vi.mocked(apiRequest).mockRejectedValue(new Error('permission denied'));
 
       await queueSync(
         'progress',
@@ -333,7 +524,7 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue(new Error('Access has been revoked or expired'));
+      vi.mocked(apiRequest).mockRejectedValue(new Error('Access has been revoked or expired'));
 
       await queueSync(
         'progress',
@@ -356,7 +547,7 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue(new Error('Session revoked'));
+      vi.mocked(apiRequest).mockRejectedValue(new Error('Session revoked'));
 
       await queueSync(
         'progress',
@@ -368,7 +559,7 @@ describe('sync', () => {
       });
     });
 
-    it('removes item after max retries exceeded', async () => {
+    it('retains exhausted items and continues syncing later valid entries', async () => {
       vi.mocked(db.getSyncQueue).mockResolvedValue([
         {
           id: 'item-8',
@@ -376,19 +567,59 @@ describe('sync', () => {
           payload: { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm8' },
           mutationId: 'm8',
           createdAt: 800,
+          attempts: 4,
+        },
+        {
+          id: 'item-9',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'cfi-9', percentage: 60, mutationId: 'm9' },
+          mutationId: 'm9',
+          createdAt: 801,
           attempts: 5,
+          error: 'Earlier network error',
+        },
+        {
+          id: 'item-10',
+          type: 'progress',
+          payload: { bookId: 'b1', cfi: 'cfi-10', percentage: 70, mutationId: 'm10' },
+          mutationId: 'm10',
+          createdAt: 802,
+          attempts: 0,
         },
       ]);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValue({ revision: 1, updatedAt: '2025-01-01T00:00:00Z' });
+      vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
 
       await queueSync(
         'progress',
         { bookId: 'b1', cfi: 'cfi', percentage: 50, mutationId: 'm8' },
         'm8',
       );
+
       await vi.waitFor(() => {
-        expect(db.removeSyncQueueItem).toHaveBeenCalledWith('item-8');
+        expect(db.removeSyncQueueItem).toHaveBeenCalledWith('item-10');
       });
-      expect(api.put).not.toHaveBeenCalled();
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'item-8',
+          attempts: 5,
+          permanentError: true,
+          error: 'Network error',
+        }),
+      );
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'item-9',
+          attempts: 5,
+          permanentError: true,
+          error: 'Earlier network error',
+        }),
+      );
+      expect(db.removeSyncQueueItem).not.toHaveBeenCalledWith('item-8');
+      expect(db.removeSyncQueueItem).not.toHaveBeenCalledWith('item-9');
+      expect(apiRequest).toHaveBeenCalledTimes(2);
     });
 
     it('marks progress entry as synced', async () => {
@@ -402,7 +633,10 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockResolvedValue({} as unknown as Response);
+      vi.mocked(apiRequest).mockResolvedValue({
+        revision: 1,
+        updatedAt: '2025-01-01T00:00:00Z',
+      });
       vi.mocked(db.getUnsyncedProgress).mockResolvedValue([
         {
           id: 'p1',
@@ -421,8 +655,159 @@ describe('sync', () => {
         'm11',
       );
       await vi.waitFor(() => {
-        expect(db.saveProgress).toHaveBeenCalledWith(expect.objectContaining({ synced: true }));
+        expect(db.saveProgress).toHaveBeenCalledWith(
+          expect.objectContaining({ synced: true, baseRevision: 1 }),
+        );
       });
+    });
+
+    it('preserves both progress versions for a server-confirmed revision conflict', async () => {
+      const item: SyncQueueItem = {
+        id: 'progress-conflict-item',
+        type: 'progress',
+        payload: {
+          bookId: 'b1',
+          cfi: 'local-cfi',
+          percentage: 35,
+          mutationId: 'mutation-local',
+          baseRevision: 0,
+        },
+        mutationId: 'mutation-local',
+        createdAt: 1000,
+        attempts: 0,
+      };
+      vi.mocked(db.getSyncQueue).mockResolvedValue([item]);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(Object.assign(new Error('Revision conflict'), { status: 409 }))
+        .mockResolvedValueOnce({
+          locator: { cfi: 'remote-cfi' },
+          progressPercent: 80,
+          updatedAt: new Date(6000).toISOString(),
+          revision: 1,
+        });
+
+      await queueSync('progress', item.payload, item.mutationId);
+
+      await vi.waitFor(() => {
+        expect(db.removeSyncQueueItem).toHaveBeenCalledWith(item.id);
+      });
+      await flushConflictWrites();
+
+      const [conflict] = getPendingConflicts('b1');
+      expect(conflict).toMatchObject({
+        type: ConflictType.ProgressUpdate,
+        localVersion: item.payload,
+        remoteVersion: {
+          bookId: 'b1',
+          cfi: 'remote-cfi',
+          percentage: 80,
+          revision: 1,
+        },
+        resolved: false,
+      });
+    });
+    it('retains the local queue item when conflict details cannot be persisted', async () => {
+      const item: SyncQueueItem = {
+        id: 'progress-conflict-storage-failure',
+        type: 'progress',
+        payload: {
+          bookId: 'b1',
+          cfi: 'local-cfi',
+          percentage: 35,
+          mutationId: 'mutation-local',
+          baseRevision: 0,
+        },
+        mutationId: 'mutation-local',
+        createdAt: 1000,
+        attempts: 0,
+      };
+      vi.mocked(db.getSyncQueue).mockResolvedValue([item]);
+      vi.mocked(db.saveConflicts).mockRejectedValueOnce(new Error('IndexedDB quota'));
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(Object.assign(new Error('Revision conflict'), { status: 409 }))
+        .mockResolvedValueOnce({
+          locator: { cfi: 'remote-cfi' },
+          progressPercent: 80,
+          updatedAt: new Date(6000).toISOString(),
+          revision: 1,
+        });
+
+      await syncAll();
+
+      expect(db.removeSyncQueueItem).not.toHaveBeenCalledWith(item.id);
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: item.id,
+          permanentError: true,
+          error: expect.stringContaining('remains available'),
+        }),
+      );
+    });
+
+    it('applies the chosen remote progress to the reader and encrypted cache', async () => {
+      const localEntry = {
+        id: 'b1-progress',
+        bookId: 'b1',
+        cfi: 'local-cfi',
+        percentage: 35,
+        lastRead: 100,
+        synced: false,
+        mutationId: 'mutation-local',
+        baseRevision: 0,
+      };
+      const conflict: ConflictRecord = {
+        id: 'remote-choice',
+        type: ConflictType.ProgressUpdate,
+        localVersion: {
+          bookId: 'b1',
+          cfi: 'local-cfi',
+          percentage: 35,
+          mutationId: 'mutation-local',
+          baseRevision: 0,
+        },
+        remoteVersion: {
+          bookId: 'b1',
+          cfi: 'remote-cfi',
+          percentage: 80,
+          revision: 2,
+          updatedAt: '2025-01-02T00:00:00Z',
+        },
+        localTimestamp: 1000,
+        remoteTimestamp: 2000,
+        resolved: false,
+        resolution: null,
+        resolvedAt: null,
+        bookId: 'b1',
+        entityId: 'b1',
+        createdAt: 2000,
+      };
+      vi.mocked(db.getProgress).mockResolvedValue(localEntry);
+      useAuthStore.setState({ bookId: 'b1' });
+      useReaderStore.setState({
+        progress: {
+          locator: { cfi: 'local-cfi' },
+          progressPercent: 35,
+          updatedAt: '2025-01-01T00:00:00Z',
+          revision: 0,
+        },
+      });
+
+      await acceptRemoteProgressFromConflict(conflict);
+
+      expect(useReaderStore.getState().progress).toEqual({
+        locator: { cfi: 'remote-cfi' },
+        progressPercent: 80,
+        updatedAt: '2025-01-02T00:00:00Z',
+        revision: 2,
+      });
+      expect(db.saveProgress).toHaveBeenCalledWith(
+        expect.objectContaining({
+          cfi: 'remote-cfi',
+          percentage: 80,
+          baseRevision: 2,
+          synced: true,
+        }),
+      );
     });
 
     it('syncs comment resolve action via PATCH', async () => {
@@ -466,7 +851,7 @@ describe('sync', () => {
           attempts: 0,
         },
       ]);
-      vi.mocked(api.put).mockRejectedValue('string error');
+      vi.mocked(apiRequest).mockRejectedValue('string error');
 
       await queueSync(
         'progress',
@@ -485,7 +870,13 @@ describe('sync', () => {
         id: 'conflict-1',
         type: ConflictType.ProgressUpdate,
         localVersion: { bookId: 'b1', cfi: 'cfi-9', percentage: 42, mutationId: 'm9' },
-        remoteVersion: { bookId: 'b1', cfi: 'remote-cfi', percentage: 90 },
+        remoteVersion: {
+          bookId: 'b1',
+          cfi: 'remote-cfi',
+          percentage: 90,
+          revision: 3,
+          updatedAt: '2025-01-01T00:00:00Z',
+        },
         localTimestamp: 1000,
         remoteTimestamp: 1000,
         resolved: false,
@@ -505,7 +896,13 @@ describe('sync', () => {
         expect.objectContaining({
           type: 'progress',
           mutationId: 'm9',
-          payload: { bookId: 'b1', cfi: 'cfi-9', percentage: 42, mutationId: 'm9' },
+          payload: {
+            bookId: 'b1',
+            cfi: 'cfi-9',
+            percentage: 42,
+            mutationId: 'm9',
+            baseRevision: 3,
+          },
         }),
       );
     });
@@ -573,7 +970,10 @@ describe('sync', () => {
       });
 
       vi.mocked(db.getSyncQueue).mockImplementation(() => queueDeferred);
-      vi.mocked(api.put).mockResolvedValue({} as unknown as Response);
+      vi.mocked(apiRequest).mockResolvedValue({
+        revision: 1,
+        updatedAt: '2025-01-01T00:00:00Z',
+      });
       vi.mocked(db.getUnsyncedProgress).mockResolvedValue([]);
 
       // First queueSync starts the drain (getSyncQueue called once)
@@ -614,7 +1014,7 @@ describe('sync', () => {
       ]);
 
       await vi.waitFor(() => {
-        expect(api.put).toHaveBeenCalled();
+        expect(apiRequest).toHaveBeenCalled();
       });
 
       // Still only one drain ran

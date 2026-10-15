@@ -11,6 +11,8 @@ import {
 describe('ProgressUpdateSchema', () => {
   it('accepts valid progress', () => {
     const result = ProgressUpdateSchema.parse({
+      mutationId: '00000000-0000-4000-8000-000000000001',
+      baseRevision: 0,
       locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
       progressPercent: 50,
     });
@@ -20,6 +22,8 @@ describe('ProgressUpdateSchema', () => {
   it('rejects progressPercent > 100', () => {
     expect(() =>
       ProgressUpdateSchema.parse({
+        mutationId: '00000000-0000-4000-8000-000000000001',
+        baseRevision: 0,
         locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
         progressPercent: 101,
       }),
@@ -29,6 +33,8 @@ describe('ProgressUpdateSchema', () => {
   it('rejects negative progressPercent', () => {
     expect(() =>
       ProgressUpdateSchema.parse({
+        mutationId: '00000000-0000-4000-8000-000000000001',
+        baseRevision: 0,
         locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'ch' },
         progressPercent: -1,
       }),

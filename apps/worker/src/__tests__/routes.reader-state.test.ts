@@ -5,17 +5,18 @@ import {
   mockQueryFirst,
   mockQueryAll,
   mockExecute,
+  mockTransaction,
   mockRequireAuth,
 } from './fixtures';
 import { app } from '../app';
-import { assertBookAccess } from '../lib/tenant-isolation';
-
+import { assertBookAccess, parseLocatorRow } from '../lib/tenant-isolation';
 vi.mock('../lib/tenant-isolation', () => ({
   parseLocatorRow: vi.fn(),
   assertBookAccess: vi.fn(),
 }));
 
-const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
+const mockAssertBookAccess = vi.mocked(assertBookAccess);
+const mockParseLocatorRow = vi.mocked(parseLocatorRow);
 
 describe('Reader State Routes', () => {
   const env = makeEnv();
@@ -23,6 +24,7 @@ describe('Reader State Routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAssertBookAccess.mockResolvedValue(null);
+    mockParseLocatorRow.mockResolvedValue({ cfi: 'epubcfi(/6/4)' });
   });
 
   describe('GET /api/books/:bookId/progress', () => {
@@ -45,6 +47,8 @@ describe('Reader State Routes', () => {
 
       mockQueryFirst.mockResolvedValue({
         id: 'progress-1',
+        book_id: 'book-1',
+        user_email: 'user@example.com',
         locator_json: JSON.stringify({
           cfi: 'epubcfi(/6/4)',
           selectedText: 'test',
@@ -52,6 +56,8 @@ describe('Reader State Routes', () => {
         }),
         progress_percent: 50,
         updated_at: '2023-01-01T00:00:00Z',
+        revision: 1,
+        mutation_id: 'mutation-1',
       });
 
       const res = await app.fetch(
@@ -69,17 +75,31 @@ describe('Reader State Routes', () => {
   });
 
   describe('PUT /api/books/:bookId/progress', () => {
-    it('updates progress and returns success', async () => {
+    it('updates progress with its initial revision', async () => {
       mockRequireAuth.mockResolvedValue({
         email: 'user@example.com',
         capabilities: { canRead: true },
       });
-      mockExecute.mockResolvedValue({ rows: [] });
+      mockQueryFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'progress-1',
+          book_id: 'book-1',
+          user_email: 'user@example.com',
+          locator_json: JSON.stringify({ cfi: 'epubcfi(/6/4)' }),
+          progress_percent: 60,
+          updated_at: '2023-01-01T00:00:00Z',
+          revision: 1,
+          mutation_id: '00000000-0000-4000-8000-000000000001',
+        });
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/progress', {
           method: 'PUT',
           body: JSON.stringify({
+            mutationId: '00000000-0000-4000-8000-000000000001',
+            baseRevision: 0,
             locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'chap1' },
             progressPercent: 60,
           }),
@@ -96,6 +116,8 @@ describe('Reader State Routes', () => {
       const body: { ok: boolean; data: Record<string, unknown>; error: { code: string } } =
         await res.json();
       expect(body.ok).toBe(true);
+      expect(body.data.revision).toBe(1);
+      expect(mockTransaction).toHaveBeenCalledOnce();
     });
   });
 

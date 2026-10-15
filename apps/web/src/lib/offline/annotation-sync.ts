@@ -42,10 +42,14 @@ async function syncAnnotationHighlight(
   );
 }
 
-async function syncAnnotationBookmark(payload: AnnotationSyncPayload): Promise<void> {
+async function syncAnnotationBookmark(
+  payload: AnnotationSyncPayload,
+  mutationId: string,
+): Promise<void> {
   await apiRequest(`/api/books/${payload.bookId}/bookmarks`, {
     method: 'POST',
     body: JSON.stringify({
+      mutationId,
       locator: {
         cfi: payload.annotation.cfi,
         selectedText: payload.annotation.text ?? payload.annotation.cfi,
@@ -108,7 +112,7 @@ export async function syncAnnotation(
       return { type: 'comment', item: cm };
     }
     case 'bookmark':
-      await syncAnnotationBookmark(payload);
+      await syncAnnotationBookmark(payload, item.mutationId);
       return undefined;
     default:
       throw new Error(`Unrecognized annotation type: ${annotationType}`);
