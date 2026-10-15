@@ -671,29 +671,90 @@ export async function clickToolbarButton(page: Page, buttonName: string | RegExp
 }
 
 /**
- * Suppress non-fatal workbox SW registration PAGE ERRORs in preview mode.
- * These are `Cannot read properties of undefined (reading 'waiting')` errors
- * from the workbox bundle that appear as console errors but don't cause
- * test failures. Call this in test.beforeEach() or at the top of a test.
+ * Suppress only known Workbox registration errors and environmental preview
+ * network failures from unmocked backend requests. Other page errors fail.
  */
 export function suppressWorkboxErrors(page: Page) {
   page.on('pageerror', (error) => {
-    const msg = error.message;
-    if (msg.includes("reading 'waiting'")) return;
-    // Environmental network noise in the E2E preview env (no Worker backend):
-    // unmocked requests to localhost:8787 and cross-origin mock URLs surface as
-    // page errors that are NOT app bugs. Treat network-level failures as noise
-    // (they kept killing reader tests mid-axe-scan on the scheduled lane —
-    // issue #957); rethrow anything that looks like an app-logic error.
+    const message = error.message;
+    if (message.includes("reading 'waiting'")) return;
     if (
       /Failed to load resource|ERR_CONNECTION_REFUSED|access control checks|Failed to fetch|AbortError|net::ERR_|Worker initialization failed/i.test(
-        msg,
+        message,
       )
     ) {
       return;
     }
     throw error;
   });
+}
+
+export async function waitForServiceWorkerActivation(page: Page): Promise<void> {
+  const activation = await page.evaluate(async () => {
+    if (!('serviceWorker' in navigator)) {
+      return { supported: false, activeState: null, scope: null, error: 'unsupported' };
+    }
+
+    let registration: ServiceWorkerRegistration | undefined;
+    let worker: ServiceWorker | null = null;
+    let onStateChange: (() => void) | undefined;
+    let timeoutId: number | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timeoutId = window.setTimeout(
+        () => reject(new Error('Service Worker activation timed out')),
+        45_000,
+      );
+    });
+
+    try {
+      registration = await Promise.race([navigator.serviceWorker.ready, timeout]);
+      worker = registration.active;
+      if (!worker) {
+        return { supported: true, activeState: null, scope: registration.scope };
+      }
+
+      if (worker.state !== 'activated') {
+        await Promise.race([
+          new Promise<void>((resolve, reject) => {
+            onStateChange = () => {
+              if (worker?.state === 'activated') {
+                resolve();
+              } else if (worker?.state === 'redundant') {
+                reject(new Error('Service Worker became redundant before activation'));
+              }
+            };
+            worker.addEventListener('statechange', onStateChange);
+            onStateChange();
+          }),
+          timeout,
+        ]);
+      }
+
+      return {
+        supported: true,
+        activeState: worker.state,
+        scope: registration.scope,
+      };
+    } catch (error) {
+      registration ??= await navigator.serviceWorker.getRegistration().catch(() => undefined);
+      worker ??= registration?.active ?? null;
+      return {
+        supported: true,
+        activeState: worker?.state ?? null,
+        scope: registration?.scope ?? null,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      if (worker && onStateChange) worker.removeEventListener('statechange', onStateChange);
+    }
+  });
+
+  if (activation.activeState !== 'activated') {
+    throw new Error(
+      `Service Worker must activate before controlled reload: ${JSON.stringify(activation)}`,
+    );
+  }
 }
 
 export async function loginAsReader(page: Page, bookSlug?: string) {

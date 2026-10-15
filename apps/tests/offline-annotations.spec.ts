@@ -7,6 +7,7 @@ import {
   mockReaderApi,
   selectReaderPassage,
   suppressWorkboxErrors,
+  waitForServiceWorkerActivation,
   TEST_USER,
 } from './fixtures';
 
@@ -28,7 +29,12 @@ const EPUB_BUFFER = createMinimalEpub(
   { title: 'A1 Offline Book', identifier: 'urn:uuid:offline-annotations-book' },
 );
 
-const EPUB_URL = 'http://127.0.0.1:0/test/offline-annotations.epub';
+const EPUB_URL = `/api/files/${TEST_USER.bookSlug}.epub`;
+
+function resolveEpubUrl(baseURL: string | URL | undefined): string {
+  if (!baseURL) throw new Error('Playwright project baseURL is required');
+  return new URL(EPUB_URL, baseURL).toString();
+}
 const FULL_CAPABILITIES_LOGIN = {
   ok: true,
   data: {
@@ -156,7 +162,8 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
   test('@pwa creates ordinary highlight and shared comment offline, reloads, navigates, and settles on reconnect', async ({
     page,
     context,
-  }) => {
+  }, testInfo) => {
+    const epubUrl = resolveEpubUrl(testInfo.project.use.baseURL);
     let isOfflineNetwork = false;
     let rejectHighlightWrites = false;
     let rejectCommentWrites = false;
@@ -332,6 +339,8 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     await expect.poll(getChapterText, { timeout: 30000 }).toContain('OFFLINE ANNOTATION PASSAGE');
 
+    await waitForServiceWorkerActivation(page);
+
     // Reload to ensure SW controls the client
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
@@ -355,19 +364,17 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
       })
       .toContain('OFFLINE ANNOTATION PASSAGE');
 
-    // Seed fixture EPUB bytes into SW cache
-    await page.evaluate(
-      async ({ url, bytes }) => {
-        const cache = await caches.open('external-assets');
-        await cache.put(
-          url,
-          new Response(new Uint8Array(bytes), {
-            headers: { 'Content-Type': 'application/epub+zip' },
-          }),
-        );
-      },
-      { url: EPUB_URL, bytes: Array.from(EPUB_BUFFER) },
-    );
+    // The controlled online reader load must populate Workbox normally.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(async (url) => {
+            const cache = await caches.open('book-content');
+            return Boolean(await cache.match(url));
+          }, epubUrl),
+        { timeout: 15000, message: 'Online reader load should cache EPUB in Workbox book-content' },
+      )
+      .toBe(true);
 
     // Go offline
     isOfflineNetwork = true;
