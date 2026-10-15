@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, cleanup, waitFor } from '@testing-library/react';
+import { renderHook, act, cleanup } from '@testing-library/react';
 import { useEpubNavigation } from '../useEpubNavigation';
 
 const mockRendition = {
