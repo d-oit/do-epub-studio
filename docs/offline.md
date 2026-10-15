@@ -143,14 +143,21 @@ Reader mutation
 
 ### Sync Protocol
 
-1. Queue is FIFO (sorted by `createdAt`)
-2. POST/PUT to the Worker API with the queued mutation ID where supported
-3. Annotation creates carry `mutationId` to the Worker; unique partial indexes
-   on `highlights.mutation_id` and `comments.mutation_id` make duplicate POSTs
-   return the existing annotation. Progress upserts and reading-insight merges
-   retain their resource-specific idempotency behavior.
-4. On success: remove from syncQueue, mark local entry as `synced: true`
-5. On failure: increment `attempts`, schedule retry with exponential backoff
+1. Queue entries are ordered by `createdAt`; progress entries are additionally
+   topologically ordered by `dependsOnMutationId` so an offline chain is applied
+   in the order the reader made the edits.
+2. Requests carry the queued mutation ID. Progress PUTs also carry
+   `baseRevision`; chained offline writes carry the predecessor's mutation ID.
+3. Server idempotency is resource-scoped: duplicate highlight/comment creates
+   return the existing row, bookmark creates use their mutation ID, and progress
+   mutations are recorded by `(book_id, user_email, mutation_id)` with the exact
+   applied revision. A delayed progress retry therefore replays its original
+   result without replacing newer progress.
+4. On success: remove from `syncQueue`, mark the local entry as `synced: true`,
+   and save the acknowledged progress revision.
+5. Permanent item-level 4xx failures remain in the queue as failed entries and
+   do not block later entries. A 401 pauses the drain and keeps queued work for
+   reauthentication; 429, 5xx, and network failures use bounded retries.
 
 ### Retry Logic
 
@@ -158,42 +165,39 @@ Reader mutation
 BASE_DELAY_MS = 1000;
 MAX_DELAY_MS = 30000;
 MAX_RETRY_ATTEMPTS = 5;
-// delay = 2s, 4s, 8s, 16s, 30s (capped)
+// Retry delays: 2s, 4s, 8s, 16s, each with ±25% jitter and a 30s cap.
 ```
 
 ### Conflict Resolution
 
 Conflicts are categorised by `ConflictType` (`progress_update`, `annotation_edit`,
-`bookmark_change`, `comment_update`) and detected in `apps/web/src/lib/offline/conflict-resolution.ts`.
-Two strategies exist — `last_write_wins` and `manual`.
+`bookmark_change`, `comment_update`) and stored in both the in-memory
+`pendingConflicts` map and the durable `conflicts` IndexedDB store.
 
-| Entity     | Strategy        | Notes                                                   |
-| ---------- | --------------- | ------------------------------------------------------- |
-| Progress   | Last-write-wins | Winner chosen by `lastRead` timestamp; no manual review |
-| Bookmarks  | Last-write-wins |                                                         |
-| Highlights | Last-write-wins |                                                         |
-| Comments   | Conditional     | Manual when timestamps collide or diverge               |
+| Entity     | Strategy                 | Notes                                                                                                                            |
+| ---------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Progress   | Server revision + manual | Compare-and-swap rejects stale writes with HTTP 409. The client durably saves both versions for an explicit local/remote choice. |
+| Bookmarks  | Timestamp helper         | Generic `resolveWithLWW` selects the later timestamp.                                                                            |
+| Highlights | Timestamp helper         | Generic `resolveWithLWW` selects the later timestamp.                                                                            |
+| Comments   | Timestamp helper         | Equal timestamps require manual review; otherwise the later timestamp wins.                                                      |
 
-When local and remote timestamps collide (`localTimestamp === remoteTimestamp`) or
-diverge beyond `MANUAL_CONFLICT_THRESHOLD_MS` (5s), `resolveConflict` returns the
-`Manual` strategy and records a `ConflictRecord` in both the in-memory
-`pendingConflicts` map and the durable `conflicts` IndexedDB store (Plan 228
-F2). The sync item is then removed from the queue and the worker responds
-`409 conflict_requires_manual_resolution` so it is not retried forever; the UI
-surfaces the pending conflict for a manual local/remote (or merged) resolution
-via `resolveManualConflict`.
-
-Otherwise conflicts auto-resolve with `resolveWithLWW` (`last_write_wins`),
-taking the version with the later timestamp. The earlier claim that comments are
-"append-only (no overwrite)" is incorrect — comment edits sync through
-`PATCH /api/comments/:id` and follow the same conflict-detection path.
+Progress writes use `baseRevision`; queued writes created offline also include
+`dependsOnMutationId`. The Worker accepts a dependency only when it is the
+latest server mutation, and returns the exact stored result for duplicate
+mutation IDs. A stale edit returns `409 PROGRESS_CONFLICT`; the client fetches
+the current revision and records both the local and remote positions without
+timestamp-based selection. If durable conflict storage fails, the local queue
+entry is retained as a failed item for export or retry.
 
 ### Permission Revocation Detection
 
-- `syncItem()` returns `permission_revoked` on 401/403 or `revoked` in error message
-- Clears all cached permissions in IndexedDB
-- Calls `onPermissionRevoked` callback → UI shows access revoked message
-- Failing sync item is removed from queue (prevents stall)
+- `syncItem()` treats 401 as `session_expired` and 403 (or a `revoked` error
+  message) as `permission_revoked`.
+- Both clear cached permissions. A 401 pauses the drain and keeps queued work
+  for reauthentication; a 403 item remains queued as a terminal failure, and
+  later items continue.
+- `onPermissionRevoked` is called for permission-level revocation so the UI can
+  show the access change.
 
 ## Service Worker Lifecycle
 
@@ -216,7 +220,7 @@ File: `apps/web/src/sw.ts`
 Registered with tag `sync-reader-state`. On `sync` event:
 
 1. Dynamically imports `syncAll()` from `./lib/offline/sync`
-2. Processes queue FIFO
+2. Processes entries in creation order, respecting progress mutation dependencies.
 3. Logs traceId for every sync attempt (success/failure)
 
 ### Cache Invalidation

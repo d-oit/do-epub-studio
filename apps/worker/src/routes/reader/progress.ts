@@ -2,12 +2,12 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
-import { queryFirst, execute } from '../../db/client';
+import { queryFirst, transaction } from '../../db/client';
 import { ProgressUpdateSchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
 import { getRequestTraceId } from '../../lib/api-error';
-import { ForbiddenError } from '../../lib/http-errors';
+import { AppError, ForbiddenError } from '../../lib/http-errors';
 
 export const progressRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -19,6 +19,29 @@ interface ProgressRow {
   locator_json: string;
   progress_percent: number;
   updated_at: string;
+  revision: number;
+  mutation_id: string | null;
+}
+
+async function toProgressData(
+  env: Env,
+  row: ProgressRow,
+  bookId: string,
+  ctx: { waitUntil: (promise: Promise<unknown>) => void },
+) {
+  const locator = await parseLocatorRow(
+    env,
+    row.locator_json,
+    { entityType: 'progress', entityId: row.id, bookId },
+    ctx,
+  );
+  if (!locator) throw new Error('Failed to parse progress locator');
+  return {
+    locator,
+    progressPercent: row.progress_percent,
+    updatedAt: row.updated_at,
+    revision: row.revision,
+  };
 }
 
 progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
@@ -43,24 +66,13 @@ progressRouter.get('/:bookId/progress', readerAuth, async (c) => {
   if (!progress) {
     return c.json({
       ok: true,
-      data: { locator: null, progressPercent: 0 },
+      data: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
     });
   }
 
-  const locator = await parseLocatorRow(
-    c.env,
-    progress.locator_json,
-    { entityType: 'progress', entityId: progress.id, bookId },
-    c.executionCtx,
-  );
-
   return c.json({
     ok: true,
-    data: {
-      locator,
-      progressPercent: progress.progress_percent,
-      updatedAt: progress.updated_at,
-    },
+    data: await toProgressData(c.env, progress, bookId, c.executionCtx),
   });
 });
 
@@ -85,25 +97,110 @@ progressRouter.put(
     if (!auth.capabilities.canRead) {
       throw new ForbiddenError('Access denied');
     }
-
-    const locatorJson = JSON.stringify(body.locator);
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    await execute(
+    const replay = await queryFirst<ProgressRow>(
       c.env,
-      `INSERT INTO reading_progress (id, book_id, user_email, locator_json, progress_percent, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?)
-     ON CONFLICT(book_id, user_email) DO UPDATE SET
-       locator_json = excluded.locator_json,
-       progress_percent = excluded.progress_percent,
-       updated_at = excluded.updated_at`,
-      [id, bookId, auth.email, locatorJson, body.progressPercent, now],
+      `SELECT progress_id AS id, book_id, user_email, locator_json, progress_percent, updated_at, revision, mutation_id
+       FROM reading_progress_mutations
+       WHERE book_id = ? AND user_email = ? AND mutation_id = ?`,
+      [bookId, auth.email, body.mutationId],
+    );
+    if (replay) {
+      return c.json({
+        ok: true,
+        data: await toProgressData(c.env, replay, bookId, c.executionCtx),
+      });
+    }
+
+    const existing = await queryFirst<ProgressRow>(
+      c.env,
+      `SELECT * FROM reading_progress WHERE book_id = ? AND user_email = ?`,
+      [bookId, auth.email],
     );
 
-    return c.json({
-      ok: true,
-      data: { locator: body.locator, progressPercent: body.progressPercent, updatedAt: now },
-    });
+    if (existing?.mutation_id === body.mutationId) {
+      return c.json({
+        ok: true,
+        data: await toProgressData(c.env, existing, bookId, c.executionCtx),
+      });
+    }
+
+    const now = new Date().toISOString();
+    const recordMutationSql = `INSERT OR IGNORE INTO reading_progress_mutations
+      (mutation_id, book_id, user_email, progress_id, locator_json, progress_percent, updated_at, revision)
+      SELECT mutation_id, book_id, user_email, id, locator_json, progress_percent, updated_at, revision
+      FROM reading_progress
+      WHERE book_id = ? AND user_email = ? AND mutation_id = ?`;
+
+    if (existing) {
+      const followsLocalMutation =
+        body.dependsOnMutationId !== undefined &&
+        body.dependsOnMutationId === existing.mutation_id &&
+        existing.revision > body.baseRevision;
+      if (existing.revision !== body.baseRevision && !followsLocalMutation) {
+        throw new AppError('Reading progress changed on the server', 'PROGRESS_CONFLICT', 409);
+      }
+
+      await transaction(c.env, [
+        {
+          sql: `UPDATE reading_progress
+                SET locator_json = ?, progress_percent = ?, updated_at = ?, revision = revision + 1, mutation_id = ?
+                WHERE id = ? AND revision = ?`,
+          args: [
+            JSON.stringify(body.locator),
+            body.progressPercent,
+            now,
+            body.mutationId,
+            existing.id,
+            existing.revision,
+          ],
+        },
+        {
+          sql: recordMutationSql,
+          args: [bookId, auth.email, body.mutationId],
+        },
+      ]);
+    } else {
+      if (body.baseRevision !== 0 || body.dependsOnMutationId !== undefined) {
+        throw new AppError('Reading progress changed on the server', 'PROGRESS_CONFLICT', 409);
+      }
+
+      await transaction(c.env, [
+        {
+          sql: `INSERT INTO reading_progress
+                (id, book_id, user_email, locator_json, progress_percent, updated_at, revision, mutation_id)
+                VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+                ON CONFLICT(book_id, user_email) DO NOTHING`,
+          args: [
+            crypto.randomUUID(),
+            bookId,
+            auth.email,
+            JSON.stringify(body.locator),
+            body.progressPercent,
+            now,
+            body.mutationId,
+          ],
+        },
+        {
+          sql: recordMutationSql,
+          args: [bookId, auth.email, body.mutationId],
+        },
+      ]);
+    }
+
+    const applied = await queryFirst<ProgressRow>(
+      c.env,
+      `SELECT progress_id AS id, book_id, user_email, locator_json, progress_percent, updated_at, revision, mutation_id
+       FROM reading_progress_mutations
+       WHERE book_id = ? AND user_email = ? AND mutation_id = ?`,
+      [bookId, auth.email, body.mutationId],
+    );
+    if (applied) {
+      return c.json({
+        ok: true,
+        data: await toProgressData(c.env, applied, bookId, c.executionCtx),
+      });
+    }
+
+    throw new AppError('Reading progress changed on the server', 'PROGRESS_CONFLICT', 409);
   },
 );

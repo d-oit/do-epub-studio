@@ -2,8 +2,12 @@ import type { MutableRefObject } from 'react';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
 import { apiRequest } from '../../../lib/api';
-import { saveProgress, queueSync, generateMutationId } from '../../../lib/offline';
-import { useReaderStore } from '../../../stores';
+import { getProgress, saveProgress, queueSync, generateMutationId } from '../../../lib/offline';
+import type {
+  ProgressSyncPayload,
+  ProgressSyncResult,
+} from '../../../lib/offline/progress-conflict';
+import { useAuthStore, useReaderStore } from '../../../stores';
 
 /** Milliseconds to coalesce online progress PUTs (GOAP-224 B6). */
 export const PROGRESS_PUT_DEBOUNCE_MS = 500;
@@ -47,33 +51,81 @@ export function createRelocatedHandler(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pending: { cfi: string; progressPercent: number } | null = null;
 
-  const persist = async (payload: { cfi: string; progressPercent: number }): Promise<void> => {
-    const { cfi, progressPercent } = payload;
-    const mutationId = generateMutationId();
-    const queueOffline = async () => {
-      await saveProgress({
-        id: `${bookId}-progress`,
-        bookId,
-        cfi,
-        percentage: progressPercent,
-        lastRead: Date.now(),
-        synced: false,
-        mutationId,
-      });
-      await queueSync(
-        'progress',
-        { bookId, cfi, percentage: progressPercent, mutationId },
-        mutationId,
-      );
-    };
-
-    if (navigator.onLine) {
+  let writeChain: Promise<void> = Promise.resolve();
+  const persist = (payload: { cfi: string; progressPercent: number }): Promise<void> => {
+    const pendingSave = writeChain.then(async () => {
+      const { cfi, progressPercent } = payload;
+      const mutationId = generateMutationId();
+      let storedProgress;
       try {
-        await apiRequest(`/api/books/${bookId}/progress`, {
+        storedProgress = await getProgress(bookId);
+      } catch (error) {
+        const readError = error instanceof Error ? error : new Error(String(error));
+        logClientEvent({
+          level: 'warn',
+          event: 'reader.progress_local_read_failed',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          error: { name: readError.name, message: readError.message, stack: readError.stack },
+          metadata: { bookId },
+        });
+      }
+
+      const pendingProgress = storedProgress && !storedProgress.synced ? storedProgress : undefined;
+      const baseRevision =
+        pendingProgress?.baseRevision ?? useReaderStore.getState().progress.revision ?? 0;
+      const dependsOnMutationId = pendingProgress?.mutationId;
+      const queueOffline = async () => {
+        const queuePayload: ProgressSyncPayload = {
+          bookId,
+          cfi,
+          percentage: progressPercent,
+          mutationId,
+          baseRevision,
+          ...(dependsOnMutationId ? { dependsOnMutationId } : {}),
+        };
+        await saveProgress({
+          id: `${bookId}-progress`,
+          bookId,
+          cfi,
+          percentage: progressPercent,
+          lastRead: Date.now(),
+          synced: false,
+          mutationId,
+          baseRevision,
+        });
+        await queueSync('progress', queuePayload, mutationId);
+      };
+
+      if (!navigator.onLine || pendingProgress) {
+        await queueOffline();
+        return;
+      }
+
+      try {
+        const result = await apiRequest<ProgressSyncResult>(`/api/books/${bookId}/progress`, {
           method: 'PUT',
           token: sessionToken,
-          body: JSON.stringify({ locator: { cfi }, progressPercent, mutationId }),
+          body: JSON.stringify({
+            locator: { cfi },
+            progressPercent,
+            mutationId,
+            baseRevision,
+          }),
         });
+        const auth = useAuthStore.getState();
+        if (
+          Number.isSafeInteger(result.revision) &&
+          auth.sessionToken === sessionToken &&
+          auth.bookId === bookId
+        ) {
+          const currentProgress = useReaderStore.getState().progress;
+          setProgress({
+            ...currentProgress,
+            revision: result.revision,
+            updatedAt: result.updatedAt,
+          });
+        }
       } catch (e) {
         const saveError = e instanceof Error ? e : new Error(String(e));
         logClientEvent({
@@ -86,9 +138,9 @@ export function createRelocatedHandler(
         });
         await queueOffline();
       }
-    } else {
-      await queueOffline();
-    }
+    });
+    writeChain = pendingSave.catch(() => undefined);
+    return pendingSave;
   };
 
   const clearTimer = (): void => {
@@ -111,10 +163,16 @@ export function createRelocatedHandler(
     const { cfi, href, percentage } = location.start;
     // Store/server contract is 0–100; rendition fraction is 0–1. Without a
     // usable fraction, retain the current value instead of clobbering it.
-    const current = useReaderStore.getState().progress.progressPercent;
+    const currentProgress = useReaderStore.getState().progress;
+    const current = currentProgress.progressPercent;
     const progressPercent =
       typeof percentage === 'number' && Number.isFinite(percentage) ? percentage * 100 : current;
-    setProgress({ locator: { cfi }, progressPercent, updatedAt: new Date().toISOString() });
+    setProgress({
+      ...currentProgress,
+      locator: { cfi },
+      progressPercent,
+      updatedAt: new Date().toISOString(),
+    });
 
     const tocItem = tocItems.find((item) => item.href === href);
     if (tocItem) {

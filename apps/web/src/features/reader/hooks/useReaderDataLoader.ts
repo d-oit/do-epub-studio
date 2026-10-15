@@ -62,6 +62,7 @@ export function useReaderDataLoader({
               locator: { cfi: cachedProgress.cfi },
               progressPercent: cachedProgress.percentage,
               updatedAt: new Date(cachedProgress.lastRead).toISOString(),
+              revision: cachedProgress.baseRevision ?? 0,
             });
             source = 'offline';
           }
@@ -102,9 +103,10 @@ export function useReaderDataLoader({
 
       // Online: read local annotations to merge pending/failed records
       const localAnnotationsPromise = getAnnotations(currentBookId);
+      const localProgressPromise = getProgress(currentBookId).catch(() => undefined);
 
       try {
-        const [hl, cm, bm, pg, localAnnotations] = await Promise.all([
+        const [hl, cm, bm, pg, localAnnotations, localProgress] = await Promise.all([
           fetchHighlights(currentBookId, currentSessionToken),
           fetchComments(currentBookId, currentSessionToken),
           apiRequest<Bookmark[]>(`/api/books/${currentBookId}/bookmarks`, {
@@ -112,6 +114,7 @@ export function useReaderDataLoader({
           }),
           fetchProgress(currentBookId, currentSessionToken),
           localAnnotationsPromise.catch(() => []),
+          localProgressPromise,
         ]);
 
         if (isCancelled || currentGen !== generationRef.current) return;
@@ -159,7 +162,16 @@ export function useReaderDataLoader({
         setHighlights(mergedHighlights);
         setComments(mergedComments);
         setBookmarks(bm);
-        setProgress(pg);
+        setProgress(
+          localProgress && !localProgress.synced
+            ? {
+                locator: { cfi: localProgress.cfi },
+                progressPercent: localProgress.percentage,
+                updatedAt: new Date(localProgress.lastRead).toISOString(),
+                revision: localProgress.baseRevision ?? pg.revision ?? 0,
+              }
+            : pg,
+        );
         source = 'server';
       } catch (err) {
         const error = err instanceof Error ? err : new Error(String(err));
@@ -197,6 +209,7 @@ export function useReaderDataLoader({
               locator: { cfi: cachedProgress.cfi },
               progressPercent: cachedProgress.percentage,
               updatedAt: new Date(cachedProgress.lastRead).toISOString(),
+              revision: cachedProgress.baseRevision ?? 0,
             });
             source = 'offline';
           }

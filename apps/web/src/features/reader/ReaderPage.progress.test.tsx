@@ -34,7 +34,7 @@ vi.mock('../../lib/client-logger', () => ({
 vi.mock('../../lib/offline', () => ({
   setupOnlineListener: vi.fn(() => () => {}),
   getSyncQueue: vi.fn(() => Promise.resolve([])),
-  getProgress: vi.fn(),
+  getProgress: vi.fn().mockResolvedValue(undefined),
   getAnnotations: vi.fn(() => Promise.resolve([])),
   subscribeAnnotationChanges: vi.fn(() => () => {}),
 }));

@@ -107,6 +107,8 @@ describe('API Validation Integration', () => {
       new Request('http://localhost/api/books/test-book/progress', {
         method: 'PUT',
         body: JSON.stringify({
+          mutationId: '00000000-0000-4000-8000-000000000001',
+          baseRevision: 0,
           locator: { cfi: 'cfi', selectedText: 'text', chapterRef: 'chap1' },
           progressPercent: 150,
         }), // Invalid percent (> 100)

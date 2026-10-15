@@ -78,6 +78,7 @@ describe('useReaderDataLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getAnnotations).mockResolvedValue([]);
+    vi.mocked(getProgress).mockResolvedValue(undefined);
   });
 
   it('does nothing when sessionToken is null', () => {

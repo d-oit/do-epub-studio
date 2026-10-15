@@ -90,6 +90,8 @@ describe('MultiSignalLocatorSchema', () => {
 describe('ProgressUpdateSchema', () => {
   it('accepts valid progress with multi-signal locator', () => {
     const result = ProgressUpdateSchema.safeParse({
+      mutationId: '00000000-0000-4000-8000-000000000001',
+      baseRevision: 0,
       locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: 50,
     });
@@ -98,6 +100,8 @@ describe('ProgressUpdateSchema', () => {
 
   it('accepts progress with cfi-only locator (partial fields allowed)', () => {
     const result = ProgressUpdateSchema.safeParse({
+      mutationId: '00000000-0000-4000-8000-000000000001',
+      baseRevision: 0,
       locator: { cfi: 'epubcfi(/6/4)' },
       progressPercent: 50,
     });
@@ -106,6 +110,8 @@ describe('ProgressUpdateSchema', () => {
 
   it('rejects progressPercent below 0', () => {
     const result = ProgressUpdateSchema.safeParse({
+      mutationId: '00000000-0000-4000-8000-000000000001',
+      baseRevision: 0,
       locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: -1,
     });
@@ -114,6 +120,8 @@ describe('ProgressUpdateSchema', () => {
 
   it('rejects progressPercent above 100', () => {
     const result = ProgressUpdateSchema.safeParse({
+      mutationId: '00000000-0000-4000-8000-000000000001',
+      baseRevision: 0,
       locator: { cfi: 'epubcfi(/6/4)', selectedText: 'text', chapterRef: 'ch1' },
       progressPercent: 101,
     });

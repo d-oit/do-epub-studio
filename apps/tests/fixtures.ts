@@ -204,7 +204,12 @@ export const LOGIN_RESPONSE = {
 
 export const PROGRESS_RESPONSE = {
   ok: true,
-  data: { locator: { cfi: 'epubcfi(/6/4)' }, progressPercent: 0.1 },
+  data: {
+    locator: { cfi: 'epubcfi(/6/4)' },
+    progressPercent: 0.1,
+    updatedAt: '2025-01-01T00:00:00Z',
+    revision: 1,
+  },
 };
 
 export const ADMIN_USER = {

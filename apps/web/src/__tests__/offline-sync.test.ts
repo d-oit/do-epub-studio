@@ -7,7 +7,7 @@ import {
   setPermissionRevokedCallback,
 } from '../lib/offline/sync';
 import * as db from '../lib/offline/db';
-import { api } from '../lib/api';
+import { api, apiRequest } from '../lib/api';
 
 // Mock the API
 vi.mock('../lib/api', () => ({
@@ -17,6 +17,7 @@ vi.mock('../lib/api', () => ({
     put: vi.fn(),
     delete: vi.fn(),
   },
+  apiRequest: vi.fn(),
 }));
 
 // Mock the database
@@ -162,7 +163,7 @@ describe('Offline Sync', () => {
       ]);
 
       // Mock API to return 403 (permission revoked)
-      vi.mocked(api.put).mockRejectedValueOnce({ status: 403, message: 'Permission revoked' });
+      vi.mocked(apiRequest).mockRejectedValueOnce({ status: 403, message: 'Permission revoked' });
 
       // Trigger sync - note: the callback will be invoked asynchronously
       await syncAll();
@@ -189,7 +190,7 @@ describe('Offline Sync', () => {
       };
 
       vi.mocked(db.getSyncQueue).mockResolvedValue([errorItem]);
-      vi.mocked(api.put).mockRejectedValueOnce(new Error('Network error'));
+      vi.mocked(apiRequest).mockRejectedValueOnce(new Error('Network error'));
 
       // Should not throw
       await expect(syncAll()).resolves.not.toThrow();
@@ -204,7 +205,7 @@ describe('Offline Sync', () => {
       );
     });
 
-    it('should stop retrying after max attempts', async () => {
+    it('keeps an exhausted item available for recovery without retrying it', async () => {
       vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
 
       const maxRetryItem = {
@@ -213,16 +214,22 @@ describe('Offline Sync', () => {
         payload: { bookId: 'book-1' },
         mutationId: 'mutation-1',
         createdAt: Date.now(),
-        attempts: 5, // Already at max
+        attempts: 5,
       };
 
       vi.mocked(db.getSyncQueue).mockResolvedValue([maxRetryItem]);
 
       await syncAll();
 
-      // Should remove item without attempting sync
-      expect(db.removeSyncQueueItem).toHaveBeenCalledWith('max-retry-item');
-      expect(api.put).not.toHaveBeenCalled();
+      expect(db.updateSyncQueueItem).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'max-retry-item',
+          attempts: 5,
+          permanentError: true,
+        }),
+      );
+      expect(db.removeSyncQueueItem).not.toHaveBeenCalledWith('max-retry-item');
+      expect(apiRequest).not.toHaveBeenCalled();
       expect(api.post).not.toHaveBeenCalled();
     });
   });

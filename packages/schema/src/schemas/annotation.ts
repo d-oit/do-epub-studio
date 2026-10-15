@@ -10,6 +10,9 @@ export const ProgressLocatorSchema = z.object({
 export type ProgressLocator = z.infer<typeof ProgressLocatorSchema>;
 
 export const ProgressUpdateSchema = z.object({
+  mutationId: z.string().uuid(),
+  baseRevision: z.number().int().nonnegative(),
+  dependsOnMutationId: z.string().uuid().optional(),
   locator: ProgressLocatorSchema,
   progressPercent: z.number().min(0).max(100),
 });
@@ -17,6 +20,7 @@ export const ProgressUpdateSchema = z.object({
 export type ProgressUpdate = z.infer<typeof ProgressUpdateSchema>;
 
 export const BookmarkCreateSchema = z.object({
+  mutationId: z.string().uuid().optional(),
   locator: MultiSignalLocatorSchema,
   label: z.string().max(255).optional(),
 });

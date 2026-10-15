@@ -28,6 +28,7 @@ export interface ReadingProgress {
   locator: AnnotationLocator | null;
   progressPercent: number;
   updatedAt: string | null;
+  revision?: number;
 }
 
 export interface Bookmark {
@@ -126,7 +127,7 @@ interface ReaderState {
 }
 
 const initialReaderState = {
-  progress: { locator: null, progressPercent: 0, updatedAt: null },
+  progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
   bookmarks: [],
   highlights: [],
   comments: [],

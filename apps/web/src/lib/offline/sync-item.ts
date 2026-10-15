@@ -6,8 +6,13 @@ import type { SyncQueueItem } from './db';
 import { saveProgress, getUnsyncedProgress } from './db';
 import { deleteFeedbackDraftByMutation } from './feedback-drafts';
 import { saveAnnotation, getUnsyncedAnnotations } from './annotation-mutations';
-import { syncProgress, handleProgressConflict, type SyncResult } from './progress-conflict';
 import { syncAnnotation, type AnnotationCreateResult } from './annotation-sync';
+import {
+  syncProgress,
+  handleProgressConflict,
+  type ProgressSyncResult,
+  type SyncResult,
+} from './progress-conflict';
 import { logClientEvent } from '../client-logger';
 
 export interface ReadingInsightSyncPayload {
@@ -55,6 +60,7 @@ export async function syncFeedback(item: SyncQueueItem): Promise<void> {
 
 export type ItemSyncResult = SyncResult & {
   annotation?: AnnotationCreateResult;
+  progress?: ProgressSyncResult;
   detail?: string;
   permanent?: boolean;
 };
@@ -66,8 +72,9 @@ export async function syncItem(
 ): Promise<ItemSyncResult> {
   try {
     let annotationResult: AnnotationCreateResult | undefined;
+    let progressResult: ProgressSyncResult | undefined;
     if (item.type === 'progress') {
-      await syncProgress(item);
+      progressResult = await syncProgress(item);
     } else if (item.type === 'annotation') {
       annotationResult = await syncAnnotation(item);
     } else if (item.type === 'reading-insight') {
@@ -82,7 +89,7 @@ export async function syncItem(
           : 'unknown';
       throw new Error(`Unrecognized sync queue item type: ${label}`);
     }
-    return { success: true, annotation: annotationResult };
+    return { success: true, annotation: annotationResult, progress: progressResult };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown sync error';
     const status = (error as { status?: number }).status;
@@ -109,15 +116,17 @@ export async function syncItem(
       return { success: false, error: 'feedback_blocked', detail: message };
     }
 
-    if (status === 401 || status === 403) {
-      return { success: false, error: 'permission_revoked' };
+    if (status === 401) {
+      return { success: false, error: 'session_expired', detail: message };
     }
-
+    if (status === 403) {
+      return { success: false, error: 'permission_revoked', detail: message };
+    }
     if (status && status >= 400 && status < 500 && status !== 409 && status !== 429) {
       return { success: false, error: message, permanent: true };
     }
     if (message.includes('revoked')) {
-      return { success: false, error: 'permission_revoked' };
+      return { success: false, error: 'permission_revoked', detail: message };
     }
 
     if (status === 409 && item.type === 'progress') {
@@ -140,12 +149,17 @@ export async function syncItem(
 export async function markAsSynced(
   type: 'progress' | 'annotation' | 'reading-insight' | 'feedback',
   mutationId: string,
+  progressResult?: ProgressSyncResult,
 ): Promise<void> {
   if (type === 'progress') {
     const unsynced = await getUnsyncedProgress();
     const entry = unsynced.find((e) => e.mutationId === mutationId);
     if (entry) {
-      await saveProgress({ ...entry, synced: true });
+      await saveProgress({
+        ...entry,
+        synced: true,
+        baseRevision: progressResult?.revision ?? entry.baseRevision,
+      });
     }
   } else if (type === 'annotation') {
     const unsynced = await getUnsyncedAnnotations();

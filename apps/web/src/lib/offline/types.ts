@@ -12,6 +12,7 @@ export interface ProgressEntry {
   lastRead: number;
   synced: boolean;
   mutationId: string;
+  baseRevision?: number;
 }
 
 export interface AnnotationEntry {

@@ -19,6 +19,7 @@ describe('progress API', () => {
         locator: { cfi: 'cfi-123' },
         progressPercent: 45.5,
         updatedAt: '2024-01-15T10:00:00Z',
+        revision: 8,
       };
       mockApiRequest.mockResolvedValue(mockResponse);
 
@@ -28,6 +29,7 @@ describe('progress API', () => {
         locator: { cfi: 'cfi-123' },
         progressPercent: 45.5,
         updatedAt: '2024-01-15T10:00:00Z',
+        revision: 8,
       });
       expect(mockApiRequest).toHaveBeenCalledWith('/api/books/book-1/progress', {
         method: 'GET',
@@ -40,6 +42,7 @@ describe('progress API', () => {
         locator: null,
         progressPercent: 0,
         updatedAt: undefined,
+        revision: 0,
       };
       mockApiRequest.mockResolvedValue(mockResponse);
 
@@ -49,6 +52,7 @@ describe('progress API', () => {
         locator: null,
         progressPercent: 0,
         updatedAt: null,
+        revision: 0,
       });
     });
 

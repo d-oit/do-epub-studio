@@ -201,7 +201,7 @@ describe('Reader Annotations Offline (A1)', () => {
     expect(canonical[0]?.synced).toBe(true);
   });
 
-  it('replay 403: produces a durable failed local item retaining text/anchor and removes queue item', async () => {
+  it('replay 403: retains a terminal queue item with the failed annotation content', async () => {
     Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
 
     const { result: cmHandlers } = renderHook(() => useCommentHandlers());
@@ -224,7 +224,18 @@ describe('Reader Annotations Offline (A1)', () => {
     });
 
     const queue = await getSyncQueue();
-    expect(queue).toHaveLength(0);
+    expect(queue).toHaveLength(1);
+    expect(queue[0]).toMatchObject({
+      permanentError: true,
+      error: 'Access denied',
+      payload: {
+        annotation: {
+          cfi: FIXTURE_SELECTION.cfiRange,
+          text: FIXTURE_SELECTION.text,
+          comment: 'Comment to be rejected',
+        },
+      },
+    });
 
     const storeComments = useReaderStore.getState().comments;
     expect(storeComments).toHaveLength(1);

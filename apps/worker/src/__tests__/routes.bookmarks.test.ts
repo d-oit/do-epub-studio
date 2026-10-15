@@ -3,6 +3,7 @@ import {
   makeEnv,
   makePassThroughContext,
   mockQueryAll,
+  mockQueryFirst,
   mockExecute,
   mockRequireAuth,
 } from './fixtures';
@@ -93,13 +94,25 @@ describe('Bookmark Routes', () => {
   describe('POST /api/books/:bookId/bookmarks', () => {
     it('creates bookmark and returns 201', async () => {
       mockRequireAuth.mockResolvedValue(authCtx);
-      mockExecute.mockResolvedValue({});
+      mockQueryFirst.mockResolvedValueOnce({
+        id: 'bookmark-id',
+        book_id: 'book-1',
+        user_email: 'user@example.com',
+        locator_json: JSON.stringify({
+          cfi: 'epubcfi(/6/8)',
+          selectedText: 'test',
+          chapterRef: 'chapter1.xhtml',
+        }),
+        label: 'My Bookmark',
+        created_at: '2026-10-14T00:00:00.000Z',
+      });
 
       const res = await app.fetch(
         new Request('http://localhost/api/books/book-1/bookmarks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
           body: JSON.stringify({
+            mutationId: '11111111-1111-4111-8111-111111111111',
             locator: { cfi: 'epubcfi(/6/8)', selectedText: 'test', chapterRef: 'chapter1.xhtml' },
             label: 'My Bookmark',
           }),

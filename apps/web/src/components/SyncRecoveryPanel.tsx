@@ -3,7 +3,7 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../stores/auth';
 import type { SyncQueueItem } from '../lib/offline/db';
 
-// The authenticated shell loads offline storage only after the user opens recovery UI.
+// Load offline storage only after the reader opens the recovery UI.
 interface SyncRecoveryPanelProps {
   pendingCount: number;
 }

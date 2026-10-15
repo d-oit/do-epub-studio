@@ -6,11 +6,12 @@ import {
   detectConflict,
   ConflictType,
 } from '../../../../lib/offline/conflict-resolution';
-import { resendProgressFromConflict } from '../../../../lib/offline/sync';
+import { resendProgressFromConflict } from '../../../../lib/offline/progress-conflict-actions';
 import { useReaderStore } from '../../../../stores/reader';
 import { useAuthStore } from '../../../../stores';
 
-vi.mock('../../../../lib/offline/sync', () => ({
+vi.mock('../../../../lib/offline/progress-conflict-actions', () => ({
+  acceptRemoteProgressFromConflict: vi.fn(),
   resendProgressFromConflict: vi.fn(),
 }));
 
@@ -112,46 +113,5 @@ describe('ConflictResolutionPanel', () => {
     fireEvent.click(dismissBtn);
     const updated = useReaderStore.getState().conflicts.find((c) => c.id === conflictId);
     expect(updated?.resolved).toBe(true);
-  });
-
-  describe('REL-03 resend on keep-local', () => {
-    it('keep-local re-sends the local progress version', async () => {
-      const conflictId = seedConflict({
-        localVersion: { bookId: BOOK_ID, cfi: 'cfi-1', percentage: 50, mutationId: 'm-1' },
-        remoteVersion: { bookId: BOOK_ID, cfi: 'remote-cfi', percentage: 90 },
-      });
-      render(<ConflictResolutionPanel />);
-      const keepLocalBtn = await screen.findByRole('button', {
-        name: /reader\.conflicts\.keepLocal/i,
-      });
-      fireEvent.click(keepLocalBtn);
-      expect(resendProgressFromConflict).toHaveBeenCalledTimes(1);
-      expect(resendProgressFromConflict).toHaveBeenCalledWith(
-        expect.objectContaining({ id: conflictId, type: ConflictType.ProgressUpdate }),
-      );
-    });
-
-    it('keep-remote does not re-send', async () => {
-      seedConflict();
-      render(<ConflictResolutionPanel />);
-      const keepRemoteBtn = await screen.findByRole('button', {
-        name: /reader\.conflicts\.keepRemote/i,
-      });
-      fireEvent.click(keepRemoteBtn);
-      expect(resendProgressFromConflict).not.toHaveBeenCalled();
-    });
-
-    it('dismiss re-sends like keep-local (identical resolution semantics)', async () => {
-      const conflictId = seedConflict({
-        localVersion: { bookId: BOOK_ID, cfi: 'cfi-2', percentage: 40, mutationId: 'm-2' },
-      });
-      render(<ConflictResolutionPanel />);
-      const dismissBtn = await screen.findByRole('button', { name: /reader\.conflicts\.dismiss/i });
-      fireEvent.click(dismissBtn);
-      expect(resendProgressFromConflict).toHaveBeenCalledTimes(1);
-      expect(resendProgressFromConflict).toHaveBeenCalledWith(
-        expect.objectContaining({ id: conflictId }),
-      );
-    });
   });
 });

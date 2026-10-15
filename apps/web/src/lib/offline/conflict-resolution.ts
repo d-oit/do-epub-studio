@@ -31,11 +31,14 @@ const MANUAL_CONFLICT_THRESHOLD_MS = 5_000;
 // followed by a clear cannot race, and failures degrade to a logged warning
 // (the in-memory session keeps working).
 let hydrationPromise: Promise<void> | null = null;
-let writeChain: Promise<void> = Promise.resolve();
+let writeChain: Promise<boolean> = Promise.resolve(true);
 
-function writeThrough(): Promise<void> {
+function writeThrough(): Promise<boolean> {
   writeChain = writeChain
-    .then(() => saveConflicts([...pendingConflicts.values()]))
+    .then(async () => {
+      await saveConflicts([...pendingConflicts.values()]);
+      return true;
+    })
     .catch((err) => {
       logClientEvent({
         level: 'warn',
@@ -44,12 +47,13 @@ function writeThrough(): Promise<void> {
         event: 'conflict.persist.failed',
         metadata: { errorMessage: err instanceof Error ? err.message : String(err) },
       });
+      return false;
     });
   return writeChain;
 }
 
-/** Test/smoke seam: await all queued writes have settled (deterministic asserts). */
-export function flushConflictWrites(): Promise<void> {
+/** Await queued conflict writes and report whether the durable mirror was saved. */
+export function flushConflictWrites(): Promise<boolean> {
   return writeChain;
 }
 
@@ -83,6 +87,46 @@ export function __clearConflictCache(): void {
   hydrationPromise = null;
 }
 
+export function recordConflict(
+  type: ConflictType,
+  localVersion: unknown,
+  remoteVersion: unknown,
+  localTimestamp: number,
+  remoteTimestamp: number,
+  bookId: string,
+  entityId: string,
+): ConflictRecord {
+  const conflict: ConflictRecord = {
+    id: uuidv4(),
+    type,
+    localVersion,
+    remoteVersion,
+    localTimestamp,
+    remoteTimestamp,
+    resolved: false,
+    resolution: null,
+    resolvedAt: null,
+    bookId,
+    entityId,
+    createdAt: Date.now(),
+  };
+  pendingConflicts.set(conflict.id, conflict);
+  logClientEvent({
+    level: 'warn',
+    traceId: createTraceId(),
+    spanId: createSpanId(),
+    event: 'conflict.detected',
+    metadata: {
+      conflictId: conflict.id,
+      type,
+      bookId,
+      entityId,
+    },
+  });
+  void writeThrough();
+  return conflict;
+}
+
 export function detectConflict(
   type: ConflictType,
   localVersion: unknown,
@@ -92,38 +136,16 @@ export function detectConflict(
   bookId: string,
   entityId: string,
 ): ConflictRecord | null {
-  if (localTimestamp === remoteTimestamp) {
-    const conflict: ConflictRecord = {
-      id: uuidv4(),
-      type,
-      localVersion,
-      remoteVersion,
-      localTimestamp,
-      remoteTimestamp,
-      resolved: false,
-      resolution: null,
-      resolvedAt: null,
-      bookId,
-      entityId,
-      createdAt: Date.now(),
-    };
-    pendingConflicts.set(conflict.id, conflict);
-    logClientEvent({
-      level: 'warn',
-      traceId: createTraceId(),
-      spanId: createSpanId(),
-      event: 'conflict.detected',
-      metadata: {
-        conflictId: conflict.id,
-        type,
-        bookId,
-        entityId,
-      },
-    });
-    void writeThrough();
-    return conflict;
-  }
-  return null;
+  if (localTimestamp !== remoteTimestamp) return null;
+  return recordConflict(
+    type,
+    localVersion,
+    remoteVersion,
+    localTimestamp,
+    remoteTimestamp,
+    bookId,
+    entityId,
+  );
 }
 
 export function resolveWithLWW(

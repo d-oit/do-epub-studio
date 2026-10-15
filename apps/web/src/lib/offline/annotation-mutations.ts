@@ -176,7 +176,13 @@ export async function failAnnotationCreation(
     syncError: detail,
   };
 
+  const failedQueueItem: SyncQueueItem = {
+    ...item,
+    error: detail,
+    permanentError: true,
+  };
   const encryptedEntry = await encryptEntry(failedEntry, ANNOTATION_PLAINTEXT);
+  const encryptedQueueItem = await encryptEntry(failedQueueItem, SYNC_QUEUE_PLAINTEXT);
 
   assertCurrentSession(sessionToken);
 
@@ -184,7 +190,7 @@ export async function failAnnotationCreation(
   const tx = db.transaction(['annotations', 'syncQueue'], 'readwrite');
   await Promise.all([
     tx.objectStore('annotations').put(encryptedEntry),
-    tx.objectStore('syncQueue').delete(item.id),
+    tx.objectStore('syncQueue').put(encryptedQueueItem),
   ]);
   await tx.done;
 

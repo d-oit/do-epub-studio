@@ -1,5 +1,5 @@
-import { api, apiRequest } from '../api';
-import { resolveConflict, ConflictType } from './conflict-resolution';
+import { apiRequest } from '../api';
+import { recordConflict, ConflictType, flushConflictWrites } from './conflict-resolution';
 import type { SyncQueueItem } from './db';
 import { logClientEvent } from '../client-logger';
 
@@ -18,42 +18,50 @@ export interface ProgressSyncPayload {
   cfi: string;
   percentage: number;
   mutationId: string;
+  baseRevision?: number;
+  dependsOnMutationId?: string;
+}
+
+export interface ProgressSyncResult {
+  revision: number;
+  updatedAt: string;
+}
+
+export interface RemoteProgressVersion {
+  bookId: string;
+  cfi: string;
+  percentage: number;
+  revision: number;
+  updatedAt: string | null;
 }
 
 /** Remote progress shape returned by GET /api/books/:bookId/progress. */
 interface RemoteProgressResponse {
   locator?: unknown;
   progressPercent?: number;
-  updatedAt?: string;
+  updatedAt?: string | null;
+  revision?: number;
 }
 
 /** Write one queued progress mutation to the reader progress API. */
-export async function syncProgress(item: SyncQueueItem): Promise<void> {
+export async function syncProgress(item: SyncQueueItem): Promise<ProgressSyncResult> {
   const payload = item.payload as ProgressSyncPayload;
-  await api.put(`/api/books/${payload.bookId}/progress`, {
-    locator: {
-      cfi: payload.cfi,
-    },
-    progressPercent: payload.percentage,
-    mutationId: payload.mutationId,
+  return apiRequest<ProgressSyncResult>(`/api/books/${payload.bookId}/progress`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      locator: { cfi: payload.cfi },
+      progressPercent: payload.percentage,
+      mutationId: item.mutationId,
+      baseRevision: payload.baseRevision ?? 0,
+      ...(payload.dependsOnMutationId ? { dependsOnMutationId: payload.dependsOnMutationId } : {}),
+    }),
   });
 }
 
 /**
- * Resolve a 409 on a progress PUT by fetching the ACTUAL remote progress so
- * the conflict reflects real server state instead of a fabricated copy of the
- * local payload (REL-03, GOAP-999).
- *
- * Outcome mapping:
- * - remote fetch fails (non-401): `conflict_remote_unavailable` — the caller
- *   retains pending state (no fabrication, no retry-cap count, no removal).
- * - remote fetch fails with 401: rethrown so the caller keeps the normal
- *   permission-revocation handling.
- * - LWW resolves with local winner: success (server state is superseded by
- *   the caller's next write semantics — the queue item is acknowledged).
- * - remote wins or manual resolution needed: `conflict_requires_manual_
- *   resolution` — the conflict record keeps both real versions durably for
- *   the user-choice UI.
+ * Resolve a progress 409 by reading and durably preserving both exact versions.
+ * Revision conflicts always require a user choice; timestamps never decide
+ * which position wins.
  */
 export async function handleProgressConflict(
   item: SyncQueueItem,
@@ -66,15 +74,14 @@ export async function handleProgressConflict(
   try {
     remoteData = await apiRequest<RemoteProgressResponse>(`/api/books/${payload.bookId}/progress`);
   } catch (remoteError) {
-    // 401 keeps the normal permission-revocation handling in the outer
-    // switch instead of being swallowed as "remote unavailable".
-    if ((remoteError as { status?: number }).status === 401) {
+    if (
+      typeof remoteError === 'object' &&
+      remoteError !== null &&
+      'status' in remoteError &&
+      remoteError.status === 401
+    ) {
       throw remoteError;
     }
-    // Unavailable remote fetch retains pending state: do NOT fabricate a
-    // conflict and do NOT remove the queue item — it is retried on the next
-    // natural sync trigger (online event, next queueSync, SW sync request)
-    // and never counts toward the retry cap.
     logClientEvent({
       level: 'warn',
       traceId,
@@ -89,21 +96,46 @@ export async function handleProgressConflict(
     return { success: false, error: 'conflict_remote_unavailable' };
   }
 
-  const remoteLocator = remoteData?.locator as { cfi?: unknown } | null | undefined;
-  // Shape mirrors ProgressSyncPayload minus mutationId: the server's GET
-  // progress does not return one.
-  const remoteVersion: Omit<ProgressSyncPayload, 'mutationId'> = {
-    bookId: payload.bookId,
-    cfi: typeof remoteLocator?.cfi === 'string' ? remoteLocator.cfi : '',
-    percentage: typeof remoteData?.progressPercent === 'number' ? remoteData.progressPercent : 0,
-  };
-  const parsedRemoteTs = remoteData?.updatedAt ? Date.parse(remoteData.updatedAt) : NaN;
-  // Unusable remote timestamp: keep equal timestamps (forces the manual
-  // resolution path with the existing user-choice semantics) but pair it
-  // with the REAL remote version content instead of a fabricated copy.
-  const remoteTimestamp = Number.isFinite(parsedRemoteTs) ? parsedRemoteTs : item.createdAt;
+  const remoteRevision = remoteData?.revision;
+  const remotePercentage = remoteData?.progressPercent;
+  if (
+    typeof remoteRevision !== 'number' ||
+    !Number.isInteger(remoteRevision) ||
+    remoteRevision < 0 ||
+    typeof remotePercentage !== 'number' ||
+    !Number.isFinite(remotePercentage) ||
+    remotePercentage < 0 ||
+    remotePercentage > 100
+  ) {
+    logClientEvent({
+      level: 'warn',
+      traceId,
+      spanId,
+      event: 'sync.item.conflict_remote_unavailable',
+      metadata: { itemId: item.id, type: item.type, reason: 'invalid_remote_progress' },
+    });
+    return { success: false, error: 'conflict_remote_unavailable' };
+  }
 
-  const resolution = resolveConflict(
+  const locator = remoteData.locator;
+  const remoteCfi =
+    typeof locator === 'object' &&
+    locator !== null &&
+    'cfi' in locator &&
+    typeof locator.cfi === 'string'
+      ? locator.cfi
+      : '';
+  const remoteTimestampValue = remoteData.updatedAt ? Date.parse(remoteData.updatedAt) : NaN;
+  const remoteTimestamp = Number.isFinite(remoteTimestampValue) ? remoteTimestampValue : 0;
+  const remoteVersion: RemoteProgressVersion = {
+    bookId: payload.bookId,
+    cfi: remoteCfi,
+    percentage: remotePercentage,
+    revision: remoteRevision,
+    updatedAt: remoteData.updatedAt ?? null,
+  };
+
+  const conflict = recordConflict(
     ConflictType.ProgressUpdate,
     item.payload,
     remoteVersion,
@@ -112,6 +144,16 @@ export async function handleProgressConflict(
     payload.bookId,
     payload.bookId,
   );
+  if (!(await flushConflictWrites())) {
+    logClientEvent({
+      level: 'error',
+      traceId,
+      spanId,
+      event: 'sync.item.conflict_persist_failed',
+      metadata: { itemId: item.id, type: item.type },
+    });
+    return { success: false, error: 'conflict_persist_failed' };
+  }
 
   logClientEvent({
     level: 'warn',
@@ -121,19 +163,12 @@ export async function handleProgressConflict(
     metadata: {
       itemId: item.id,
       type: item.type,
-      resolved: resolution.resolved,
-      strategy: resolution.strategy,
-      winner: resolution.winner,
+      conflictId: conflict.id,
+      resolved: false,
+      strategy: 'manual',
       remoteFetched: true,
     },
   });
 
-  if (resolution.resolved && resolution.winner === 'local') {
-    // Local wins LWW — sync is successful, no need to re-send
-    return { success: true };
-  }
-
-  // Remote wins (server state supersedes the local write) or manual
-  // resolution needed — the conflict record keeps both versions durably.
   return { success: false, error: 'conflict_requires_manual_resolution' };
 }
