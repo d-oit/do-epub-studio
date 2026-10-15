@@ -59,7 +59,10 @@ const config: KnipConfig = {
       // never imported by app source (GOAP-252). Declared as an entry (not
       // `ignore`) so knip traces its imports into apps/worker sources
       // (e.g. lib/register-argon2-wasm.ts) instead of flagging them unused.
-      entry: ['functions/api/\\[\\[path\\]\\].ts'],
+      entry: [
+        'functions/api/\\[\\[path\\]\\].ts',
+        'src/features/reader/lib/search/search.worker.ts',
+      ],
     },
 
     // ---- apps/worker -----------------------------------------------------

@@ -80,6 +80,19 @@ export interface BookFileEntry {
   cachedAt: number;
 }
 
+export interface ChapterIndexDoc {
+  chapterRef: string;
+  chapterTitle?: string;
+  content: string;
+  cfiMap?: Array<{ offset: number; cfi: string }>;
+}
+
+export interface BookSearchIndexEntry {
+  bookId: string;
+  chapters: ChapterIndexDoc[];
+  updatedAt: number;
+}
+
 /**
  * Offline conflict categories (value + type merged). Kept as a value/type pair
  * (not an enum) so `db.ts` can type the conflicts store without importing the

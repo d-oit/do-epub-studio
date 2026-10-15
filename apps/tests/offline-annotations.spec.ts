@@ -57,7 +57,7 @@ type StoredOfflineDatabase = {
 
 async function readOfflineDatabase(page: Page): Promise<StoredOfflineDatabase> {
   return page.evaluate(async () => {
-    const request = indexedDB.open('do-epub-studio', 5);
+    const request = indexedDB.open('do-epub-studio', 6);
     return new Promise<StoredOfflineDatabase>((resolve, reject) => {
       request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
       request.onsuccess = () => {

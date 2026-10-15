@@ -55,7 +55,10 @@ export const SearchQuerySchema = z.object({
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
 
 export const ExportQuerySchema = z.object({
-  format: z.enum(['markdown', 'html']).default('markdown'),
+  format: z.enum(['markdown', 'html', 'jsonld', 'csv', 'json']).default('markdown'),
+  reviewer: z.string().trim().optional(),
+  tag: z.string().trim().optional(),
+  status: z.enum(['open', 'resolved', 'all']).default('all'),
 });
 
 export type ExportQuery = z.infer<typeof ExportQuerySchema>;

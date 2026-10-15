@@ -3,6 +3,7 @@ import { encryptJSON, decryptJSON } from './crypto';
 import { useAuthStore } from '@/stores/auth';
 import type {
   BookFileEntry,
+  BookSearchIndexEntry,
   ConflictRecord,
   PermissionCache,
   ProgressEntry,
@@ -15,7 +16,7 @@ import type {
 export * from './types';
 
 const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 let dbInstance: IDBPDatabase | null = null;
 let tokenOverride: string | null = null;
@@ -93,6 +94,7 @@ export const SYNC_QUEUE_PLAINTEXT = ['id', 'createdAt'] as const;
 const READING_INSIGHT_PLAINTEXT = ['bookId', 'date'] as const;
 const PERMISSION_PLAINTEXT = ['bookId'] as const;
 const BOOK_FILE_PLAINTEXT = ['bookId', 'cachedAt'] as const;
+const SEARCH_INDEX_PLAINTEXT = ['bookId', 'updatedAt'] as const;
 const CONFLICT_PLAINTEXT = [
   'id',
   'bookId',
@@ -179,10 +181,31 @@ export async function getDB(): Promise<IDBPDatabase> {
           db.createObjectStore('bookFiles', { keyPath: 'bookId' });
         }
       }
+
+      // v5→v6: offline search index store for tokenized chapter search
+      if (oldVersion < 6) {
+        if (!db.objectStoreNames.contains('searchIndexes')) {
+          db.createObjectStore('searchIndexes', { keyPath: 'bookId' });
+        }
+      }
     },
   });
 
   return dbInstance;
+}
+
+export async function saveSearchIndex(entry: BookSearchIndexEntry): Promise<void> {
+  const db = await getDB();
+  const stored = await encryptEntry(entry, SEARCH_INDEX_PLAINTEXT);
+  await db.put('searchIndexes', stored);
+}
+
+export async function getSearchIndex(bookId: string): Promise<BookSearchIndexEntry | undefined> {
+  const db = await getDB();
+  const stored = (await db.get('searchIndexes', bookId)) as Record<string, unknown> | undefined;
+  if (!stored) return undefined;
+  const entry = await decryptEntry<BookSearchIndexEntry>(stored, SEARCH_INDEX_PLAINTEXT);
+  return entry ?? undefined;
 }
 
 export async function saveProgress(entry: ProgressEntry): Promise<void> {
