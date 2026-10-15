@@ -62,7 +62,6 @@ describe('reanchorByText', () => {
       loadContent,
     );
     expect(result.success).toBe(true);
-    // Match type depends on exact match being found or not
     expect(result.matchType).toBeDefined();
   });
 
@@ -78,6 +77,23 @@ describe('reanchorByText', () => {
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('fuzzy');
     expect(result.fallback).toBe(true);
+  });
+
+  it('prioritizes exact match in chapter 2 over fuzzy match in chapter 1', async () => {
+    const loadContent = vi.fn((href: string) => {
+      if (href === 'chapter1.xhtml') {
+        return Promise.resolve('This chapter has important concepts key ideas about topic.');
+      }
+      if (href === 'chapter2.xhtml') {
+        return Promise.resolve('This chapter contains the exact quote target text here.');
+      }
+      return Promise.resolve('Other text');
+    });
+
+    const result = await reanchorByText('exact quote target text', mockToc, loadContent);
+    expect(result.success).toBe(true);
+    expect(result.matchType).toBe('exact');
+    expect(result.chapterHref).toBe('chapter2.xhtml');
   });
 
   it('searches subitems when parent not found', async () => {
@@ -187,7 +203,6 @@ describe('findBestChapterMatch', () => {
       chapterHref: 'nonexistent.xhtml',
     };
     const result = findBestChapterMatch(locator, mockToc);
-    // Returns first toc item as fallback when href not found
     expect(result?.label).toBe('Chapter 1');
   });
 
@@ -259,37 +274,29 @@ describe('performance-optimized logic correctness', () => {
 
   it('reanchorByText handles matching after literal space splitting optimization', async () => {
     const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
-    // Check exact match
     const resultExact = await reanchorByText('quick brown fox', mockToc, loadContent);
     expect(resultExact.success).toBe(true);
     expect(resultExact.matchType).toBe('exact');
 
-    // Check fuzzy match (needs >70% overlap by default)
-    // Words >= 4 chars: "quick" (match), "brown" (match), "jumps" (match), "lazy" (no)
-    // 3/4 = 75% > 70%
     const resultFuzzy = await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
     expect(resultFuzzy.success).toBe(true);
     expect(resultFuzzy.matchType).toBe('fuzzy');
   });
 
   it('reanchorByText reuses cached state between Pass 1 and Pass 2', async () => {
-    const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
+    const loadContent = vi
+      .fn()
+      .mockResolvedValue('The chapter discusses important concepts and key ideas.');
 
-    // Fuzzy match only (no exact/partial match)
-    // Pass 1 will check all chapters and cache them.
-    // Pass 2 will use the cache.
-    await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
+    // Searching for text that only matches on Pass 2 (fuzzy word overlap)
+    await reanchorByText('important concepts key ideas discussion topic', mockToc, loadContent);
 
-    // 4 unique base HREFs in uniqueHrefs: chapter1, chapter2, chapter3, section3a
-    // Wait, getCachedData strips # fragment but section3a.xhtml and chapter3.xhtml are different files
-    // in this mockToc. So 4 calls is correct for this specific mock setup.
+    // 4 unique chapter bases in mockToc loaded in Pass 1 and reused in Pass 2 without extra calls
     expect(loadContent).toHaveBeenCalledTimes(4);
   });
 
   it('reanchorByText correctly identifies words for fuzzy match', async () => {
     const loadContent = vi.fn().mockResolvedValue('Optimization is great for performance.');
-    // words are length >= 4
-    // "optimization", "great", "performance"
     const result = await reanchorByText('optimization performance', mockToc, loadContent, {
       fuzzyThreshold: 0.5,
     });
@@ -301,10 +308,6 @@ describe('performance-optimized logic correctness', () => {
     const loadContent = vi
       .fn()
       .mockResolvedValue('Literary content often has beautiful repetition.');
-    // Target text has repeated/shuffled words with no long consecutive matching segment >= 20 chars
-    // Shuffled words: "repetition content beautiful content literary repetition beautiful"
-    // Matched/deduplicated unique words: "repetition", "content", "beautiful", "literary"
-    // Deduplication prevents artificial matching inflation on duplicate words.
     const result = await reanchorByText(
       'repetition content beautiful content literary repetition beautiful',
       mockToc,

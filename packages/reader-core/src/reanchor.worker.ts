@@ -1,11 +1,16 @@
 /// <reference lib="WebWorker" />
 
-interface TocItem {
-  id: string;
-  label: string;
-  href: string;
-  subitems?: TocItem[];
-}
+import type { TocItem } from './epub-types';
+import {
+  ExactCfiStrategy,
+  TextPositionStrategy,
+  ExactAndPartialQuoteStrategy,
+  FuzzyWordOverlapStrategy,
+  type ReanchorStrategy,
+  type StrategyContext,
+  type AnnotationAnchor,
+  type CachedChapter,
+} from './reanchor-strategies';
 
 interface ReanchorResult {
   success: boolean;
@@ -24,6 +29,7 @@ interface ReanchorRequest {
   chapterContents: Record<string, string>;
   fuzzyThreshold?: number;
   preferChapter?: string;
+  anchor?: AnnotationAnchor;
 }
 
 interface ResultMessage {
@@ -32,38 +38,23 @@ interface ResultMessage {
   result: ReanchorResult;
 }
 
-function normalizeText(text: string, isAlreadyLower = false): string {
-  return (isAlreadyLower ? text : text.toLowerCase())
-    .replace(/[^\p{L}\p{N}\s]+/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+const pass1Strategies: ReanchorStrategy[] = [
+  new ExactCfiStrategy(),
+  new TextPositionStrategy(),
+  new ExactAndPartialQuoteStrategy(),
+];
 
-function findPartialMatches(
-  normalizedTarget: string,
-  normalizedContent: string,
-  minLength = 20,
-): { match: string; position: number } | null {
-  if (normalizedTarget.length < minLength) return null;
-
-  for (let len = normalizedTarget.length; len >= minLength; len -= 5) {
-    for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
-      const segment = normalizedTarget.slice(i, i + len);
-      const pos = normalizedContent.indexOf(segment);
-      if (pos !== -1) {
-        return { match: segment, position: pos };
-      }
-    }
-  }
-
-  return null;
-}
+const pass2Strategies: ReanchorStrategy[] = [new FuzzyWordOverlapStrategy()];
 
 function performReanchor(
   targetText: string,
   toc: TocItem[],
   chapterContents: Record<string, string>,
-  options: { fuzzyThreshold?: number; preferChapter?: string } = {},
+  options: {
+    fuzzyThreshold?: number;
+    preferChapter?: string;
+    anchor?: AnnotationAnchor;
+  } = {},
 ): ReanchorResult {
   const { preferChapter } = options;
 
@@ -71,38 +62,15 @@ function performReanchor(
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
   }
 
-  const normalizedTargetLower = targetText.toLowerCase();
-  const normalizedTargetGeneral = normalizeText(targetText);
-  const matchedWords = normalizedTargetGeneral.match(/[\p{L}\p{N}]{4,}/gu) || [];
-  const words = [...new Set(matchedWords)];
-
-  const cache = new Map<
-    string,
-    { lower: string; general: string | undefined; wordSet: Set<string> | undefined }
-  >();
-
-  function getCachedData(href: string) {
-    const base = href.split('#')[0] ?? '';
-    const cached = cache.get(base);
-    if (cached) return cached;
-
-    const content = chapterContents[base];
-    if (!content) return null;
-
-    const result: { lower: string; general: string | undefined; wordSet: Set<string> | undefined } =
-      {
-        lower: content.toLowerCase(),
-        general: undefined,
-        wordSet: undefined,
-      };
-    cache.set(base, result);
-    return result;
-  }
+  const anchor: AnnotationAnchor = options.anchor ?? {
+    selectedText: targetText,
+    chapterRef: preferChapter,
+  };
 
   const baseToHref = new Map<string, string>();
   const collectHrefs = (items: TocItem[]) => {
     for (const item of items) {
-      const base = item.href.split('#')[0] ?? '';
+      const base = item.href.split('#')[0] ?? item.href;
       if (!baseToHref.has(base)) {
         baseToHref.set(base, item.href);
       }
@@ -112,7 +80,6 @@ function performReanchor(
   collectHrefs(toc);
 
   const basePrefer = preferChapter?.split('#')[0];
-
   let uniqueHrefs: string[];
   if (basePrefer) {
     const primary: string[] = [];
@@ -129,68 +96,58 @@ function performReanchor(
     uniqueHrefs = [...baseToHref.values()];
   }
 
-  // Pass 1: Exact and Partial matches
+  const cache = new Map<string, CachedChapter>();
+  function getCachedData(base: string): CachedChapter | null {
+    const cached = cache.get(base);
+    if (cached) return cached;
+    const content = chapterContents[base];
+    if (!content) return null;
+    const result: CachedChapter = {
+      content,
+      lower: content.toLowerCase(),
+    };
+    cache.set(base, result);
+    return result;
+  }
+
+  // Pass 1: High-precision matches across ALL candidate chapters
   for (const href of uniqueHrefs) {
-    const cached = getCachedData(href);
+    const base = href.split('#')[0] ?? href;
+    const cached = getCachedData(base);
     if (!cached) continue;
 
-    const exactIndex = cached.lower.indexOf(normalizedTargetLower);
-    if (exactIndex !== -1) {
-      return {
-        success: true,
-        chapterHref: href,
-        fallback: false,
-        matchType: 'exact',
-      };
-    }
+    const ctx: StrategyContext = {
+      anchor,
+      chapterHref: href,
+      cached,
+      fuzzyThreshold: options.fuzzyThreshold,
+    };
 
-    if (cached.general === undefined) {
-      cached.general = normalizeText(cached.lower, true);
-    }
-
-    const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
-    if (partial) {
-      return {
-        success: true,
-        chapterHref: href,
-        fallback: false,
-        matchType: 'partial',
-        message: `Partial match found at position ${partial.position}`,
-      };
+    for (const strategy of pass1Strategies) {
+      const result = strategy.execute(ctx);
+      if (result) {
+        return result;
+      }
     }
   }
 
-  // Pass 2: Fuzzy word overlap
-  const threshold = options.fuzzyThreshold ?? 0.7;
-  const targetMatchCount = Math.ceil(words.length * threshold);
+  // Pass 2: Lower-precision fallback matches across ALL candidate chapters
+  for (const href of uniqueHrefs) {
+    const base = href.split('#')[0] ?? href;
+    const cached = getCachedData(base);
+    if (!cached) continue;
 
-  if (words.length > 0) {
-    for (const href of uniqueHrefs) {
-      const cached = getCachedData(href);
-      if (!cached) continue;
+    const ctx: StrategyContext = {
+      anchor,
+      chapterHref: href,
+      cached,
+      fuzzyThreshold: options.fuzzyThreshold,
+    };
 
-      if (cached.wordSet === undefined) {
-        cached.wordSet = new Set(cached.lower.match(/[\p{L}\p{N}]{4,}/gu) || []);
-      }
-
-      let matchCount = 0;
-      const { wordSet } = cached;
-      for (const [i, word] of words.entries()) {
-        if (wordSet.has(word)) {
-          matchCount++;
-          if (matchCount >= targetMatchCount) {
-            return {
-              success: true,
-              chapterHref: href,
-              fallback: true,
-              matchType: 'fuzzy',
-              message: 'Fuzzy match based on word overlap',
-            };
-          }
-        }
-        if (matchCount + (words.length - 1 - i) < targetMatchCount) {
-          break;
-        }
+    for (const strategy of pass2Strategies) {
+      const result = strategy.execute(ctx);
+      if (result) {
+        return result;
       }
     }
   }
@@ -209,6 +166,7 @@ self.onmessage = (event: MessageEvent<ReanchorRequest>) => {
     const result = performReanchor(data.targetText, data.toc, data.chapterContents, {
       fuzzyThreshold: data.fuzzyThreshold,
       preferChapter: data.preferChapter,
+      anchor: data.anchor,
     });
 
     const msg: ResultMessage = {
