@@ -1,34 +1,16 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import type { RequestContext } from '../lib/observability';
-import {
-  validateGrant,
-  computeCapabilities,
-  getGrantByBookAndSession,
-  getGrantsBySession,
-} from '../auth/password';
-import { resolveRecoveryGrant } from '../auth/recovery-grant';
-import { createSession, validateSession, revokeSession } from '../auth/session';
-import {
-  createResetToken,
-  verifyResetToken,
-  bumpResetTokenAttempt,
-  claimResetToken,
-  purgeExpiredTokensForAccount,
-} from '../auth/reset';
-import { logAudit } from '../audit';
-import { logRiskEvent, RISK_EVENTS } from '../audit/risk';
 import {
   AccessRequestSchema,
   RecoveryRequestSchema,
   RecoveryVerifySchema,
 } from '@do-epub-studio/shared';
 import { ValidateQuerySchema } from '@do-epub-studio/schema';
-import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
-import { queryFirst } from '../db/client';
-import { createEmailTransport } from '../lib/email-transport';
 import { apiError } from '../lib/api-error';
+import { AccessGrantService } from '../services/access-grant.service';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 
 function getClientIp(c: { req: { header(name: string): string | undefined } }): string {
   return (
@@ -38,9 +20,18 @@ function getClientIp(c: { req: { header(name: string): string | undefined } }): 
   );
 }
 
-async function hashString(value: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+function serviceError(
+  c: Context,
+  result: { status?: number; error?: string; message?: string; headers?: Record<string, string> },
+  defaultStatus = 400,
+) {
+  return apiError(
+    c,
+    (result.status ?? defaultStatus) as ContentfulStatusCode,
+    result.error ?? 'BAD_REQUEST',
+    result.message ?? 'Error',
+    result.headers,
+  );
 }
 
 export const accessRouter = new Hono<{
@@ -50,454 +41,77 @@ export const accessRouter = new Hono<{
 
 accessRouter.post('/recovery-request', zValidator('json', RecoveryRequestSchema), async (c) => {
   const { bookSlug, email } = c.req.valid('json');
-  if (!bookSlug) {
-    return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
-  }
-  const emailKey = email.toLowerCase();
-  const traceId = c.get('requestContext').traceId;
-  // Pure-IP hash: the per-IP rate-limit key must not be salted by the target
-  // email or it becomes per-IP-per-account and defeats the per-IP cap.
-  const ipHash = await hashString(getClientIp(c));
+  if (!bookSlug) return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
 
-  // Rate limit by email (max 3 per 5 min) + by IP to bound abuse (ADR-232).
-  const accountRate = await checkRateLimitDO(c.env, 'auth_recovery', emailKey, {
-    maxRequests: 3,
-    windowMs: 300_000,
-  });
-  const ipRate = await checkRateLimitDO(c.env, 'auth_recovery_ip', ipHash, {
-    maxRequests: 10,
-    windowMs: 300_000,
+  const result = await AccessGrantService.requestRecovery({
+    env: c.env,
+    bookSlug,
+    email,
+    clientIp: getClientIp(c),
+    requestContext: c.get('requestContext'),
+    executionCtx: c.executionCtx,
   });
 
-  if (!accountRate.allowed || !ipRate.allowed) {
-    return apiError(
-      c,
-      429,
-      'TOO_MANY_REQUESTS',
-      'Too many recovery attempts. Please try again later.',
-    );
-  }
-
-  const book = await queryFirst<{ id: string; slug: string }>(
-    c.env,
-    'SELECT id, slug FROM books WHERE slug = ?',
-    [bookSlug],
-  );
-
-  if (book) {
-    const grant = await getGrantByBookAndSession(c.env, book.id, emailKey);
-
-    if (
-      grant &&
-      !grant.revoked_at &&
-      (!grant.expires_at || new Date(grant.expires_at) > new Date())
-    ) {
-      await purgeExpiredTokensForAccount(c.env, { email: emailKey });
-
-      const token = await createResetToken(c.env, {
-        purpose: 'reader_magic_link',
-        email: emailKey,
-        ipHash,
-        traceId,
-        bookId: book.id,
-      });
-      const recoveryUrl = `${c.env.APP_BASE_URL}/login?book=${bookSlug}&token=${token}`;
-
-      const transport = createEmailTransport(c.env);
-      // Fire-and-forget: don't let the response latency reveal account existence
-      // (CWE-204 timing side channel); the send still always happens for eligible users.
-      c.executionCtx.waitUntil(
-        transport.send({
-          to: emailKey,
-          subject: 'Recover access to your book',
-          text: `Click the link to recover access (valid for 30 minutes): ${recoveryUrl}`,
-          html: `<p>Click <a href="${recoveryUrl}">here</a> to recover access to your book. This link expires in 30 minutes.</p>`,
-          context: c.get('requestContext'),
-        }),
-      );
-
-      await logAudit(
-        c.env,
-        {
-          entityType: 'session',
-          entityId: book.id,
-          action: 'recovery_requested',
-          actorEmail: emailKey,
-          payload: { ipHash },
-        },
-        c.executionCtx,
-      );
-    }
-  }
-
-  // Always return success to prevent user enumeration
-  return c.json({ ok: true });
+  return result.ok ? c.json({ ok: true }) : serviceError(c, result, 400);
 });
 
 accessRouter.post('/verify-recovery', zValidator('json', RecoveryVerifySchema), async (c) => {
   const { token } = c.req.valid('json');
-  const traceId = c.get('requestContext').traceId;
 
-  // Per-IP rate limit on the verify path (ADR-232 parity with admin reset).
-  const ipVerifyRate = await checkRateLimitDO(
-    c.env,
-    'auth_recovery_verify_ip',
-    await hashString(getClientIp(c)),
-    {
-      maxRequests: 10,
-      windowMs: 300_000,
-    },
-  );
-  if (!ipVerifyRate.allowed) {
-    return apiError(
-      c,
-      429,
-      'TOO_MANY_REQUESTS',
-      'Too many recovery attempts. Please try again later.',
-    );
-  }
-
-  const verify = await verifyResetToken(c.env, token, 'reader_magic_link');
-
-  if (!verify.ok) {
-    const reason = verify.reason;
-    await logAudit(
-      c.env,
-      {
-        entityType: 'session',
-        entityId: 'unknown',
-        action: 'recovery_denied',
-        payload: { reason: reason === 'used' ? 'replay' : reason, traceId },
-      },
-      c.executionCtx,
-    );
-    // Replaying an already-consumed reader magic link (ADR-234 item 7).
-    if (verify.reason === 'used') {
-      await logRiskEvent(c.env, c.executionCtx, {
-        kind: RISK_EVENTS.tokenReplay,
-        entityId: 'unknown',
-        entityType: 'user',
-        payload: { kind: 'password_reset', account: 'unknown' },
-      });
-    }
-    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
-  }
-
-  await bumpResetTokenAttempt(c.env, verify.record.id);
-
-  const grantedEmail = verify.record.email;
-  if (!grantedEmail) {
-    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
-  }
-
-  // Reader magic links bind to a specific book; the resolution helper owns the
-  // lookup so the route only maps its outcome to an audit entry and a response.
-  const recovery = await resolveRecoveryGrant(c.env, grantedEmail, verify.record.bookId);
-  if (!recovery.ok) {
-    await logAudit(
-      c.env,
-      {
-        entityType: 'session',
-        entityId: recovery.entityId,
-        action: 'recovery_denied',
-        payload: { reason: recovery.reason, traceId },
-      },
-      c.executionCtx,
-    );
-    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
-  }
-  const { grant: activeGrant, targetBookId } = recovery.resolution;
-
-  // Single-use: claim the token BEFORE issuing a session so concurrent requests
-  // with the same captured link cannot mint multiple sessions (CWE-362).
-  const claimed = await claimResetToken(c.env, verify.record.id);
-  if (!claimed) {
-    await logAudit(
-      c.env,
-      {
-        entityType: 'session',
-        entityId: grantedEmail,
-        action: 'recovery_denied',
-        payload: { reason: 'replay', traceId },
-      },
-      c.executionCtx,
-    );
-    // Concurrent single-use claim lost -> token reuse (ADR-234 item 7).
-    await logRiskEvent(c.env, c.executionCtx, {
-      kind: RISK_EVENTS.tokenReplay,
-      entityId: grantedEmail,
-      entityType: 'user',
-      payload: { kind: 'password_reset', account: grantedEmail },
-    });
-    return apiError(c, 401, 'INVALID_TOKEN', 'Invalid or expired recovery link');
-  }
-
-  const book = await queryFirst<{
-    id: string;
-    slug: string;
-    title: string;
-    author_name: string | null;
-    visibility: string;
-    cover_image_url: string | null;
-  }>(
-    c.env,
-    `SELECT id, slug, title, author_name, visibility, cover_image_url FROM books WHERE id = ?`,
-    [targetBookId],
-  );
-
-  if (!book) {
-    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
-  }
-
-  const session = await createSession(c.env, book.id, grantedEmail);
-
-  await logAudit(
-    c.env,
-    {
-      entityType: 'session',
-      entityId: book.id,
-      action: 'access_granted',
-      actorEmail: grantedEmail,
-      payload: { grantId: activeGrant.id, method: 'magic_link' },
-    },
-    c.executionCtx,
-  );
-
-  return c.json({
-    ok: true,
-    data: {
-      sessionToken: session.token,
-      expiresAt: session.expiresAt,
-      book: {
-        id: book.id,
-        slug: book.slug,
-        title: book.title,
-        authorName: book.author_name,
-        visibility: book.visibility,
-        coverImageUrl: book.cover_image_url,
-      },
-      capabilities: computeCapabilities(activeGrant),
-    },
+  const result = await AccessGrantService.verifyRecovery({
+    env: c.env,
+    token,
+    clientIp: getClientIp(c),
+    requestContext: c.get('requestContext'),
+    executionCtx: c.executionCtx,
   });
+
+  return result.ok ? c.json({ ok: true, data: result.data }) : serviceError(c, result, 401);
 });
 
 accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c) => {
   const { bookSlug, email, password } = c.req.valid('json');
-  if (!bookSlug) {
-    return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
-  }
-  const emailKey = email.toLowerCase();
+  if (!bookSlug) return apiError(c, 400, 'MISSING_BOOK', 'Book slug is required');
 
-  // Rate limit by email to prevent brute-force attacks (max 5 requests per minute)
-  const rateLimit = await checkRateLimitDO(c.env, 'auth_access', emailKey, {
-    maxRequests: 5,
-    windowMs: 60_000,
+  const result = await AccessGrantService.requestAccess({
+    env: c.env,
+    bookSlug,
+    email,
+    password,
+    clientIp: getClientIp(c),
+    executionCtx: c.executionCtx,
   });
 
-  if (!rateLimit.allowed) {
-    return apiError(
-      c,
-      429,
-      'TOO_MANY_REQUESTS',
-      'Too many login attempts. Please try again later.',
-    );
-  }
-
-  // Check account lockout (triggered after 5 consecutive failures; lasts 15 minutes)
-  const lockoutCheck = await checkRateLimitDO(c.env, 'auth_lockout', emailKey, {
-    maxRequests: 1,
-    windowMs: 900_000,
-  });
-
-  if (!lockoutCheck.allowed) {
-    // Observational lockout risk event (ADR-234 item 7): emit when the account
-    // lockout path fires (423 ACCOUNT_LOCKED). Lockout semantics unchanged.
-    await logRiskEvent(c.env, c.executionCtx, {
-      kind: RISK_EVENTS.loginLocked,
-      entityId: emailKey,
-      entityType: 'user',
-      payload: { account: emailKey, ipHash: await hashString(getClientIp(c)) },
-    });
-    const retryAfter = Math.ceil((lockoutCheck.resetAt - Date.now()) / 1000);
-    return apiError(
-      c,
-      423,
-      'ACCOUNT_LOCKED',
-      'Account temporarily locked due to repeated failed login attempts. Please try again later.',
-      { 'Retry-After': String(retryAfter) },
-    );
-  }
-
-  const result = await validateGrant(c.env, bookSlug, emailKey, password);
-
-  if (!result.valid || !result.grant || !result.book) {
-    await logAudit(
-      c.env,
-      {
-        entityType: 'session',
-        entityId: bookSlug,
-        action: 'access_denied',
-        actorEmail: emailKey,
-        payload: { reason: result.error },
-      },
-      c.executionCtx,
-    );
-
-    // Track consecutive failures; lock the account when the 5th failure occurs
-    const failureCheck = await checkRateLimitDO(c.env, 'auth_failures', emailKey, {
-      maxRequests: 5,
-      windowMs: 900_000,
-    });
-    if (!failureCheck.allowed) {
-      // 5th (or more) failure — write the lockout entry so the next attempt is blocked
-      await checkRateLimitDO(c.env, 'auth_lockout', emailKey, {
-        maxRequests: 1,
-        windowMs: 900_000,
-      });
-    }
-
-    return apiError(c, 401, 'ACCESS_DENIED', 'Access denied');
-  }
-
-  // Successful login — clear failure counter and any lingering lockout
-  await Promise.all([
-    deleteRateLimitKey(c.env, 'auth_failures', emailKey),
-    deleteRateLimitKey(c.env, 'auth_lockout', emailKey),
-  ]);
-
-  const session = await createSession(c.env, result.book.id, emailKey);
-
-  await logAudit(
-    c.env,
-    {
-      entityType: 'session',
-      entityId: result.book.id,
-      action: 'access_granted',
-      actorEmail: emailKey,
-      payload: { grantId: result.grant.id },
-    },
-    c.executionCtx,
-  );
-
-  return c.json({
-    ok: true,
-    data: {
-      sessionToken: session.token,
-      expiresAt: session.expiresAt,
-      book: {
-        id: result.book.id,
-        slug: result.book.slug,
-        title: result.book.title,
-        authorName: result.book.author_name,
-        visibility: result.book.visibility,
-        coverImageUrl: result.book.cover_image_url,
-      },
-      capabilities: computeCapabilities(result.grant),
-    },
-  });
+  return result.ok ? c.json({ ok: true, data: result.data }) : serviceError(c, result, 401);
 });
 
 accessRouter.post('/logout', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
-
-  await revokeSession(c.env, token);
-
-  return c.json({ ok: true });
+  return c.json(await AccessGrantService.logout(c.env, token));
 });
 
 accessRouter.post('/refresh', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
+  const result = await AccessGrantService.refreshSession(c.env, token);
 
-  const result = await validateSession(c.env, token);
-
-  if (!result.valid || !result.session) {
-    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
-  }
-
-  if (!result.bookId) {
-    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
-  }
-
-  // Security: Verify the grant is still valid before refreshing
-  const grant = await getGrantByBookAndSession(c.env, result.bookId, result.session.email);
-  if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
-    return apiError(c, 403, 'ACCESS_DENIED', 'Access has been revoked or expired');
-  }
-
-  const newSession = await createSession(c.env, result.bookId, result.session.email);
-
-  // Security: Implement token rotation by revoking the old session token
-  await revokeSession(c.env, token);
-
-  return c.json({
-    ok: true,
-    data: { sessionToken: newSession.token, expiresAt: newSession.expiresAt },
-  });
+  return result.ok ? c.json({ ok: true, data: result.data }) : serviceError(c, result, 401);
 });
 
 accessRouter.get('/validate', zValidator('query', ValidateQuerySchema), async (c) => {
   const { bookId } = c.req.valid('query');
-
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
+  const result = await AccessGrantService.validateBookAccess(c.env, token, bookId);
 
-  const sessionResult = await validateSession(c.env, token);
-
-  if (!sessionResult.valid || !sessionResult.session) {
-    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
-  }
-
-  const grant = await getGrantByBookAndSession(c.env, bookId, sessionResult.session.email);
-
-  if (!grant || grant.revoked_at || (grant.expires_at && new Date(grant.expires_at) < new Date())) {
-    return c.json({
-      ok: true,
-      data: {
-        valid: false,
-        grantId: '',
-        canComment: false,
-        canDownloadOffline: false,
-      },
-    });
-  }
-
-  return c.json({
-    ok: true,
-    data: {
-      valid: true,
-      grantId: grant.id,
-      canComment: grant.comments_allowed === 1,
-      canDownloadOffline: grant.offline_allowed === 1,
-    },
-  });
+  return result.ok ? c.json({ ok: true, data: result.data }) : serviceError(c, result, 401);
 });
 
 accessRouter.get('/validate-all', async (c) => {
   const authHeader = c.req.header('Authorization');
   const token = authHeader?.replace('Bearer ', '') ?? '';
+  const result = await AccessGrantService.validateAllAccess(c.env, token);
 
-  const sessionResult = await validateSession(c.env, token);
-
-  if (!sessionResult.valid || !sessionResult.session) {
-    return apiError(c, 401, 'SESSION_INVALID', 'Invalid session');
-  }
-
-  const grants = await getGrantsBySession(c.env, sessionResult.session.email);
-
-  const now = new Date();
-  const validGrantIds = grants
-    .filter((g) => !g.revoked_at && (!g.expires_at || new Date(g.expires_at) > now))
-    .map((g) => g.id);
-
-  return c.json({
-    ok: true,
-    data: {
-      grantIds: validGrantIds,
-      revokedBookIds: grants
-        .filter((g) => g.revoked_at || (g.expires_at && new Date(g.expires_at) <= now))
-        .map((g) => g.book_id),
-    },
-  });
+  return result.ok ? c.json({ ok: true, data: result.data }) : serviceError(c, result, 401);
 });
