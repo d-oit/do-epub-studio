@@ -1,6 +1,5 @@
 {
   "apps/web/src/features/reader/ReaderPage.tsx": 530,
   "apps/worker/src/auth/admin-middleware.ts": 516,
-  "apps/worker/src/routes/creator.ts": 1061,
-  "packages/reader-core/src/sanitizer.ts": 981
+  "apps/worker/src/routes/creator.ts": 1061
 }

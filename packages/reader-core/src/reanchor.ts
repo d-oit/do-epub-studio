@@ -1,56 +1,30 @@
 import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
 import { checkDeadline, createDeadline } from '@do-epub-studio/shared';
+import {
+  TextPositionStrategy,
+  ExactAndPartialQuoteStrategy,
+  FuzzyWordOverlapStrategy,
+  normalizeText,
+  type ReanchorStrategy,
+  type StrategyContext,
+  type AnnotationAnchor,
+  type CachedChapter,
+  type SharedTargetState,
+  type ReanchorResult,
+} from './reanchor-strategies';
 
-const TARGET_TEXT_MAX_LEN = 1024 * 1024;
-const CHAPTER_CONTENT_MAX_LEN = 4 * 1024 * 1024;
 const REANCHOR_TIMEOUT_MS = 15_000;
 
-export interface ReanchorResult {
-  success: boolean;
-  cfi?: string;
-  chapterHref?: string;
-  fallback: boolean;
-  matchType?: 'exact' | 'fuzzy' | 'partial';
-  message?: string;
-}
+export type { AnnotationAnchor, ReanchorResult };
+export { normalizeText };
 
-export interface AnnotationAnchor {
-  cfi?: string;
-  selectedText: string;
-  chapterRef?: string;
-}
+const defaultPass1Strategies: ReanchorStrategy[] = [
+  new TextPositionStrategy(),
+  new ExactAndPartialQuoteStrategy(),
+];
 
-export function normalizeText(text: string, isAlreadyLower = false): string {
-  return (isAlreadyLower ? text : text.toLowerCase())
-    .replace(/[^\p{L}\p{N}\s]+/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function findPartialMatches(
-  normalizedTarget: string,
-  normalizedContent: string,
-  minLength = 20,
-): { match: string; position: number } | null {
-  if (normalizedTarget.length < minLength || normalizedContent.length < minLength) return null;
-
-  for (
-    let len = Math.min(normalizedTarget.length, normalizedContent.length);
-    len >= minLength;
-    len -= 5
-  ) {
-    for (let i = 0; i <= normalizedTarget.length - len; i += Math.max(1, Math.floor(len / 4))) {
-      const segment = normalizedTarget.slice(i, i + len);
-      const pos = normalizedContent.indexOf(segment);
-      if (pos !== -1) {
-        return { match: segment, position: pos };
-      }
-    }
-  }
-
-  return null;
-}
+const defaultPass2Strategies: ReanchorStrategy[] = [new FuzzyWordOverlapStrategy()];
 
 export async function reanchorByText(
   targetText: string,
@@ -61,6 +35,9 @@ export async function reanchorByText(
     preferChapter?: string;
     timeoutMs?: number;
     traceId?: string;
+    anchor?: AnnotationAnchor;
+    pass1Strategies?: ReanchorStrategy[];
+    pass2Strategies?: ReanchorStrategy[];
   } = {},
 ): Promise<ReanchorResult> {
   const { preferChapter } = options;
@@ -72,185 +49,94 @@ export async function reanchorByText(
     return { success: false, fallback: true, message: 'Text too short for reanchoring' };
   }
 
-  const normalizedTargetLower = targetText.toLowerCase();
-  let normalizedTargetGeneral: string | undefined;
-  let words: string[] | undefined;
+  const anchor: AnnotationAnchor = options.anchor ?? {
+    selectedText: targetText,
+    chapterRef: preferChapter,
+  };
 
-  interface CachedChapter {
-    lower: string;
-    general?: string;
-    wordSet?: Set<string>;
-  }
   const cache = new Map<string, CachedChapter>();
 
   async function getCachedData(href: string): Promise<CachedChapter> {
-    const hashIdx = href.indexOf('#');
-    const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
+    const base = href.split('#')[0] ?? href;
     const cached = cache.get(base);
     if (cached) return cached;
 
     const content = await loadChapterContent(base);
     const result: CachedChapter = {
+      content,
       lower: content.toLowerCase(),
     };
     cache.set(base, result);
     return result;
   }
 
-  const baseToHref = new Map<string, string>();
-  // Use iterative stack-based traversal to avoid recursion overhead
-  const stack: TocItem[] = [];
-  for (const item of [...toc].reverse()) {
-    stack.push(item);
-  }
+  const uniqueHrefs = getUniqueHrefsFromToc(toc, preferChapter);
+  const pass1 = options.pass1Strategies ?? defaultPass1Strategies;
+  const pass2 = options.pass2Strategies ?? defaultPass2Strategies;
 
-  while (stack.length > 0) {
-    const item = stack.pop();
-    if (!item) continue;
+  const sharedTargetState: SharedTargetState = {};
 
-    const href = item.href;
-    const hashIdx = href.indexOf('#');
-    const base = hashIdx === -1 ? href : href.substring(0, hashIdx);
-    if (!baseToHref.has(base)) {
-      baseToHref.set(base, href);
-    }
-
-    if (item.subitems) {
-      for (const sub of [...item.subitems].reverse()) {
-        stack.push(sub);
-      }
-    }
-  }
-
-  let basePrefer: string | undefined;
-  if (preferChapter) {
-    const hashIdx = preferChapter.indexOf('#');
-    basePrefer = hashIdx === -1 ? preferChapter : preferChapter.substring(0, hashIdx);
-  }
-
-  let uniqueHrefs: string[];
-  if (basePrefer) {
-    const primary: string[] = [];
-    const secondary: string[] = [];
-    for (const [base, href] of baseToHref) {
-      if (base === basePrefer) {
-        primary.push(href);
-      } else {
-        secondary.push(href);
-      }
-    }
-    uniqueHrefs = [...primary, ...secondary];
-  } else {
-    uniqueHrefs = Array.from(baseToHref.values());
-  }
-
-  // Pass 1: Exact and Partial matches
+  // Pass 1: High-precision matches (Exact CFI, Text Position, Exact/Partial Quote) across ALL candidate chapters
+  const pass1Results: ReanchorResult[] = [];
+  const ambiguousPass1: ReanchorResult[] = [];
   for (const href of uniqueHrefs) {
     checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
     try {
       const cached = await getCachedData(href);
+      const ctx: StrategyContext = {
+        anchor,
+        chapterHref: href,
+        cached,
+        fuzzyThreshold: options.fuzzyThreshold,
+        sharedTargetState,
+      };
 
-      const exactIndex = cached.lower.indexOf(normalizedTargetLower);
-      if (exactIndex !== -1) {
-        return {
-          success: true,
-          chapterHref: href,
-          fallback: false,
-          matchType: 'exact',
-        };
-      }
-
-      if (cached.general === undefined) {
-        cached.general = normalizeText(cached.lower, true);
-      }
-
-      if (normalizedTargetGeneral === undefined) {
-        normalizedTargetGeneral = normalizeText(targetText);
-      }
-
-      const partial = findPartialMatches(normalizedTargetGeneral, cached.general);
-      if (partial) {
-        return {
-          success: true,
-          chapterHref: href,
-          fallback: false,
-          matchType: 'partial',
-          message: `Partial match found at position ${partial.position}`,
-        };
+      for (const strategy of pass1) {
+        const result = strategy.execute(ctx);
+        if (!result) continue;
+        if (result.success) pass1Results.push(result);
+        else if (result.ambiguous) ambiguousPass1.push(result);
+        break;
       }
     } catch {
       continue;
     }
   }
 
-  // Pass 2: Fuzzy word overlap
-  if (words === undefined) {
-    if (normalizedTargetGeneral === undefined) {
-      normalizedTargetGeneral = normalizeText(targetText);
-    }
-    const targetToProcess =
-      normalizedTargetGeneral.length <= TARGET_TEXT_MAX_LEN
-        ? normalizedTargetGeneral
-        : normalizedTargetGeneral.slice(0, TARGET_TEXT_MAX_LEN);
-    // Use exec() streaming loop to populate Set directly without allocating intermediate match arrays
-    const wordSet = new Set<string>();
-    const wordRegex = /[\p{L}\p{N}]{4,}/gu;
-    let match: RegExpExecArray | null;
-    while ((match = wordRegex.exec(targetToProcess)) !== null) {
-      wordSet.add(match[0]);
-    }
-    words = Array.from(wordSet);
-  }
+  const preciseMatch = chooseBestCandidate(pass1Results);
+  if (preciseMatch) return preciseMatch;
+  const firstPassAmbiguous = ambiguousPass1[0];
+  if (firstPassAmbiguous) return firstPassAmbiguous;
 
-  const threshold = options.fuzzyThreshold ?? 0.7;
-  const targetMatchCount = Math.ceil(words.length * threshold);
+  const pass2Results: ReanchorResult[] = [];
+  for (const href of uniqueHrefs) {
+    checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
+    try {
+      const cached = await getCachedData(href);
+      const ctx: StrategyContext = {
+        anchor,
+        chapterHref: href,
+        cached,
+        fuzzyThreshold: options.fuzzyThreshold,
+        sharedTargetState,
+      };
 
-  if (words.length > 0) {
-    for (const href of uniqueHrefs) {
-      checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
-      try {
-        const cached = await getCachedData(href);
-        if (cached.wordSet === undefined) {
-          const wordSet = new Set<string>();
-          const contentToProcess =
-            cached.lower.length <= CHAPTER_CONTENT_MAX_LEN
-              ? cached.lower
-              : cached.lower.slice(0, CHAPTER_CONTENT_MAX_LEN);
-          // Use exec() streaming loop to populate Set directly without allocating intermediate match arrays
-          const wordRegex = /[\p{L}\p{N}]{4,}/gu;
-          let match: RegExpExecArray | null;
-          while ((match = wordRegex.exec(contentToProcess)) !== null) {
-            wordSet.add(match[0]);
-          }
-          cached.wordSet = wordSet;
-        }
-
-        let matchCount = 0;
-        const { wordSet } = cached;
-        let processedCount = 0;
-        for (const word of words) {
-          if (wordSet.has(word)) {
-            matchCount++;
-            if (matchCount >= targetMatchCount) {
-              return {
-                success: true,
-                chapterHref: href,
-                fallback: true,
-                matchType: 'fuzzy',
-                message: 'Fuzzy match based on word overlap',
-              };
-            }
-          }
-          processedCount++;
-          if (matchCount + (words.length - processedCount) < targetMatchCount) {
-            break; // Impossible to reach threshold
-          }
-        }
-      } catch {
-        continue;
+      for (const strategy of pass2) {
+        const result = strategy.execute(ctx);
+        if (!result) continue;
+        if (result.success) pass2Results.push(result);
+        else if (result.ambiguous) ambiguousPass1.push(result);
+        break;
       }
+    } catch {
+      continue;
     }
   }
+
+  const fallbackMatch = chooseBestCandidate(pass2Results);
+  if (fallbackMatch) return fallbackMatch;
+  const fallbackAmbiguous = ambiguousPass1[0];
+  if (fallbackAmbiguous) return fallbackAmbiguous;
 
   return {
     success: false,
@@ -259,10 +145,76 @@ export async function reanchorByText(
   };
 }
 
+function chooseBestCandidate(candidates: ReanchorResult[]): ReanchorResult | null {
+  if (candidates.length === 0) return null;
+  let bestConfidence = 0;
+  for (const candidate of candidates) {
+    bestConfidence = Math.max(bestConfidence, candidate.confidence ?? 0);
+  }
+  const best = candidates.filter((candidate) => (candidate.confidence ?? 0) === bestConfidence);
+  if (best.length === 1) return best[0] ?? null;
+  return {
+    success: false,
+    confidence: bestConfidence,
+    fallback: true,
+    matchType: best[0]?.matchType,
+    ambiguous: true,
+    message: 'Multiple chapters contain equally confident matches; review required',
+  };
+}
+
+export function applyReanchorResult(
+  anchor: AnnotationAnchor,
+  result: ReanchorResult,
+): AnnotationAnchor {
+  if (
+    !result.success ||
+    result.matchType !== 'exact' ||
+    result.confidence === undefined ||
+    result.confidence < 0.9 ||
+    !result.chapterHref ||
+    !result.position
+  ) {
+    return anchor;
+  }
+
+  const updated: AnnotationAnchor = {
+    ...anchor,
+    chapterRef: result.chapterHref,
+    position: result.position,
+  };
+  delete updated.cfi;
+  return updated;
+}
+
+function getUniqueHrefsFromToc(toc: TocItem[], preferChapter?: string): string[] {
+  const baseToHref = new Map<string, string>();
+  const collect = (items: TocItem[]) => {
+    for (const item of items) {
+      const base = item.href.split('#')[0] ?? item.href;
+      if (!baseToHref.has(base)) baseToHref.set(base, item.href);
+      if (item.subitems) collect(item.subitems);
+    }
+  };
+  collect(toc);
+
+  const basePrefer = preferChapter?.split('#')[0];
+  if (!basePrefer) return Array.from(baseToHref.values());
+
+  const primary: string[] = [];
+  const secondary: string[] = [];
+  for (const [base, href] of baseToHref) {
+    if (base === basePrefer) primary.push(href);
+    else secondary.push(href);
+  }
+  return [...primary, ...secondary];
+}
+
 export async function tryReanchor(
   anchor: AnnotationAnchor,
   toc: TocItem[],
   loadChapterContent: (href: string) => Promise<string>,
+  options: { timeoutMs?: number; traceId?: string } = {},
 ): Promise<{ anchor: AnnotationAnchor; reanchorResult: ReanchorResult }> {
   if (anchor.selectedText.length < 10) {
     return {
@@ -277,19 +229,12 @@ export async function tryReanchor(
 
   const result = await reanchorByText(anchor.selectedText, toc, loadChapterContent, {
     preferChapter: anchor.chapterRef,
+    anchor,
+    timeoutMs: options.timeoutMs,
+    traceId: options.traceId,
   });
 
-  if (result.success && result.chapterHref) {
-    return {
-      anchor: {
-        ...anchor,
-        chapterRef: result.chapterHref,
-      },
-      reanchorResult: result,
-    };
-  }
-
-  return { anchor, reanchorResult: result };
+  return { anchor: applyReanchorResult(anchor, result), reanchorResult: result };
 }
 
 export function findBestChapterMatch(locator: LocatorResult, toc: TocItem[]): TocItem | null {

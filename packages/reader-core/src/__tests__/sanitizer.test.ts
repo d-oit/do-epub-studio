@@ -782,6 +782,24 @@ describe('createEpubSanitizerHook', () => {
     expect(() => doc2.head.removeChild(hostNode2)).not.toThrow();
     expect(doc2.querySelector('script')).toBeNull();
   });
+  it('does not rehome forged host IDs and sanitizes retained stylesheet nodes', () => {
+    const { hook } = createEpubSanitizerHook();
+    const doc = new DOMParser().parseFromString(
+      '<html><head>' +
+        '<meta id="epubjs-injected-meta" http-equiv="refresh" content="0;url=https://evil.test/">' +
+        '<style id="epubjs-injected-css-images">@import "https://evil.test/style.css"; img{background:url(https://evil.test/pixel.png);color:red}</style>' +
+        '</head><body><p>Safe text</p></body></html>',
+      'text/html',
+    );
+    const stylesheet = doc.getElementById('epubjs-injected-css-images') as HTMLStyleElement;
+
+    hook({ document: doc, href: 'chapter-forged-host-node.xhtml' });
+
+    expect(doc.querySelector('meta[http-equiv="refresh"]')).toBeNull();
+    expect(doc.head.contains(stylesheet)).toBe(true);
+    expect(stylesheet.textContent).not.toContain('evil.test');
+    expect(stylesheet.textContent).toContain('color:red');
+  });
 
   it('evicts least-recently-used entries when the cache exceeds the max size', () => {
     const { hook } = createEpubSanitizerHook();

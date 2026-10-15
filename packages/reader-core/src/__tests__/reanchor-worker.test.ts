@@ -7,7 +7,7 @@
  * the tryReanchor helper.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { afterEach, describe, it, expect, vi, beforeEach } from 'vitest';
 import { reanchorByText, tryReanchor, terminateWorker } from '../reanchor-worker';
 import type { TocItem } from '../epub-types';
 
@@ -42,6 +42,9 @@ function makeLoader(map: Record<string, string>): (href: string) => Promise<stri
 beforeEach(() => {
   terminateWorker(); // reset global pool between tests
 });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 // ---------------------------------------------------------------------------
 // reanchorByText – CFI matching / text fallback
@@ -69,7 +72,7 @@ describe('reanchorByText (pool fallback)', () => {
     expect(result.fallback).toBe(false);
   });
 
-  it('prefers the chapter specified via preferChapter', async () => {
+  it('does not choose a preferred chapter when exact text is repeated elsewhere', async () => {
     const loader = makeLoader({
       'chapter1.xhtml': 'target text is here',
       'chapter2.xhtml': 'target text is also here',
@@ -79,8 +82,8 @@ describe('reanchorByText (pool fallback)', () => {
     const result = await reanchorByText('target text', TOC, loader, {
       preferChapter: 'chapter2.xhtml',
     });
-    expect(result.success).toBe(true);
-    expect(result.chapterHref).toBe('chapter2.xhtml');
+    expect(result).toMatchObject({ success: false, ambiguous: true, matchType: 'exact' });
+    expect(result.chapterHref).toBeUndefined();
   });
 
   it('falls back to fuzzy match when exact/partial not found', async () => {
@@ -175,6 +178,8 @@ describe('tryReanchor (pool fallback)', () => {
     const result = await tryReanchor(anchor, TOC, loader);
     expect(result.reanchorResult.success).toBe(true);
     expect(result.anchor.chapterRef).toBe('chapter2.xhtml');
+    expect(result.anchor.position).toBeDefined();
+    expect(result.anchor).not.toHaveProperty('cfi');
   });
 
   it('preserves original anchor when reanchor fails', async () => {
@@ -206,6 +211,37 @@ describe('tryReanchor (pool fallback)', () => {
     expect(result.anchor).toMatchObject({
       cfi: 'epubcfi(/6/8)',
       highlightColor: 'yellow',
+    });
+  });
+  it('forwards the complete anchor in the worker request', async () => {
+    let received: unknown;
+    class CapturingWorker {
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onerror: ((event: ErrorEvent) => void) | null = null;
+      postMessage(message: unknown): void {
+        received = message;
+        const request = message as { id: string };
+        this.onmessage?.({
+          data: { type: 'result', id: request.id, result: { success: false, fallback: true } },
+        } as MessageEvent);
+      }
+      terminate(): void {}
+    }
+    vi.stubGlobal('Worker', CapturingWorker);
+    const anchor = {
+      cfi: 'epubcfi(/6/4)',
+      selectedText: 'Selected annotation quote',
+      chapterRef: 'chapter1.xhtml',
+      prefix: 'before quote',
+      suffix: 'after quote',
+      position: { start: 12, end: 37 },
+    };
+
+    await tryReanchor(anchor, TOC, makeLoader({ 'chapter1.xhtml': 'chapter content' }));
+
+    expect(received).toMatchObject({
+      type: 'reanchor',
+      anchor,
     });
   });
 });

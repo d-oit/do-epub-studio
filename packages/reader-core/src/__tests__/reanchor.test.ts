@@ -30,7 +30,11 @@ describe('reanchorByText', () => {
   });
 
   it('returns success for exact match', async () => {
-    const loadContent = vi.fn().mockResolvedValue('This is the target text in the content.');
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml' ? 'This is the target text in the content.' : 'No match.',
+      ),
+    );
     const result = await reanchorByText('target text', mockToc, loadContent);
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('exact');
@@ -51,25 +55,40 @@ describe('reanchorByText', () => {
     expect(result.success).toBe(true);
     expect(result.chapterHref).toBe('chapter2.xhtml');
   });
+  it('rejects equally confident matches across chapters as ambiguous', async () => {
+    const loadContent = vi.fn(() =>
+      Promise.resolve('A repeated passage appears in multiple chapters.'),
+    );
+    const result = await reanchorByText('repeated passage appears', mockToc, loadContent);
+    expect(result).toMatchObject({ success: false, ambiguous: true, matchType: 'exact' });
+    expect(result.chapterHref).toBeUndefined();
+  });
 
   it('returns partial match when exact not found', async () => {
-    const loadContent = vi
-      .fn()
-      .mockResolvedValue('This is content with words scattered throughout the paragraph.');
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml'
+          ? 'This is content with words scattered throughout the paragraph.'
+          : 'Other chapter text.',
+      ),
+    );
     const result = await reanchorByText(
       'words scattered throughout paragraph',
       mockToc,
       loadContent,
     );
     expect(result.success).toBe(true);
-    // Match type depends on exact match being found or not
     expect(result.matchType).toBeDefined();
   });
 
   it('returns fuzzy match based on word overlap', async () => {
-    const loadContent = vi
-      .fn()
-      .mockResolvedValue('The chapter discusses important concepts and key ideas about the topic.');
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml'
+          ? 'The chapter discusses important concepts and key ideas about the topic.'
+          : 'Other chapter text.',
+      ),
+    );
     const result = await reanchorByText(
       'important concepts key ideas topic discussion',
       mockToc,
@@ -78,6 +97,23 @@ describe('reanchorByText', () => {
     expect(result.success).toBe(true);
     expect(result.matchType).toBe('fuzzy');
     expect(result.fallback).toBe(true);
+  });
+
+  it('prioritizes exact match in chapter 2 over fuzzy match in chapter 1', async () => {
+    const loadContent = vi.fn((href: string) => {
+      if (href === 'chapter1.xhtml') {
+        return Promise.resolve('This chapter has important concepts key ideas about topic.');
+      }
+      if (href === 'chapter2.xhtml') {
+        return Promise.resolve('This chapter contains the exact quote target text here.');
+      }
+      return Promise.resolve('Other text');
+    });
+
+    const result = await reanchorByText('exact quote target text', mockToc, loadContent);
+    expect(result.success).toBe(true);
+    expect(result.matchType).toBe('exact');
+    expect(result.chapterHref).toBe('chapter2.xhtml');
   });
 
   it('searches subitems when parent not found', async () => {
@@ -132,6 +168,8 @@ describe('tryReanchor', () => {
     const result = await tryReanchor(anchor, mockToc, loadContent);
     expect(result.reanchorResult.success).toBe(true);
     expect(result.anchor.chapterRef).toBe('chapter2.xhtml');
+    expect(result.anchor.position).toBeDefined();
+    expect(result.anchor).not.toHaveProperty('cfi');
   });
 
   it('preserves original anchor on failure', async () => {
@@ -187,7 +225,6 @@ describe('findBestChapterMatch', () => {
       chapterHref: 'nonexistent.xhtml',
     };
     const result = findBestChapterMatch(locator, mockToc);
-    // Returns first toc item as fallback when href not found
     expect(result?.label).toBe('Chapter 1');
   });
 
@@ -258,38 +295,40 @@ describe('performance-optimized logic correctness', () => {
   });
 
   it('reanchorByText handles matching after literal space splitting optimization', async () => {
-    const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
-    // Check exact match
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml'
+          ? 'The quick brown fox jumps over the lazy dog.'
+          : 'Unrelated chapter.',
+      ),
+    );
     const resultExact = await reanchorByText('quick brown fox', mockToc, loadContent);
     expect(resultExact.success).toBe(true);
     expect(resultExact.matchType).toBe('exact');
 
-    // Check fuzzy match (needs >70% overlap by default)
-    // Words >= 4 chars: "quick" (match), "brown" (match), "jumps" (match), "lazy" (no)
-    // 3/4 = 75% > 70%
     const resultFuzzy = await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
     expect(resultFuzzy.success).toBe(true);
     expect(resultFuzzy.matchType).toBe('fuzzy');
   });
 
   it('reanchorByText reuses cached state between Pass 1 and Pass 2', async () => {
-    const loadContent = vi.fn().mockResolvedValue('The quick brown fox jumps over the lazy dog.');
+    const loadContent = vi
+      .fn()
+      .mockResolvedValue('The chapter discusses important concepts and key ideas.');
 
-    // Fuzzy match only (no exact/partial match)
-    // Pass 1 will check all chapters and cache them.
-    // Pass 2 will use the cache.
-    await reanchorByText('quick brown jumps lazy dog', mockToc, loadContent);
+    // Searching for text that only matches on Pass 2 (fuzzy word overlap)
+    await reanchorByText('important concepts key ideas discussion topic', mockToc, loadContent);
 
-    // 4 unique base HREFs in uniqueHrefs: chapter1, chapter2, chapter3, section3a
-    // Wait, getCachedData strips # fragment but section3a.xhtml and chapter3.xhtml are different files
-    // in this mockToc. So 4 calls is correct for this specific mock setup.
+    // 4 unique chapter bases in mockToc loaded in Pass 1 and reused in Pass 2 without extra calls
     expect(loadContent).toHaveBeenCalledTimes(4);
   });
 
   it('reanchorByText correctly identifies words for fuzzy match', async () => {
-    const loadContent = vi.fn().mockResolvedValue('Optimization is great for performance.');
-    // words are length >= 4
-    // "optimization", "great", "performance"
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml' ? 'Optimization is great for performance.' : 'Other chapter.',
+      ),
+    );
     const result = await reanchorByText('optimization performance', mockToc, loadContent, {
       fuzzyThreshold: 0.5,
     });
@@ -298,13 +337,13 @@ describe('performance-optimized logic correctness', () => {
   });
 
   it('reanchorByText handles target string with repeated duplicate words correctly', async () => {
-    const loadContent = vi
-      .fn()
-      .mockResolvedValue('Literary content often has beautiful repetition.');
-    // Target text has repeated/shuffled words with no long consecutive matching segment >= 20 chars
-    // Shuffled words: "repetition content beautiful content literary repetition beautiful"
-    // Matched/deduplicated unique words: "repetition", "content", "beautiful", "literary"
-    // Deduplication prevents artificial matching inflation on duplicate words.
+    const loadContent = vi.fn((href: string) =>
+      Promise.resolve(
+        href === 'chapter1.xhtml'
+          ? 'Literary content often has beautiful repetition.'
+          : 'Unrelated chapter content.',
+      ),
+    );
     const result = await reanchorByText(
       'repetition content beautiful content literary repetition beautiful',
       mockToc,
