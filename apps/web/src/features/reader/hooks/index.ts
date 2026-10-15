@@ -1,5 +1,9 @@
 export { useReaderUI } from './useReaderUi';
 export { useReaderEpub } from './useReaderEpub';
+export { useEpubLoader } from './useEpubLoader';
+export { useEpubRendition } from './useEpubRendition';
+export { useEpubNavigation } from './useEpubNavigation';
+export { useEpubAnnotationBridge } from './useEpubAnnotationBridge';
 export { useAnnotationHandlers } from './useAnnotationHandlers';
 export { useBookmarkHandlers } from './useBookmarkHandlers';
 export { useReaderLogout } from './useReaderLogout';
