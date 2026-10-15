@@ -111,7 +111,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       expect(queue[0]?.error).toBe('Network error');
     });
 
-    it('retains a failed annotation in the queue for recovery', async () => {
+    it('persists a failed annotation in annotations and removes it from sync queue', async () => {
       const previousAuthState = useAuthStore.getState();
       useAuthStore.setState({ sessionToken: TEST_TOKEN });
       const item: SyncQueueItem = {
@@ -141,12 +141,7 @@ describe('Offline Database — Sync Queue & Permissions', () => {
       }
 
       const queue = await getSyncQueue();
-      expect(queue).toHaveLength(1);
-      expect(queue[0]).toMatchObject({
-        id: 'failed-annotation',
-        error: 'Access denied',
-        permanentError: true,
-      });
+      expect(queue).toHaveLength(0);
       const annotations = await getAnnotations('book-1');
       expect(annotations).toEqual([
         expect.objectContaining({
