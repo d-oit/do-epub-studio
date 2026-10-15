@@ -125,51 +125,24 @@ export function isAllowedExternalHost(urlValue: string, policy: ExternalUrlPolic
   return false;
 }
 
-function isProtocolRelative(val: string): boolean {
-  const normalized = val.trim();
-  let slashCount = 0;
-
-  for (let i = 0; i < normalized.length && slashCount < 2; i++) {
-    const code = normalized.charCodeAt(i);
-    if (code <= 32) continue;
-    if (code === 47 || code === 92) {
-      slashCount++;
-      continue;
-    }
-    return false;
-  }
-
-  return slashCount === 2;
-}
-
 export function shouldStripHref(val: string, policy: ExternalUrlPolicy): boolean {
   const scheme = getScheme(val);
-  if (scheme === null) {
-    if (!isProtocolRelative(val)) return false;
-    return !isAllowedExternalHost(`https:${val.trim().replace(/\\/g, '/')}`, policy);
-  }
+  if (scheme === null) return false;
   if (scheme === 'http' || scheme === 'https') {
     return !isAllowedExternalHost(val, policy);
   }
   return !ALLOWED_SCHEMES.has(scheme);
 }
 
-export function shouldStripResourceUrl(val: string, policy: ExternalUrlPolicy): boolean {
-  const scheme = getScheme(val);
-  if (scheme === null) {
-    if (!isProtocolRelative(val)) return false;
-    return !isAllowedExternalHost(`https:${val.trim().replace(/\\/g, '/')}`, policy);
-  }
-  if (scheme === 'http' || scheme === 'https') {
-    return !isAllowedExternalHost(val, policy);
-  }
-  return true;
-}
-
 export function shouldStripCssUrl(urlVal: string, policy: ExternalUrlPolicy): boolean {
   const scheme = getScheme(urlVal);
-  if (scheme === null) return isProtocolRelative(urlVal);
-  if (scheme === 'data' || scheme === 'javascript' || scheme === 'vbscript') return true;
+  if (scheme === null) return false;
+  if (scheme === 'javascript' || scheme === 'vbscript') return true;
+  if (scheme === 'data') {
+    const lower = urlVal.toLowerCase();
+    if (lower.startsWith('data:image/')) return false;
+    return true;
+  }
   if (scheme === 'http' || scheme === 'https') {
     return !isAllowedExternalHost(urlVal, policy);
   }

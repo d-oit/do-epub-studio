@@ -12,18 +12,17 @@ import {
   equalsIgnoreCase,
   isAllowedExternalHost,
   parseHttpHost,
-  shouldStripResourceUrl,
+  shouldStripCssUrl,
   shouldStripHref,
   type ExternalUrlPolicy,
   DEFAULT_EXTERNAL_URL_POLICY,
 } from './sanitizer-url';
-import { sanitizeCssText } from './sanitizer-css';
 
 const SANITIZE_TIMEOUT_MS = 5_000;
 const TREEWALKER_CHECK_INTERVAL = 100;
 const SANITIZE_CACHE_MAX = 10;
 
-export const SANITIZER_POLICY_VERSION = 6;
+export const SANITIZER_POLICY_VERSION = 4;
 
 export type { ExternalUrlPolicy };
 export { DEFAULT_EXTERNAL_URL_POLICY, isAllowedExternalHost };
@@ -54,14 +53,68 @@ export function sanitizeSvg(svgContent: string): string {
   return DOMPurify.sanitize(svgContent, getConfig());
 }
 
-export { sanitizeCssText };
-
-function shouldStripSrcset(value: string, policy: ExternalUrlPolicy): boolean {
-  for (const candidate of value.split(',')) {
-    const url = candidate.trim().split(/\s+/, 1)[0];
-    if (url && shouldStripResourceUrl(url, policy)) return true;
+/**
+ * Strips legacy IE CSS expression() constructs by scanning open/close parenthesis depth.
+ * Uses linear character iteration instead of a regular expression to guarantee zero ReDoS backtracking.
+ */
+function stripCssExpressions(cssText: string): string {
+  let result = cssText;
+  while (result.toLowerCase().includes('expression(')) {
+    const idx = result.toLowerCase().indexOf('expression(');
+    const open = result.indexOf('(', idx);
+    if (open === -1) break;
+    let depth = 1;
+    let close = open + 1;
+    while (close < result.length && depth > 0) {
+      const char = result.charAt(close);
+      if (char === '(') {
+        depth++;
+      } else if (char === ')') {
+        depth--;
+      }
+      close++;
+    }
+    result = result.slice(0, idx) + 'none' + result.slice(close);
   }
-  return false;
+  return result;
+}
+
+/**
+ * Sanitizes CSS text in <style> tags or inline style attributes.
+ * Strips expression(), -moz-binding, javascript/data-html schemes, and non-whitelisted url() hosts.
+ */
+export function sanitizeCssText(
+  cssText: string,
+  policy: ExternalUrlPolicy = DEFAULT_EXTERNAL_URL_POLICY,
+): string {
+  if (!cssText) return cssText;
+
+  let sanitized = stripCssExpressions(cssText);
+  sanitized = sanitized.replace(/-moz-binding\s*:[^;}]*/gi, '');
+
+  sanitized = sanitized.replace(
+    /@import\s+(?:url\(['"]?|['"])([^'"]+)(?:['"]?\)|['"])([^;]*);?/gi,
+    (_match: string, urlValue: string, rest: string): string => {
+      const trimmedUrl = urlValue.trim();
+      if (shouldStripCssUrl(trimmedUrl, policy)) {
+        return '/* removed @import */';
+      }
+      return `@import url("${trimmedUrl}") ${rest || ''};`;
+    },
+  );
+
+  sanitized = sanitized.replace(
+    /url\(\s*(?:"([^"]*)"|'([^']*)'|([^)]*))\s*\)/gi,
+    (match: string, g1?: string, g2?: string, g3?: string): string => {
+      const urlValue = (g1 ?? g2 ?? g3 ?? '').trim();
+      if (shouldStripCssUrl(urlValue, policy)) {
+        return 'url("")';
+      }
+      return match;
+    },
+  );
+
+  return sanitized;
 }
 
 function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void {
@@ -87,28 +140,12 @@ function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void
       if (cleanCss !== attr.value) {
         el.setAttribute('style', cleanCss);
       }
-    } else if (
-      (equalsIgnoreCase(name, 'src') ||
-        equalsIgnoreCase(name, 'poster') ||
-        equalsIgnoreCase(name, 'background')) &&
-      attr.value &&
-      shouldStripResourceUrl(attr.value, policy)
-    ) {
-      el.removeAttribute(name);
-      continue;
-    } else if (equalsIgnoreCase(name, 'srcset') && attr.value) {
-      if (shouldStripSrcset(attr.value, policy)) {
-        el.removeAttribute(name);
-        continue;
-      }
     }
 
     if (name === 'href' || name === 'xlink:href') {
       if (isLinkable === undefined) {
         const localName = el.localName;
         isLinkable =
-          localName === 'a' ||
-          localName === 'link' ||
           localName === 'use' ||
           localName === 'image' ||
           equalsIgnoreCase(localName, 'feimage') ||
@@ -163,15 +200,7 @@ export function sanitizeDom(
 }
 
 function collectHostInjectedNodes(doc: Document): NodeListOf<Element> | Element[] {
-  // epub.js inserts stylesheet nodes with this prefix. EPUB input can forge the
-  // same IDs, so never rehome arbitrary element types after DOMPurify runs.
-  return doc.head ? doc.head.querySelectorAll('style[id^="epubjs-injected-"]') : [];
-}
-function sanitizeHostInjectedNodes(hostNodes: Iterable<Element>, policy: ExternalUrlPolicy): void {
-  for (const node of hostNodes) {
-    if (node.textContent) node.textContent = sanitizeCssText(node.textContent, policy);
-    if (node.hasAttributes()) sanitizeElementAttributes(node, policy);
-  }
+  return doc.head ? doc.head.querySelectorAll('[id^="epubjs-injected-"]') : [];
 }
 
 function rehomeHostInjectedNodes(doc: Document, hostNodes: Iterable<Element>): void {
@@ -195,9 +224,6 @@ export function sanitizeEpubDocument(
   const root = doc.documentElement;
   if (!root) return;
 
-  const hostNodes = collectHostInjectedNodes(doc);
-  sanitizeHostInjectedNodes(hostNodes, policy);
-
   const sanitized = DOMPurify.sanitize(root, {
     ALLOWED_TAGS: EPUB_ALLOWED_TAGS,
     ADD_ATTR: EPUB_ADD_ATTR,
@@ -209,6 +235,7 @@ export function sanitizeEpubDocument(
   checkDeadline(deadline, 'epub-sanitize', timeoutMs, traceId);
 
   if (sanitized.localName === 'html') {
+    const hostNodes = collectHostInjectedNodes(doc);
     root.replaceChildren(...sanitized.childNodes);
     for (let i = root.attributes.length - 1; i >= 0; i--) {
       const attr = root.attributes.item(i);
@@ -292,7 +319,6 @@ export function createEpubSanitizerHook(options?: {
         const cachedDoc = parser.parseFromString(cached, 'text/html');
         const cachedRoot = cachedDoc.documentElement;
         const hostNodes = collectHostInjectedNodes(doc);
-        sanitizeHostInjectedNodes(hostNodes, policy);
         root.replaceChildren(...cachedRoot.childNodes);
         copyHtmlAttributesWhenChanged(root, cachedRoot);
         rehomeHostInjectedNodes(doc, hostNodes);

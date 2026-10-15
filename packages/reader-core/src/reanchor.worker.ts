@@ -2,6 +2,7 @@
 
 import type { TocItem } from './epub-types';
 import {
+  ExactCfiStrategy,
   TextPositionStrategy,
   ExactAndPartialQuoteStrategy,
   FuzzyWordOverlapStrategy,
@@ -9,8 +10,16 @@ import {
   type StrategyContext,
   type AnnotationAnchor,
   type CachedChapter,
-  type ReanchorResult,
 } from './reanchor-strategies';
+
+interface ReanchorResult {
+  success: boolean;
+  cfi?: string;
+  chapterHref?: string;
+  fallback: boolean;
+  matchType?: 'exact' | 'fuzzy' | 'partial';
+  message?: string;
+}
 
 interface ReanchorRequest {
   type: 'reanchor';
@@ -30,6 +39,7 @@ interface ResultMessage {
 }
 
 const pass1Strategies: ReanchorStrategy[] = [
+  new ExactCfiStrategy(),
   new TextPositionStrategy(),
   new ExactAndPartialQuoteStrategy(),
 ];
@@ -100,8 +110,7 @@ function performReanchor(
     return result;
   }
 
-  const pass1Results: ReanchorResult[] = [];
-  const ambiguousPass1: ReanchorResult[] = [];
+  // Pass 1: High-precision matches across ALL candidate chapters
   for (const href of uniqueHrefs) {
     const base = href.split('#')[0] ?? href;
     const cached = getCachedData(base);
@@ -116,19 +125,13 @@ function performReanchor(
 
     for (const strategy of pass1Strategies) {
       const result = strategy.execute(ctx);
-      if (!result) continue;
-      if (result.success) pass1Results.push(result);
-      else if (result.ambiguous) ambiguousPass1.push(result);
-      break;
+      if (result) {
+        return result;
+      }
     }
   }
 
-  const preciseMatch = chooseBestCandidate(pass1Results);
-  if (preciseMatch) return preciseMatch;
-  const firstPassAmbiguous = ambiguousPass1[0];
-  if (firstPassAmbiguous) return firstPassAmbiguous;
-
-  const pass2Results: ReanchorResult[] = [];
+  // Pass 2: Lower-precision fallback matches across ALL candidate chapters
   for (const href of uniqueHrefs) {
     const base = href.split('#')[0] ?? href;
     const cached = getCachedData(base);
@@ -143,39 +146,16 @@ function performReanchor(
 
     for (const strategy of pass2Strategies) {
       const result = strategy.execute(ctx);
-      if (!result) continue;
-      if (result.success) pass2Results.push(result);
-      else if (result.ambiguous) ambiguousPass1.push(result);
-      break;
+      if (result) {
+        return result;
+      }
     }
   }
-
-  const fallbackMatch = chooseBestCandidate(pass2Results);
-  if (fallbackMatch) return fallbackMatch;
-  const fallbackAmbiguous = ambiguousPass1[0];
-  if (fallbackAmbiguous) return fallbackAmbiguous;
 
   return {
     success: false,
     fallback: true,
     message: 'Could not find target text in any chapter',
-  };
-}
-function chooseBestCandidate(candidates: ReanchorResult[]): ReanchorResult | null {
-  if (candidates.length === 0) return null;
-  let bestConfidence = 0;
-  for (const candidate of candidates) {
-    bestConfidence = Math.max(bestConfidence, candidate.confidence ?? 0);
-  }
-  const best = candidates.filter((candidate) => (candidate.confidence ?? 0) === bestConfidence);
-  if (best.length === 1) return best[0] ?? null;
-  return {
-    success: false,
-    confidence: bestConfidence,
-    fallback: true,
-    matchType: best[0]?.matchType,
-    ambiguous: true,
-    message: 'Multiple chapters contain equally confident matches; review required',
   };
 }
 

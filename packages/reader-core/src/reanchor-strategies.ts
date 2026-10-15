@@ -35,12 +35,10 @@ export interface StrategyContext {
 
 export interface ReanchorResult {
   success: boolean;
+  cfi?: string;
   chapterHref?: string;
-  position?: TextPositionSelector;
-  confidence?: number;
   fallback: boolean;
   matchType?: 'exact' | 'fuzzy' | 'partial';
-  ambiguous?: boolean;
   message?: string;
 }
 
@@ -55,8 +53,33 @@ export function normalizeText(text: string, isAlreadyLower = false): string {
     .replace(/\s+/g, ' ')
     .trim();
 }
-function sameChapter(anchorHref: string | undefined, chapterHref: string): boolean {
-  return anchorHref !== undefined && anchorHref.split('#')[0] === chapterHref.split('#')[0];
+
+/**
+ * Strategy 1: Exact CFI Strategy (Pass 1)
+ */
+export class ExactCfiStrategy implements ReanchorStrategy {
+  readonly name = 'exact-cfi';
+
+  execute(ctx: StrategyContext): ReanchorResult | null {
+    const { anchor, chapterHref, cached } = ctx;
+    if (!anchor.cfi) return null;
+
+    if (anchor.chapterRef && anchor.chapterRef === chapterHref) {
+      const lowerTarget = anchor.selectedText.toLowerCase();
+      if (cached.lower.includes(lowerTarget)) {
+        return {
+          success: true,
+          cfi: anchor.cfi,
+          chapterHref,
+          fallback: false,
+          matchType: 'exact',
+          message: 'Matched via exact CFI and chapter content',
+        };
+      }
+    }
+
+    return null;
+  }
 }
 
 /**
@@ -67,27 +90,28 @@ export class TextPositionStrategy implements ReanchorStrategy {
 
   execute(ctx: StrategyContext): ReanchorResult | null {
     const { anchor, chapterHref, cached } = ctx;
-    if (!anchor.position || !sameChapter(anchor.chapterRef, chapterHref)) return null;
+    if (!anchor.position) return null;
 
     const { start, end } = anchor.position;
     const content = cached.content;
-    if (start < 0 || end <= start || end > content.length) return null;
+    if (start < 0 || end <= start || start >= content.length) return null;
 
     const slice = content.slice(start, end);
     const normalizedSlice = normalizeText(slice);
     const normalizedTarget = normalizeText(anchor.selectedText);
 
-    if (normalizedSlice !== normalizedTarget || normalizedTarget.length < 10) return null;
+    if (normalizedSlice === normalizedTarget && normalizedTarget.length >= 10) {
+      return {
+        success: true,
+        cfi: anchor.cfi,
+        chapterHref,
+        fallback: false,
+        matchType: 'exact',
+        message: `Matched via text position selector [${start}, ${end}]`,
+      };
+    }
 
-    return {
-      success: true,
-      chapterHref,
-      position: { start, end },
-      confidence: 0.99,
-      fallback: false,
-      matchType: 'exact',
-      message: `Matched via text position selector [${start}, ${end}]`,
-    };
+    return null;
   }
 }
 
@@ -105,36 +129,21 @@ export class ExactAndPartialQuoteStrategy implements ReanchorStrategy {
 
     const lowerContent = cached.lower;
     const lowerTarget = selectedText.toLowerCase();
-    const lowerPrefix = prefix?.trim().toLowerCase() ?? '';
-    const lowerSuffix = suffix?.trim().toLowerCase() ?? '';
-    const hasContext = lowerPrefix.length > 0 || lowerSuffix.length > 0;
-    let exactCount = 0;
-    let bestContextScore = -1;
-    let bestContextCount = 0;
-    let bestIndex = -1;
-    let hasUnmappedMatch = false;
 
-    for (
-      let exactIndex = lowerContent.indexOf(lowerTarget);
-      exactIndex !== -1;
-      exactIndex = lowerContent.indexOf(lowerTarget, exactIndex + 1)
-    ) {
-      const rawMatch = cached.content.slice(exactIndex, exactIndex + selectedText.length);
-      if (rawMatch.length !== selectedText.length || rawMatch.toLowerCase() !== lowerTarget) {
-        hasUnmappedMatch = true;
-        continue;
-      }
-
-      exactCount++;
+    // Exact text match
+    const exactIndex = lowerContent.indexOf(lowerTarget);
+    if (exactIndex !== -1) {
       let contextScore = 0;
-      if (lowerPrefix) {
+      if (prefix) {
+        const lowerPrefix = prefix.toLowerCase().trim();
         const precedingText = lowerContent.slice(
           Math.max(0, exactIndex - lowerPrefix.length - 20),
           exactIndex,
         );
         if (precedingText.includes(lowerPrefix)) contextScore++;
       }
-      if (lowerSuffix) {
+      if (suffix) {
+        const lowerSuffix = suffix.toLowerCase().trim();
         const followingText = lowerContent.slice(
           exactIndex + lowerTarget.length,
           exactIndex + lowerTarget.length + lowerSuffix.length + 20,
@@ -142,45 +151,20 @@ export class ExactAndPartialQuoteStrategy implements ReanchorStrategy {
         if (followingText.includes(lowerSuffix)) contextScore++;
       }
 
-      if (contextScore > bestContextScore) {
-        bestContextScore = contextScore;
-        bestContextCount = 1;
-        bestIndex = exactIndex;
-      } else if (contextScore === bestContextScore) {
-        bestContextCount++;
-      }
-    }
-
-    if (exactCount > 0 || hasUnmappedMatch) {
-      if (
-        hasUnmappedMatch ||
-        (exactCount > 1 && (!hasContext || bestContextScore === 0 || bestContextCount !== 1))
-      ) {
-        return {
-          success: false,
-          chapterHref,
-          confidence: 0.5,
-          fallback: true,
-          matchType: 'exact',
-          ambiguous: true,
-          message: 'Repeated exact quote has no unique prefix/suffix match',
-        };
-      }
-
       return {
         success: true,
+        cfi: anchor.cfi,
         chapterHref,
-        position: { start: bestIndex, end: bestIndex + selectedText.length },
-        confidence: 0.95 + Math.max(0, bestContextScore) * 0.02,
         fallback: false,
         matchType: 'exact',
         message:
-          bestContextScore > 0
-            ? `Exact quote match with prefix/suffix context score ${bestContextScore}`
+          contextScore > 0
+            ? `Exact quote match with prefix/suffix context score ${contextScore}`
             : 'Exact quote match',
       };
     }
 
+    // Partial text match
     if (cached.general === undefined) {
       cached.general = normalizeText(cached.lower, true);
     }
@@ -193,16 +177,18 @@ export class ExactAndPartialQuoteStrategy implements ReanchorStrategy {
     const generalTarget = sharedTargetState?.normalizedTargetGeneral ?? normalizeText(selectedText);
 
     const partial = this.findPartialMatches(generalTarget, cached.general);
-    if (!partial) return null;
+    if (partial) {
+      return {
+        success: true,
+        cfi: anchor.cfi,
+        chapterHref,
+        fallback: false,
+        matchType: 'partial',
+        message: `Partial match found at position ${partial.position}`,
+      };
+    }
 
-    return {
-      success: true,
-      chapterHref,
-      confidence: 0.65,
-      fallback: true,
-      matchType: 'partial',
-      message: `Partial match found at normalized position ${partial.position}; review required`,
-    };
+    return null;
   }
 
   private findPartialMatches(
@@ -296,11 +282,11 @@ export class FuzzyWordOverlapStrategy implements ReanchorStrategy {
         if (matchCount >= targetMatchCount) {
           return {
             success: true,
+            cfi: anchor.cfi,
             chapterHref,
-            confidence: 0.35,
             fallback: true,
             matchType: 'fuzzy',
-            message: 'Fuzzy word overlap only; position must be confirmed by a reviewer',
+            message: 'Fuzzy match based on word overlap',
           };
         }
       }
@@ -323,5 +309,16 @@ export class FuzzyWordOverlapStrategy implements ReanchorStrategy {
       wordSet.add(match[0]);
     }
     return wordSet;
+  }
+}
+
+// Backward compatibility alias for FuzzyQuoteStrategy
+export class FuzzyQuoteStrategy implements ReanchorStrategy {
+  readonly name = 'fuzzy-quote';
+  private exactAndPartial = new ExactAndPartialQuoteStrategy();
+  private fuzzyWordOverlap = new FuzzyWordOverlapStrategy();
+
+  execute(ctx: StrategyContext): ReanchorResult | null {
+    return this.exactAndPartial.execute(ctx) ?? this.fuzzyWordOverlap.execute(ctx);
   }
 }

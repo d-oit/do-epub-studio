@@ -2,6 +2,7 @@ import type { TocItem } from './epub-types';
 import type { LocatorResult } from './locator';
 import { checkDeadline, createDeadline } from '@do-epub-studio/shared';
 import {
+  ExactCfiStrategy,
   TextPositionStrategy,
   ExactAndPartialQuoteStrategy,
   FuzzyWordOverlapStrategy,
@@ -11,15 +12,24 @@ import {
   type AnnotationAnchor,
   type CachedChapter,
   type SharedTargetState,
-  type ReanchorResult,
 } from './reanchor-strategies';
 
 const REANCHOR_TIMEOUT_MS = 15_000;
 
-export type { AnnotationAnchor, ReanchorResult };
+export interface ReanchorResult {
+  success: boolean;
+  cfi?: string;
+  chapterHref?: string;
+  fallback: boolean;
+  matchType?: 'exact' | 'fuzzy' | 'partial';
+  message?: string;
+}
+
+export type { AnnotationAnchor };
 export { normalizeText };
 
 const defaultPass1Strategies: ReanchorStrategy[] = [
+  new ExactCfiStrategy(),
   new TextPositionStrategy(),
   new ExactAndPartialQuoteStrategy(),
 ];
@@ -77,8 +87,6 @@ export async function reanchorByText(
   const sharedTargetState: SharedTargetState = {};
 
   // Pass 1: High-precision matches (Exact CFI, Text Position, Exact/Partial Quote) across ALL candidate chapters
-  const pass1Results: ReanchorResult[] = [];
-  const ambiguousPass1: ReanchorResult[] = [];
   for (const href of uniqueHrefs) {
     checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
     try {
@@ -93,22 +101,16 @@ export async function reanchorByText(
 
       for (const strategy of pass1) {
         const result = strategy.execute(ctx);
-        if (!result) continue;
-        if (result.success) pass1Results.push(result);
-        else if (result.ambiguous) ambiguousPass1.push(result);
-        break;
+        if (result) {
+          return result;
+        }
       }
     } catch {
       continue;
     }
   }
 
-  const preciseMatch = chooseBestCandidate(pass1Results);
-  if (preciseMatch) return preciseMatch;
-  const firstPassAmbiguous = ambiguousPass1[0];
-  if (firstPassAmbiguous) return firstPassAmbiguous;
-
-  const pass2Results: ReanchorResult[] = [];
+  // Pass 2: Lower-precision fallback matches (Fuzzy Word Overlap) across ALL candidate chapters
   for (const href of uniqueHrefs) {
     checkDeadline(deadline, 'reanchor-by-text', timeoutMs, traceId);
     try {
@@ -123,68 +125,20 @@ export async function reanchorByText(
 
       for (const strategy of pass2) {
         const result = strategy.execute(ctx);
-        if (!result) continue;
-        if (result.success) pass2Results.push(result);
-        else if (result.ambiguous) ambiguousPass1.push(result);
-        break;
+        if (result) {
+          return result;
+        }
       }
     } catch {
       continue;
     }
   }
 
-  const fallbackMatch = chooseBestCandidate(pass2Results);
-  if (fallbackMatch) return fallbackMatch;
-  const fallbackAmbiguous = ambiguousPass1[0];
-  if (fallbackAmbiguous) return fallbackAmbiguous;
-
   return {
     success: false,
     fallback: true,
     message: 'Could not find target text in any chapter',
   };
-}
-
-function chooseBestCandidate(candidates: ReanchorResult[]): ReanchorResult | null {
-  if (candidates.length === 0) return null;
-  let bestConfidence = 0;
-  for (const candidate of candidates) {
-    bestConfidence = Math.max(bestConfidence, candidate.confidence ?? 0);
-  }
-  const best = candidates.filter((candidate) => (candidate.confidence ?? 0) === bestConfidence);
-  if (best.length === 1) return best[0] ?? null;
-  return {
-    success: false,
-    confidence: bestConfidence,
-    fallback: true,
-    matchType: best[0]?.matchType,
-    ambiguous: true,
-    message: 'Multiple chapters contain equally confident matches; review required',
-  };
-}
-
-export function applyReanchorResult(
-  anchor: AnnotationAnchor,
-  result: ReanchorResult,
-): AnnotationAnchor {
-  if (
-    !result.success ||
-    result.matchType !== 'exact' ||
-    result.confidence === undefined ||
-    result.confidence < 0.9 ||
-    !result.chapterHref ||
-    !result.position
-  ) {
-    return anchor;
-  }
-
-  const updated: AnnotationAnchor = {
-    ...anchor,
-    chapterRef: result.chapterHref,
-    position: result.position,
-  };
-  delete updated.cfi;
-  return updated;
 }
 
 function getUniqueHrefsFromToc(toc: TocItem[], preferChapter?: string): string[] {
@@ -234,7 +188,17 @@ export async function tryReanchor(
     traceId: options.traceId,
   });
 
-  return { anchor: applyReanchorResult(anchor, result), reanchorResult: result };
+  if (result.success && result.chapterHref) {
+    return {
+      anchor: {
+        ...anchor,
+        chapterRef: result.chapterHref,
+      },
+      reanchorResult: result,
+    };
+  }
+
+  return { anchor, reanchorResult: result };
 }
 
 export function findBestChapterMatch(locator: LocatorResult, toc: TocItem[]): TocItem | null {

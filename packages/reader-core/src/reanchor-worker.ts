@@ -1,6 +1,6 @@
 import type { TocItem } from './epub-types';
 import type { ReanchorResult, AnnotationAnchor } from './reanchor';
-import { applyReanchorResult, reanchorByText as directReanchorByText } from './reanchor';
+import { reanchorByText as directReanchorByText } from './reanchor';
 
 interface WorkerPoolMessage {
   type: 'reanchor';
@@ -10,7 +10,6 @@ interface WorkerPoolMessage {
   chapterContents: Record<string, string>;
   fuzzyThreshold?: number;
   preferChapter?: string;
-  anchor?: AnnotationAnchor;
 }
 
 interface WorkerResultMessage {
@@ -72,7 +71,7 @@ class ReanchorWorkerPool {
     targetText: string,
     toc: TocItem[],
     loadChapterContent: (href: string) => Promise<string>,
-    options: { fuzzyThreshold?: number; preferChapter?: string; anchor?: AnnotationAnchor } = {},
+    options: { fuzzyThreshold?: number; preferChapter?: string } = {},
   ): Promise<ReanchorResult> {
     const worker = this.getWorker();
     if (!worker) {
@@ -107,7 +106,6 @@ class ReanchorWorkerPool {
         chapterContents,
         fuzzyThreshold: options.fuzzyThreshold,
         preferChapter: options.preferChapter,
-        anchor: options.anchor,
       };
       worker.postMessage(msg);
     });
@@ -131,9 +129,16 @@ class ReanchorWorkerPool {
 
     const result = await this.reanchorByText(anchor.selectedText, toc, loadChapterContent, {
       preferChapter: anchor.chapterRef,
-      anchor,
     });
-    return { anchor: applyReanchorResult(anchor, result), reanchorResult: result };
+
+    if (result.success && result.chapterHref) {
+      return {
+        anchor: { ...anchor, chapterRef: result.chapterHref },
+        reanchorResult: result,
+      };
+    }
+
+    return { anchor, reanchorResult: result };
   }
 
   terminate(): void {
@@ -172,7 +177,7 @@ export async function reanchorByText(
   targetText: string,
   toc: TocItem[],
   loadChapterContent: (href: string) => Promise<string>,
-  options: { fuzzyThreshold?: number; preferChapter?: string; anchor?: AnnotationAnchor } = {},
+  options: { fuzzyThreshold?: number; preferChapter?: string } = {},
 ): Promise<ReanchorResult> {
   return getPool().reanchorByText(targetText, toc, loadChapterContent, options);
 }

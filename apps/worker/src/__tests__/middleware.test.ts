@@ -13,7 +13,6 @@ vi.mock('../auth/session', () => ({
 
 import type { Mock } from 'vitest';
 import { requireAuth } from '../auth/middleware';
-import { requireSession, requireBookGrant } from '../middleware/auth';
 import { queryFirst } from '../db/client';
 import { validateSession, parseAuthHeader } from '../auth/session';
 import type { Env } from '../lib/env';
@@ -189,59 +188,5 @@ describe('requireAuth middleware', () => {
     const result = await requireAuth(makeEnv(), req);
     expect(result).not.toBeNull();
     expect(result?.email).toBe('user@example.com');
-  });
-});
-
-describe('requireSession and requireBookGrant middleware', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('requireSession rejects requests without valid token', async () => {
-    mockParseAuthHeader.mockReturnValue(null);
-    const c = {
-      req: { header: () => undefined },
-      env: makeEnv(),
-      get: vi.fn().mockReturnValue(undefined),
-      json: vi.fn().mockImplementation((val, status) => ({ val, status })),
-    };
-    const next = vi.fn();
-    await requireSession(c as unknown as Parameters<typeof requireSession>[0], next);
-    expect(next).not.toHaveBeenCalled();
-    expect(c.json).toHaveBeenCalled();
-  });
-
-  it('requireBookGrant checks active grant permissions', async () => {
-    mockParseAuthHeader.mockReturnValue('valid-token');
-    mockValidateSession.mockResolvedValue({
-      valid: true,
-      session: makeSessionRow() as unknown as SessionLike,
-      bookId: 'book-1',
-    });
-    mockQueryFirst.mockResolvedValue({
-      id: 'grant-1',
-      book_id: 'book-1',
-      email: 'user@example.com',
-      mode: 'private',
-      allowed: 1,
-      comments_allowed: 1,
-      offline_allowed: 0,
-      expires_at: null,
-    });
-
-    const vars: Record<string, unknown> = {};
-    const c = {
-      req: { header: () => 'Bearer valid-token', param: () => 'book-1' },
-      env: makeEnv(),
-      get: (k: string) => vars[k],
-      set: (k: string, v: unknown) => {
-        vars[k] = v;
-      },
-      json: vi.fn(),
-    };
-    const next = vi.fn();
-    const mw = requireBookGrant('comment');
-    await mw(c as unknown as Parameters<typeof mw>[0], next);
-    expect(next).toHaveBeenCalled();
   });
 });

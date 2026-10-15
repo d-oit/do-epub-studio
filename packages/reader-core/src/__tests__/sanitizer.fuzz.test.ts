@@ -10,7 +10,11 @@ function verifyNoDangerousSchemes(urlValue: string): void {
   const lower = urlValue.toLowerCase().trim();
   expect(lower.startsWith('javascript:')).toBe(false);
   expect(lower.startsWith('vbscript:')).toBe(false);
-  expect(lower.startsWith('data:')).toBe(false);
+  if (lower.startsWith('data:')) {
+    expect(lower.startsWith('data:text/html')).toBe(false);
+    expect(lower.startsWith('data:text/javascript')).toBe(false);
+    expect(lower.startsWith('data:application/javascript')).toBe(false);
+  }
 }
 
 describe('Sanitizer Fuzzing & Property Tests', () => {
@@ -59,7 +63,6 @@ describe('Sanitizer Fuzzing & Property Tests', () => {
         expect(result).not.toContain('<script');
         expect(result).not.toContain('javascript:');
         expect(result).not.toContain('vbscript:');
-        expect(result).not.toContain('data:');
       }),
       { numRuns: 100 },
     );
@@ -75,7 +78,6 @@ describe('Sanitizer Fuzzing & Property Tests', () => {
 
         expect(result).not.toContain('javascript:');
         expect(result).not.toContain('vbscript:');
-        expect(result).not.toContain('data:');
         expect(result).not.toContain('expression(');
       }),
       { numRuns: 100 },

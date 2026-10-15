@@ -6,8 +6,6 @@
 - refactor(web): replace unsafe `as unknown as` casts in reader/offline code with typed internals; fix a latent Buffer pooled-backing bug in offline crypto
 - feat(offline): create ordinary highlights and shared comments offline with encrypted local records, idempotent replay, and durable failed-sync state.
 - fix(reader): keep progress CFI changes from rebuilding the active EPUB rendition during reading and reconnect.
-- security(reader-core): modularize re-anchoring strategies, use quote context to reject ambiguous matches, harden EPUB sanitization, and add adversarial tests plus a 50 ms CI benchmark.
-- fix(worker): enforce target-book comment permission for cross-book comment creation.
 
 <!-- Previous release history (v0.1.1, v0.2.0) archived — intentional version reset to 0.1.0 per Wave 6. -->
 
