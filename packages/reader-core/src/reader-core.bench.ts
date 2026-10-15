@@ -134,9 +134,10 @@ describe('reader-core performance', () => {
     ] as const;
 
     for (const { name, count } of sizes) {
+      const doc = buildSyntheticDoc(count);
       bench(`sanitizeEpubDocument: ${name}`, () => {
-        const doc = buildSyntheticDoc(count);
-        sanitizeEpubDocument(doc);
+        const clone = doc.cloneNode(true) as Document;
+        sanitizeEpubDocument(clone);
       });
     }
   });

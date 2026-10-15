@@ -105,9 +105,10 @@ describe('sanitizeEpubDocument performance', () => {
   const sizes = [500, 2000, 5000] as const;
 
   for (const count of sizes) {
+    const doc = buildEpubLikeDoc(count);
     bench(`sanitizeEpubDocument (${count} elements)`, () => {
-      const doc = buildEpubLikeDoc(count);
-      sanitizeEpubDocument(doc);
+      const clone = doc.cloneNode(true) as Document;
+      sanitizeEpubDocument(clone);
     });
   }
 });

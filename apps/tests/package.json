@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Playwright end-to-end suite for d.o.EPUB Studio (GOAP-289)",
   "scripts": {
-    "lint": "eslint . --ext .ts --max-warnings 0"
+    "lint": "eslint . --ext .ts --max-warnings 0",
+    "test:unit": "echo 'No unit tests in @do-epub-studio/e2e'"
   },
   "dependencies": {},
   "devDependencies": {
