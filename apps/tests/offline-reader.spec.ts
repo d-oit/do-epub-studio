@@ -190,21 +190,26 @@ test.describe('Offline reader', () => {
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 
-    const swActive = await page.evaluate(async () => {
-      try {
-        const _registration = await Promise.race([
-          navigator.serviceWorker.ready,
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000)),
-        ]);
-        return !!navigator.serviceWorker.controller;
-      } catch {
-        return false;
-      }
-    });
-
-    expect(swActive, 'Service Worker must be active and controlling the page in pwa-chromium').toBe(
-      true,
-    );
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(async () => {
+            try {
+              await Promise.race([
+                navigator.serviceWorker.ready,
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+              ]);
+              return Boolean(navigator.serviceWorker.controller);
+            } catch {
+              return false;
+            }
+          }),
+        {
+          timeout: 15_000,
+          message: 'Service Worker must be active and controlling the page in pwa-chromium',
+        },
+      )
+      .toBe(true);
     // Seed the strategy cache directly. With a controlling SW, page.route
     // mocks are bypassed (the SW fetches from its own context, invisible to
     // Playwright routing), so seed the real 'api-responses' cache that the

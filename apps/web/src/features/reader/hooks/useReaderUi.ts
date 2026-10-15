@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useReaderStore } from '../../../stores/reader';
 import type { ReaderPanel } from '../../../stores/reader';
 import type { SelectionData } from '../components/annotations';
@@ -29,16 +29,6 @@ export function useReaderUI(): UseReaderUIReturn {
   const [selection, setSelection] = useState<SelectionData | null>(null);
   const [revokedBooks, setRevokedBooks] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        togglePanel('search');
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [togglePanel]);
   return {
     activePanel,
     setActivePanel,
