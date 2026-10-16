@@ -145,23 +145,14 @@ gh pr merge <pr-number> --squash --delete-branch
 
 ### Hotfix Flow
 
+Branch from updated `main` and commit exactly as in Feature Branch Flow steps 1–3, then:
+
 ```bash
-# 1. Create hotfix from main
-git checkout main
-git pull
-git checkout -b hotfix/critical-fix
-
-# 2. Fix and commit
-git add -A
-git commit -m "fix(scope): critical fix"
-
-# 3. Push with priority
+# Push and create PR with label
 git push -u origin HEAD
-
-# 4. Create PR with label
 gh pr create --title "hotfix: critical fix" --label "hotfix"
 
-# 5. Merge only after human confirmation + green checks (no --admin/--auto)
+# Merge only after human confirmation + green checks (no --admin/--auto)
 gh pr checks <pr-number>
 gh pr merge <pr-number> --squash
 ```
@@ -183,13 +174,7 @@ git push --force-with-lease
 
 ### Authentication
 
-```bash
-# Check status
-gh auth status
-
-# Login
-gh auth login
-```
+Run `gh auth status` (already covered in Quick Push); use `gh auth login` when unauthenticated.
 
 ### PR Management
 
@@ -211,7 +196,6 @@ gh pr review <number> --approve --body "LGTM"
 | Permission denied | Check gh auth, repo access |
 | Branch conflict | Rebase or merge main first |
 | Actions failing | Check logs, fix locally |
-| Auto-merge disabled | Enable in repo settings |
 | PR not mergeable | Rebase or resolve conflicts |
 
 ## d.o.EPUB Studio Specific
@@ -243,6 +227,21 @@ gh pr review <number> --approve --body "LGTM"
 - [ ] PR description is complete
 - [ ] CI/CD status monitored
 - [ ] Known issues checked
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Checks are green, so I can merge without asking." | Merging requires explicit human confirmation and `--admin`/`--auto` are forbidden (AGENTS.md Tier 1 no-automerge rule); verify with `gh pr checks <pr-number>` and merge only on the user's go-ahead. |
+| "A red deploy check means my code broke the build." | `Deployment rate limited — retry in 24 hours` is the Vercel Hobby free-deployment cap (`api-deployments-free-per-day`), never code; only `Deployment has failed` warrants `npx vercel inspect <dpl> --logs`. |
+| "Vercel and Pages are required checks, so they gate the merge." | Both deploy integrations are non-required (ADR-286 — only Codacy is ruleset-required); merge on required-green + not-BEHIND + zero unresolved threads, then retry deployments from the dashboard. |
+
+## Red Flags
+
+- [ ] Merging with `--admin`/`--auto`, or before required checks are green and the user gave the go-ahead
+- [ ] More than one push per revision (re-pushes burn the Vercel Hobby deployment quota)
+- [ ] PR is BEHIND/DIRTY or has unresolved review threads
+- [ ] `Deployment rate limited` diagnosed as a code failure instead of quota exhaustion
 
 ## Summary
 

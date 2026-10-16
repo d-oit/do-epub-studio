@@ -97,3 +97,20 @@ grep -r "offline sync" plans/ analysis/
 - GitHub: [d-o-hub/chaotic_semantic_memory](https://github.com/d-o-hub/chaotic_semantic_memory)
 - Docs: [docs.rs/chaotic_semantic_memory](https://docs.rs/chaotic_semantic_memory)
 - NPM: [@d-o-hub/csm](https://www.npmjs.com/package/@d-o-hub/csm)
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "csm will understand my paraphrased question." | csm is Hyperdimensional Computing — hash-based token matching, not embeddings. It misses synonyms; query with literal domain terms or use an external embedding model. |
+| "I'll commit `.git/memory-index/csm.db` so the team shares the index." | The index is per-clone and never committed; each clone runs `csm init` + `csm index-dir`. |
+| "No hits — I'll just raise `-k`." | v0.3.2 has `--abstain-threshold` for exactly this; a larger `-k` only returns weaker matches. |
+| "csm isn't installed, so past learnings are unreachable." | `scripts/check_csm.sh` health-checks it, and the documented fallback is `grep -r "<terms>" plans/ analysis/`. |
+
+## Red Flags
+
+- [ ] Empty/low-signal results from a synonym query treated as "nothing was ever recorded".
+- [ ] `csm_concepts`, `csm_associations`, or the `.db` file showing up in `git status`.
+- [ ] Index built without `--heading-level 2`, so `##` sections under `plans/` and `analysis/` are not retrievable.
+- [ ] `-k` left large (blowing the token budget) instead of the default 5.
+- [ ] csm availability asserted without running `scripts/check_csm.sh`.

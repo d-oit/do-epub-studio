@@ -104,3 +104,22 @@ source-path=SCRIPTDIR
 3. If validation fails: fix and retry
 4. Only proceed when validation passes
 5. Run tests: `bats tests/script.bats`
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "It's a throwaway internal script — `set -euo pipefail` is overkill." | Sourcing the template header is what makes failures fatal instead of swallowed. Without `-u`/pipefail, a failed command inside a pipeline exits 0. |
+| "I'll add quotes later; ShellCheck will flag them." | The validation loop is fix-and-retry immediately: run `shellcheck script.sh` after every change and only proceed once it passes. Unquoted expansions (SC2086) split words at runtime. |
+| "I'll check `$?` after running the command." | SC2181: check directly with `if ! command; then ...`. |
+| "ShellCheck is wrong here — I'll add `# shellcheck disable=SC2086`." | Suppressions are not fixes. The only sanctioned project-level disable is `SC1090` in `.shellcheckrc` for `source-path=SCRIPTDIR` resolution. |
+| "Call `main \"$@\"` at the bottom; nobody sources this file." | BATS `setup()` sources the script, so `main` must be guarded by `[[ "${BASH_SOURCE[0]}" == "${0}" ]]`. |
+
+## Red Flags
+
+- [ ] Script has no `set -euo pipefail` (or drops `-u`/`-o pipefail`).
+- [ ] `local var=$(cmd)` (SC2155) or unquoted `$var` expansions (SC2086) present.
+- [ ] Exit status tested via `$?` / `[ $? -eq 0 ]` instead of `if ! command` (SC2181).
+- [ ] Inline `# shellcheck disable=` added to silence a finding instead of fixing it.
+- [ ] `main "$@"` invoked without the `BASH_SOURCE[0] == "$0"` guard, breaking sourced BATS runs.
+- [ ] New or changed script ships without a BATS test, or `bats tests/` is not run after the fix.

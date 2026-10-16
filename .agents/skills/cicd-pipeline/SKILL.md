@@ -95,17 +95,9 @@ jobs:
 
 ## Deployment Strategies
 
-### Blue-Green Deployment
-
-Deploy to blue (staging), run smoke tests, switch traffic, keep green for rollback.
-
-### Canary Deployment
-
-Deploy to 10% of traffic, monitor metrics, increase if healthy, full rollout or rollback.
-
-### Rolling Deployment
-
-Update one instance at a time, wait for health check, continue until all updated.
+- **Blue-Green** — deploy to blue (staging), run smoke tests, switch traffic, keep green for rollback.
+- **Canary** — deploy to 10% of traffic, monitor metrics, increase if healthy, full rollout or rollback.
+- **Rolling** — update one instance at a time, wait for health check, continue until all updated.
 
 ## Security Scanning
 
@@ -163,13 +155,7 @@ e2e-tests:
 
 ## Caching Strategies
 
-```yaml
-- name: Setup Node.js
-  uses: actions/setup-node@v4
-  with:
-    node-version: '20'
-    cache: 'npm'
-```
+Cache npm dependencies with `actions/setup-node`'s built-in `cache: 'npm'` (see Unit Tests above) — no separate cache job is needed.
 
 ## Quality Gate Workflow
 
@@ -244,6 +230,20 @@ Reference `.lighthouserc.json` for per-route URL configuration.
 - **Pages rejects any file >25 MiB at asset validation — after build passes.**
   Enforced by `scripts/check-bundle-budget.mjs` (`platformLimits`); SW
   `globIgnores` excludes precache only, never the upload (GOAP-273/#1188).
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The pipeline is green, so the merge is safe." | In the Quality Gate workflow `build` MUST declare `needs: [lint, typecheck, test]` — without it the gates run in parallel and a failing typecheck can sit next to a passing build. |
+| "The desktop Lighthouse preset is close enough." | CI MUST enforce the Lighthouse mobile preset with route-specific budgets — remove `preset: "desktop"` from `.lighthouserc.json` and define routes under `routeBudgets` in `.performance-budgets.json`. |
+| "Node 20 in the devcontainer matches the CI examples." | Node ≥22 is mandatory (wrangler requires it) and the CI matrix is 22/24 — a Node 20 base image dies at `worker#build`, far from the actual cause. |
+
+## Red Flags
+
+- [ ] Quality-gate `build` job has no `needs: [lint, typecheck, test]`
+- [ ] `.lighthouserc.json` still sets `preset: "desktop"`
+- [ ] Devcontainer pins Node <22 or a pre-bookworm distro (Playwright 1.63 ships no WebKit for debian11)
 
 ## Summary
 

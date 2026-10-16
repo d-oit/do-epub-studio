@@ -173,3 +173,21 @@ it will halt automation and **post a "Autopilot Handoff" comment on the PR.**
 - [ ] No protected labels on the PR
 - [ ] All scripts pass ShellCheck validation
 - [ ] Evals run successfully against fixtures
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "`gh pr view --json comments` shows me the whole discussion." | It returns only general comments — inline review comments REQUIRE `gh api /repos/:owner/:repo/pulls/<number>/comments`. |
+| "I'll wait for all checks to go green before merging." | Non-required checks can sit pending indefinitely (e.g. Chromatic `UI Tests`), and `gh pr checks --watch` hangs forever. Attempt `gh pr merge <N> --squash` and let branch protection decide server-side — `mergeStateStatus: UNSTABLE` can still be mergeable; `--auto` is forbidden by repo policy. |
+| "A `cancelled` check needs the `--admin` override." | A `cancelled` conclusion with no replacement run is what `concurrency: cancel-in-progress` leaves behind, and the integration token cannot rerun it (`Resource not accessible by integration`). Push an **empty commit** to fire a fresh `synchronize` run. |
+| "The PR is only `BEHIND`, so I can merge it." | `BEHIND` → `gh pr update-branch`, then wait for the new checks; never merge a BEHIND or DIRTY PR. |
+| "Lockfile conflicts just need one side kept." | On a dependabot PR, regenerate `pnpm-lock.yaml` per the `migration-refactoring` recipe — never keep one side whole. |
+
+## Red Flags
+
+- [ ] Autopilot halted on must-fix comments but `goap-agent` was never activated (no "Autopilot Handoff" follow-through)
+- [ ] PR carries `release:cut`/`release`, `WIP`, or `DO NOT MERGE` labels, or touches auth/security/permission code
+- [ ] A merge attempted while the PR is BEHIND/DIRTY, or with a failing CI check pending investigation
+- [ ] `gh pr checks --watch` left running, or the loop retried with `--auto`/`--admin`
+- [ ] Active `gh` account not verified against the repository owner (`bash scripts/verify-auth.sh` skipped)

@@ -203,6 +203,21 @@ Save actionable feedback per eval directory. Catches:
 [Actionable improvements back to skill-creator]
 ```
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The output looks right, so I'll mark the assertion `passed: true`." | Require concrete evidence — a direct quote or reference from the output — for every PASS. Deny benefit of the doubt. |
+| "I'll write the assertions up front so the eval is ready to run." | Add `assertions` *after* the first run to match actual behavior; they must be objective, verifiable, and non-brittle. |
+| "Every assertion passed, so the skill is validated." | Always-pass assertions inflate the score — remove them. A clean `grading.json` still needs `feedback.json`: human review catches unasserted issues and technically correct but unhelpful outputs. |
+
+## Red Flags
+
+- [ ] A `grading.json` entry with `passed: true` whose `evidence` is not a direct quote from the output.
+- [ ] An assertion that passes on every run (always-pass assertion inflating the pass rate).
+- [ ] An `eval-<name>/` iteration missing `without_skill/` (no baseline delta) or `timing.json`.
+- [ ] Iterating with narrow patches to `SKILL.md` instead of feeding the failed assertions + `feedback.json` back to `skill-creator`.
+
 ## References
 
 - `references/skillevaluator-framework.md` — NVIDIA SkillEvaluator multi-tier framework integration (Tier 1 Validation, Tier 2 Deduplication, Tier 3 Live Evaluation & Skill Lift).

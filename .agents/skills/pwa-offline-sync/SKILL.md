@@ -104,3 +104,22 @@ Per web.dev customize-install / MDN `beforeinstallprompt`:
   registration, cleanup retained in module scope for HMR/tests;
 - Synthetic-event tests prove UI lifecycle only — never claim native OS
   installation from them.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Nobody is logged in, so an IndexedDB read for the pending count is harmless." | Sync-queue payloads are encrypted with the session token — an unauthenticated poll reads the wrong owner's path. Reset `pendingSyncCount` to 0 and skip IndexedDB entirely when logged out, and re-run the effect on the auth flip. |
+| "A static import of `lib/offline` in the shell hook is simpler to reason about." | Shell-level hooks MUST dynamic-import it so IndexedDB + crypto + sync stay out of the eager bundle (ADR-107 §3 route totals). Only feature code inside the reader may import it statically. |
+| "A 401/403 is just another failure — retry with a longer backoff." | Revocation is terminal: `clearAllPermissions()` plus the `onPermissionRevoked` callback (zombie detection), which also stops further reads. |
+| "Bump the cache name / IndexedDB version to force a clean slate." | Version bumps are intentional and migration-backed; silent clears discard queued mutations. |
+| "The new status widget needs its own `offline.pendingSyncCount` key." | Reuse the existing plural key `offline.pendingSync` (one/other). A second count key for the same noun drifts from the reader's indicator. |
+
+## Red Flags
+
+- [ ] A shell-level hook (e.g. `useSyncStatus`) touches IndexedDB while unauthenticated, or its effect doesn't re-run on the auth flip.
+- [ ] `lib/offline` imported statically in a shell-level hook.
+- [ ] Cache name or IndexedDB version bumped with no migration path.
+- [ ] `beforeinstallprompt` handler without `preventDefault()`, or `promptInstall()` able to consume the retained event more than once.
+- [ ] `isStandalone()` uses UA sniffing, or the install UI renders a disabled/fake button when unsupported.
+- [ ] `setupOnlineListener()` cleanup not returned from the effect (pending retries never cancelled).

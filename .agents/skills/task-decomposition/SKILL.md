@@ -210,6 +210,25 @@ The decomposition phase feeds directly into GOAP's planning cycle for optimal ex
 5. **Anticipate Issues**: Identify risks
 6. **Enable Parallelization**: Find independent tasks
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Fifteen tasks is more thorough than seven." | Step 2 caps components at 3-7; extra tasks dilute ownership and hide the parallelization opportunities the checklist requires. |
+| "Estimation can wait until work starts." | Step 6 assigns Low/Medium/High per task and the Quality Checklist requires appropriate complexity estimates and no task over 4 hours. |
+| "It is an architecture change, but I'll decompose now and run TRIZ afterwards." | Architecture, permission, offline sync, EPUB rendering, and API design work must have TRIZ analysis first; the checklist lists it for architecture tasks. |
+| "Everything is sequential A to B, which is always safe." | Dependency mapping defines sequential, parallel, and converging shapes; the checklist requires identifying parallelization opportunities. |
+| "Testing and docs are tasks to append at the end." | The Quality Checklist and Tips require testing and docs planned per task, not bolted on after implementation. |
+
+## Red Flags
+
+- [ ] A task with no complexity estimate, or estimated above 4 hours.
+- [ ] Architecture, permission, offline sync, EPUB rendering, or API design decomposed with no TRIZ analysis behind it.
+- [ ] Component list outside 3-7, or components kept/merged with no stated criterion.
+- [ ] Every dependency drawn sequential while nothing notes what can run in parallel.
+- [ ] A task with no defined inputs, outputs, and measurable success criteria.
+- [ ] Tasks that cannot be owned by a single agent or verified in isolation.
+
 ## Summary
 
 Good decomposition enables optimal execution, clear validation, and higher quality.

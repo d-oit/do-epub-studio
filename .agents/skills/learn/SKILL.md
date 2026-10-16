@@ -78,3 +78,21 @@ After debugging a Turso sync issue:
 - `AGENTS.md` - Root agent guidance and constraints.
 - `agents-docs/LEARNINGS.md` - Project-wide learnings.
 - `plans/` - ADRs and phase plans.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Nothing surprising happened, so I'll skip capture." | Tier 2 #12 is mandatory; if nothing qualifies, write "no new learnings" in the PR description instead of skipping silently. |
+| "I'll mention the learning in the PR description." | Learnings go into scoped files (`agents-docs/LEARNINGS.md`, `scripts/AGENTS.md`, `.agents/skills/<name>/AGENTS.md`) in the same PR that produced them. |
+| "I'll write the whole debugging narrative so context isn't lost." | The format is 1–3 lines per insight; verbose explanations and session-specific notes are under What NOT to Capture. |
+| "`pnpm build` is worth recording." | Commands documented in README/AGENTS.md are obvious documentation — capture only undocumented flags, env vars, and runtime/CI-only constraints. |
+| "I'll put it in `agents-docs/LEARNINGS.md` to be safe." | Scoping rule: most specific location wins — a skill-specific quirk belongs in `.agents/skills/<name>/AGENTS.md`. |
+
+## Red Flags
+
+- [ ] Non-trivial change merged with neither learnings nor a "no new learnings" statement.
+- [ ] Entry with no file path, command, or error string, so it cannot be re-verified.
+- [ ] Duplicate of an existing entry in the scoped file.
+- [ ] A skill-specific quirk filed in `agents-docs/LEARNINGS.md`.
+- [ ] Capture claimed via a chat summary while no scoped file changed in the PR.

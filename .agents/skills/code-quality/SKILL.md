@@ -105,3 +105,22 @@ Use named constants instead of bare numbers like `30000`.
 ## Impeccable (UI files only)
 
 For UI component files, `npx impeccable detect` runs deterministic design quality checks (44 rules). This is separate from code quality — it catches design anti-patterns, not code smells. See `DESIGN.md` for project design language.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The duplicated block is only a few lines, extracting it is over-engineering." | DRY is a core principle here: duplicated logic goes into a shared function or constant, there is no size threshold. |
+| "This function validates, saves, and notifies, but it's one workflow." | Single Responsibility: split functions that validate, save, and notify. Bloaters are code smells — Long Method (>50 lines), Long Parameter List (>4 params). |
+| "`30000` is obvious from context." | No magic numbers: use a named constant. Bare literals are flagged by both Quick Check and Quality Criteria. |
+| "`pnpm --filter <pkg> lint` passed, so my root `eslint.config.js` change is fine." | Root config changes affect every package — run `pnpm lint` (Turborepo, all packages). Codacy also lints root-level `vite.config.ts`, `vitest.config.ts`, `playwright.config.ts` that local ESLint skips. |
+| "A test translation mock is simplest as `Record<string, string>` with bracket access." | Triggers `security/detect-object-injection` (ESLint) and `useQwikValidLexicalScope` (Biome). Use `Map<string, string>` with `.get(key)` and wrap `t` with `vi.fn()`. |
+
+## Red Flags
+
+- [ ] New regex on untrusted input instead of `matchBounded`/`testBounded`/`matchAllBounded` from `@do-epub-studio/shared`.
+- [ ] A function over 50 lines or over 4 parameters that "does one workflow" (validate + save + notify).
+- [ ] Bare numeric literals inline (e.g. `30000`) instead of a named constant.
+- [ ] `@typescript-eslint/*` rule set to `'error'` in an override block that lacks `plugins` — crashes ESLint in every package inheriting the root config.
+- [ ] `Record<string, string>` + `obj[key]` in a test translation mock, or module-scope `const fn = () => ...` left unwrapped in a test file.
+- [ ] Lint verified only with `pnpm --filter <pkg> lint` after touching `eslint.config.js`.

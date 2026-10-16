@@ -45,11 +45,8 @@ skills into a single workflow that reviews, reports, and fixes PR issues.
 ### Phase 1: Identify PR
 
 ```bash
-# From current branch
+# From the current branch, or pass the PR number/URL as the first argument
 gh pr view --json number,url,title,headRefName,baseRefName,author,state
-
-# Or use provided number
-gh pr view $PR_NUMBER --json number,url,title,headRefName,baseRefName,author,state
 ```
 
 Stop and ask user if no PR found.
@@ -182,7 +179,7 @@ for t in unresolved:
 
 For each unresolved thread:
 - **Real issue**: fix the code, push, then resolve the thread.
-- **False positive** (e.g. OwlWatch flagging plan documents as live code bugs, or a stale finding for an issue already fixed elsewhere): resolve via GraphQL mutation with a comment explaining why it is a false positive.
+- **False positive** (e.g. OwlWatch scanning `plans/`, `agents-docs/` markdown and flagging documented vulnerabilities as live code — always a false positive on docs-only PRs — or a stale finding for an issue already fixed elsewhere): resolve via GraphQL mutation with a comment explaining why, e.g. "False positive: this finding describes an issue documented in the plan that was already fixed in PR #NNN."
 
 ```bash
 gh api graphql -f query='mutation {
@@ -190,24 +187,18 @@ gh api graphql -f query='mutation {
 }'
 ```
 
-**Step 3 — OwlWatch-specific guidance:**
-OwlWatch scans markdown files (plans/, agents-docs/) and flags descriptions of vulnerabilities as if they were live code. These are always false positives on docs-only PRs. Resolve without code changes but add a comment: "False positive: this finding describes an issue documented in the plan that was already fixed in PR #NNN."
-
-**Step 4 — Chromatic visual regression:**
+**Step 3 — Chromatic visual regression:**
 If the PR changes CSS, component roles, or aria attributes, Chromatic will flag visual changes as pending baselines. These are expected and must be accepted at the Chromatic UI before the `UI Tests` check turns green. Navigate to the build URL shown in `gh pr checks $PR` and click "Accept all changes."
 
-**Step 5 — Final merge:**
+**Step 4 — Final merge:**
 ```bash
-# Confirm everything is green
 gh pr checks $PR  # all non-skipping checks must pass
 
-# Merge directly — NEVER use --auto
 gh pr merge $PR --squash
 ```
 
-**Do NOT use `--auto`.** Auto-merge fires asynchronously and silently fails when
-the branch is BEHIND or threads are unresolved. Always work through steps 1–4
-first, then merge directly with `gh pr merge <N> --squash`.
+**Do NOT use `--auto`:** it fires asynchronously and silently fails when the
+branch is BEHIND or threads are unresolved.
 
 ## Delegation Map
 
@@ -228,11 +219,22 @@ first, then merge directly with `gh pr merge <N> --squash`.
 - [ ] Findings classified by severity
 - [ ] Must-fix issues auto-fixed
 - [ ] Quality gate passes after fixes
-- [ ] All CI checks pass
-- [ ] Branch is up to date with main (`mergeStateStatus: CLEAN`)
-- [ ] All review threads resolved (no `isResolved: false` entries)
-- [ ] Chromatic baselines accepted if visual changes present
+- [ ] Merge-readiness steps 1–3 run (see Phase 10)
 - [ ] Report delivered to user
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "`--auto` is the safe way to merge — it merges as soon as CI is green." | `--auto` fires asynchronously and silently fails when the branch is BEHIND or threads are unresolved. Work Steps 1–3, then merge directly with `gh pr merge <N> --squash`. |
+| "`gh pr view $PR` shows no review comments, so there is nothing to resolve." | `gh pr view` misses inline review comments — only `gh api /repos/:owner/:repo/pulls/$PR/comments` returns them; thread state comes from the `reviewThreads` GraphQL query. |
+| "The OwlWatch hit on the plan markdown names a real vulnerability, so the code must change." | OwlWatch scans `plans/` and `agents-docs/` markdown and flags documented vulnerabilities as if they were live code; on docs-only PRs these are false positives — resolve the thread with an explanatory comment, no code change. |
+
+## Red Flags
+
+- [ ] `mergeStateStatus` is `BEHIND` (or `DIRTY`) when the merge command runs — Step 1 requires `CLEAN`/`MERGEABLE` first.
+- [ ] `gh pr merge --auto` or `--admin` in the merge command (`--auto` never merges reliably; `--admin` bypasses CI).
+- [ ] Chromatic baselines still pending while the `UI Tests` check is red.
 
 ## References
 

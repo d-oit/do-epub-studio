@@ -170,6 +170,25 @@ Impeccable catches: side-tab borders, purple gradients, bounce easing, dark glow
 - [ ] Specific replacements provided for each
 - [ ] Design principles cited for changes
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The purple gradient is only a subtle accent." | Purple-to-blue gradients are the canonical default-AI palette. Use real color theory — complementary or analogous pairs — not "purple because AI". |
+| "Users expect a short onboarding wizard." | A 5-step onboarding wizard "treats users as suspects". Don't teach the UI — fix the UI, and prefer progressive disclosure. |
+| "The empty state needs an illustration to feel warm." | Illustrated empty states are in the Canon of Slop (cute once, now patronizing), and generic empty states offer zero help. Show the next action instead. |
+| "A confirm dialog is safer than undo for deletes." | "Are you sure?" dialogs are trust issues. Use a 5-10 second undo window on destructive actions. |
+| "The copy is aspirational: powerful, seamless, intuitive." | Those are AI corporate superlatives. Replace with specifics — what it does and by how much ("Saves 3 hours" > "Saves time"). |
+
+## Red Flags
+
+- [ ] New UI ships a purple→blue gradient, `border-radius: 24px+`, or Inter as the primary font.
+- [ ] Headline follows `[Verb] your [noun] with [product]`, or the CTA reads "Get started for free".
+- [ ] Error copy blames the user ("Invalid input"), or a placeholder stands in for a label.
+- [ ] Confirm dialog where undo would work, or a modal/wizard interrupting first load.
+- [ ] Audit findings listed without 🔴/🟡/🟢 severity, or surface polish fixed before structural problems.
+- [ ] Replacements are generic advice ("make it cleaner") instead of the concrete rewrite.
+
 ## Summary
 
 Anti-slop is a discipline, not a style. Choose specificity over templates, tension over harmony, and respect for users over pleasing everyone.

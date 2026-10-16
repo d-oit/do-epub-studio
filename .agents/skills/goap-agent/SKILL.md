@@ -198,6 +198,24 @@ Are tasks independent?
 - `references/agent-assignments.md` - Agent capability mapping
 - `plans/` - Store all planning documents here
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "These tasks look independent, so I'll fan them out now." | Phase 6 requires verifying no data deps, no resource conflicts, and no ordering first — parallelizing dependent tasks is an explicit anti-pattern. |
+| "I'll fire each parallel task as its own message as I think of it." | All independent tasks go in a single message with multiple Task/Actor calls; sequential messages instead of parallel is listed under Anti-patterns. |
+| "For a 3-task job I can keep the plan in my head." | The skill says always use the `plans/` folder, and the Quality Checklist requires the plan written to `plans/`. |
+| "A failed agent means the phase is done-ish; I'll aggregate what returned." | Phase 6 requires validating each result before aggregating, using the retry → reassign → modify → escalate chain. |
+| "Skipping the gate saves a round trip." | Phase 5 defines N quality-gate checkpoints, and the Error Handling table fixes → re-runs the gate after any fix. |
+
+## Red Flags
+
+- [ ] Two tasks in one parallel batch touch the same file, table, or resource.
+- [ ] No plan document under `plans/` for a 5+ step task.
+- [ ] Quality gates written as "tests pass" with no runnable command.
+- [ ] Phase N+1 started before the Phase N gate was checked.
+- [ ] Agent results aggregated without validating deliverables (files, rows, exit codes); a failed agent silently dropped from the synthesis.
+
 ## Summary
 
 GOAP enables systematic planning through:

@@ -13,8 +13,6 @@ metadata:
 
 # Web Doc Resolver Skill
 
-Python implementation for resolving web URLs and queries into compact, LLM-ready markdown documentation with provider cascade, quality scoring, and advanced routing.
-
 ## When to use this skill
 
 Activate this skill when you need to:
@@ -24,7 +22,6 @@ Activate this skill when you need to:
 - Access quality scoring and content validation features
 - Use circuit breaker patterns for provider reliability
 - Leverage routing memory for learned provider preferences
-- Run as a CLI tool or import as a Python module
 
 ## Prerequisites
 
@@ -54,9 +51,6 @@ python scripts/resolve.py "query" --log-level INFO --max-chars 5000
 ```bash
 # From the skill directory
 cd .agents/skills/do-web-doc-resolver && python -m scripts.resolve "https://docs.rs/tokio"
-
-# Or via PYTHONPATH from anywhere
-PYTHONPATH=.agents/skills/do-web-doc-resolver python -c "from scripts.resolve import main; main()" "https://example.com"
 ```
 
 ### Python Module Usage
@@ -222,13 +216,7 @@ do-web-doc-resolver/
 │   ├── __init__.py
 │   ├── conftest.py
 │   └── test_resolve.py
-└── references/           # Detailed documentation
-    ├── CASCADE.md
-    ├── CLI.md
-    ├── CONFIG.md
-    ├── PROVIDERS.md
-    ├── RUST_CLI.md
-    └── TESTING.md
+└── references/           # Detailed documentation (see References below)
 ```
 
 ## References
@@ -241,6 +229,20 @@ do-web-doc-resolver/
 | All providers & rate limits | `references/PROVIDERS.md` |
 | Rust CLI architecture       | `references/RUST_CLI.md`  |
 | Test structure & markers    | `references/TESTING.md`   |
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Cache and free providers are slow — call the paid provider first." | The cascade checks the cache (24h TTL) then FREE providers before any paid one, and the active profile caps paid attempts (`free` 0, `fast` 1, `balanced` 1-2, `quality` 3-5). |
+| "The first provider that returns content is good enough." | Content is scored 0.0-1.0 (too short <500 chars: -0.35) and must clear the profile's quality threshold (`free` 0.70, `fast` 0.60, `balanced` 0.65, `quality` 0.55). |
+| "Two 5xx responses in a row — just retry the same provider." | 3 consecutive failures trip the circuit breaker: that provider is skipped for a 300s cooldown, and only a successful call resets the failure count. |
+
+## Red Flags
+
+- [ ] Provider skipped or reordered around the cascade without the API key it needs (e.g. `exa`/`tavily`/`firecrawl` with no `*_API_KEY` exported).
+- [ ] Result accepted below the profile's quality threshold, or content shorter than `WEB_RESOLVER_MIN_CHARS`.
+- [ ] Same provider retried after 429/401/402/5xx instead of setting cooldown / tripping the breaker.
 
 ## Related Skills
 

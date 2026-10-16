@@ -91,3 +91,22 @@ if (!failureCheck.allowed) {
     { maxRequests: 1, windowMs: 900_000 });
 }
 ```
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The lockout keeps blocking my manual testing, so I'll relax the failure cap" | The guard is 5 failures per 900 s, and the 5th writes the `auth_lockout` key for another 900 s; the handler answers 423 with a `Retry-After` header. Change the test client, not the constant. |
+| "Returning 'email not found' makes auth debugging far easier" | Step 5: return generic access-denied errors and never reveal whether an email exists — enumeration is an explicit threat in the workflow's threat model. |
+| "Sessions can be stateless, so revocation can wait for expiry" | Logout and refresh must revoke existing tokens, and session revocation is required on permission revocation per ADR-004. |
+| "15-minute signed URLs cause refetches mid-chapter; make the TTL 24 h" | Signed R2 URLs must carry a TTL under 15 minutes with expiry metadata and an `X-Trace-Id`. |
+| "A failed grant attempt doesn't need an audit row" | Step 4 logs `grant_*`, `access_*`, and `session_*` events with actor plus trace, and failures must also increment the `auth_failures` counter. |
+
+## Red Flags
+
+- [ ] A new `/api/access/*` handler parses the payload without Zod plus a capability check.
+- [ ] Password comparison is not Argon2id (plaintext or fast hash such as SHA-256).
+- [ ] A session or signed URL is issued without expiry metadata or an `X-Trace-Id` log.
+- [ ] The `auth_lockout` check runs after credential validation, or the `auth_failures` / `auth_lockout` counters are not cleared on success.
+- [ ] A grant/session mutation has no matching `grant_*`, `access_*`, or `session_*` audit row.
+- [ ] The 5th-failure path returns 423 without a `Retry-After` header, or no rate-limit/abuse guard is documented for the endpoint.

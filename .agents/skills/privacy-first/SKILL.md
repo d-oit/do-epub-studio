@@ -201,6 +201,24 @@ throw new Error(`User ${user.email} not found`);
 throw new Error('User not found');
 ```
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "It's only a test fixture, not real data, so any email will do" | Fixtures must use obviously fake values — `user@example.com`, `faker.internet.email()`, or the `john.doe@example.com` / `+1-555-000-0000` / `123 Test Street, Test City` pattern. Anything else is a real address frozen in git history. |
+| "This email is already committed elsewhere, so one more reference adds nothing" | The core principle is that data never enters version control; an existing leak never authorizes a new one. Fix the old occurrence instead of matching it. |
+| "It's a config default, not production, so a literal address is fine" | Config files are committed and checked out by everyone. Secrets and addresses belong in `process.env.ADMIN_EMAIL` (or similar), never as literals. |
+| "The error message needs the email to be useful for debugging" | Errors must not leak user info: throw a generic `User not found` and log the identifier server-side. |
+| "The docs need a realistic contact so users know where to write" | Documentation uses placeholders such as `[support email]`, and API examples use reserved domains like `https://api.example.com/data`. |
+
+## Red Flags
+
+- [ ] A staged hunk contains a literal address that is not on a reserved domain (`example.com`, `example.org`).
+- [ ] The pre-checks would fire: `git diff --cached | grep -E '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'` or the `.gitleaks.toml` `Email` / `AWS Key` rules match.
+- [ ] API examples or doc snippets point at a real production domain instead of `api.example.com`.
+- [ ] `throw new Error(...)` or a log line interpolates `user.email`, a phone number, or a name.
+- [ ] A query selects `email` or `phone` unmasked, with no `LEFT(email, 2) || '***@***.***'` style masking.
+
 ## Summary
 
 Privacy-first means assuming all code will be public. Never commit personal data and use environment variables for secrets.

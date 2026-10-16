@@ -41,21 +41,8 @@ npm test
 # Run specific test file
 npm test -- src/api/auth.test.ts
 
-# Run tests matching pattern
-npm test -- --grep "auth"
-
 # Watch mode
 npm test -- --watch
-```
-
-### CI/CD Test Run
-
-```bash
-# Run with coverage
-npm test -- --coverage
-
-# Run with JSON output for CI
-npm test -- --json > test-results.json
 ```
 
 ### Debugging Failing Tests
@@ -241,6 +228,21 @@ npm test -- --bail
 - [ ] Clear test names describe behavior
 - [ ] Proper AAA structure
 - [ ] Good coverage of edge cases
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "I only touched one file, so running that one test file is enough." | The gate aggregates `npm run test:unit`, `test:integration`, and `test:e2e` with coverage thresholds; the required suites (auth flow, permission checks, EPUB parsing, CFI navigation, offline sync) are only proven by the full run. |
+| "`Terminated` / exit 143 means my change broke the tests." | It means the task was signalled, not linted or tested — check `pgrep -f quality_gate` for a competing `scripts/quality_gate.sh` (they share `<pkg>/coverage/.tmp`) before debugging code. |
+| "The test is flaky, so I'll raise the timeout." | Flakiness is a race condition in the test or the code. Fix the missing `await`/timing instead of masking it — the Quality Checklist requires deterministic tests. |
+
+## Red Flags
+
+- [ ] Starting `scripts/quality_gate.sh` while `pgrep -f quality_gate` still lists a live instance.
+- [ ] Reading a tail that shows `✗ Workflow validation FAILED` and treating it as the end of the run (the gate aggregates failures; wait for the final summary banner).
+- [ ] A test that only passes on re-run — that is a race condition, not "flakiness".
+- [ ] Mocks standing in for the logic under test instead of stubbing the external service.
 
 ## Summary
 

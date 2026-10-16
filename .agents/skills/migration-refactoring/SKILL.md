@@ -199,23 +199,6 @@ def get_users():
 - [ ] Lint passes
 - [ ] Build succeeds
 
-### Smoke Tests
-
-```bash
-# Quick validation
-npm run typecheck
-npm run lint
-npm test
-```
-
-## Error Handling
-
-| Error | Cause | Solution |
-|-------|-------|----------|
-| Import errors | Broken imports | Update import paths |
-| Type errors | API changes | Update types |
-| Test failures | Behavior changes | Update tests |
-
 ## Integration
 
 - **task-decomposition**: Plan large migrations
@@ -242,6 +225,21 @@ npm test
 - [ ] Migration order determined
 - [ ] Automated fixes applied
 - [ ] Tests pass after migration
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "One big commit for the whole migration is easier to review." | Phase 3 requires incremental commits with a rollback point created at each step; `git reset --hard HEAD~1` is only an option if the steps were committed separately. |
+| "Tests pass locally, so the dependency bump is done." | Re-pin the declared target with `pnpm add --save-exact --lockfile-only <pkg>@<declared-version>` — a plain `pnpm install --lockfile-only` resolves `^x.y.z` to the *newest* patch and silently changes what the PR claims to do. |
+| "A `pnpm-lock.yaml` conflict is easiest resolved by keeping our side." | `merge=ours` is inert (no `merge.ours.driver` registered), so conflicts still occur; take `origin/main`'s lockfile, re-pin, then verify with `diff <(git show origin/main:pnpm-lock.yaml) pnpm-lock.yaml` (`.gitattributes` marks lockfiles `-diff`). |
+
+## Red Flags
+
+- [ ] Migrating an entry point or root file (imported by many) before leaf files with no importers.
+- [ ] Lockfile conflict resolved by keeping one side wholesale, or by a plain `pnpm install --lockfile-only` after a bump.
+- [ ] Migration started with no committed rollback point, or with an untested rollback plan (Pre-Migration Checklist).
+- [ ] Tests/typecheck/lint not re-run after the final migration step (Post-Migration Checklist).
 
 ## Summary
 

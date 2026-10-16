@@ -201,6 +201,25 @@ background: #ffffff;
 - [ ] No accessibility violations
 - [ ] Focus indicators visible
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "axe-core reported zero violations, so the component is accessible." | Automated checks cover only part of WCAG 2.2. The Manual Checks list — keyboard navigation, focus indicator, skip link, heading hierarchy — is still required, along with the `npx impeccable detect` pre-audit pass. |
+| "The `title` attribute gives the icon button a name." | 4.1.2 (Name, role, value) requires a programmatically determined name. Use visible text or `aria-label`, and `role="button"` on custom clickables. |
+| "4.4:1 contrast is close enough to 4.5:1." | 1.4.3 requires 4.5:1 for normal text; 3:1 applies only to large text. Ship the passing pair (`#595959` on `#ffffff`), not a near miss. |
+| "The focus ring looks bad on mouse click, so I removed it." | 2.4.7 requires a visible focus indicator. Move the outline to `:focus-visible` so pointer users don't see it and keyboard users always do. |
+| "`placeholder="Email"` labels the input." | Placeholders are not labels. 3.3.2 requires a real `<label for="email">` bound to the input's id. |
+
+## Red Flags
+
+- [ ] Images or icon-only controls with no text alternative, or decorative images missing `alt=""` (1.1.1).
+- [ ] Interactive element reachable only by pointer — no keyboard path and no `tabindex`.
+- [ ] Body text contrast between 3:1 and 4.5:1, or gray text on a colored background.
+- [ ] Touch targets under 44px (caught by the `npx impeccable detect` pre-audit pass).
+- [ ] `outline: none` with no `:focus-visible` replacement.
+- [ ] Skipped heading levels (h1 → h3), or a dialog without `role="dialog"` and a focus trap.
+
 ## Summary
 
 Accessibility is essential for inclusive design. Audit early, test with real assistive technology, and fix issues proactively.

@@ -120,3 +120,22 @@ After resolving contradictions:
 - New contradictions checked (must be NONE)
 
 **Violation = incomplete architecture**
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The analysis file is a formality — I remember the contradictions." | Prerequisites require triz-analysis completed and `analysis/triz-core-YYYY-MM-DD.md` present; this skill MUST run AFTER it. |
+| "Secondary contradictions will surface later if they matter." | The Rule forbids system design until new contradictions are checked and the result is NONE. |
+| "Segmentation resolves everything, so skip the separation choice." | Core Loop step 3 picks Time, Space, Condition, or System-level per contradiction; the choice follows the contradiction's class. |
+| "The fix is obvious, the IFR can wait." | Core Loop step 2 defines an IFR per contradiction, and IFR criteria require no added complexity and no new contradictions. |
+| "Component mapping is documentation work for later." | System Design Derivation step 1 maps every solution to a component before design, recorded in `plans/003-system-design.md`. |
+
+## Red Flags
+
+- [ ] `New Contradictions:` left blank or omitted instead of explicitly stating whether it is NONE.
+- [ ] A resolution block with no `**IFR:**` line.
+- [ ] Solver started with no `analysis/triz-core-YYYY-MM-DD.md` in the tree.
+- [ ] Solutions not mapped to a component in `plans/003-system-design.md`.
+- [ ] One separation principle applied to every contradiction with no reference to its analyzed class.
+- [ ] A contradiction marked resolved while an acknowledged secondary effect is left open.

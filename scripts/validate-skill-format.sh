@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 # Validates SKILL.md format per agentskills.io specification.
-# Checks: frontmatter syntax, required fields, constraints, naming, line count.
+# Checks: frontmatter syntax, required fields, constraints, naming, line count,
+# required sections (## Rationalizations table, ## Red Flags checklist).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
 
-SKILLS_SRC="$REPO_ROOT/.agents/skills"
+SKILLS_SRC=${SKILLS_SRC:-"$REPO_ROOT/.agents/skills"}
 
 MAX_SKILL_LINES=${MAX_SKILL_LINES:-250}
 ERRORS=0
@@ -102,6 +103,38 @@ for skill_dir in "$SKILLS_SRC"/*/; do
     if [ "$lines" -gt "$MAX_SKILL_LINES" ]; then
         printf '%s[FAIL]%s %s: %d lines (max %d)\n' "${RED}" "${NC}" "$skill_name" "$lines" "$MAX_SKILL_LINES"
         local_errors=$((local_errors + 1))
+    fi
+
+    # Check 8: Rationalizations section (table header + >=2 data rows)
+    if ! grep -qE '^##[[:space:]]+Rationalizations[[:space:]]*$' "$skill_file"; then
+        printf '%s[FAIL]%s %s: Missing "## Rationalizations" section\n' "${RED}" "${NC}" "$skill_name"
+        local_errors=$((local_errors + 1))
+    else
+        if ! grep -qE '^\|[[:space:]]*Rationalization[[:space:]]*\|[[:space:]]*Reality[[:space:]]*\|' "$skill_file"; then
+            printf '%s[FAIL]%s %s: Rationalizations missing "| Rationalization | Reality |" table header\n' "${RED}" "${NC}" "$skill_name"
+            local_errors=$((local_errors + 1))
+        fi
+        # Count data rows in the section: rows starting with "|" but not the separator.
+        rat_rows=$(awk '/^##[[:space:]]+Rationalizations/{f=1;next}/^##[[:space:]]/{f=0}f' "$skill_file" \
+            | grep -cE '^\|[^-]' || true)
+        rat_rows=$((rat_rows > 0 ? rat_rows - 1 : 0)) # minus the header row
+        if [ "$rat_rows" -lt 2 ]; then
+            printf '%s[FAIL]%s %s: Rationalizations needs >=2 data rows (found %d)\n' "${RED}" "${NC}" "$skill_name" "$rat_rows"
+            local_errors=$((local_errors + 1))
+        fi
+    fi
+
+    # Check 9: Red Flags section (>=3 checklist items)
+    if ! grep -qE '^##[[:space:]]+Red Flags[[:space:]]*$' "$skill_file"; then
+        printf '%s[FAIL]%s %s: Missing "## Red Flags" section\n' "${RED}" "${NC}" "$skill_name"
+        local_errors=$((local_errors + 1))
+    else
+        rf_items=$(awk '/^##[[:space:]]+Red Flags/{f=1;next}/^##[[:space:]]/{f=0}f' "$skill_file" \
+            | grep -cE '^[[:space:]]*-[[:space:]]*\[ \]' || true)
+        if [ "$rf_items" -lt 3 ]; then
+            printf '%s[FAIL]%s %s: Red Flags needs >=3 checklist items (found %d)\n' "${RED}" "${NC}" "$skill_name" "$rf_items"
+            local_errors=$((local_errors + 1))
+        fi
     fi
 
     if [ $local_errors -eq 0 ]; then

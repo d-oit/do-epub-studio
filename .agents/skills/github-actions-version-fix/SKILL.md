@@ -143,6 +143,23 @@ yamllint .github/workflows/
 - [ ] Validated YAML syntax after changes
 - [ ] Tested workflow runs successfully
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The tag exists, so a `# v12.6.2` pin comment is fine." | Tag names are not uniformly `v`-prefixed — `treosh/lighthouse-ci-action` is tagged `12.6.2`, so zizmor's `ref-version-mismatch` audit rejects the comment. Verify with `gh api repos/<owner>/<repo>/matching-refs/tags/<prefix> --jq '.[].ref'`. |
+| "The tags API SHA is the SHA to pin." | The GitHub tags API returns the tag *object*, so its SHA is wrong for a `uses:` pin. Verify with `git ls-remote <upstream> "refs/tags/<tag>^{}"` (annotated), falling back to the plain ref for lightweight tags. |
+| "The workflow file is fine — that lint failure must be ESLint." | The failure surfaces as `pnpm lint failed` because root lint chains `turbo run lint && pnpm lint:workflows`; read the *tail* of the output — the ESLint header is a red herring. |
+| "No pip means zizmor cannot run here." | `uv tool install zizmor` works but lands in `~/.local/bin`, which must be on `PATH` or the validator's pip fallbacks fail silently (`No module named pip`). |
+
+## Red Flags
+
+- [ ] `uses:` tag has no matching ref, or the trailing `# vX.Y.Z` comment disagrees with the action's real tag name
+- [ ] Pin SHA taken from the tags API object (`git ls-remote …^{}` never run)
+- [ ] `pnpm lint failed` blamed on ESLint without reading the tail for the zizmor error
+- [ ] `uv tool install zizmor` without exporting `~/.local/bin` on `PATH`
+- [ ] Workflow edited without re-validating YAML (`python -c "import yaml; …"` or `yamllint`)
+
 ## Summary
 
 Use `gh api` to find correct version tags or commit SHAs when actions fail to resolve. Prefer full SHAs for security-critical actions and validate YAML before committing.

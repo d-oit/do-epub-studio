@@ -117,3 +117,21 @@ Using the harness in another codebase is proven, never assumed:
 - Fix the sensor that fired; do not refactor unrelated code in the same pass.
 - An empty sensor suite passes vacuously; that is not evidence.
 - **Deploy-platform limits are not bundler limits**: vite will happily emit a 25.6 MiB wasm that Cloudflare Pages rejects at upload (>25 MiB/file) *after* every local gate is green — SW `globIgnores` excludes the precache, never the upload. The sensor is `check-bundle-budget.mjs`'s all-files platform-cap walk (quality gate + bundle-size CI); fix at emit time (vite `generateBundle` drop), never by weakening the sensor.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The verify pass exited 0, so that's my evidence." | An empty or unconfigured sensor suite passes vacuously (the generic pack ships zero sensors); only a recorded run of real `[[sensors]]` from `do-harness.toml` is evidence. |
+| "I'll paste the sensor list into the doc so nobody has to run the CLI." | `do-harness.toml` is the single source of truth — a copied list drifts; query it with `do-harness list` / `explain --set verification`. |
+| "I'll just run `do-harness hook install` to get the hooks." | Forbidden by ADR-246; hooks are the repo's own `scripts/hooks/*`. |
+| "Same subtask failed twice, third try will land." | 3 consecutive sensor failures must halt and surface a diagnostic, and strikes/beats only persist when verify ran with `--record`. |
+| "Every local gate is green, so the bundle is deployable." | Cloudflare Pages rejects >25 MiB files *after* local gates pass; only `check-bundle-budget.mjs`'s platform-cap walk sees it. |
+
+## Red Flags
+
+- [ ] A sensor run reported as evidence when no `[[sensors]]` are configured or the run was unrecorded (`--record` absent).
+- [ ] Third consecutive failure of the same subtask with no halt and no diagnostic surfaced.
+- [ ] A guide edited to quiet a sensor fire while `do-harness.toml` / the sensor itself stays untouched.
+- [ ] Swarm handoff accepted from an empty agent result (treated as success instead of a failed handoff).
+- [ ] Weakening `check-bundle-budget.mjs` or the platform-cap check instead of dropping the artifact at emit time.
