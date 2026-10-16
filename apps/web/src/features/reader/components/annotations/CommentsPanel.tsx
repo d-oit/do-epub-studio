@@ -74,6 +74,7 @@ export function CommentsPanel({
   const [editingHighlight, setEditingHighlight] = useState<string | null>(null);
   const [highlightNote, setHighlightNote] = useState('');
 
+  const [filterUnanchored, setFilterUnanchored] = useState(false);
   const handleReply = useCallback(
     (commentId: string) => {
       if (replyText.trim()) {
@@ -108,6 +109,11 @@ export function CommentsPanel({
   const openComments = useMemo(() => comments.filter((c) => c.status === 'open'), [comments]);
   const resolvedComments = useMemo(
     () => comments.filter((c) => c.status === 'resolved'),
+    [comments],
+  );
+  const unanchoredComments = useMemo(
+    () =>
+      comments.filter((c) => c.anchorStatus === 'orphaned' || c.anchorStatus === 'needs_review'),
     [comments],
   );
 
@@ -182,34 +188,73 @@ export function CommentsPanel({
         label: `${t('annotation.comment')} (${openComments.length})`,
         content: (
           <div className="space-y-4">
-            {openComments.length === 0 && resolvedComments.length === 0 && (
-              <p className="text-sm text-foreground-muted text-center py-8">
-                {t('comment.noComments')}
-              </p>
-            )}
-            {openComments.length > 0 && (
-              <div>
-                <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
-                  {t('comment.status.open')}
-                </h3>
-                <div className="space-y-3">
-                  {openComments.map((comment) => (
-                    <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
-                  ))}
-                </div>
+            {unanchoredComments.length > 0 && (
+              <div className="flex items-center gap-1.5 pb-2 border-b border-border">
+                <button
+                  type="button"
+                  onClick={() => setFilterUnanchored(false)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    !filterUnanchored
+                      ? 'bg-accent text-white'
+                      : 'bg-background-secondary text-foreground-muted hover:text-foreground'
+                  }`}
+                >
+                  {t('comment.status.open')} ({openComments.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterUnanchored(true)}
+                  className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                    filterUnanchored
+                      ? 'bg-accent text-white'
+                      : 'bg-background-secondary text-foreground-muted hover:text-foreground'
+                  }`}
+                >
+                  {t('comment.unanchoredFilter')} ({unanchoredComments.length})
+                </button>
               </div>
             )}
-            {resolvedComments.length > 0 && (
-              <div className="mt-6">
+            {filterUnanchored ? (
+              <div className="space-y-3">
                 <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
-                  {t('comment.status.resolved')}
+                  {t('comment.unanchoredFilter')}
                 </h3>
-                <div className="space-y-3">
-                  {resolvedComments.map((comment) => (
-                    <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
-                  ))}
-                </div>
+                {unanchoredComments.map((comment) => (
+                  <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
+                ))}
               </div>
+            ) : (
+              <>
+                {openComments.length === 0 && resolvedComments.length === 0 && (
+                  <p className="text-sm text-foreground-muted text-center py-8">
+                    {t('comment.noComments')}
+                  </p>
+                )}
+                {openComments.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
+                      {t('comment.status.open')}
+                    </h3>
+                    <div className="space-y-3">
+                      {openComments.map((comment) => (
+                        <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {resolvedComments.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-xs font-semibold text-foreground-muted uppercase mb-3">
+                      {t('comment.status.resolved')}
+                    </h3>
+                    <div className="space-y-3">
+                      {resolvedComments.map((comment) => (
+                        <Fragment key={comment.id}>{renderComment(comment)}</Fragment>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         ),
@@ -265,6 +310,8 @@ export function CommentsPanel({
     [
       openComments,
       resolvedComments,
+      unanchoredComments,
+      filterUnanchored,
       highlights,
       t,
       renderComment,

@@ -354,5 +354,38 @@ describe('CommentsPanel', () => {
       fireEvent.click(screen.getByText('comment.delete'));
       expect(mockOnDeleteComment).toHaveBeenCalledWith('comment-1');
     });
+
+    it('filters and displays unanchored and needs_review comments preserving original quote', () => {
+      const unanchoredComment: Comment = {
+        id: 'comment-unanchored',
+        body: 'Comment on deleted text',
+        displayName: 'user',
+        isOwn: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'open',
+        visibility: 'shared',
+        parentCommentId: null,
+        resolvedAt: null,
+        chapterRef: 'chapter-1',
+        cfiRange: null,
+        selectedText: null,
+        originalSelectedText: 'Preserved quote from previous revision',
+        anchorStatus: 'orphaned',
+        revisionId: 'rev-target-1234',
+        replies: [],
+      };
+
+      render(<CommentsPanel {...defaultProps} comments={[...mockComments, unanchoredComment]} />);
+
+      const filterBtn = screen.getByRole('button', { name: /comment\.unanchoredFilter/i });
+      expect(filterBtn).toBeInTheDocument();
+
+      fireEvent.click(filterBtn);
+
+      expect(screen.getByText('Comment on deleted text')).toBeInTheDocument();
+      expect(screen.getByText(/Preserved quote from previous revision/i)).toBeInTheDocument();
+      expect(screen.getByText('comment.unanchoredBadge')).toBeInTheDocument();
+    });
   });
 });

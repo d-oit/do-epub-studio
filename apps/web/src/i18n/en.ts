@@ -797,6 +797,10 @@ export const en = {
   'admin.insights.lastActivity': 'Last Activity',
   'admin.insights.previous': 'Previous',
   'admin.insights.next': 'Next',
+  'admin.books.uploadRevision': 'Upload revision',
+  'admin.books.revisionSuccess': 'Revision uploaded and annotations migrated successfully',
+  'comment.unanchoredFilter': 'Needs Review',
+  'comment.unanchoredBadge': 'Unanchored',
 } as const;
 
 export type TranslationKeys = keyof typeof en;
