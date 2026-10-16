@@ -161,6 +161,25 @@ export function createRelocatedHandler(
 
   const onRelocated = async (location: RelocatedLocation): Promise<void> => {
     const { cfi, href, percentage } = location.start;
+
+    // Chapter tracking is independent of progress persistence and must run on
+    // every relocation (TOC highlight, prefetch, reading timer).
+    const tocItem = tocItems.find((item) => item.href === href);
+    if (tocItem) {
+      currentChapterRef.current = tocItem.href;
+      setCurrentChapter(tocItem.href);
+    }
+
+    onChapterChange();
+    markPageRead();
+
+    // Until the initial progress load settles (server or offline), a
+    // 'relocated' event is the programmatic first display of the book — not a
+    // user move. Storing or persisting it would overwrite the stored last
+    // position with the book's start (an offline reload then restored 0%
+    // instead of the saved percentage).
+    if (!useReaderStore.getState().progressRestored) return;
+
     // Store/server contract is 0–100; rendition fraction is 0–1. Without a
     // usable fraction, retain the current value instead of clobbering it.
     const currentProgress = useReaderStore.getState().progress;
@@ -173,15 +192,6 @@ export function createRelocatedHandler(
       progressPercent,
       updatedAt: new Date().toISOString(),
     });
-
-    const tocItem = tocItems.find((item) => item.href === href);
-    if (tocItem) {
-      currentChapterRef.current = tocItem.href;
-      setCurrentChapter(tocItem.href);
-    }
-
-    onChapterChange();
-    markPageRead();
 
     pending = { cfi, progressPercent };
 

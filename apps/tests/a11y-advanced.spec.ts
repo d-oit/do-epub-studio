@@ -8,6 +8,7 @@ import {
   mockAdminApi,
   clickToolbarButton,
   suppressWorkboxErrors,
+  EPUB_CONTENT_HOST_SELECTOR,
 } from './fixtures';
 
 test.describe('Advanced accessibility — keyboard navigation', () => {
@@ -161,6 +162,7 @@ test.describe('Advanced accessibility — focus management', () => {
     await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
     const results = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
     const critical = results.violations.filter(
       (v) => v.impact === 'critical' || v.impact === 'serious',

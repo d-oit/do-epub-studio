@@ -200,15 +200,19 @@ export class ReadingTimer {
     }
     const chapterWords = { ...(existing?.chapterWords ?? {}), ...this.wordsByChapter };
 
-    await saveReadingInsight({
-      bookId: this.bookId,
-      date,
-      activeMinutes: totalMinutes,
-      activePages: totalPages,
-      lastUpdated: Date.now(),
-      chapterMinutes,
-      chapterWords,
-    });
+    try {
+      await saveReadingInsight({
+        bookId: this.bookId,
+        date,
+        activeMinutes: totalMinutes,
+        activePages: totalPages,
+        lastUpdated: Date.now(),
+        chapterMinutes,
+        chapterWords,
+      });
+    } catch {
+      // If auth is already torn down on logout, saveReadingInsight fails fail-closed
+    }
 
     this.activeSeconds -= fullMinutes * 60;
     this.activePages = 0;

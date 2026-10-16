@@ -129,6 +129,34 @@ the encrypted `bookFiles` store. On an offline reload:
    by the service worker's `book-content` route in production; the
    `external-assets` route serves any cross-origin book URL it has cached.
 
+#### Reading-position restore ordering (GOAP-1007)
+
+`reader.progress_loaded` marks the end of the initial progress load — the
+server read, or the `progress` store read when the request fails **or when the
+browser reports itself offline**. Until it settles the reader is showing the
+book's programmatic first position, and the app writes **nothing** back for it:
+
+- `useEpubProgress` ignores relocation events while `progressRestored` is
+  false (`useReaderDataLoader` flips the flag when the load settles, on every
+  branch — including the offline branch that returns before the online path's
+  `finally`), so the first display cannot overwrite the stored entry with the
+  book's start. Without this, an offline reload read back 0 % from the entry
+  the reload itself had just clobbered; without the offline branch's own
+  completion, the gate never lifted and every page turn read offline was
+  dropped instead of persisted.
+- The navigation display effect ignores store updates whose CFI the rendition
+  reported through its own `relocated` event; the rendition is already there,
+  and re-displaying it lands asynchronously and reverts page turns made in the
+  meantime.
+
+Regression cover: `apps/tests/reader-progress.spec.ts` — the offline fallback
+test keeps the stored percentage, and `@mobile keeps saving the reading
+position while the browser reports offline` reloads with
+`navigator.onLine === false`, restores the stored position and then asserts the
+durable row records the next page turn; unit cover for the gating itself is in
+`useReaderDataLoader.test.ts` and `useEpubProgress.test.ts`.
+`apps/tests/reader-migration-smoke.spec.ts` covers chapter navigation.
+
 ## Sync Queue & Protocol
 
 ### Mutation Flow

@@ -126,7 +126,11 @@ export function useEpubRendition({
       void progressFlushRef.current?.();
       progressFlushRef.current = null;
       if (createdRendition) {
-        createdRendition.destroy();
+        try {
+          createdRendition.destroy();
+        } catch {
+          // epub.js rendition.destroy() can throw if internal hooks/views are already cleared
+        }
         if (renditionRef.current === createdRendition) renditionRef.current = null;
       }
     };

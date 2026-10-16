@@ -298,8 +298,8 @@ export function ReaderPage() {
 
   useEffect(() => {
     return () => {
-      void flushInsights();
-      void syncInsightsToServer();
+      void flushInsights().catch(() => {});
+      void syncInsightsToServer().catch(() => {});
     };
   }, [flushInsights, syncInsightsToServer]);
 

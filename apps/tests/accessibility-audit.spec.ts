@@ -7,6 +7,7 @@ import {
   loginAsAdmin,
   clickToolbarButton,
   suppressWorkboxErrors,
+  EPUB_CONTENT_HOST_SELECTOR,
 } from './fixtures';
 
 // ---------------------------------------------------------------------------
@@ -47,8 +48,19 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockReaderApi(page, { includeBookmarks: false });
     await loginAsReader(page);
 
+    // The exclusion below keeps the scripts-disabled sandbox out of axe's
+    // frame traversal (docs/accessibility.md). The `<iframe>` element itself
+    // IS auditable from this document — `frame-title` needs no scripts inside
+    // the frame — so its accessible name is asserted directly rather than
+    // silently dropped with the subtree. The frame appears once the EPUB has
+    // rendered, which under parallel load outlives the toolbar wait.
+    const bookFrame = page.locator(`${EPUB_CONTENT_HOST_SELECTOR} iframe`).first();
+    await expect(bookFrame).toBeAttached({ timeout: 30_000 });
+    await expect(bookFrame).toHaveAttribute('title', /\S/, { timeout: 20_000 });
+
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -72,6 +84,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);
@@ -86,6 +99,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);

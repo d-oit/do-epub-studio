@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { encryptJSON } from '../web/src/lib/offline/crypto';
+import { encryptJSON, decryptJSON } from '../web/src/lib/offline/crypto';
 import { createMinimalEpub } from './fixtures';
 
 const TEST_EPUB = createMinimalEpub(
@@ -292,5 +292,151 @@ test.describe('Reader Progress Persistence', () => {
       '75',
     );
     await expect(page.getByText('75%')).toBeVisible();
+  });
+
+  test('@mobile keeps saving the reading position while the browser reports offline', async ({
+    page,
+  }) => {
+    const bookId = 'test-book';
+    const sessionToken = 'mock-token';
+    const seededCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
+    // Function declaration, not a const arrow: Codacy's Biome engine flags
+    // `const x = () => ...` in specs with the Qwik `useQwikValidLexicalScope`
+    // false positive (this project is React; see agents-docs/LEARNINGS.md).
+    function offlineLoaded(msg: { text(): string }): boolean {
+      return (
+        msg.text().includes('reader.progress_loaded') && msg.text().includes('"source":"offline"')
+      );
+    }
+
+    // The reload reports `navigator.onLine === false`, so the reader takes the
+    // offline branch of the initial load. The existing fallback test emulates
+    // unreachability by aborting a route, which keeps `onLine` true and takes
+    // the online-then-catch path instead — this branch had no browser cover.
+    // Routes still serve the shell and the EPUB: the branch under test is the
+    // app's own offline decision, not a killed document navigation.
+    await page.addInitScript(
+      ({ token, bid }) => {
+        window.localStorage.setItem(
+          'do-epub-auth',
+          JSON.stringify({
+            state: {
+              sessionToken: token,
+              bookId: bid,
+              bookSlug: bid,
+              isAuthenticated: true,
+            },
+          }),
+        );
+        Object.defineProperty(navigator, 'onLine', { get: () => false, configurable: true });
+      },
+      { token: sessionToken, bid: bookId },
+    );
+
+    await page.route(`**/api/books/${bookId}/file-url`, (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { url: '/mock-book.epub' } }),
+      }),
+    );
+    await page.route('**/mock-book.epub', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/epub+zip', body: TEST_EPUB }),
+    );
+    await page.route('**/api/books/**/highlights', (route) =>
+      route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }),
+    );
+    await page.route('**/api/books/**/comments', (route) =>
+      route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }),
+    );
+    await page.route('**/api/books/**/bookmarks', (route) =>
+      route.fulfill({ body: JSON.stringify({ ok: true, data: [] }) }),
+    );
+
+    // First load: no durable row yet, so the reader restores nothing and the
+    // load settling is what re-enables persistence (source stays `default`).
+    const firstLoad = page.waitForEvent('console', (msg) =>
+      msg.text().includes('reader.progress_loaded'),
+    );
+    await page.goto(`/read/${bookId}`);
+    await firstLoad;
+
+    // Durable position, encrypted with the app's own crypto (see the fallback
+    // test's note: plaintext rows are refused by design, #1284).
+    const progressCiphertext = await encryptJSON(
+      {
+        cfi: seededCfi,
+        percentage: 75,
+        lastRead: Date.now(),
+        mutationId: 'offline-mut-progress-75',
+      },
+      sessionToken,
+    );
+    await page.evaluate(
+      async ({ bid, encryptedPayload }) => {
+        const { promise, resolve, reject } = Promise.withResolvers<void>();
+        const req = indexedDB.open('do-epub-studio');
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction('progress', 'readwrite');
+          tx.objectStore('progress').put({
+            id: `${bid}-progress`,
+            bookId: bid,
+            synced: false,
+            encryptedPayload,
+          });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+        await promise;
+      },
+      { bid: bookId, encryptedPayload: progressCiphertext },
+    );
+
+    const restoredLoad = page.waitForEvent('console', offlineLoaded);
+    await page.reload();
+    await restoredLoad;
+
+    await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
+      timeout: 20000,
+    });
+    await expect(page.getByRole('progressbar', { name: /Reading Progress/i })).toHaveAttribute(
+      'aria-valuenow',
+      '75',
+    );
+
+    // A page turn must still be recorded: the relocation handler is gated
+    // until the offline load settles, and a gate that never lifts drops every
+    // position read offline instead of persisting it.
+    await page.keyboard.press('ArrowRight');
+    await expect
+      .poll(
+        async () => {
+          const ciphertext = await page.evaluate(async (bid) => {
+            const { promise, resolve } = Promise.withResolvers<string | null>();
+            const req = indexedDB.open('do-epub-studio');
+            req.onerror = () => resolve(null);
+            req.onsuccess = () => {
+              const tx = req.result.transaction('progress', 'readonly');
+              const get = tx.objectStore('progress').get(`${bid}-progress`);
+              get.onsuccess = () => {
+                const row = get.result as { encryptedPayload?: string } | undefined;
+                resolve(row?.encryptedPayload ?? null);
+              };
+              get.onerror = () => resolve(null);
+            };
+            return promise;
+          }, bookId);
+          const cfi = ciphertext
+            ? (await decryptJSON<{ cfi: string }>(ciphertext, sessionToken)).cfi
+            : null;
+          // True only for a recorded, moved position: an untouched or missing
+          // row must fail rather than pass as "different".
+          return cfi !== null && cfi !== seededCfi;
+        },
+        { timeout: 15000 },
+      )
+      .toBe(true);
   });
 });

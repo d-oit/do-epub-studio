@@ -31,7 +31,7 @@ export function AdminBookCard({
         <span className="text-xs font-medium px-2 py-1 bg-background-tertiary rounded text-foreground-muted uppercase">
           {book.visibility}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <button
             type="button"
             onClick={() => onEdit(book)}

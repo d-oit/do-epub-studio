@@ -22,6 +22,30 @@ E2E accessibility audits run against every major page in
 - Table of Contents
 - Admin login, books, grants, audit pages
 
+Reader audits scan the **app-owned** surfaces (toolbar, panels, sidebars). The
+book content itself renders inside a scripts-disabled sandboxed frame
+(`sandbox="allow-same-origin"`, the ADR-006 sanitizer + egress-guard
+contract), which axe cannot audit: `@axe-core/playwright` runs
+`axe.runPartial` per frame and awaits each result, and the injected script
+never executes in such a frame, so that await never settles (measured: a plain
+`srcdoc` frame finishes the same partial run in ~80 ms, the identical document
+with `sandbox="allow-same-origin"` never returns). The reader scans therefore
+exclude `[data-epub-content-host]` — the host `ReaderViewer` renders — instead
+of hanging until the 60 s test timeout.
+
+The exclusion covers the `<iframe>` element too, and `frame-title` is one of
+the checks axe applies to that element **in this document** (it needs no
+scripts inside the frame), so the contract is enforced directly instead of
+being dropped with the subtree:
+
+- `ReaderViewer` names every generated frame as epub.js creates it (the book
+  title, `reader.untitledBook` when unknown), and
+- `accessibility-audit.spec.ts` asserts the accessible name of the book frame
+  before running the scan.
+
+EPUB-level accessibility metadata is covered separately by
+`packages/reader-core/src/epub-accessibility.ts`.
+
 Run audits locally:
 
 ```bash

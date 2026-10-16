@@ -86,6 +86,7 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
     setOnline(true);
     useReaderStore.setState({
       progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
+      progressRestored: true,
     });
     useAuthStore.setState({ sessionToken: null, bookId: null });
   });
@@ -246,6 +247,7 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
   it('retains the current progress when the rendition omits percentage', async () => {
     useReaderStore.setState({
       progress: { locator: { cfi: 'epubcfi(/6/2)' }, progressPercent: 42, updatedAt: null },
+      progressRestored: true,
     });
     const { handler, setProgress } = makeHandler();
 
@@ -254,5 +256,38 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
     expect(setProgress).toHaveBeenCalledWith(expect.objectContaining({ progressPercent: 42 }));
     await handler.flush();
     expect(lastPutBody().progressPercent).toBe(42);
+  });
+
+  it('does not persist the pre-restore first display, so offline reload keeps the stored position', async () => {
+    setOnline(false);
+    useReaderStore.setState({
+      progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
+      progressRestored: false,
+    });
+    const { handler, setProgress, setCurrentChapter, onChapterChange, markPageRead } =
+      makeHandler();
+
+    // The reader's programmatic first display fires 'relocated' before the
+    // initial progress load settles. Persisting it overwrote the stored last
+    // position with the book's start (offline reload then restored 0%).
+    await handler.onRelocated({
+      start: { cfi: 'epubcfi(/6/2!/4/2[p1]/1:0)', href: 'ch1.xhtml' },
+    });
+    await handler.flush();
+
+    expect(setProgress).not.toHaveBeenCalled();
+    expect(saveProgress).not.toHaveBeenCalled();
+    expect(queueSync).not.toHaveBeenCalled();
+    expect(apiRequest).not.toHaveBeenCalled();
+    // Chapter tracking stays independent of progress persistence.
+    expect(setCurrentChapter).toHaveBeenCalledWith('ch1.xhtml');
+    expect(onChapterChange).toHaveBeenCalled();
+    expect(markPageRead).toHaveBeenCalled();
+
+    // Once the loader has settled, relocations persist again.
+    useReaderStore.setState({ progressRestored: true });
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/8)', href: 'ch1.xhtml' } });
+    await handler.flush();
+    expect(saveProgress).toHaveBeenCalledTimes(1);
   });
 });

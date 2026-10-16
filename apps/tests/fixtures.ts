@@ -730,57 +730,79 @@ export async function loginAsAdmin(page: Page) {
 }
 
 /**
+ * Stable hook marking the reader's sandboxed book-content subtree
+ * (`ReaderViewer` renders it). Axe scans MUST exclude it: the app sandboxes
+ * book content with `sandbox="allow-same-origin"` only (no `allow-scripts` —
+ * ADR-006 sanitizer + egress-guard contract), and `@axe-core/playwright`'s
+ * `runPartial` never resolves inside a script-blocked sandboxed frame.
+ * Measured on this repo: a plain `srcdoc` iframe completes the identical
+ * partial run in ~80 ms, while the same document with
+ * `sandbox="allow-same-origin"` never returns — which made every reader-route
+ * scan hang until the 60 s test timeout. Excluding this subtree keeps every
+ * app-owned surface in scope instead of timing out.
+ */
+export const EPUB_CONTENT_HOST_SELECTOR = '[data-epub-content-host]';
+
+/**
+ * Reader iframe selector for tooling that must reach INTO the book frame
+ * (overlay helpers, annotation specs). epub.js wraps views in
+ * `div.view-container` inside `div.views-container`; the `.epub-view` and
+ * `data-reader-viewer` variants cover other builds, and the bare `iframe`
+ * fallback keeps older specs working.
+ */
+export const EPUB_CONTENT_FRAME_SELECTOR = `${EPUB_CONTENT_HOST_SELECTOR} iframe, div.view-container iframe, div.views-container iframe, div.epub-view iframe, div[data-reader-viewer="true"] iframe`;
+
+/**
  * Selects `text` inside the reader's EPUB iframe by building a DOM Range over
  * the matching text node and dispatching a `mouseup`, so the annotation
  * toolbar sees a real selection (restored with the A1 offline-annotations
  * spec, GOAP-311).
  */
 export async function selectReaderPassage(page: Page, text: string): Promise<void> {
-  const iframeLocator = page
-    .locator('div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe')
-    .first();
+  const iframeLocator = page.locator(`${EPUB_CONTENT_FRAME_SELECTOR}, iframe`).first();
   await iframeLocator.waitFor({ state: 'attached', timeout: 15000 });
 
-  const selected = await page.evaluate((targetText) => {
-    const iframes = Array.from(
-      document.querySelectorAll<HTMLIFrameElement>(
-        'div[data-reader-viewer="true"] iframe, div.epub-view iframe, iframe',
-      ),
-    );
-    for (const iframe of iframes) {
-      const doc = iframe.contentDocument;
-      const win = iframe.contentWindow;
-      if (!doc || !win) continue;
-
-      const paragraph = Array.from(doc.querySelectorAll('p')).find((item) =>
-        item.textContent?.includes(targetText),
+  const selected = await page.evaluate(
+    ({ targetText, frameSelector }) => {
+      const iframes = Array.from(
+        document.querySelectorAll<HTMLIFrameElement>(`${frameSelector}, iframe`),
       );
-      if (!paragraph) continue;
+      for (const iframe of iframes) {
+        const doc = iframe.contentDocument;
+        const win = iframe.contentWindow;
+        if (!doc || !win) continue;
 
-      const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
-      let node: Node | null = walker.nextNode();
-      while (node) {
-        const content = node.textContent ?? '';
-        const index = content.indexOf(targetText);
-        if (index !== -1) {
-          const range = doc.createRange();
-          range.setStart(node, index);
-          range.setEnd(node, index + targetText.length);
-          const selection = win.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-            win.dispatchEvent(
-              new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
-            );
-            return true;
+        const paragraph = Array.from(doc.querySelectorAll('p')).find((item) =>
+          item.textContent?.includes(targetText),
+        );
+        if (!paragraph) continue;
+
+        const walker = doc.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+        let node: Node | null = walker.nextNode();
+        while (node) {
+          const content = node.textContent ?? '';
+          const index = content.indexOf(targetText);
+          if (index !== -1) {
+            const range = doc.createRange();
+            range.setStart(node, index);
+            range.setEnd(node, index + targetText.length);
+            const selection = win.getSelection();
+            if (selection) {
+              selection.removeAllRanges();
+              selection.addRange(range);
+              win.dispatchEvent(
+                new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
+              );
+              return true;
+            }
           }
+          node = walker.nextNode();
         }
-        node = walker.nextNode();
       }
-    }
-    return false;
-  }, text);
+      return false;
+    },
+    { targetText: text, frameSelector: EPUB_CONTENT_FRAME_SELECTOR },
+  );
 
   if (!selected) {
     throw new Error(`Target text "${text}" not found in iframe to select`);
