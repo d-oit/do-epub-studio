@@ -90,11 +90,26 @@ One-sentence summary. Clarify scope vs related skills if overlap exists.
 
 [Concise, step-by-step procedural instructions]
 
+## Rationalizations
+
+| Rationalization                             | Reality                                             |
+| ------------------------------------------- | --------------------------------------------------- |
+| "[plausible excuse in this skill's domain]" | [the concrete counter-rule/command from this skill] |
+| "[another excuse]"                          | [another concrete counter-fact]                     |
+
+## Red Flags
+
+- [ ] [observable condition that predicts failure]
+- [ ] [observable condition that predicts failure]
+- [ ] [observable condition that predicts failure]
+
 ## Reference Files
 
 - `references/guide.md` - [when to read]
 - `scripts/run.sh` - [what it does]
 ```
+
+Canonical copy with the required-section rules: `.agents/skills/SKILL_TEMPLATE.md`.
 
 ## Frontmatter Fields
 
@@ -154,6 +169,7 @@ Per the agentskills.io specification — uses `expected_output`, not trigger mat
 ## Rules
 
 - `SKILL.md` ≤ 250 lines — detailed content goes in `references/`.
+- Every `SKILL.md` ends with `## Rationalizations` (table `| Rationalization | Reality |`, ≥2 rows) and `## Red Flags` (`- [ ]` checklist, ≥3 items) — enforced by `scripts/validate-skill-format.sh`.
 - Include executable scripts so the agent can validate directly.
 - Cite sources as backtick-wrapped relative paths (e.g., `` `references/guide.md` ``).
 - No `@` prefix on reference paths. No markdown links in References sections.

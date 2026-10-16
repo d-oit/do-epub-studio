@@ -139,3 +139,22 @@ Any one condition closes the PR regardless of arithmetic score:
 - `references/report-format.md`
 - `references/merge-order.md`
 - `evals/evals.json`
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "I reviewed the report myself, so I'll add `--execute` in the same run." | Default is DRY-RUN: `close`/`review`/`merge` print the exact `gh` command and exit 0 without mutating. `--execute` comes only after the user approves the report. |
+| "It's my own PR, so I'll approve it." | GitHub blocks `approve`/`request-changes` on PRs you authored. Use `review --decision comment` for self-authored PRs. |
+| "Score 8 with two unaddressed recommendations — merge and note them." | Recommendations NOT addressed = do NOT merge that PR, regardless of score. |
+| "The Dependabot SHA bump has no tests, so apply the -2 subtractor." | The "no tests" subtractor does not apply to CI SHA pins; lockfile/SHA-only bumps with +3 security/CI and no other subtractors floor at 6 (APPROVE). |
+| "Owner-authored PRs get skipped by default anyway." | Owner exclusion is OPT-IN — in this repo every open PR is authored by `d-oit`, so a default-on exclusion would make the skill a no-op. |
+
+## Red Flags
+
+- [ ] `close`/`review`/`merge` run with `--execute` without a human-approved report for that run.
+- [ ] A draft/WIP PR, or one labeled `bug`/`security`/`critical`, appears in the close or merge set.
+- [ ] A score 3-5 PR closed with `close`, or a score ≥6 PR merged with unaddressed report recommendations.
+- [ ] A repo with >200 open PRs swept without label-scoped `collect` batches (the script caps at `--limit 200`).
+- [ ] `approve`/`request-changes` attempted on a PR authored by the running account.
+- [ ] Report written to a repo path instead of stdout or `local://`.

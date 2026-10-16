@@ -217,6 +217,25 @@ IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh
 | Bounce easing | Feels dated | Use ease-out curves |
 | Side borders | Most recognizable AI tell | Full borders or icons |
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "This purple gradient is intentional, so I'll silence the rule." | `purple-gradient` fires on the default AI palette — use the project OKLCH tokens first. A genuine brand exception gets a scoped `impeccable-disable` with a reason, never an `ignoreRules` entry. |
+| "CI runs the detector, so I don't need to." | The detector is part of the quality gate and the PR-review step: run `npx impeccable detect --json .` before opening the PR so findings are fixed at the source. |
+| "The gate is warnings-only, so leftover findings can merge." | `IMPECCABLE_REQUIRED=1` promotes findings to errors. Each one must be fixed or explicitly waived with a reason — not left untriaged. |
+| "`Inter` is just the OS default, not a choice I made." | `overused-font` flags Inter/system defaults as the primary font regardless of where they came from. Choose contextual fonts per `DESIGN.md`. |
+| "I'll skip `/impeccable shape` — the design is obvious." | The workflow is shape → build → audit → polish; `/impeccable build` executes from the shape plan. |
+
+## Red Flags
+
+- [ ] Detector findings left untriaged on a PR because the gate is "warnings only".
+- [ ] `ignoreRules`/`ignoreValues` widened in `.impeccable/config.json` instead of a scoped inline waiver.
+- [ ] `impeccable-disable` comment with no rule name or no stated reason.
+- [ ] `.impeccable/` submodule revision diverging from the pinned `cli-v3.1.0`.
+- [ ] `SKIP_DESIGN=1` used without a documented reason.
+- [ ] UI shipped without the `/impeccable audit` → `/impeccable polish` steps.
+
 ## Summary
 
 Impeccable provides deterministic design quality checks that catch AI-generated anti-patterns. Use the 23 commands for design workflow, the 44 detector rules for automated checks, and the CI integration for quality gates. Project tokens in `globals.css` remain authoritative.

@@ -73,6 +73,24 @@ agent-browser --session my-session close
 - **Need visual verification?** Use `screenshot --annotate` for labeled elements
 - **Complex JS eval?** Use `eval --stdin <<'EVALEOF'` to avoid shell escaping
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The refs from the last snapshot are still good — I'll reuse `@e3`." | Refs are invalidated by navigation or any DOM change. Re-run `snapshot -i` before the next interaction. |
+| "`wait --load networkidle` is the safest wait." | Sites with analytics or websockets never reach idle and the command times out. Use `wait 2000`. |
+| "It was a one-off command, so closing the session doesn't matter." | Unclosed sessions leak Chrome processes. Always run `agent-browser --session <name> close` when done. |
+| "The element comes first in the DOM, so it is visually above the others." | DOM order and class names do not prove visual placement. Verify with bounding boxes or a screenshot after the change. |
+
+## Red Flags
+
+- [ ] An `@eN` ref reused after `open`, a navigating `click`, or any DOM change, with no intervening `snapshot -i`.
+- [ ] `wait --load networkidle` used on a site that loads analytics or opens websockets.
+- [ ] Chrome sessions left open after the task finished.
+- [ ] Placement judged from DOM order or class names, with no bounding box or screenshot.
+- [ ] Commands issued one per shell call when `agent-browser batch` or `&&` would chain them.
+- [ ] Commands timing out while a dialog may be pending and `agent-browser dialog status` was never run.
+
 ## References
 
 - `references/commands.md` - Complete command reference

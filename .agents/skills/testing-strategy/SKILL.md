@@ -106,6 +106,21 @@ test('user can read a book', async ({ page }) => {
 
 - **testdata-builders** — For deterministic test data builders.
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Unit tests cover the logic, so an E2E test for this flow is redundant." | The pyramid reserves E2E (10%) for critical paths — e.g. `page.goto('/books/test-book')` asserting `.reader` is visible — which unit tests cannot observe. |
+| "Overall coverage is above 80%, so the feature is covered." | Targets are per-type: Business Logic > 90%, API Routes > 80%, UI Components > 70%. An 82% total can hide an uncovered permission check. |
+| "The core flow is flaky, so I'll `test.skip` it for now." | The Quality Checklist forbids skipped tests for core flows — fix the race or the flow instead. |
+
+## Red Flags
+
+- [ ] `test.skip` / `it.skip` on a critical-path Playwright spec.
+- [ ] A new business-logic module with no Vitest unit test (Business Logic target is > 90%).
+- [ ] CSP tests validating only one variant — both full and minimal headers must be asserted.
+- [ ] A CSP test that misses `report-uri /api/csp-report` or tolerates `unsafe-eval`/`unsafe-inline` in `script-src`.
+
 ## References
 
 - `references/test-patterns.md` - Common patterns

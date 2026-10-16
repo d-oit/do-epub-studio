@@ -121,3 +121,22 @@ Write analysis to: `analysis/triz-core-YYYY-MM-DD.md`
 - Analysis written to file
 
 **Violation = invalid implementation**
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The conflict is obvious, I don't need to classify it as technical or physical." | Core Loop step 4 requires the classification; the class decides which separation principle triz-solver may apply. |
+| "I'll summarize the contradiction in the PR description instead of `analysis/`." | Output location is fixed: `analysis/triz-core-YYYY-MM-DD.md`. The Rule forbids coding before the analysis is written to file. |
+| "Security always costs usability, so the contradiction is real by definition." | Verification step 3 requires proving the conflict is real, not assumed; the output format has a `**Reality:**` line for exactly this check. |
+| "This is a small change, so TRIZ does not apply." | The Rule covers any non-trivial system design task — architecture, permissions, offline sync, EPUB rendering. |
+| "triz-analysis is done, I can start coding while triz-solver catches up." | Contradictions are flagged unresolved *for* triz-solver; implementation before they are resolved is invalid. |
+
+## Red Flags
+
+- [ ] Implementation started while no `analysis/triz-core-YYYY-MM-DD.md` exists.
+- [ ] A contradiction listed without both an `**Improving:**` and a `**Worsens:**` property.
+- [ ] Contradictions described in chat or a PR body but never written to the analysis file.
+- [ ] Contradiction type (technical vs physical) never stated.
+- [ ] A contradiction recorded with no real-vs-assumed verification.
+- [ ] Contradictions left unflagged for triz-solver at hand-off.

@@ -138,6 +138,24 @@ readonly MAX_COMMIT_SUBJECT_LENGTH=72
 - **skill-creator**: Use to create new skills with proper structure
 - **code-quality**: Enforce AGENTS.md rules in reviews
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "I'll describe the quality gate without pinning the exact command." | TIER 2 gates must be runnable — `./scripts/quality_gate.sh` and `./scripts/atomic-commit/run.sh` are named explicitly, because an unnamed gate cannot be enforced. |
+| "The 500 LOC / 250 line limits are just prose advice." | They belong in Named Constants (`MAX_LINES_PER_SOURCE_FILE=500`, `MAX_LINES_PER_SKILL_MD=250`) so an agent can check them mechanically. |
+| "A one-page doc doesn't need the Compliance Self-Check." | Compliance Self-Check is one of the six Required Sections, and it is what verifies the TIER 1 rules ("NEVER commit to `main`", "NEVER leak secrets"). |
+| "An example date like `2026-01-01` is fine in a template." | TIER 3 bans hardcoded dates — derive them with `date +"%Y-%m-%d"`. |
+| "Repo-specific invariants can just live in a prose paragraph." | d.o.EPUB Studio rules belong in the TIER 1 Additions block (CFI locators per ADR-006, signed URLs, session revocation on permission change). |
+
+## Red Flags
+
+- [ ] Named Constants block absent, so `MAX_LINES_PER_*` limits are only quotable, not checkable.
+- [ ] A TIER 1 bullet phrased "should" or "prefer" instead of NEVER/MUST.
+- [ ] A TIER 2 gate citing a script path that does not exist in the repo.
+- [ ] Skills Reference table listing a skill with no `.agents/skills/<name>/SKILL.md`.
+- [ ] Hardcoded date or environment URL inside TIER 3.
+
 ## Summary
 
 Good AGENTS.md enables consistent, safe, high-quality AI-assisted development.

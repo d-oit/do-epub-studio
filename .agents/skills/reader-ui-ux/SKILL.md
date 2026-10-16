@@ -88,3 +88,22 @@ CI: `npx impeccable detect --json .` runs in quality gate. See `DESIGN.md` for a
 - **Parallel preload:** Use `Promise.all` for spine/chapter operations to reduce load time.
 - **Search virtualization:** Lists with >50 items must use the `VirtualList` component for smooth scrolling.
 - **No `dark:` utilities:** Semantic tokens already adapt to dark/sepia themes via `globals.css` CSS variables. Avoid redundant `dark:` Tailwind prefixes.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "One hardcoded `#4f46e5` is faster than hunting for the token." | All color must come from `oklch()` semantic tokens in `globals.css`; literals do not adapt to the dark/sepia themes and fail the checklist. |
+| "Adding `dark:` variants is safer than trusting tokens." | The `globals.css` variables already adapt across themes; `dark:` utilities duplicate the theme and drift from it on the next token change. |
+| "I'll keep the panel's open state in local component state." | Panels are mutually exclusive — opening one must close the others through the shared (Zustand) state, or overlays stack. |
+| "The nav flickers for only a frame during transitions." | Assign `view-transition-name: prevent-flicker` to Sidebar and BottomTabBar and exclude them from the root cross-fade (`animation: none` in `@view-transition`). See `references/regression-prevention.md`. |
+| "60 list rows render fine without virtualization." | Lists with more than 50 items must use the `VirtualList` component. |
+
+## Red Flags
+
+- [ ] Hardcoded hex/rgb colors, or `dark:` Tailwind prefixes, in a touched component.
+- [ ] Navigation change without `viewTransition: true`, or nav containers missing `prevent-flicker`.
+- [ ] Two side panels or overlays mountable at the same time.
+- [ ] New user-facing string missing from the `en/de/fr` catalogs.
+- [ ] Interactive control under 44px on mobile, or missing `aria-label`/focus trap.
+- [ ] A list rendering 50+ items without `VirtualList`, or EPUB spine parsing with no timeout budget.

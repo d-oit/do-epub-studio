@@ -220,3 +220,23 @@ agent-browser --session {SESSION} close
 | Template | Purpose |
 |----------|---------|
 | [templates/dogfood-report-template.md](templates/dogfood-report-template.md) | Copy into output directory as the report file |
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "I'll explore the whole app first and write every issue up at the end." | Steps 4 and 5 happen in one pass — append each issue to the report the moment it is found so nothing is lost if the session is interrupted. |
+| "Record video for every issue; more evidence is better." | Static issues (typos, clipped text, misalignment) need one annotated screenshot and **Repro Video** set to `N/A`. Video is for interactive, timing, or state-change bugs. |
+| "It broke once, that's a finding." | Verify reproducibility with at least one retry before collecting evidence; if it does not reproduce consistently it is not a valid issue. |
+| "I'll read the app's source to explain the bug." | Findings must come only from browser observation — never read the target app's HTML, JS, or config. |
+| "The output directory is stale, I'll clear it and restart the session." | Never delete output files or close and restart the session mid-run. Work forward, not backward. |
+
+## Red Flags
+
+- [ ] `### ISSUE-` blocks in the report that the summary severity counts do not reflect.
+- [ ] A `record start` video for a static typo or clipped-text issue.
+- [ ] Issues discovered but not appended to the report yet.
+- [ ] An issue logged with no screenshot file backing its numbered repro step.
+- [ ] `fill` used instead of `type` while a repro video is recording.
+- [ ] The app under test's source, HTML, JS, or config opened during the session.
+- [ ] `npx agent-browser` used instead of the direct `agent-browser` binary.

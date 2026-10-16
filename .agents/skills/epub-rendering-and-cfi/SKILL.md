@@ -78,3 +78,22 @@ rendition.hooks.content.register(createEpubSanitizerHook());
 // and enforces href-scheme + event-attribute rules via sanitizeDom().
 // Never bypass this hook — iframe sandbox is allow-same-origin only.
 ```
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "A CFI is stable — persisting it alone is enough to re-anchor a highlight." | ADR-006 requires multi-signal locators. Persist `{ cfi, selectedText, chapterRef, elementIndex, charOffset }` together; CFIs shift on re-pagination and font changes. |
+| "The sanitizer strips content the book needs, so I'll skip `createEpubSanitizerHook` here." | Every rendition MUST register the hook before display. `sanitizeEpubDocument` uses the `EPUB_ALLOWED_TAGS` allowlist and the iframe sandbox is `allow-same-origin` only — extend the allowlist instead of bypassing. |
+| "Fuzzy re-anchoring can split the excerpt on whitespace with a regex." | Use `matchAllBounded` from `@do-epub-studio/shared` for fuzzy word extraction; ad-hoc regex over book text is the unbounded-match failure mode. |
+| "`loader.setProgress` is the navigation API, so I'll call it from the component." | `setProgress` calls `rendition.display(cfi)` internally. Call the rendition handle directly, or you navigate twice. |
+| "Silently falling back to the chapter start is acceptable UX." | Re-anchoring must warn the user when it falls back (exact → fuzzy → chapter → notice); silent jumps are the annotation-drift bug. |
+
+## Red Flags
+
+- [ ] A highlight record persists `cfi` without `selectedText` and `chapterRef` alongside it.
+- [ ] `rendition.hooks.content.register(createEpubSanitizerHook())` is absent before `rendition.display(...)`.
+- [ ] A new `createRendition` per re-render instead of reusing one rendition handle.
+- [ ] `loader.on('relocated', ...)` handlers registered with no matching removal on unmount.
+- [ ] Chapter fallback fires with no user notice and no telemetry event carrying `traceId`.
+- [ ] Hand-rolled regex word extraction for fuzzy matching instead of `matchAllBounded`.

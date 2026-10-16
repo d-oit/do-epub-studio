@@ -77,6 +77,24 @@ Review pull requests holistically — analyzing diffs, risk, and cross-file impa
 - Cloudflare Worker patterns
 - Turso DB patterns
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "It's a test-only change, so I can skip the security scan." | Phase 2 runs the security scan on every PR, and the Quality Checklist requires no hardcoded secrets regardless of which files changed. |
+| "The change is trivial, it doesn't need tests." | Quality Checklist: "New code has tests"; test coverage verification is a Phase 2 step, not a judgement call. |
+| "I read the diff of the main file, the others are similar." | Phase 1 requires identifying *all* modified files and the cross-file impact; risk tiers (Critical: auth/security/payments, High: API/models/database) are assigned per change. |
+| "Style and inline nits belong in this review too." | Inline code smells in a single active file are `code-quality`'s scope — this skill reviews the PR as a whole, not the diff line by line. |
+| "I'll post comments as I find them." | Phase 3 orders feedback summary → issues → suggestions → comments, so every comment is grounded in the change-impact assessment. |
+
+## Red Flags
+
+- [ ] PR touching auth, security, or payments not classified Critical risk.
+- [ ] Debug code (`console.log`, commented-out blocks) left in the diff.
+- [ ] Secrets, tokens, or API keys written inline in code or config.
+- [ ] New or changed behavior with no test and no documentation update.
+- [ ] Review comments posted before a cross-file impact summary exists.
+
 ## References
 
 - `references/patterns.md` - Common code patterns

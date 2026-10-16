@@ -167,6 +167,25 @@ The rule's intent is to block the **first** pattern. The second
 pattern with `path.resolve` + `startsWith` guard is the 2026 best
 practice from OWASP. Always prefer it over suppressing the rule.
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "`detect-non-literal-fs-filename` is a false positive here, so I'll inline an `eslint-disable`" | The rule blocks `readFileSync(new URL(...))`; the sanctioned fix is literal paths or `path.resolve(root, userPath)` plus a `resolved.startsWith(root + path.sep)` guard — always prefer it over suppressing the rule. |
+| "EPUB HTML comes from a vetted upload, so sanitizing is redundant" | Security rule 3: sanitize all EPUB HTML with DOMPurify and a fixed allow-list (`p`, `span`, `div`, `a` / `class`, `href`); `innerHTML` and `document.write` on raw content are the XSS anti-patterns. |
+| "The R2 bucket is private, so a direct `bucket.r2.dev/<id>` URL is safe" | Public file URLs are an anti-pattern; signed URLs must be validated server-side and issued with an expiration (`generateSignedUrl(bookId, { expiresIn: '15m' })`). |
+| "This is a read-only audit, so configuration review is out of scope" | Configuration review is part of the workflow: CORS, CSP/HSTS headers, Turso auth token exposure, Cloudflare R2 credentials, and session timeouts. |
+| "It is only information disclosure, so it can wait for the next sprint" | Severity drives response: Critical (RCE, auth bypass) is immediate, High (data exposure, privilege escalation) is 24 hours, Medium is 1 week. |
+
+## Red Flags
+
+- [ ] `innerHTML`, `document.write`, or `element.innerHTML` receives EPUB content without DOMPurify and an explicit `ALLOWED_TAGS` / `ALLOWED_ATTR` list.
+- [ ] An `fs.*` call's first argument is non-literal and there is no `path.resolve` + root-containment check.
+- [ ] A Turso auth token, R2 credential, or API key appears as a literal in client-reachable code instead of `process.env.*`.
+- [ ] A book-access route returns a `${bookId}`-derived `r2.dev` URL rather than a signed, expiring URL.
+- [ ] Passwords are hashed with something other than Argon2/bcrypt (rule 6), or permission revocation leaves sessions live (rule 7).
+- [ ] Error responses, logs, or audit output reveal whether an email or book exists.
+
 ## References
 
 - `references/security-checklist.md` - Audit checklist

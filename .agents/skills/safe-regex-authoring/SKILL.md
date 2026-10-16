@@ -109,6 +109,25 @@ Every CodeQL ReDoS alert MUST be fixed at the source — never dismissed:
 - `packages/shared/src/safe-regex.ts` — `matchBounded` / `testBounded` implementation
 - AGENTS.md Tier 1: "MUST guard every regex against untrusted input using matchBounded/testBounded from @do-epub-studio/shared per ADR-034"
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The input comes from our own parser, so no length guard is needed." | The Three-Layer Defense applies to every regex touching untrusted input: length guard first, unambiguous pattern second, fuzz test third. Any annotation/CFI/URL surface counts as untrusted. |
+| "The CodeQL alert is a false positive — I'll dismiss it." | Every ReDoS alert MUST be fixed at the source and confirmed at `state: fixed` via `gh api repos/<owner>/<repo>/code-scanning/alerts`; dismissing it is not remediation. |
+| "`re.test(input)` is the same as `testBounded(re, input, MAX_CFI_LENGTH)`." | The `matchBounded`/`testBounded`/`matchAllBounded` helpers reject over-length input *before* the regex engine runs; the bare methods do not, which is exactly the ReDoS window. |
+| "`/\/+$/` is tiny, it can't backtrack pathologically." | Overlapping repetitions are the polynomial case: rewrite to a looped `str.endsWith('/')` or `str.replace(/\/$/, '')`, or bound the repetition (`epubcfi\([^)]{1,512}\)`). |
+| "The 25ms fuzz budget is flaky in CI, skip it." | Layer 3 requires a `fast-check` property asserting every regex completes under 25ms for adversarial inputs up to `MAX_LENGTH` — that test is the regression guard, not a nicety. |
+
+## Red Flags
+
+- [ ] Regex applied to request/EPUB/user input with no length check before it runs.
+- [ ] Nested or overlapping quantifiers (`(a+)+`, `/\/+$/`, unbounded `[^)]+`) left in the pattern.
+- [ ] `re.test`/`re.exec`/`input.matchAll(re)` called directly on untrusted input instead of the bounded helpers.
+- [ ] CodeQL `js/redos` alert dismissed rather than moved to `state: fixed`.
+- [ ] Regex change merged with no `fast-check` property test for adversarial input.
+- [ ] Fix verified without `pnpm test --filter <affected-package>`.
+
 ## Integration
 
 - **security-code-auditor**: For broader security reviews

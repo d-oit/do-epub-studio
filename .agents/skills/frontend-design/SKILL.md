@@ -60,3 +60,22 @@ To prevent duplication across skills, delegate domain-specific concerns as follo
 - `references/layout-and-tokens.md` — Layout planning guidelines and OKLCH token mapping.
 - `references/component-architecture.md` — Responsive component patterns, container queries, and View Transitions.
 - `references/performance-and-budgets.md` — Performance budget limits, Lighthouse CI integration, and bundle auditing.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "I'll settle the layout while writing the component." | Workflow step 1 is Layout Plan & Wireframe across desktop, tablet, and mobile — before implementation. |
+| "A media query is simpler than `@container`." | Responsive components must respond to their slot, not the viewport: Container Queries are the platform-first default here. |
+| "This hex matches the mockup exactly." | All color comes from `oklch()` tokens in `apps/web/src/styles/globals.css`. Never hardcode colors or hex values. |
+| "A 40 KB animation library is negligible." | Validate against `.performance-budgets.json`, `bundle-baseline.json`, and Lighthouse CI before proposing UI changes. |
+| "Accessibility and reader interactions are out of scope." | Delegate them: WCAG audits → `accessibility-auditor`, reader/admin UX → `reader-ui-ux`, polish → `impeccable`, PWA/offline → `pwa-offline-sync`. |
+
+## Red Flags
+
+- [ ] Component implementation started with no viewport layout plan.
+- [ ] Color literal (`#rrggbb`, `rgb()`, Tailwind palette class) instead of an OKLCH semantic token.
+- [ ] Viewport media queries where the component should respond to its own container.
+- [ ] Budget files not re-validated after adding a dependency, font, or animation library.
+- [ ] A single asset pushing past the Cloudflare Pages per-file cap (25 MiB).
+- [ ] Re-documenting a11y or reader-interaction rules here instead of delegating to the owning skill.

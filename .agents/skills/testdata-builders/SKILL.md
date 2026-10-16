@@ -80,3 +80,18 @@ const highlight = createHighlightBuilder()
   .withColor('#ffff00')
   .build();
 ```
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Inline object literals are quicker than importing a builder." | Workflow step 6: refactor tests to import builders from `@do-epub-studio/testkit` instead of ad-hoc inline objects. |
+| "I'll hand-add the new schema field to the object in the test." | Builders must be updated whenever the schema changes — CI should fail otherwise. |
+| "A random title/email makes the fixture more realistic." | Randomness must be eliminated or seeded to keep snapshots stable. |
+
+## Red Flags
+
+- [ ] A test constructing a book/grant/session object inline instead of via `createBookBuilder()` / `createGrantBuilder()`.
+- [ ] `Math.random()` / `Date.now()` inside a builder without a seed — unstable snapshots.
+- [ ] A `packages/schema/migrations/*` change merged with no corresponding `packages/testkit` builder update.
+- [ ] Builder defaults missing `locale` or trace metadata.

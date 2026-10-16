@@ -52,6 +52,7 @@ skill-name/
 ### SKILL.md Body
 
 - Keep under **250 lines** (agentskills.io allows 500; we enforce 250).
+- Include the required `## Rationalizations` (table `| Rationalization | Reality |`, ≥2 rows) and `## Red Flags` (`- [ ]` checklist, ≥3 items) sections — enforced by `./scripts/validate-skill-format.sh`. Start from `.agents/skills/SKILL_TEMPLATE.md`.
 - Use progressive disclosure: move detailed content to `references/`.
 - Include step-by-step instructions, examples, and common edge cases.
 - Reference files with relative paths from skill root, one level deep.
@@ -78,6 +79,25 @@ skill-name/
 - Descriptions over 250 characters (truncated in L1 routing).
 - Deeply nested reference files (keep to one level from `SKILL.md`).
 - Auto-generating `SKILL.md` without human review.
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "The description is under 1024 chars, so it's fine." | The repo enforces ≤250 (target ≤200) for reliable L1 routing; the primary trigger belongs in the first 80 characters. |
+| "Frontmatter `name` is cosmetic — the directory already identifies the skill." | `name` must be lowercase letters/numbers/hyphens, ≤64 chars, and match the directory name exactly. |
+| "I'll generate `SKILL.md` mechanically and ship it." | Nothing generated skips review: run `./scripts/validate-skill-format.sh` and get a human read before committing the skill. |
+| "Evaluation is optional — I can eyeball the draft." | Step 5 delegates grading and benchmarking to `skill-evaluator`, and step 4 requires `evals/evals.json` with 2-3 realistic prompts plus `expected_output` descriptions. |
+| "Deep detail needs its own `references/archive/v2/` subfolder." | Reference files stay one level deep from `SKILL.md`; go deeper and the agent won't find them. |
+
+## Red Flags
+
+- [ ] `description` exceeds 250 chars, or the primary trigger is not in the first 80 characters.
+- [ ] Frontmatter `name` mismatches the directory name or uses uppercase/underscores.
+- [ ] Body exceeds 250 lines without moving detail into `references/`.
+- [ ] `evals/evals.json` missing, or lacking 2-3 realistic prompts with `expected_output` descriptions.
+- [ ] `./scripts/validate-skill-format.sh` never run on the new or edited skill.
+- [ ] Reference file nested more than one level below `SKILL.md`.
 
 ## References
 

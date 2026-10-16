@@ -70,3 +70,22 @@ accessRouter.post('/request', zValidator('json', AccessRequestSchema), async (c)
 // Error responses use the same envelope with ok: false
 // return c.json({ ok: false, error: { code: 'ACCESS_DENIED', message: 'Access denied' } }, 401);
 ```
+
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "Register the path-length guard first so oversized URIs are rejected before anything else runs" | Observability middleware MUST precede path guards, CORS, security headers, and rate limiting, so traceId is captured on every request including 414 responses (`apps/worker/src/app.ts:23-33`). |
+| "This endpoint can return a bare JSON object; the envelope is boilerplate" | Responses follow one format: `{ ok: true, data }` on success and `{ ok: false, error: { code, message } }` on failure. |
+| "I'll implement the session check right in this route file" | Auth middleware and session validation boundaries belong to `secure-invite-and-access`; this skill owns routing, handler structure, and response helpers. |
+| "Zod adds a dependency — I'll validate the body by hand" | Routes use `zValidator` with schemas from `@do-epub-studio/shared`, typed against the `Env` bindings; hand-rolled parsing is the anti-pattern. |
+| "A hardcoded fallback key keeps local dev working" | There are no hardcoded secrets, including dev fallbacks — bindings come from the environment only. |
+
+## Red Flags
+
+- [ ] Observability/trace middleware is registered after CORS, security headers, rate limiting, or a path-length guard.
+- [ ] A handler reads `c.env.*` without a typed `Env` binding.
+- [ ] A response body is not the `{ ok, data }` or `{ ok: false, error }` envelope.
+- [ ] The handler parses `c.req.json()` directly instead of `zValidator('json', SharedSchema)`.
+- [ ] Session or signed-URL logic is duplicated into this layer instead of delegating to `secure-invite-and-access`.
+- [ ] A new route file appears in `src/routes/` without being registered with the typed router in `apps/worker/src/app.ts`.

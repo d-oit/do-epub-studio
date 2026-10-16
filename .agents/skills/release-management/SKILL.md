@@ -169,6 +169,24 @@ git diff
 - `VERSION` at repo root
 - AGENTS.md Tier 2: "Releases MUST be cut via the release-management skill — no manual tags, no direct CHANGELOG edits"
 
+## Rationalizations
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "CI is green, so the version is published." | Merging the release PR does **not** create the tag — the version is only publishable after `./scripts/release/create-release-tag.sh` (Step 6). |
+| "I'll just push the tag myself — the script is a formality." | The pre-push hook blocks direct `v*` tag pushes; `create-release-tag.sh` is the only sanctioned path and it verifies clean up-to-date `main`, `VERSION` vs every `package.json`, and the release-notes shape first. |
+| "I'll tidy the CHANGELOG section after the release publishes." | The section is written exactly once, inside the release PR — never edited after the tag publishes (AGENTS.md Tier 2: no direct CHANGELOG edits). |
+| "A bare `git commit -m` is fine for the release PR." | The commit-msg hook rejects a commit with no body — commit through `./scripts/atomic-commit/run.sh --message … --body …`, which also pushes the branch and opens the PR. |
+| "This release has no breaking changes, so I can omit that part." | `scripts/release/check-release-notes.sh <version>` requires a dated header, sections, a non-empty Breaking Changes statement, and no `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>` draft text. |
+
+## Red Flags
+
+- [ ] A `v*` tag pushed by hand instead of via `create-release-tag.sh`
+- [ ] `VERSION` disagreeing with any `package.json` at tag time
+- [ ] Release notes with `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>` or no Breaking Changes statement
+- [ ] `[Unreleased]` bullets left behind after the release PR merges
+- [ ] `release:cut` label expected to trigger anything (`release.yml` fires only on a `v*` tag push)
+
 ## Integration
 
 - **cicd-pipeline**: For CI/CD workflow configuration
