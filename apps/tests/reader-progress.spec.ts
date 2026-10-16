@@ -300,8 +300,14 @@ test.describe('Reader Progress Persistence', () => {
     const bookId = 'test-book';
     const sessionToken = 'mock-token';
     const seededCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
-    const offlineLoaded = (msg: { text(): string }): boolean =>
-      msg.text().includes('reader.progress_loaded') && msg.text().includes('"source":"offline"');
+    // Function declaration, not a const arrow: Codacy's Biome engine flags
+    // `const x = () => ...` in specs with the Qwik `useQwikValidLexicalScope`
+    // false positive (this project is React; see agents-docs/LEARNINGS.md).
+    function offlineLoaded(msg: { text(): string }): boolean {
+      return (
+        msg.text().includes('reader.progress_loaded') && msg.text().includes('"source":"offline"')
+      );
+    }
 
     // The reload reports `navigator.onLine === false`, so the reader takes the
     // offline branch of the initial load. The existing fallback test emulates
