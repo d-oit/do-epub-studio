@@ -22,8 +22,10 @@ const TEST_EPUB = createMinimalEpub(
 test.describe('Reader Progress Persistence', () => {
   test('@mobile should save progress and resume from the same CFI on reload', async ({ page }) => {
     const bookId = 'test-book';
-    const initialCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
-    const updatedCfi = 'epubcfi(/6/10[chap2]!/4/2/4)';
+    // The fixture has 2 chapters (itemrefs c1 at /6/2, c2 at /6/4). CFIs point
+    // to paragraph p1 in chapter 1 and p2 in chapter 2.
+    const initialCfi = 'epubcfi(/6/2[c1]!/4/2[p1]/1:0)';
+    const updatedCfi = 'epubcfi(/6/4[c2]!/4/2[p2]/1:0)';
     let currentCfi = initialCfi;
 
     // 1. Mock API
@@ -109,10 +111,8 @@ test.describe('Reader Progress Persistence', () => {
       '10',
     );
     await expect(page.getByText('10%')).toBeVisible();
-    // 4. Verify initial CFI (this is hard without a real EPUB, but we can check if the PUT was called later)
-    // For this test, we'll manually trigger a relocation if we can, or just trust the telemetry and code path verified by Vitest.
-    // Actually, we can check if currentCfi matches what we expect after a reload.
-
+    const contentFrame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(contentFrame.getByText('First chapter passage content')).toBeVisible();
     // Set a new CFI
     currentCfi = updatedCfi;
 
@@ -134,12 +134,13 @@ test.describe('Reader Progress Persistence', () => {
       '75',
     );
     await expect(page.getByText('75%')).toBeVisible();
+    await expect(contentFrame.getByText('Second chapter passage content')).toBeVisible();
   });
 
   test('@mobile should fallback to IndexedDB if network is offline', async ({ page }) => {
     const bookId = 'test-book';
-    const initialCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
-    const updatedCfi = 'epubcfi(/6/10[chap2]!/4/2/4)';
+    const initialCfi = 'epubcfi(/6/2[c1]!/4/2[p1]/1:0)';
+    const updatedCfi = 'epubcfi(/6/4[c2]!/4/2[p2]/1:0)';
 
     // 1. Initial online mock
     await page.route(`**/api/books/${bookId}/progress`, async (route) => {
@@ -216,7 +217,8 @@ test.describe('Reader Progress Persistence', () => {
       '10',
     );
     await expect(page.getByText('10%')).toBeVisible();
-
+    const contentFrame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(contentFrame.getByText('First chapter passage content')).toBeVisible();
     // 4. Establish a newer local position directly in IndexedDB: the minimal
     //    fixture EPUB exposes no TOC chapters ("No chapters available"), so
     //    chapter navigation is impossible here. Seeding the durable store is
@@ -292,6 +294,7 @@ test.describe('Reader Progress Persistence', () => {
       '75',
     );
     await expect(page.getByText('75%')).toBeVisible();
+    await expect(contentFrame.getByText('Second chapter passage content')).toBeVisible();
   });
 
   test('@mobile keeps saving the reading position while the browser reports offline', async ({
@@ -299,7 +302,7 @@ test.describe('Reader Progress Persistence', () => {
   }) => {
     const bookId = 'test-book';
     const sessionToken = 'mock-token';
-    const seededCfi = 'epubcfi(/6/4[chap1]!/4/2/2)';
+    const seededCfi = 'epubcfi(/6/2[c1]!/4/2[p1]/1:0)';
     // Function declaration, not a const arrow: Codacy's Biome engine flags
     // `const x = () => ...` in specs with the Qwik `useQwikValidLexicalScope`
     // false positive (this project is React; see agents-docs/LEARNINGS.md).
@@ -405,11 +408,14 @@ test.describe('Reader Progress Persistence', () => {
       'aria-valuenow',
       '75',
     );
+    const contentFrame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(contentFrame.getByText('First chapter passage content')).toBeVisible();
 
     // A page turn must still be recorded: the relocation handler is gated
     // until the offline load settles, and a gate that never lifts drops every
     // position read offline instead of persisting it.
     await page.keyboard.press('ArrowRight');
+    await expect(contentFrame.getByText('Second chapter passage content')).toBeVisible();
     await expect
       .poll(
         async () => {
