@@ -800,4 +800,8 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Última atividade',
   'admin.insights.previous': 'Anterior',
   'admin.insights.next': 'Próximo',
+  'admin.books.uploadRevision': 'Carregar revisão',
+  'admin.books.revisionSuccess': 'Revisão carregada e anotações migradas com sucesso',
+  'comment.unanchoredFilter': 'Requer revisão',
+  'comment.unanchoredBadge': 'Desancorado',
 };

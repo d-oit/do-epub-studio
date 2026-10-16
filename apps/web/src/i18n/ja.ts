@@ -798,4 +798,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '最終アクティビティ',
   'admin.insights.previous': '前へ',
   'admin.insights.next': '次へ',
+  'admin.books.uploadRevision': 'リビジョンをアップロード',
+  'admin.books.revisionSuccess': 'リビジョンがアップロードされ、注釈が正常に移行されました',
+  'comment.unanchoredFilter': '確認が必要',
+  'comment.unanchoredBadge': 'アンカーなし',
 };
