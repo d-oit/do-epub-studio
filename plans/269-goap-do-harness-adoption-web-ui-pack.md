@@ -1,6 +1,6 @@
 # GOAP-269: do-harness adoption + web-ui sensor pack
 
-**Status:** IN PROGRESS (upstream pack and local registration delivered; F2/F3/F5/F6/F7 fixed in GOAP-291/294 on 2026-09-30 — all six runners reach browser work, `web-ui-tests` is in the verification set and runs in CI; remaining: promote the CI context to a required check if desired — ADR-286 decision)
+**Status:** COMPLETE (upstream pack and local registration delivered; F2/F3/F5/F6/F7 fixed in GOAP-291/294 on 2026-09-30 — all six runners reach browser work, `web-ui-tests` is in the verification set and runs in CI; ADR-286 determined required-check policy: `web-ui-tests` is intentionally unpromoted)
 **Date:** 2026-09-13
 **ADR:** ADR-246 (`plans/246-adr-do-harness-completion-contract.md`)
 

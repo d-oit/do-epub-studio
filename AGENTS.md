@@ -168,8 +168,8 @@ codacy pull-request gh d-oit do-epub-studio <PR> --output json
 Computational agent-loop verification runs via do-harness (generic pack; ADR-246 / GOAP-269). Sensors wrap the same pnpm scripts as the gates. Repo git hooks are NOT managed by do-harness (they live in `scripts/hooks/`).
 
 ```bash
-do-harness verify --set feedback --changed             # during edits
-do-harness verify --set verification --changed --strict  # before claiming done
+do-harness verify --set feedback --changed --record             # during edits
+do-harness verify --set verification --changed --strict --record  # before claiming done
 do-harness status --set verification                   # evidence freshness (no run)
 ```
 

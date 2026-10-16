@@ -14,6 +14,22 @@ pre-push = []
 [signal-sets]
 feedback = ["verify-fast"]
 verification = ["typecheck", "lint", "test-unit", "skills", "loc", "web-ui-tests"]
+release = [
+  "typecheck",
+  "lint",
+  "test-unit",
+  "skills",
+  "loc",
+  "web-ui-tests",
+  "agent-sync",
+  "workflows",
+  "bundle",
+  "app-identity",
+  "adr-index",
+  "plan-references",
+  "gate-parity",
+  "coverage-parity",
+]
 
 # GOAP-269 Phase 4: the upstream `web-ui` pack (d-o-hub/do-harness#75,
 # shipped in v0.1.1). Added ADDITIVELY rather than via `init --language web`,
@@ -184,4 +200,87 @@ argv = ["node", "--test", "scripts/web-ui/audit.test.mjs", "scripts/web-ui/audit
 when-changed = [
   "scripts/web-ui/**",
   "scripts/*-audit.mjs",
+]
+
+# --- GOAP-276 Phase 1: Gate-only shell and script validator sensors ---
+
+[[sensors]]
+name = "agent-sync"
+argv = ["node", "scripts/check-agent-sync.mjs"]
+when-changed = [
+  "scripts/check-agent-sync.mjs",
+  "AGENTS.md",
+  ".agents/AGENTS.md",
+  ".claude/CLAUDE.md",
+  ".cursorrules",
+  ".windsurfrules",
+  "CLAUDE.md",
+]
+
+[[sensors]]
+name = "workflows"
+argv = ["bash", "scripts/validate-workflows.sh"]
+when-changed = [
+  ".github/workflows/**",
+  "scripts/validate-workflows.sh",
+]
+
+[[sensors]]
+name = "bundle"
+argv = ["node", "scripts/check-bundle-budget.mjs"]
+when-changed = [
+  "scripts/check-bundle-budget.mjs",
+  "scripts/bundle-baseline.json",
+  "apps/web/src/**",
+  "apps/web/vite.config.*",
+]
+
+[[sensors]]
+name = "app-identity"
+argv = ["node", "scripts/check-app-identity.mjs"]
+when-changed = [
+  "scripts/check-app-identity.mjs",
+  "VERSION",
+  "package.json",
+  "apps/*/package.json",
+  "packages/*/package.json",
+]
+
+[[sensors]]
+name = "adr-index"
+argv = ["node", "scripts/check-adr-index.mjs"]
+when-changed = [
+  "plans/*.md",
+  "plans/archive/*.md",
+  "scripts/check-adr-index.mjs",
+]
+
+[[sensors]]
+name = "plan-references"
+argv = ["node", "scripts/check-plan-references.mjs"]
+when-changed = [
+  "plans/*.md",
+  "plans/archive/*.md",
+  "scripts/check-plan-references.mjs",
+]
+
+[[sensors]]
+name = "gate-parity"
+argv = ["bash", "scripts/validate-gate-parity.sh"]
+when-changed = [
+  "scripts/gate-manifest.json",
+  "scripts/validate-gate-parity.sh",
+  "scripts/quality_gate.sh",
+  "scripts/lib/quality_gate_*.sh",
+  ".github/workflows/**",
+]
+
+[[sensors]]
+name = "coverage-parity"
+argv = ["bash", "scripts/validate-coverage-parity.sh"]
+when-changed = [
+  "coverage-thresholds.json",
+  "scripts/validate-coverage-parity.sh",
+  "codecov.yml",
+  "**/vitest.config.*",
 ]
