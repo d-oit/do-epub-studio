@@ -54,6 +54,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': '退出',
   'reader.search': '搜索',
   'reader.searchPlaceholder': '在书中搜索…',
+  'reader.clearSearch': '清除搜索',
   'reader.searchNoResults': '无匹配结果',
   'reader.searchMatches': '{n}个匹配',
   'reader.searchResultLabel': '搜索结果 {index}：{chapter}',

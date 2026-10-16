@@ -61,6 +61,7 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'Cerrar sesi\u00f3n',
   'reader.search': 'Buscar',
   'reader.searchPlaceholder': 'Buscar en el libro\u2026',
+  'reader.clearSearch': 'Limpiar búsqueda',
   'reader.searchNoResults': 'Sin resultados',
   'reader.searchMatches': '{n} resultados',
   'reader.searchResultLabel': 'Resultado de b\u00fasqueda {index}: {chapter}',

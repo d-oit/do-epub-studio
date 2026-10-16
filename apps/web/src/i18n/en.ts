@@ -67,6 +67,7 @@ export const en = {
   'reader.signOut': 'Sign Out',
   'reader.search': 'Search',
   'reader.searchPlaceholder': 'Search in book…',
+  'reader.clearSearch': 'Clear search',
   'reader.searchNoResults': 'No matches',
   'reader.searchMatches': '{n} matches',
   'reader.searchResultLabel': 'Search result {index}: {chapter}',

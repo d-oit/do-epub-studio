@@ -61,6 +61,7 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'Выйти',
   'reader.search': 'Поиск',
   'reader.searchPlaceholder': 'Поиск по книге…',
+  'reader.clearSearch': 'Очистить поиск',
   'reader.searchNoResults': 'Нет совпадений',
   'reader.searchMatches': '{n} совпадений',
   'reader.searchResultLabel': 'Результат поиска {index}: {chapter}',

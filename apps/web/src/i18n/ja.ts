@@ -61,6 +61,7 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'ログアウト',
   'reader.search': '検索',
   'reader.searchPlaceholder': '書籍内を検索…',
+  'reader.clearSearch': '検索をクリア',
   'reader.searchNoResults': '一致なし',
   'reader.searchMatches': '{n}件の一致',
   'reader.searchResultLabel': '検索結果 {index}：{chapter}',

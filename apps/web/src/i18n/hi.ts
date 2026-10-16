@@ -61,6 +61,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'लॉग आउट',
   'reader.search': 'खोजें',
   'reader.searchPlaceholder': 'पुस्तक में खोजें…',
+  'reader.clearSearch': 'खोज साफ़ करें',
   'reader.searchNoResults': 'कोई मेल नहीं',
   'reader.searchMatches': '{n} मेल',
   'reader.searchResultLabel': 'खोज परिणाम {index}: {chapter}',

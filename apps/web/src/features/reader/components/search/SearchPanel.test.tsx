@@ -208,6 +208,52 @@ describe('SearchPanel', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
+  it('renders clear button when query is present and clears query on click', () => {
+    mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
+
+    render(
+      <SearchPanel
+        isOpen
+        book={mockBook}
+        onClose={mockOnClose}
+        onNavigate={mockOnNavigate}
+        t={mockT}
+      />,
+    );
+
+    const input = screen.getByRole('searchbox');
+    expect(screen.queryByRole('button', { name: 'reader.clearSearch' })).not.toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: 'fox' } });
+    const clearBtn = screen.getByRole('button', { name: 'reader.clearSearch' });
+    expect(clearBtn).toBeInTheDocument();
+
+    fireEvent.click(clearBtn);
+    expect(input).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'reader.clearSearch' })).not.toBeInTheDocument();
+  });
+
+  it('clears query when Escape is pressed on search input with text without closing panel', () => {
+    mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
+
+    render(
+      <SearchPanel
+        isOpen
+        book={mockBook}
+        onClose={mockOnClose}
+        onNavigate={mockOnNavigate}
+        t={mockT}
+      />,
+    );
+
+    const input = screen.getByRole('searchbox');
+    fireEvent.change(input, { target: { value: 'fox' } });
+
+    fireEvent.keyDown(input, { key: 'Escape' });
+    expect(input).toHaveValue('');
+    expect(mockOnClose).not.toHaveBeenCalled();
+  });
+
   it('does not render when isOpen is false', () => {
     mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
     render(

@@ -60,6 +60,7 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'تسجيل الخروج',
   'reader.search': 'بحث',
   'reader.searchPlaceholder': 'البحث في الكتاب…',
+  'reader.clearSearch': 'مسح البحث',
   'reader.searchNoResults': 'لا نتائج',
   'reader.searchMatches': '{n} نتيجة',
   'reader.searchResultLabel': 'نتيجة البحث {index}: {chapter}',

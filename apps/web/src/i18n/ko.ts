@@ -61,6 +61,7 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': '로그아웃',
   'reader.search': '검색',
   'reader.searchPlaceholder': '도서 내 검색…',
+  'reader.clearSearch': '검색어 지우기',
   'reader.searchNoResults': '일치하는 결과 없음',
   'reader.searchMatches': '{n}개 일치',
   'reader.searchResultLabel': '검색 결과 {index}: {chapter}',
