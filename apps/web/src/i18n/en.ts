@@ -67,6 +67,7 @@ export const en = {
   'reader.signOut': 'Sign Out',
   'reader.search': 'Search',
   'reader.searchPlaceholder': 'Search in book…',
+  'reader.clearSearch': 'Clear search',
   'reader.searchNoResults': 'No matches',
   'reader.searchMatches': '{n} matches',
   'reader.searchResultLabel': 'Search result {index}: {chapter}',
@@ -796,10 +797,6 @@ export const en = {
   'admin.insights.lastActivity': 'Last Activity',
   'admin.insights.previous': 'Previous',
   'admin.insights.next': 'Next',
-  'admin.books.uploadRevision': 'Upload revision',
-  'admin.books.revisionSuccess': 'Revision uploaded and annotations migrated successfully',
-  'comment.unanchoredFilter': 'Needs Review',
-  'comment.unanchoredBadge': 'Unanchored',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

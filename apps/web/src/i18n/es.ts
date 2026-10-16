@@ -61,6 +61,7 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'Cerrar sesi\u00f3n',
   'reader.search': 'Buscar',
   'reader.searchPlaceholder': 'Buscar en el libro\u2026',
+  'reader.clearSearch': 'Limpiar búsqueda',
   'reader.searchNoResults': 'Sin resultados',
   'reader.searchMatches': '{n} resultados',
   'reader.searchResultLabel': 'Resultado de b\u00fasqueda {index}: {chapter}',
@@ -802,8 +803,4 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Última actividad',
   'admin.insights.previous': 'Anterior',
   'admin.insights.next': 'Siguiente',
-  'admin.books.uploadRevision': 'Subir revisión',
-  'admin.books.revisionSuccess': 'Revisión subida y anotaciones migradas con éxito',
-  'comment.unanchoredFilter': 'Requiere revisión',
-  'comment.unanchoredBadge': 'Desanclado',
 };

@@ -84,6 +84,18 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
   useFocusTrap(isOpen, panelRef);
   useKeyboardShortcut('Escape', onClose, { enabled: isOpen });
 
+  const handleClear = useCallback(() => {
+    setQuery('');
+    inputRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape' && query) {
+      e.stopPropagation();
+      handleClear();
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
@@ -152,14 +164,42 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
             onChange={(e) => {
               setQuery(e.target.value);
             }}
+            onKeyDown={handleKeyDown}
             placeholder={t('reader.searchPlaceholder')}
-            className="w-full bg-background border border-border rounded-lg px-4 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all"
+            className={`w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-accent transition-all ${
+              isSearching && query ? 'pr-16' : query || isSearching ? 'pr-10' : 'pr-4'
+            }`}
             maxLength={120}
             aria-label={t('reader.searchPlaceholder')}
           />
+          {query && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label={t('reader.clearSearch')}
+              className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md min-w-[28px] min-h-[28px] p-1 text-foreground-muted hover:text-foreground hover:bg-background-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors ${
+                isSearching ? 'right-9' : 'right-2'
+              }`}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
           {isSearching && (
             <div
-              className="absolute right-3 top-1/2 -translate-y-1/2"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none"
               role="status"
               aria-live="polite"
             >

@@ -25,13 +25,6 @@ interface HighlightRow {
   color: string;
   created_at: string;
   updated_at: string;
-  revision_id?: string | null;
-  original_cfi?: string | null;
-  original_chapter_ref?: string | null;
-  original_selected_text?: string | null;
-  anchor_status?: string | null;
-  confidence?: number | null;
-  migration_outcome?: string | null;
 }
 
 function toHighlightDTO(row: HighlightRow) {
@@ -44,13 +37,6 @@ function toHighlightDTO(row: HighlightRow) {
     color: row.color,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    anchorStatus: row.anchor_status ?? 'anchored',
-    confidence: row.confidence ?? 1.0,
-    migrationOutcome: row.migration_outcome ?? null,
-    revisionId: row.revision_id ?? null,
-    originalCfi: row.original_cfi ?? null,
-    originalChapterRef: row.original_chapter_ref ?? null,
-    originalSelectedText: row.original_selected_text ?? null,
   };
 }
 highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
@@ -66,15 +52,11 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   );
   if (mismatch) return mismatch.response;
 
-  const anchorStatus = c.req.query('anchorStatus');
-  let query = `SELECT * FROM highlights WHERE book_id = ? AND user_email = ?`;
-  const params: (string | number | null)[] = [bookId, auth.email];
-  if (anchorStatus) {
-    query += ` AND anchor_status = ?`;
-    params.push(anchorStatus);
-  }
-  query += ` ORDER BY created_at DESC LIMIT 1000`;
-  const highlights = await queryAll<HighlightRow>(c.env, query, params);
+  const highlights = await queryAll<HighlightRow>(
+    c.env,
+    `SELECT * FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
+    [bookId, auth.email],
+  );
 
   return c.json({
     ok: true,

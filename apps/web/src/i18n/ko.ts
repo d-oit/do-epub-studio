@@ -61,6 +61,7 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': '로그아웃',
   'reader.search': '검색',
   'reader.searchPlaceholder': '도서 내 검색…',
+  'reader.clearSearch': '검색어 지우기',
   'reader.searchNoResults': '일치하는 결과 없음',
   'reader.searchMatches': '{n}개 일치',
   'reader.searchResultLabel': '검색 결과 {index}: {chapter}',
@@ -789,8 +790,4 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '최근 활동',
   'admin.insights.previous': '이전',
   'admin.insights.next': '다음',
-  'admin.books.uploadRevision': '개정판 업로드',
-  'admin.books.revisionSuccess': '개정판이 업로드되었으며 주석이 성공적으로 마이그레이션되었습니다',
-  'comment.unanchoredFilter': '검토 필요',
-  'comment.unanchoredBadge': '고정 해제됨',
 };

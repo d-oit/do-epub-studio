@@ -62,6 +62,7 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'Uitloggen',
   'reader.search': 'Zoeken',
   'reader.searchPlaceholder': 'Zoeken in boek…',
+  'reader.clearSearch': 'Zoekopdracht wis',
   'reader.searchNoResults': 'Geen resultaten',
   'reader.searchMatches': '{n} resultaten',
   'reader.searchResultLabel': 'Zoekresultaat {index}: {chapter}',
@@ -797,8 +798,4 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Laatste activiteit',
   'admin.insights.previous': 'Vorige',
   'admin.insights.next': 'Volgende',
-  'admin.books.uploadRevision': 'Revisie uploaden',
-  'admin.books.revisionSuccess': 'Revisie geüpload en annotaties succesvol gemigreerd',
-  'comment.unanchoredFilter': 'Beoordeling vereist',
-  'comment.unanchoredBadge': 'Niet verankerd',
 };

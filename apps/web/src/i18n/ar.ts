@@ -60,6 +60,7 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'تسجيل الخروج',
   'reader.search': 'بحث',
   'reader.searchPlaceholder': 'البحث في الكتاب…',
+  'reader.clearSearch': 'مسح البحث',
   'reader.searchNoResults': 'لا نتائج',
   'reader.searchMatches': '{n} نتيجة',
   'reader.searchResultLabel': 'نتيجة البحث {index}: {chapter}',
@@ -813,8 +814,4 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'آخر نشاط',
   'admin.insights.previous': 'السابق',
   'admin.insights.next': 'التالي',
-  'admin.books.uploadRevision': 'تحميل مراجعة',
-  'admin.books.revisionSuccess': 'تم تحميل المراجعة وترحيل التعليقات التوضيحية بنجاح',
-  'comment.unanchoredFilter': 'بحاجة إلى مراجعة',
-  'comment.unanchoredBadge': 'غير مثبت',
 };

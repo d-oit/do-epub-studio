@@ -61,6 +61,7 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'Выйти',
   'reader.search': 'Поиск',
   'reader.searchPlaceholder': 'Поиск по книге…',
+  'reader.clearSearch': 'Очистить поиск',
   'reader.searchNoResults': 'Нет совпадений',
   'reader.searchMatches': '{n} совпадений',
   'reader.searchResultLabel': 'Результат поиска {index}: {chapter}',
@@ -819,8 +820,4 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Последняя активность',
   'admin.insights.previous': 'Назад',
   'admin.insights.next': 'Вперёд',
-  'admin.books.uploadRevision': 'Загрузить редакцию',
-  'admin.books.revisionSuccess': 'Редакция загружена, аннотации успешно перенесены',
-  'comment.unanchoredFilter': 'Требует проверки',
-  'comment.unanchoredBadge': 'Без привязки',
 };

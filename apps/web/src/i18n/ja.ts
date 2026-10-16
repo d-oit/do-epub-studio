@@ -61,6 +61,7 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': 'ログアウト',
   'reader.search': '検索',
   'reader.searchPlaceholder': '書籍内を検索…',
+  'reader.clearSearch': '検索をクリア',
   'reader.searchNoResults': '一致なし',
   'reader.searchMatches': '{n}件の一致',
   'reader.searchResultLabel': '検索結果 {index}：{chapter}',
@@ -797,8 +798,4 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '最終アクティビティ',
   'admin.insights.previous': '前へ',
   'admin.insights.next': '次へ',
-  'admin.books.uploadRevision': 'リビジョンをアップロード',
-  'admin.books.revisionSuccess': 'リビジョンがアップロードされ、注釈が正常に移行されました',
-  'comment.unanchoredFilter': '確認が必要',
-  'comment.unanchoredBadge': 'アンカーなし',
 };

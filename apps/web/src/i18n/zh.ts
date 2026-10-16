@@ -54,6 +54,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'reader.signOut': '退出',
   'reader.search': '搜索',
   'reader.searchPlaceholder': '在书中搜索…',
+  'reader.clearSearch': '清除搜索',
   'reader.searchNoResults': '无匹配结果',
   'reader.searchMatches': '{n}个匹配',
   'reader.searchResultLabel': '搜索结果 {index}：{chapter}',
@@ -763,8 +764,4 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '最近活动',
   'admin.insights.previous': '上一页',
   'admin.insights.next': '下一页',
-  'admin.books.uploadRevision': '上传修订版',
-  'admin.books.revisionSuccess': '修订版已上传，批注已成功迁移',
-  'comment.unanchoredFilter': '需审查',
-  'comment.unanchoredBadge': '未定位',
 };
