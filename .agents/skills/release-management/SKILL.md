@@ -48,26 +48,16 @@ Apply semantic versioning per Conventional Commits since last release:
 
 ### Step 2 — Bump Version
 
-Update `VERSION` at repo root:
+Run the automated version propagation script to update `VERSION`, all package manifests, and internal workspace dependencies:
 
 ```bash
-echo "X.Y.Z" > VERSION
+./scripts/release/version-propagation.sh X.Y.Z
 ```
 
-Update every `package.json` that references the version:
+Verify with the app identity check:
 
 ```bash
-# Find all package.json files and update version field
-find . -name 'package.json' -not -path '*/node_modules/*' \
-  -exec sed -i "s/\"version\": \".*\"/\"version\": \"X.Y.Z\"/" {} +
-```
-
-Update cross-package dependency references if any internal deps use a range:
-
-```bash
-# Update workspace dependency versions
-find . -name 'package.json' -not -path '*/node_modules/*' \
-  -exec sed -i "s/\"@do-epub-studio\/[^\"]*\": \"workspace:[\^~]\?[0-9.]*\"/\"@do-epub-studio\/shared\": \"workspace:^X.Y.Z\"/" {} +
+node scripts/check-app-identity.mjs
 ```
 
 ### Step 3 — Move `[Unreleased]` Entries into the Release Section
@@ -163,7 +153,7 @@ git diff
 |---------|----------|
 | Tag push did not trigger a release | Tags must come from `create-release-tag.sh`; check `gh run list --workflow=release.yml` |
 | CHANGELOG section missing entries | The release PR must move every `[Unreleased]` bullet (Step 3) |
-| Version mismatch in package.json drift | Use `find ... -exec sed` approach from Step 2; then verify with `grep` |
+| Version mismatch in package.json drift | Run `./scripts/release/version-propagation.sh <version>` to synchronize all manifests |
 | Quality gate fails | Fix issues before proceeding — never bypass |
 
 ## References

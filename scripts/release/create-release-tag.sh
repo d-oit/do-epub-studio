@@ -75,7 +75,7 @@ done < <(find . -name 'package.json' -not -path '*/node_modules/*' -not -path '*
 if [[ ${#MISMATCHED[@]} -gt 0 ]]; then
     echo -e "${RED}✗ Version mismatch in:${NC}" >&2
     for m in "${MISMATCHED[@]}"; do echo "  $m" >&2; done
-    echo "Run: find . -name 'package.json' -not -path '*/node_modules/*' -exec sed -i 's/\"version\": \".*\"/\"version\": \"$VERSION\"/' {} +" >&2
+    echo "Run: ./scripts/release/version-propagation.sh $VERSION" >&2
     exit 1
 fi
 
