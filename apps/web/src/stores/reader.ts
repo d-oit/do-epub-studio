@@ -49,6 +49,13 @@ export interface Highlight {
   updatedAt: string;
   syncState?: 'pending' | 'failed';
   syncError?: string;
+  anchorStatus?: 'anchored' | 'migrated' | 'orphaned' | 'needs_review';
+  confidence?: number;
+  migrationOutcome?: string;
+  revisionId?: string;
+  originalCfi?: string;
+  originalChapterRef?: string;
+  originalSelectedText?: string;
 }
 
 export interface Comment {
@@ -68,6 +75,13 @@ export interface Comment {
   replies?: Comment[];
   syncState?: 'pending' | 'failed';
   syncError?: string;
+  anchorStatus?: 'anchored' | 'migrated' | 'orphaned' | 'needs_review';
+  confidence?: number;
+  migrationOutcome?: string;
+  revisionId?: string;
+  originalCfi?: string;
+  originalChapterRef?: string;
+  originalSelectedText?: string;
 }
 
 interface ReaderState {

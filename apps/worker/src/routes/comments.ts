@@ -29,6 +29,13 @@ interface CommentRow {
   resolved_at: string | null;
   created_at: string;
   updated_at: string;
+  revision_id?: string | null;
+  original_cfi?: string | null;
+  original_chapter_ref?: string | null;
+  original_selected_text?: string | null;
+  anchor_status?: string | null;
+  confidence?: number | null;
+  migration_outcome?: string | null;
 }
 
 /**
@@ -53,6 +60,13 @@ function toCommentDTO(row: CommentRow, viewerEmail: string) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     resolvedAt: row.resolved_at ?? null,
+    anchorStatus: row.anchor_status ?? 'anchored',
+    confidence: row.confidence ?? 1.0,
+    migrationOutcome: row.migration_outcome ?? null,
+    revisionId: row.revision_id ?? null,
+    originalCfi: row.original_cfi ?? null,
+    originalChapterRef: row.original_chapter_ref ?? null,
+    originalSelectedText: row.original_selected_text ?? null,
   };
 }
 
@@ -69,11 +83,18 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
   );
   if (mismatch) return mismatch.response;
 
-  const comments = await queryAll<CommentRow>(
-    c.env,
-    `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?) ORDER BY created_at ASC LIMIT 1000`,
-    [bookId, auth.email],
-  );
+  const anchorStatus = c.req.query('anchorStatus');
+  let query = `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?)`;
+  const params: (string | number | null)[] = [bookId, auth.email];
+
+  if (anchorStatus) {
+    query += ` AND anchor_status = ?`;
+    params.push(anchorStatus);
+  }
+
+  query += ` ORDER BY created_at ASC LIMIT 1000`;
+
+  const comments = await queryAll<CommentRow>(c.env, query, params);
 
   return c.json({
     ok: true,
