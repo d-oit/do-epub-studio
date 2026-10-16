@@ -27,6 +27,7 @@ release = [
   "app-identity",
   "adr-index",
   "plan-references",
+  "release-notes",
   "gate-parity",
   "coverage-parity",
 ]
@@ -253,6 +254,15 @@ when-changed = [
   "plans/*.md",
   "plans/archive/*.md",
   "scripts/check-adr-index.mjs",
+]
+
+[[sensors]]
+name = "release-notes"
+argv = ["bash", "scripts/release/check-release-notes.sh"]
+when-changed = [
+  "CHANGELOG.md",
+  "VERSION",
+  "scripts/release/check-release-notes.sh",
 ]
 
 [[sensors]]

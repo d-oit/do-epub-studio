@@ -100,8 +100,11 @@ the tag — the version is only publishable after Step 6.
 
 The tag is the release trigger, and `create-release-tag.sh` is the only
 sanctioned way to push it — it verifies you are on an up-to-date `main`
-with a clean tree, checks `VERSION` against every `package.json`, runs the
-full quality gate, then pushes the annotated tag:
+with a clean tree, checks `VERSION` against every `package.json`, validates
+the `CHANGELOG.md` release section shape with
+`scripts/release/check-release-notes.sh <version>` (dated header, sections,
+non-empty Breaking Changes, no draft placeholders), runs the full quality
+gate, then pushes the annotated tag:
 
 ```bash
 ./scripts/release/create-release-tag.sh
@@ -151,6 +154,7 @@ git diff
 
 | Problem | Solution |
 |---------|----------|
+| Release notes shape check fails | Fix the `## [X.Y.Z] - YYYY-MM-DD` section in `CHANGELOG.md` (sections present, Breaking Changes stated or `None.`, no `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>`) and re-run `scripts/release/check-release-notes.sh <version>` |
 | Tag push did not trigger a release | Tags must come from `create-release-tag.sh`; check `gh run list --workflow=release.yml` |
 | CHANGELOG section missing entries | The release PR must move every `[Unreleased]` bullet (Step 3) |
 | Version mismatch in package.json drift | Run `./scripts/release/version-propagation.sh <version>` to synchronize all manifests |
