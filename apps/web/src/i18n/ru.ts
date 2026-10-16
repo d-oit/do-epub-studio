@@ -819,4 +819,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Последняя активность',
   'admin.insights.previous': 'Назад',
   'admin.insights.next': 'Вперёд',
+  'admin.books.uploadRevision': 'Загрузить редакцию',
+  'admin.books.revisionSuccess': 'Редакция загружена, аннотации успешно перенесены',
+  'comment.unanchoredFilter': 'Требует проверки',
+  'comment.unanchoredBadge': 'Без привязки',
 };

@@ -803,4 +803,8 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Dernière activité',
   'admin.insights.previous': 'Précédent',
   'admin.insights.next': 'Suivant',
+  'admin.books.uploadRevision': 'Téléverser une révision',
+  'admin.books.revisionSuccess': 'Révision téléversée et annotations migrées avec succès',
+  'comment.unanchoredFilter': 'À réviser',
+  'comment.unanchoredBadge': 'Non ancré',
 };

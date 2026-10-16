@@ -798,4 +798,8 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Ultima attività',
   'admin.insights.previous': 'Precedente',
   'admin.insights.next': 'Successivo',
+  'admin.books.uploadRevision': 'Carica revisione',
+  'admin.books.revisionSuccess': 'Revisione caricata e annotazioni migrate con successo',
+  'comment.unanchoredFilter': 'Richiede revisione',
+  'comment.unanchoredBadge': 'Non ancorato',
 };

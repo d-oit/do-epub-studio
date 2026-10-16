@@ -797,4 +797,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Laatste activiteit',
   'admin.insights.previous': 'Vorige',
   'admin.insights.next': 'Volgende',
+  'admin.books.uploadRevision': 'Revisie uploaden',
+  'admin.books.revisionSuccess': 'Revisie geüpload en annotaties succesvol gemigreerd',
+  'comment.unanchoredFilter': 'Beoordeling vereist',
+  'comment.unanchoredBadge': 'Niet verankerd',
 };

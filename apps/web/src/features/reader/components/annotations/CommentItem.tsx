@@ -56,21 +56,41 @@ export const CommentItem = memo(function CommentItem({
       onBlur={() => setShowActions(false)}
       tabIndex={0}
     >
-      {comment.selectedText && (
+      {comment.anchorStatus && comment.anchorStatus !== 'anchored' && (
+        <div className="mb-2 flex items-center gap-1.5">
+          <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase bg-amber-500/10 text-amber-700 dark:text-amber-400">
+            {comment.anchorStatus === 'orphaned'
+              ? t('comment.unanchoredBadge')
+              : t('comment.unanchoredFilter')}
+          </span>
+          {comment.revisionId && (
+            <span className="text-[10px] text-foreground-muted font-mono truncate max-w-[120px]">
+              {comment.revisionId.slice(0, 8)}
+            </span>
+          )}
+        </div>
+      )}
+      {(comment.selectedText || comment.originalSelectedText) && (
         <div
-          className="text-xs text-foreground-muted italic mb-2 cursor-pointer hover:text-accent"
-          onClick={onNavigate}
+          className={`text-xs text-foreground-muted italic mb-2 ${
+            comment.anchorStatus === 'orphaned'
+              ? 'cursor-default'
+              : 'cursor-pointer hover:text-accent'
+          }`}
+          onClick={comment.anchorStatus === 'orphaned' ? undefined : onNavigate}
           onKeyDown={(e) => {
+            if (comment.anchorStatus === 'orphaned') return;
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               onNavigate();
             }
           }}
-          tabIndex={0}
-          role="button"
+          tabIndex={comment.anchorStatus === 'orphaned' ? -1 : 0}
+          role={comment.anchorStatus === 'orphaned' ? undefined : 'button'}
         >
-          &ldquo;{comment.selectedText.slice(0, 100)}
-          {comment.selectedText.length > 100 ? '...' : ''}&rdquo;
+          &ldquo;{(comment.selectedText || comment.originalSelectedText || '').slice(0, 100)}
+          {(comment.selectedText || comment.originalSelectedText || '').length > 100 ? '...' : ''}
+          &rdquo;
         </div>
       )}
 
