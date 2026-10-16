@@ -46,6 +46,18 @@ export function useReaderDataLoader({
 
     let isCancelled = false;
 
+    /**
+     * Marks the restore attempt as settled for this generation. Every exit
+     * path must reach it — including the offline load, which returns before
+     * the online branch's `finally` — because the relocation handler ignores
+     * (and therefore does not persist) relocations until the flag is set.
+     */
+    function markRestoreSettled(currentGen: number): void {
+      if (!isCancelled && currentGen === generationRef.current) {
+        setProgressRestored(true);
+      }
+    }
+
     async function loadData() {
       const currentGen = ++generationRef.current;
       let source: 'server' | 'offline' | 'default' = 'default';
@@ -104,6 +116,17 @@ export function useReaderDataLoader({
               metadata: { durationMs: Math.round(rehydrateMs), bookId },
             });
           }
+          markRestoreSettled(currentGen);
+          // Same settlement signal as the online path: consumers (and the
+          // reader's own tests) use `reader.progress_loaded` to know when the
+          // stored position is in the store and relocations persist again.
+          logClientEvent({
+            level: 'info',
+            event: 'reader.progress_loaded',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            metadata: { bookId, source },
+          });
         }
         return;
       }
@@ -278,12 +301,7 @@ export function useReaderDataLoader({
           });
         }
       } finally {
-        if (!isCancelled && currentGen === generationRef.current) {
-          // The restore attempt has settled — later relocations are real
-          // reading moves (or the programmatic display of the restored
-          // position) and may persist again.
-          setProgressRestored(true);
-        }
+        markRestoreSettled(currentGen);
         logClientEvent({
           level: 'info',
           event: 'reader.progress_loaded',
