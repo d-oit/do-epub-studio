@@ -1,6 +1,9 @@
+import { useEffect } from 'react';
 import { Spinner } from '@do-epub-studio/ui';
 import { SyncRecoveryPanel } from '../../../../components/SyncRecoveryPanel';
 import { useReaderStore } from '../../../../stores/reader';
+import { useAuthStore } from '../../../../stores/auth';
+import { useTranslation } from '../../../../hooks/useTranslation';
 
 interface ReaderViewerProps {
   isLoading: boolean;
@@ -19,6 +22,36 @@ export function ReaderViewer({
   notAvailableText,
 }: ReaderViewerProps) {
   const pendingSyncCount = useReaderStore((state) => state.pendingSyncCount);
+  const bookTitle = useAuthStore((state) => state.bookTitle);
+  const { t } = useTranslation();
+  // Accessible name for the generated book iframes: epub.js never names them,
+  // which axe reports as a serious `frame-title` violation, and the book title
+  // is that frame document's name.
+  const contentFrameTitle = bookTitle ?? t('reader.untitledBook');
+
+  // epub.js creates a sandboxed <iframe> per rendered view as it renders
+  // neighbours, so the frames are named as they appear. The frame contents
+  // stay out of axe's scope (the sandbox is script-disabled — see
+  // docs/accessibility.md), but the <iframe> element in this document is
+  // auditable and must carry an accessible name. The render target only exists
+  // once `isLoading` is false and a URL resolved, so those are dependencies:
+  // the ref is still null when this effect first runs.
+  useEffect(() => {
+    const host = viewerRef.current;
+    if (!host) return;
+    const nameFrames = (): void => {
+      for (const frame of host.querySelectorAll('iframe')) {
+        if (frame.getAttribute('title') !== contentFrameTitle) {
+          frame.setAttribute('title', contentFrameTitle);
+        }
+      }
+    };
+    nameFrames();
+    const observer = new MutationObserver(nameFrames);
+    observer.observe(host, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [viewerRef, contentFrameTitle, isLoading, epubUrl]);
+
   return (
     <main id="main-content" className="pt-14 pb-20">
       {error && (
