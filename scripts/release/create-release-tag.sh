@@ -79,6 +79,13 @@ if [[ ${#MISMATCHED[@]} -gt 0 ]]; then
     exit 1
 fi
 
+# 5b. Verify CHANGELOG release section shape (GOAP-276 Phase 1)
+echo "Checking release notes..."
+if ! ./scripts/release/check-release-notes.sh "$VERSION"; then
+    echo -e "${RED}✗ Release notes invalid for $TAG — fix CHANGELOG.md before releasing${NC}" >&2
+    exit 1
+fi
+
 # 6. Run quality gate
 echo "Running quality gate..."
 if ! ./scripts/quality_gate.sh; then
