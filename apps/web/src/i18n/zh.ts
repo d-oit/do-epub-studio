@@ -764,4 +764,8 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '最近活动',
   'admin.insights.previous': '上一页',
   'admin.insights.next': '下一页',
+  'admin.books.uploadRevision': '上传修订版',
+  'admin.books.revisionSuccess': '修订版已上传，批注已成功迁移',
+  'comment.unanchoredFilter': '需审查',
+  'comment.unanchoredBadge': '未定位',
 };

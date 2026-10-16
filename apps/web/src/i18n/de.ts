@@ -802,4 +802,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'Letzte Aktivität',
   'admin.insights.previous': 'Zurück',
   'admin.insights.next': 'Weiter',
+  'admin.books.uploadRevision': 'Revision hochladen',
+  'admin.books.revisionSuccess': 'Revision hochgeladen und Anmerkungen erfolgreich migriert',
+  'comment.unanchoredFilter': 'Überprüfung erforderlich',
+  'comment.unanchoredBadge': 'Nicht verankert',
 };

@@ -4,7 +4,11 @@ import { CreateBookSchema, UpdateBookSchema } from '@do-epub-studio/shared';
 import type { Env, JsonRow } from '../../lib/env';
 import { execute, queryFirst, queryAll, transaction } from '../../db/client';
 import { logAudit } from '../../audit';
-import { UploadCompleteSchema, BookIndexSchema } from '@do-epub-studio/schema';
+import {
+  UploadCompleteSchema,
+  BookIndexSchema,
+  RevisionMigrateSchema,
+} from '@do-epub-studio/schema';
 import { adminAuth } from '../../middleware/auth';
 import { requireStepUp } from '../../middleware/step-up';
 import { bumpCacheVersion } from '../../lib/edge-cache';
@@ -12,6 +16,7 @@ import { clearBookSearchIndex, replaceBookSearchIndex } from '../../lib/book-sea
 import { NotFoundError, AppError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 import { handleBookFileUpload } from './books-upload';
+import { handleGetBookRevisions, handleMigrateBookRevision } from './books-revisions';
 
 export const booksRouter = new Hono<{
   Bindings: Env;
@@ -182,6 +187,16 @@ booksRouter.post(
 
     return c.json({ ok: true, data: { bookId, chapterCount, indexedAt } });
   },
+);
+
+booksRouter.get('/:id/revisions', adminAuth, handleGetBookRevisions);
+
+booksRouter.post(
+  '/:id/revisions/:revisionId/migrate',
+  adminAuth,
+  requireStepUp,
+  zValidator('json', RevisionMigrateSchema),
+  async (c) => handleMigrateBookRevision(c, c.req.valid('json')),
 );
 
 booksRouter.patch('/:id', adminAuth, zValidator('json', UpdateBookSchema), async (c) => {
