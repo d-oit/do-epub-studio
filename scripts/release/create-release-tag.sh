@@ -86,6 +86,15 @@ if ! ./scripts/quality_gate.sh; then
     exit 1
 fi
 
+# 6b. Verify release signal set via do-harness (GOAP-276 Phase 1)
+if command -v do-harness >/dev/null 2>&1; then
+    echo "Verifying release signal set with do-harness..."
+    if ! do-harness verify --set release --strict; then
+        echo -e "${RED}✗ do-harness release verification failed — fix issues before releasing${NC}" >&2
+        exit 1
+    fi
+fi
+
 # 7. Create annotated tag and push (RELEASE_SCRIPT_PUSH bypasses pre-push hook)
 echo ""
 echo "Creating annotated tag $TAG..."
