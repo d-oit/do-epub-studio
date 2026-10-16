@@ -43,8 +43,15 @@ export function ReaderViewer({
               assigns `target.className = flow` and sizing reads the target's
               clientWidth/clientHeight. Classes are therefore unusable for
               layout here — the surface lives on this wrapper and the host is
-              sized with inline style, which epub.js does not overwrite. */}
-          <div className="h-[calc(100dvh-8rem)] bg-background-secondary rounded-lg overflow-hidden">
+              sized with inline style, which epub.js does not overwrite.
+              `data-epub-content-host` is the stable hook that marks the
+              sandboxed book-content subtree (axe scans must exclude it: the
+              frame is script-disabled, so @axe-core/playwright's runPartial
+              never resolves inside it). */}
+          <div
+            data-epub-content-host="true"
+            className="h-[calc(100dvh-8rem)] bg-background-secondary rounded-lg overflow-hidden"
+          >
             <div ref={viewerRef} style={{ width: '100%', height: '100%' }} />
           </div>
         </div>

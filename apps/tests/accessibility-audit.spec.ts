@@ -7,6 +7,7 @@ import {
   loginAsAdmin,
   clickToolbarButton,
   suppressWorkboxErrors,
+  EPUB_CONTENT_HOST_SELECTOR,
 } from './fixtures';
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     if (accessibilityScanResults.violations.length > 0) {
@@ -72,6 +74,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);
@@ -86,6 +89,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
     const accessibilityScanResults = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .exclude(EPUB_CONTENT_HOST_SELECTOR)
       .analyze();
 
     expect(accessibilityScanResults.violations).toHaveLength(0);
