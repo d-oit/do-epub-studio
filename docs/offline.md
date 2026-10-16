@@ -129,6 +129,27 @@ the encrypted `bookFiles` store. On an offline reload:
    by the service worker's `book-content` route in production; the
    `external-assets` route serves any cross-origin book URL it has cached.
 
+#### Reading-position restore ordering (GOAP-1007)
+
+`reader.progress_loaded` marks the end of the initial progress load — the
+server read, or the `progress` store read when that request fails. Until it
+settles the reader is showing the book's programmatic first position, and the
+app writes **nothing** back for it:
+
+- `useEpubProgress` ignores relocation events while `progressRestored` is
+  false (`useReaderDataLoader` flips the flag when the load settles), so the
+  first display cannot overwrite the stored entry with the book's start —
+  without this, an offline reload read back 0 % from the entry the reload
+  itself had just clobbered.
+- The navigation display effect ignores store updates whose CFI the rendition
+  reported through its own `relocated` event; the rendition is already there,
+  and re-displaying it lands asynchronously and reverts page turns made in the
+  meantime.
+
+Regression cover: `apps/tests/reader-progress.spec.ts` (offline fallback keeps
+the stored percentage) and `apps/tests/reader-migration-smoke.spec.ts`
+(chapter navigation).
+
 ## Sync Queue & Protocol
 
 ### Mutation Flow

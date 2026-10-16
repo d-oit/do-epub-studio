@@ -7,6 +7,7 @@ import {
   measurePerformance,
 } from '../../../lib/client-logger';
 import { getProgress, getAnnotations, subscribeAnnotationChanges } from '../../../lib/offline';
+import { useReaderStore } from '../../../stores';
 import type { Highlight, Comment, Bookmark, ReadingProgress } from '../../../stores';
 import { mapOfflineHighlight, mapOfflineComment, mapOfflineBookmark } from './mapOfflineAnnotation';
 
@@ -28,9 +29,15 @@ export function useReaderDataLoader({
   setProgress,
 }: UseReaderDataLoaderOptions): void {
   const generationRef = useRef(0);
+  const setProgressRestored = useReaderStore((state) => state.setProgressRestored);
 
   useEffect(() => {
     if (!sessionToken || !bookId) return;
+
+    // Relocation events fired before this load settles are the programmatic
+    // first display of the book; the progress handler must not persist them
+    // (they would overwrite the stored last position with the book's start).
+    setProgressRestored(false);
 
     // Narrowed once: the effect already returned without a session/book, and
     // TS cannot carry that guard into the nested async function.
@@ -271,6 +278,12 @@ export function useReaderDataLoader({
           });
         }
       } finally {
+        if (!isCancelled && currentGen === generationRef.current) {
+          // The restore attempt has settled — later relocations are real
+          // reading moves (or the programmatic display of the restored
+          // position) and may persist again.
+          setProgressRestored(true);
+        }
         logClientEvent({
           level: 'info',
           event: 'reader.progress_loaded',
@@ -293,5 +306,13 @@ export function useReaderDataLoader({
       isCancelled = true;
       unsubscribe();
     };
-  }, [sessionToken, bookId, setHighlights, setComments, setBookmarks, setProgress]);
+  }, [
+    sessionToken,
+    bookId,
+    setHighlights,
+    setComments,
+    setBookmarks,
+    setProgress,
+    setProgressRestored,
+  ]);
 }

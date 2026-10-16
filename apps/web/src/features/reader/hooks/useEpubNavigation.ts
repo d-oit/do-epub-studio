@@ -69,6 +69,12 @@ export function useEpubNavigation({
   translationRef.current = t;
   const loadMetricRenditionRef = useRef<Rendition | null>(null);
   const displayedRenditionRef = useRef<Rendition | null>(null);
+  // CFI the rendition itself reported through 'relocated'. A store update that
+  // carries this CFI must not schedule another `display(cfi)`: the rendition is
+  // already there, and the redundant display lands asynchronously — it can
+  // revert a page turn the reader made in the meantime (measured: the chapter
+  // navigation smoke test flaked ~50% without this guard).
+  const renditionCfiRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!rendition) return;
@@ -88,6 +94,7 @@ export function useEpubNavigation({
       adapter,
       prefetchManager: prefetchManagerRef,
       progressFlushRef,
+      renditionCfiRef,
       setChapter,
       markPageRead,
     });
@@ -124,6 +131,7 @@ export function useEpubNavigation({
     if (displayedRenditionRef.current !== rendition) {
       displayedRenditionRef.current = rendition;
       currentChapterRef.current = null;
+      renditionCfiRef.current = null;
       setCurrentChapter(null);
     }
     const savedCfi = progressCfi ?? undefined;
@@ -197,6 +205,11 @@ export function useEpubNavigation({
       }
     };
 
+    // The store update was caused by the rendition's own 'relocated' event:
+    // it is already displaying this position, and re-displaying it would race
+    // with a page turn the reader just made.
+    if (displayCfi && displayCfi === renditionCfiRef.current) return;
+
     void display();
     return () => {
       active = false;
@@ -211,7 +224,6 @@ export function useEpubNavigation({
     prefetchManagerRef,
     setError,
   ]);
-
   useEffect(() => {
     if (!rendition) return;
     const handleKeyDown = (event: KeyboardEvent): void => {

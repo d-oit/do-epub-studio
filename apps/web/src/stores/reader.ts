@@ -86,6 +86,14 @@ export interface Comment {
 
 interface ReaderState {
   progress: ReadingProgress;
+  /**
+   * True once the reader's initial progress load (server or offline cache)
+   * has settled. Relocation events before that are the programmatic first
+   * display of the book, and persisting them would overwrite the stored last
+   * position with the book's start — the offline reload then restores 0%
+   * instead of the saved percentage.
+   */
+  progressRestored: boolean;
   bookmarks: Bookmark[];
   highlights: Highlight[];
   comments: Comment[];
@@ -103,6 +111,7 @@ interface ReaderState {
   readerSpread: ReaderSpread;
   readerZoom: ReaderZoom;
   setProgress: (progress: ReadingProgress) => void;
+  setProgressRestored: (restored: boolean) => void;
   addBookmark: (bookmark: Bookmark) => void;
   removeBookmark: (id: string) => void;
   setBookmarks: (bookmarks: Bookmark[]) => void;
@@ -142,6 +151,7 @@ interface ReaderState {
 
 const initialReaderState = {
   progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
+  progressRestored: false,
   bookmarks: [],
   highlights: [],
   comments: [],
@@ -266,6 +276,7 @@ export const useReaderStore = create<ReaderState>((set) => ({
   },
   clearConflicts: () => set({ conflicts: [] }),
   setProgress: (progress) => set({ progress }),
+  setProgressRestored: (restored) => set({ progressRestored: restored }),
   addBookmark: (bookmark) => set((state) => ({ bookmarks: [bookmark, ...state.bookmarks] })),
   removeBookmark: (id) =>
     set((state) => ({ bookmarks: state.bookmarks.filter((b) => b.id !== id) })),

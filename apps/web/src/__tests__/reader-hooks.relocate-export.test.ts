@@ -29,6 +29,7 @@ describe('createRelocatedHandler', () => {
     vi.clearAllMocks();
     useReaderStore.setState({
       progress: { locator: null, progressPercent: 0, updatedAt: null },
+      progressRestored: true,
       currentChapter: null,
     });
   });

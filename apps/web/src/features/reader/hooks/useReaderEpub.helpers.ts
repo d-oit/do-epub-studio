@@ -180,6 +180,7 @@ export function createRelocatedSetup({
   adapter,
   prefetchManager,
   progressFlushRef,
+  renditionCfiRef,
   setChapter,
   markPageRead,
 }: {
@@ -196,6 +197,12 @@ export function createRelocatedSetup({
   adapter: AnnotationAdapter;
   prefetchManager: MutableRefObject<PrefetchManager | null>;
   progressFlushRef: MutableRefObject<(() => Promise<void>) | null>;
+  /**
+   * Sink for the CFI the rendition itself reported. The navigation display
+   * effect skips store updates that carry this CFI: the rendition is already
+   * there, and re-displaying it races with a page turn the reader just made.
+   */
+  renditionCfiRef: MutableRefObject<string | null>;
   setChapter?: (href: string | null, wordCount?: number) => void;
   markPageRead?: () => void;
 }) {
@@ -236,7 +243,10 @@ export function createRelocatedSetup({
   // GOAP-224 B6: the online progress PUT is debounced; call
   // flush() on unmount so the final position is not lost.
   progressFlushRef.current = relocatedHandler.flush;
-  return relocatedHandler.onRelocated;
+  return (location: Parameters<typeof relocatedHandler.onRelocated>[0]) => {
+    renditionCfiRef.current = location.start.cfi;
+    return relocatedHandler.onRelocated(location);
+  };
 }
 
 /**
