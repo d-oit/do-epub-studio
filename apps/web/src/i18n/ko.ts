@@ -790,8 +790,4 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': '최근 활동',
   'admin.insights.previous': '이전',
   'admin.insights.next': '다음',
-  'admin.books.uploadRevision': '개정판 업로드',
-  'admin.books.revisionSuccess': '개정판이 업로드되었으며 주석이 성공적으로 마이그레이션되었습니다',
-  'comment.unanchoredFilter': '검토 필요',
-  'comment.unanchoredBadge': '고정 해제됨',
 };

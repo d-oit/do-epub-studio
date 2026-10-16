@@ -812,8 +812,4 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.insights.lastActivity': 'अंतिम गतिविधि',
   'admin.insights.previous': 'पिछला',
   'admin.insights.next': 'अगला',
-  'admin.books.uploadRevision': 'संशोधन अपलोड करें',
-  'admin.books.revisionSuccess': 'संशोधन अपलोड किया गया और एनोटेशन सफलतापूर्वक माइग्रेट किए गए',
-  'comment.unanchoredFilter': 'समीक्षा आवश्यक',
-  'comment.unanchoredBadge': 'अनएंकर किया गया',
 };

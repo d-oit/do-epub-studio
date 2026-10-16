@@ -8,10 +8,15 @@ import type { BookResponse } from '@do-epub-studio/shared';
 // keeps it out of the admin-route entry chunk (bundle budget ADR-107 §3).
 import { ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
-import { BookCreateModal, BookEditModal, BookRevisionModal, AdminBookCard } from './components';
+import { BookCreateModal } from './components/BookCreateModal';
+import { BookEditModal } from './components/BookEditModal';
 import { useAdminStepUp } from './step-up';
 import { BooksPageHeader } from './BooksPageHeader';
-import { useAdminBookMutations } from './useAdminBookMutations';
+
+interface CreateBookResponse {
+  id: string;
+  uploadUrl: string;
+}
 
 export function AdminBookResponsesPage() {
   const { t } = useTranslation();
@@ -23,28 +28,20 @@ export function AdminBookResponsesPage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [bookTitle, setBookTitle] = useState('');
+  const [authorName, setAuthorName] = useState('');
+  const [epubFile, setEpubFile] = useState<File | null>(null);
+  const [visibility, setVisibility] = useState('private');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [validationResult, setValidationResult] = useState<{
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /** Auto-dismiss the success banner after 5s. */
-  const scheduleSuccessClear = useCallback(() => {
-    if (successTimerRef.current) {
-      clearTimeout(successTimerRef.current);
-      successTimerRef.current = null;
-    }
-    successTimerRef.current = setTimeout(() => {
-      setSuccessMessage(null);
-      successTimerRef.current = null;
-    }, 5000);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (successTimerRef.current) {
-        clearTimeout(successTimerRef.current);
-        successTimerRef.current = null;
-      }
-    };
-  }, []);
 
   const [editingBook, setEditingBook] = useState<BookResponse | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -74,42 +71,23 @@ export function AdminBookResponsesPage() {
   useEffect(() => {
     void fetchBookResponses();
   }, [fetchBookResponses]);
-  const {
-    isCreateModalOpen,
-    setIsCreateModalOpen,
-    bookTitle,
-    setBookTitle,
-    authorName,
-    setAuthorName,
-    epubFile,
-    setEpubFile,
-    visibility,
-    setVisibility,
-    isSubmitting,
-    createError,
-    validationResult,
-    handleCreateBook,
-    resetCreateForm,
-    revisionBook,
-    setRevisionBook,
-    revisionFile,
-    setRevisionFile,
-    isRevisionSubmitting,
-    revisionError,
-    setRevisionError,
-    revisionValidation,
-    setRevisionValidation,
-    handleUploadRevision,
-  } = useAdminBookMutations({
-    sessionToken,
-    executeWithStepUp,
-    onSuccess: (msg) => {
-      setSuccessMessage(msg);
-      scheduleSuccessClear();
-    },
-    refreshBooks: fetchBookResponses,
-    t,
-  });
+
+  /** Auto-dismiss the success banner after 5s. Clears any pending timer first
+   *  so rapid successive actions don't leave a stale timeout running, and the
+   *  unmount cleanup below cancels it if the page is navigated away mid-wait. */
+  const scheduleSuccessClear = useCallback(() => {
+    if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(() => {
+      setSuccessMessage(null);
+      successTimerRef.current = null;
+    }, 5000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const handleViewGrants = (book: BookResponse) => {
     void navigate(`/admin/books/${book.id}/grants`, { state: { bookTitle: book.title } });
@@ -178,6 +156,155 @@ export function AdminBookResponsesPage() {
     }
   };
 
+  const resetCreateForm = () => {
+    setBookTitle('');
+    setAuthorName('');
+    setEpubFile(null);
+    setVisibility('private');
+    setCreateError(null);
+    setValidationResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const validateEpubLocal = async (file: File) => {
+    try {
+      const data = await file.arrayBuffer();
+      const { validateEpub } = await import('@do-epub-studio/shared/src/epub-validator');
+      const result = await validateEpub(data);
+
+      const localizedErrors = result.errors.map((err) => {
+        if (err.includes('mimetype')) return t('admin.createBookModal.error.missingMimetype');
+        if (err.includes('META-INF/container.xml'))
+          return t('admin.createBookModal.error.missingContainer');
+        return err;
+      });
+
+      setValidationResult({
+        ...result,
+        errors: localizedErrors,
+      });
+      return result.isValid;
+    } catch {
+      setCreateError(t('admin.createBookModal.error.corruptZip'));
+      return false;
+    }
+  };
+
+  const handleCreateBook = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+
+    if (!bookTitle.trim()) {
+      setCreateError(t('admin.createBookModal.error.fillFields'));
+      return;
+    }
+
+    if (!epubFile) {
+      setCreateError(t('admin.createBookModal.error.selectEpub'));
+      return;
+    }
+
+    const isLocalValid = await validateEpubLocal(epubFile);
+    if (!isLocalValid) {
+      return;
+    }
+
+    const slug =
+      bookTitle
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s_-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 255) || 'untitled';
+
+    setIsSubmitting(true);
+
+    try {
+      const createResult = await executeWithStepUp(
+        (tok) =>
+          apiRequest<CreateBookResponse>('/api/admin/books', {
+            method: 'POST',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              title: bookTitle.trim(),
+              slug,
+              authorName: authorName.trim() || null,
+              visibility,
+            }),
+          }),
+        sessionToken ?? undefined,
+      );
+
+      const uploadUrl = createResult.uploadUrl;
+      const uploadToken = sessionToken ?? '';
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: epubFile,
+        headers: {
+          Authorization: `Bearer ${uploadToken}`,
+          'Content-Type': 'application/octet-stream',
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = (await uploadResponse.json()) as {
+          error?: { code?: string; message: string; details?: string[] };
+        };
+        if (errorData.error?.code === 'VALIDATION_ERROR' && errorData.error.details) {
+          setValidationResult({
+            isValid: false,
+            errors: errorData.error.details,
+            warnings: [],
+          });
+          throw new Error(errorData.error.message);
+        }
+        throw new Error(t('admin.createBookModal.error.upload'));
+      }
+
+      const uploadResult = (await uploadResponse.json()) as {
+        data: {
+          storageKey: string;
+          validation?: { isValid: boolean; errors: string[]; warnings: string[] };
+        };
+      };
+
+      await executeWithStepUp(
+        (tok) =>
+          apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
+            method: 'POST',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              storageKey: uploadResult.data.storageKey,
+              originalFilename: epubFile.name,
+              fileSizeBytes: epubFile.size,
+              mimeType: epubFile.type || 'application/epub+zip',
+              validationResults: uploadResult.data.validation,
+            }),
+          }),
+        sessionToken ?? undefined,
+      );
+
+      if (uploadResult.data.validation) {
+        setValidationResult(uploadResult.data.validation);
+      }
+
+      setIsCreateModalOpen(false);
+      resetCreateForm();
+      setSuccessMessage(t('admin.createBookModal.success'));
+      void fetchBookResponses();
+
+      scheduleSuccessClear();
+    } catch (err) {
+      setCreateError((err as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <main id="main-content" className="min-dvh bg-background p-4 sm:p-6 lg:p-8">
       <BooksPageHeader onCreateClick={() => setIsCreateModalOpen(true)} />
@@ -204,21 +331,48 @@ export function AdminBookResponsesPage() {
           </div>
         ) : (
           books.map((book) => (
-            <AdminBookCard
+            <div
               key={book.id}
-              book={book}
-              onEdit={openEditModal}
-              onUploadRevision={(b) => {
-                setRevisionBook(b);
-                setRevisionFile(null);
-                setRevisionError(null);
-                setRevisionValidation(null);
-              }}
-              onArchive={setArchiveConfirmBook}
-              onManageAccess={handleViewGrants}
-              isArchiving={archivingBookId === book.id}
-              t={t}
-            />
+              className="cq-admin-book-card rounded-sm border border-border bg-surface p-4 shadow-page transition-colors hover:border-accent/40"
+            >
+              <h3 className="mb-2 font-display text-lg leading-snug text-foreground">
+                {book.title}
+              </h3>
+              {book.authorName && (
+                <p className="text-sm text-foreground-muted mb-1">{book.authorName}</p>
+              )}
+              <p className="text-sm text-foreground-muted mb-4 line-clamp-2">
+                {book.description || t('admin.books.noDescription')}
+              </p>
+              <div className="flex flex-wrap justify-between items-center gap-2">
+                <span className="text-xs font-medium px-2 py-1 bg-background-tertiary rounded text-foreground-muted uppercase">
+                  {book.visibility}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => openEditModal(book)}
+                    className="touch-target inline-flex items-center text-xs font-medium text-foreground-muted hover:text-foreground"
+                  >
+                    {t('admin.books.edit')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setArchiveConfirmBook(book);
+                    }}
+                    disabled={archivingBookId === book.id}
+                    className="touch-target inline-flex items-center text-xs font-medium text-semantic-error hover:opacity-80 disabled:opacity-50"
+                  >
+                    {archivingBookId === book.id ? '...' : t('admin.books.archive')}
+                  </button>
+                  <button
+                    onClick={() => handleViewGrants(book)}
+                    className="touch-target inline-flex items-center text-sm font-medium text-accent hover:opacity-80"
+                  >
+                    {t('admin.books.manageAccess')} &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
           ))
         )}
         {!isLoading && books.length === 0 && (
@@ -247,23 +401,6 @@ export function AdminBookResponsesPage() {
         createError={createError}
         validationResult={validationResult}
       />
-      {revisionBook && (
-        <BookRevisionModal
-          isOpen={!!revisionBook}
-          onClose={() => {
-            setRevisionBook(null);
-            setRevisionFile(null);
-            setRevisionError(null);
-          }}
-          onSubmit={handleUploadRevision}
-          bookTitle={revisionBook.title}
-          epubFile={revisionFile}
-          setEpubFile={setRevisionFile}
-          isSubmitting={isRevisionSubmitting}
-          error={revisionError}
-          validationResult={revisionValidation}
-        />
-      )}
 
       {editingBook && (
         <BookEditModal

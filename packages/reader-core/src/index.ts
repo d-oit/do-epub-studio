@@ -5,7 +5,6 @@ export * from './locator';
 export { normalizeText, findBestChapterMatch, shouldShowDriftWarning } from './reanchor';
 export type { ReanchorResult, AnnotationAnchor } from './reanchor';
 export { reanchorByText, tryReanchor, terminateWorker } from './reanchor-worker';
-export * from './reanchor-migration';
 export * from './toc';
 export * from './epub-types';
 export * from './sanitizer';

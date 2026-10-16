@@ -110,15 +110,3 @@ export const UploadCompleteSchema = z.object({
     )
     .optional(),
 });
-
-export const RevisionMigrateSchema = z.object({
-  chapters: z
-    .array(
-      z.object({
-        chapterRef: z.string().min(1).max(500),
-        content: z.string(),
-      }),
-    )
-    .optional(),
-});
-export type RevisionMigrate = z.infer<typeof RevisionMigrateSchema>;

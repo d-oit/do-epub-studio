@@ -63,28 +63,3 @@ export const CommentUpdateSchema = z.object({
 });
 
 export type CommentUpdate = z.infer<typeof CommentUpdateSchema>;
-
-export const AnchorStatusSchema = z.enum(['anchored', 'migrated', 'orphaned', 'needs_review']);
-export type AnchorStatus = z.infer<typeof AnchorStatusSchema>;
-
-export const MigrationOutcomeSchema = z.enum([
-  'exact_match',
-  'moved_text',
-  'ambiguous_match',
-  'deleted_text',
-  'already_migrated',
-]);
-export type MigrationOutcome = z.infer<typeof MigrationOutcomeSchema>;
-
-export const AnnotationMigrationReportSchema = z.object({
-  migrationId: z.string(),
-  bookId: z.string(),
-  targetRevisionId: z.string(),
-  sourceRevisionId: z.string().nullable().optional(),
-  totalCount: z.number().int().nonnegative(),
-  migratedCount: z.number().int().nonnegative(),
-  orphanedCount: z.number().int().nonnegative(),
-  needsReviewCount: z.number().int().nonnegative(),
-  outcomes: z.record(z.string(), z.number().int().nonnegative()).optional(),
-});
-export type AnnotationMigrationReport = z.infer<typeof AnnotationMigrationReportSchema>;
