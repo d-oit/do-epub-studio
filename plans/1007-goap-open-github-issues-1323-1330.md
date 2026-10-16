@@ -1,6 +1,6 @@
 # GOAP-1007: Resolve all open GitHub issues #1323–#1330 and PRs #1322/#1331
 
-**Status:** IN PROGRESS
+**Status:** DONE (2026-10-16)
 **Date:** 2026-10-14
 **Trigger:** User requested implementation of every open GitHub issue, correct-order merge of every open PR, and green CI.
 **Related:** ADR-313, TRIZ analysis `analysis/triz-core-2026-10-14.md`, issues [#1323](https://github.com/d-oit/do-epub-studio/issues/1323)–[#1330](https://github.com/d-oit/do-epub-studio/issues/1330), PRs [#1322](https://github.com/d-oit/do-epub-studio/pull/1322) and [#1331](https://github.com/d-oit/do-epub-studio/pull/1331).
@@ -68,3 +68,17 @@ Exactly eight open issues and two open PRs were found. Implementation must follo
 ## Official references used
 
 See `analysis/triz-core-2026-10-14.md` for current Cloudflare Workers/D1, GitHub branch protection/Actions security, Playwright, W3C annotation/accessibility, and React sources consulted on 2026-10-14.
+
+## Outcome (2026-10-16)
+
+All eight issues (#1323–#1330) closed, both PRs (#1322, #1331) squash-merged in the planned order after their required checks and Codacy passed, and the stashed `packages/schema/src/index.ts` edit was left untouched end to end.
+
+The phase-2 scheduled-lane repair was incomplete: the lane still failed on `ef108bb0` (run [38891690192](https://github.com/d-oit/do-epub-studio/actions/runs/38891690192), auto-filed as #1350) with 22 failures + 1 flaky, all of them in four measured classes:
+
+- **`@axe-core/playwright` cannot audit inside a scripts-disabled sandboxed frame** — `runPartial` never resolves in the reader's `sandbox="allow-same-origin"` book frame (the identical document in a plain `srcdoc` frame returns in ~80 ms). Reader scans now exclude the app-owned `[data-epub-content-host]` subtree; that covered 12 of the attempt's 22 failures plus its 1 flaky without loosening a single rule. The reader-window helpers also select the live iframe (`div.view-container > iframe`), not the `div.epub-view` class the specs assumed.
+- **The pre-restore `relocated` overwrote the durable reading position** — an offline reload displayed the book's start, persisted 0 %, and then read back the row it had just clobbered, so the restore assertion in `reader-progress.spec.ts` failed on every project. Persistence is now gated on `reader.progress_loaded` (`progressRestored`), and the navigation display effect ignores store updates carrying the CFI the rendition reported itself.
+- **A redundant `display()` of the page's own CFI reverted the next page turn** — the measured `reader-migration-smoke.spec.ts` flake (~50 % at `--repeat-each=4`, 12/12 green after the guard).
+- **The 320 px German admin card could not wrap its action row** (323 px measured) — `flex-wrap` at the source instead of a viewport or assertion change.
+- The run's earlier step attempt also flaked once on the webkit `login-and-book-load.spec.ts` password toggle; that test passes in the attempt recorded above and is not attributable to the diff — `login-and-book-load.spec.ts:61` + `login-responsive-controls.spec.ts` repeated 8× on webkit (656 executions) plus 96 instrumented toggle gestures across chromium/firefox/webkit report zero failures.
+
+Reproduction of the repaired lane: the CI command (`E2E_DEMO_LOGIN=1 PLAYWRIGHT_MODE=preview PLAYWRIGHT_INCLUDE_WEBKIT=1 pnpm test:e2e --retries=1`) locally reports 790 passed / 4 flaky (all webkit) / 0 failed in 14.5 min, against 771 passed / 1 flaky / 22 failed for the failing attempt.
