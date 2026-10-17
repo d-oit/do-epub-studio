@@ -105,3 +105,11 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
     fi
     echo ""
 fi
+
+# Untrusted-ingest sink lint (GOAP-276): the consumers that interpolate PR
+# text must contain no dynamic-execution sinks. Hermetic static scan.
+printf '%sRunning untrusted-ingest sink lint...%s\n' "${BLUE}" "${NC}"
+if ! node "$REPO_ROOT/scripts/check-untrusted-ingest-sinks.mjs"; then
+    FAILED=1
+fi
+echo ""

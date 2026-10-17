@@ -167,7 +167,8 @@ mk_view() {
         "$(mk_view 1001 "2026-08-01T00:00:00Z" '"a.ts"')" \
         "$(mk_view 1002 "2026-08-02T00:00:00Z" '"b.ts"')" > "$GH_EMIT_FILE"
 
-    GH_STUB_MODE=emit run bash -c "cd \"$repo\" && GH_EMIT_FILE=\"$GH_EMIT_FILE\" GH_LOG_FILE=\"$GH_LOG_FILE\" GH_STUB_MODE=emit PATH=\"$TMPDIR/bin:\$PATH\" \"$SCRIPT\" merge -R d-oit/do-epub-studio --pr 1001 --pr 1002 --execute --no-sync-main"
+    cd "$repo"
+    GH_STUB_MODE=emit run env GH_EMIT_FILE="$GH_EMIT_FILE" GH_LOG_FILE="$GH_LOG_FILE" GH_STUB_MODE=emit PATH="$TMPDIR/bin:$PATH" "$SCRIPT" merge -R d-oit/do-epub-studio --pr 1001 --pr 1002 --execute --no-sync-main
     [ "$status" -eq 0 ]
     grep -q "pr checkout 1001" "$GH_LOG_FILE"
     grep -q "pr merge 1001.*--squash" "$GH_LOG_FILE"
