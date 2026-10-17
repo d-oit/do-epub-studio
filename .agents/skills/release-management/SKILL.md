@@ -155,10 +155,12 @@ git diff
 | Problem | Solution |
 |---------|----------|
 | Release notes shape check fails | Fix the `## [X.Y.Z] - YYYY-MM-DD` section in `CHANGELOG.md` (sections present, Breaking Changes stated or `None.`, no `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>`) and re-run `scripts/release/check-release-notes.sh <version>` |
-| Tag push did not trigger a release | Tags must come from `create-release-tag.sh`; check `gh run list --workflow=release.yml` |
+| Tag push did not trigger a release | Tags must come from `create-release-tag.sh`; check `gh run list --workflow=release.yml`. A tag pushed with the default `GITHUB_TOKEN` (e.g. by a bot inside CI) triggers nothing — the push must come from a human/agent identity |
 | CHANGELOG section missing entries | The release PR must move every `[Unreleased]` bullet (Step 3) |
 | Version mismatch in package.json drift | Run `./scripts/release/version-propagation.sh <version>` to synchronize all manifests |
 | Quality gate fails | Fix issues before proceeding — never bypass |
+| A tag run used the workflow from before your fix | A tag run executes `release.yml` **from the tagged commit**, so fixing the workflow on a later commit changes nothing for an existing tag. To ship the fix on that version: delete the GitHub Release, re-point the tag to the corrected commit, push it again — the commit must be on `main` with green CI (the readiness gate refuses a commit whose CI it cannot verify), and `concurrency: cancel-in-progress: false` queues the new run behind any in-flight run for the same tag |
+| Release job failed after the release was created | Re-run failed jobs (`gh run rerun <run-id> --failed`) instead of re-tagging: the re-run keeps the original tag/SHA, the `release` job rebuilds, re-signs and re-attests everything itself (no dependency on the previous attempt's artifacts), and `softprops/action-gh-release` updates the existing release (`overwrite_files` defaults to true). The usual culprit is the fail-closed Pages API health check — fix the Pages deployment/bindings, then re-run. Reruns work for 30 days, up to 50 per run |
 
 ## References
 
