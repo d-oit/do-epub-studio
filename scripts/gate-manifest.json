@@ -13,6 +13,7 @@
       "check-loc",
       "format:check",
       "coverage-parity",
+      "untrusted-ingest",
       "gate-parity"
     ]
   },

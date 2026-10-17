@@ -28,6 +28,7 @@ release = [
   "adr-index",
   "plan-references",
   "release-notes",
+  "untrusted-ingest",
   "gate-parity",
   "coverage-parity",
 ]
@@ -263,6 +264,18 @@ when-changed = [
   "CHANGELOG.md",
   "VERSION",
   "scripts/release/check-release-notes.sh",
+]
+
+[[sensors]]
+name = "untrusted-ingest"
+argv = ["node", "scripts/check-untrusted-ingest-sinks.mjs"]
+when-changed = [
+  ".agents/skills/pr-review-fix/**",
+  ".agents/skills/pr-roast-batch-close/**",
+  ".agents/skills/github-pr-autopilot/**",
+  "scripts/smart-update-pr.sh",
+  ".github/workflows/bot-repush-guard.yml",
+  "scripts/check-untrusted-ingest-sinks.mjs",
 ]
 
 [[sensors]]
