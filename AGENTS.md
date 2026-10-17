@@ -175,6 +175,8 @@ do-harness status --set verification                   # evidence freshness (no 
 
 Never weaken a sensor to obtain a passing result; fix the underlying cause.
 
+CI enforces this contract (ADR-1008): the `Agent Completion Contract (do-harness)` job installs the pinned binary, runs the `verification` set strict and recorded, asserts the evidence (`git_sha`, `signal_set`) and uploads the artifact.
+
 ---
 
 _See `agents-docs/` for detailed documentation on workflow, hooks, context management, and troubleshooting. See `llms.txt` and `llms-full.txt` for structured LLM context._

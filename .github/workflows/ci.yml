@@ -409,6 +409,70 @@ jobs:
           QUALITY_GATE_NO_SMOKE: '1'
         run: bash scripts/quality_gate.sh
 
+  harness-contract:
+    name: Agent Completion Contract (do-harness)
+    # GOAP-276 Phase 1 / ADR-1008: the AGENTS.md completion contract stops
+    # being advisory here. Pinned install -> strict recorded verify with a
+    # machine-readable evidence artifact -> freshness (status) assertion ->
+    # evidence integrity assertion -> artifact upload. Deliberately not
+    # path-filtered: the contract applies to every non-draft PR.
+    needs: [changes, setup]
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Install do-harness (pinned)
+        env:
+          DO_HARNESS_VERSION: v0.2.1
+        run: |
+          set -euo pipefail
+          target=x86_64-unknown-linux-musl
+          base="https://github.com/d-o-hub/do-harness/releases/download/${DO_HARNESS_VERSION}"
+          cd "$RUNNER_TEMP"
+          curl -fsSLO "${base}/checksums.txt"
+          curl -fsSLO "${base}/do-harness-${DO_HARNESS_VERSION}-${target}.tar.gz"
+          grep " do-harness-${DO_HARNESS_VERSION}-${target}.tar.gz\$" checksums.txt | sha256sum -c -
+          tar -xzf "do-harness-${DO_HARNESS_VERSION}-${target}.tar.gz"
+          echo "$RUNNER_TEMP/do-harness-${DO_HARNESS_VERSION}-${target}" >> "$GITHUB_PATH"
+
+      - name: Verify completion contract (strict, recorded, evidence)
+        run: |
+          set -euo pipefail
+          mkdir -p .do-harness/ci
+          do-harness verify --set verification --format json \
+            --evidence .do-harness/ci/evidence.json --strict --record
+
+      - name: Assert evidence freshness (status green)
+        run: |
+          set -euo pipefail
+          do-harness status --set verification \
+            --evidence .do-harness/ci/evidence.json --format json \
+            | tee .do-harness/ci/status.json
+          jq -e '.state == "green" and .reason == "current"' .do-harness/ci/status.json > /dev/null
+
+      - name: Assert evidence integrity (git_sha, signal_set, verdicts)
+        run: |
+          set -euo pipefail
+          jq -e --arg sha "$GITHUB_SHA" \
+            '.git_sha == $sha and .signal_set == "verification"
+             and ([.sensors[].verdict] | all(. == "pass"))
+             and ([.sensors[].recorded] | all(. == true))' \
+            .do-harness/ci/evidence.json > /dev/null
+
+      - name: Upload evidence artifact
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: do-harness-verification-evidence
+          path: .do-harness/ci/
+          retention-days: 7
+
   worker-build:
     name: Worker Build Validation
     needs: [changes, setup]
@@ -770,7 +834,7 @@ jobs:
   notify-failure:
     name: Notify on failure
     if: failure() && github.ref == 'refs/heads/main'
-    needs: [pre-commit, lint, typecheck, test, build, e2e-smoke, e2e-full, bench]
+    needs: [pre-commit, lint, typecheck, test, build, e2e-smoke, e2e-full, bench, harness-contract]
     runs-on: ubuntu-latest
     permissions:
       issues: write
