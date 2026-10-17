@@ -381,10 +381,9 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     // Select passage again and create ordinary comment
     await selectReaderPassage(page, 'OFFLINE ANNOTATION PASSAGE');
-    await page
-      .locator('button')
-      .filter({ hasText: /^Comment$/ })
-      .click();
+    const commentSelectionBtn = page.locator('button').filter({ hasText: /^Comment$/ });
+    await commentSelectionBtn.focus();
+    await page.keyboard.press('Enter');
     const commentModal = page.getByRole('dialog', { name: 'Comment' });
     await expect(commentModal).toBeVisible();
     await commentModal.getByRole('textbox').fill('My shared offline note');
