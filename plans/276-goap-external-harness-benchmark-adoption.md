@@ -1,6 +1,6 @@
 # GOAP-276: Benchmark adoption — github-template-ai-agents + do-harness
 
-**Status:** IN PROGRESS (Phase 0 remediation 7/7 DONE; Phase 1 release set, release preflight, --record, and gate sensors DONE 2026-10-18; Phase 2 version-propagation DONE 2026-10-18; see Progress reconciliation)
+**Status:** IN PROGRESS (Phase 0 remediation 7/7 DONE; **Phase 1 COMPLETE 2026-10-17** — release set, release preflight, `--record`, gate sensors, release-notes shape enforcement, Rationalizations + Red Flags in all 42 SKILL.md, untrusted-ingest sink lint, and the CI-enforced completion contract (ADR-1008) DONE, with dropped-PR detection advisory by decision; Phase 2 version-propagation DONE 2026-10-18; see Progress reconciliation)
 **Date:** 2026-09-23
 
 Benchmark analysis of `d-o-hub/github-template-ai-agents` (template) and
