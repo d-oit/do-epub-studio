@@ -466,14 +466,21 @@ jobs:
             do-epub-studio-web.zip
             sbom.cyclonedx.json
 
+      - name: Generate checksums
+        # GOAP-276 Phase 2: user-facing verification needs a published
+        # checksum list; the release body documents the recipe.
+        run: sha256sum do-epub-studio-web.zip sbom.cyclonedx.json > SHA256SUMS
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
+          body_path: .github/RELEASE_NOTES_TEMPLATE.md
           files: |
             do-epub-studio-web.zip
             do-epub-studio-web.zip.sig
             sbom.cyclonedx.json
             sbom.cyclonedx.json.sig
+            SHA256SUMS
 
       - name: Post-deploy health check
         run: |

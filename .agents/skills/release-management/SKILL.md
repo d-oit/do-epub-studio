@@ -127,6 +127,16 @@ git ls-remote --tags origin vX.Y.Z
 head -20 CHANGELOG.md
 ```
 
+The release body (from `.github/RELEASE_NOTES_TEMPLATE.md`) carries the
+user-facing verification recipe; confirm the assets exist and that the recipe
+still resolves — download the published `SHA256SUMS` + zip and run:
+
+```bash
+gh release download vX.Y.Z --repo d-oit/do-epub-studio --pattern SHA256SUMS --pattern do-epub-studio-web.zip
+sha256sum -c SHA256SUMS --ignore-missing
+gh attestation verify do-epub-studio-web.zip --repo d-oit/do-epub-studio
+```
+
 ## Hard Rules
 
 - **NEVER push a `v*` tag manually** — always use `scripts/release/create-release-tag.sh <version>`. The pre-push hook blocks direct tag pushes; the script runs the quality gate and version checks first.
