@@ -27,6 +27,7 @@ release = [
   "app-identity",
   "adr-index",
   "plan-references",
+  "overlap",
   "release-notes",
   "untrusted-ingest",
   "gate-parity",
@@ -296,6 +297,15 @@ when-changed = [
   "scripts/quality_gate.sh",
   "scripts/lib/quality_gate_*.sh",
   ".github/workflows/**",
+]
+
+[[sensors]]
+name = "overlap"
+argv = ["do-harness", "overlap"]
+when-changed = [
+  ".agents/skills/**",
+  "agents-docs/AVAILABLE_SKILLS.md",
+  "do-harness.toml",
 ]
 
 [[sensors]]

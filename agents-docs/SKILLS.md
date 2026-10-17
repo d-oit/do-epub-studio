@@ -36,6 +36,20 @@ Skills use progressive disclosure per the agentskills.io specification:
 The model decides when to load full content via the `skill(name="skill-name")` tool.
 Do NOT pre-load all skills at session start — this causes context bloat and token waste.
 
+Rank candidates before loading one (metadata only, no bodies; no index to maintain):
+
+```bash
+do-harness skills suggest --query "cut a release and publish a tag"   # ranked skills + scores
+do-harness overlap                                                     # guidance-overlap ranking (advisory)
+```
+
+`overlap` reports skill pairs whose guidance is most similar (shared vocabulary,
+default threshold 0.45) and never fails a run — it is an advisory prompt. A
+flagged pair means "sharpen the two skills' scope", not "merge them" (e.g.
+`skill-creator` ↔ `skill-evaluator` are deliberately adjacent: authoring vs
+evaluation). The `overlap` sensor records the ranking in release-set evidence;
+run the command directly while editing skills.
+
 ## Why .agents/ as Canonical?
 
 `.claude/` is Claude Code-specific. `.agents/` is tool-agnostic - it works when you
