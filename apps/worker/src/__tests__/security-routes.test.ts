@@ -66,6 +66,29 @@ describe('Security Routes', () => {
     });
   });
 
+  it('returns a 400 when CSP report fields exceed maximum length bounds', async () => {
+    const res = await app.fetch(
+      new Request('http://localhost/api/csp-report', {
+        method: 'POST',
+        body: JSON.stringify({
+          'csp-report': {
+            'document-uri': 'https://example.com/',
+            'violated-directive': 'a'.repeat(1001),
+          },
+        }),
+        headers: { 'Content-Type': 'application/json' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({
+      ok: false,
+      error: { code: 'INVALID_PAYLOAD', message: 'Invalid CSP report payload' },
+    });
+  });
+
   it('returns a structured 400 when the CSP report body is malformed JSON', async () => {
     const res = await app.fetch(
       new Request('http://localhost/api/csp-report', {

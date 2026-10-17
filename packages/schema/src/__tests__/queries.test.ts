@@ -5,6 +5,7 @@ import {
   NotificationsQuerySchema,
   AdminInsightsQuerySchema,
   AuditQuerySchema,
+  CspReportSchema,
 } from '../schemas';
 
 describe('SearchQuerySchema', () => {
@@ -44,6 +45,43 @@ describe('SearchQuerySchema', () => {
 
   it('rejects negative offset', () => {
     expect(() => SearchQuerySchema.parse({ q: 'query', offset: -1 })).toThrow();
+  });
+});
+
+describe('CspReportSchema', () => {
+  it('accepts valid CSP report', () => {
+    const result = CspReportSchema.parse({
+      'csp-report': {
+        'document-uri': 'https://example.com/page',
+        'violated-directive': 'script-src',
+        referrer: 'https://example.com/',
+        'blocked-uri': 'https://evil.com/script.js',
+      },
+    });
+    expect(result['csp-report']['document-uri']).toBe('https://example.com/page');
+  });
+
+  it('rejects document-uri exceeding 2048 chars', () => {
+    const longUrl = 'https://example.com/' + 'a'.repeat(2050);
+    expect(() =>
+      CspReportSchema.parse({
+        'csp-report': {
+          'document-uri': longUrl,
+          'violated-directive': 'script-src',
+        },
+      }),
+    ).toThrow();
+  });
+
+  it('rejects violated-directive exceeding 1000 chars', () => {
+    expect(() =>
+      CspReportSchema.parse({
+        'csp-report': {
+          'document-uri': 'https://example.com/',
+          'violated-directive': 'a'.repeat(1001),
+        },
+      }),
+    ).toThrow();
   });
 });
 
