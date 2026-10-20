@@ -93,6 +93,13 @@ describe('sync', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
     Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });
+    // The replay engine writes to `readerAuth`-protected worker routes, so a
+    // drain needs a live session to send a bearer token with.
+    useAuthStore.setState({
+      sessionToken: 'replay-session-token',
+      bookId: 'b1',
+      isAuthenticated: true,
+    });
     cancelPendingRetry();
     resetDrainPromise();
     setPermissionRevokedCallback(() => {});
@@ -230,6 +237,7 @@ describe('sync', () => {
       await vi.waitFor(() => {
         expect(apiRequest).toHaveBeenCalledWith('/api/books/b1/progress', {
           method: 'PUT',
+          token: 'replay-session-token',
           body: JSON.stringify({
             locator: { cfi: 'cfi-1' },
             progressPercent: 50,
@@ -283,6 +291,7 @@ describe('sync', () => {
 
       expect(apiRequest).toHaveBeenNthCalledWith(1, '/api/books/b1/progress', {
         method: 'PUT',
+        token: 'replay-session-token',
         body: JSON.stringify({
           locator: { cfi: 'parent-cfi' },
           progressPercent: 20,
@@ -292,6 +301,7 @@ describe('sync', () => {
       });
       expect(apiRequest).toHaveBeenNthCalledWith(2, '/api/books/b1/progress', {
         method: 'PUT',
+        token: 'replay-session-token',
         body: JSON.stringify({
           locator: { cfi: 'child-cfi' },
           progressPercent: 80,
@@ -693,6 +703,12 @@ describe('sync', () => {
       });
       await flushConflictWrites();
 
+      // The conflict read hits the `readerAuth`-protected progress route, so
+      // it must carry the session token.
+      expect(apiRequest).toHaveBeenNthCalledWith(2, '/api/books/b1/progress', {
+        token: 'replay-session-token',
+      });
+
       const [conflict] = getPendingConflicts('b1');
       expect(conflict).toMatchObject({
         type: ConflictType.ProgressUpdate,
@@ -835,6 +851,7 @@ describe('sync', () => {
       await vi.waitFor(() => {
         expect(apiRequest).toHaveBeenCalledWith('/api/comments/comment-1', {
           method: 'PATCH',
+          token: 'replay-session-token',
           body: JSON.stringify({ status: 'resolved' }),
         });
       });

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { apiRequest } from '../../../lib/api';
 import { logClientEvent } from '../../../lib/client-logger';
+import { cancelPendingRetry } from '../../../lib/offline/sync';
 import { clearAllEncryptedData } from '../../../lib/offline/db';
 import { useAuthStore } from '../../../stores/auth';
 
@@ -39,9 +40,9 @@ async function teardownDeviceData(): Promise<boolean> {
 }
 
 /**
- * Sign-out handler for the reader shell: best-effort server logout, then the
- * device-data teardown, then the auth store logout (which also resets in-memory
- * reader state) and the redirect to `/login`.
+ * Sign-out handler for the reader shell: best-effort server logout, then cancel
+ * scheduled retries, clear the auth session and reader state, purge device data,
+ * and redirect to `/login`.
  */
 export function useReaderLogout(): () => Promise<void> {
   const navigate = useNavigate();
@@ -64,8 +65,9 @@ export function useReaderLogout(): () => Promise<void> {
         error: { name: error.name, message: error.message, stack: error.stack },
       });
     } finally {
-      const cleaned = await teardownDeviceData();
+      cancelPendingRetry();
       logout();
+      const cleaned = await teardownDeviceData();
       void navigate(cleaned ? '/login' : '/login?cleanup=failed');
     }
   }, [logout, navigate, sessionToken]);

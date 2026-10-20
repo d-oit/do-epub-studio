@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   saveFeedbackDraft,
   loadFeedbackDrafts,
@@ -10,6 +10,7 @@ import {
   type FeedbackDraft,
 } from './feedback-drafts';
 import { closeDb, setTokenOverride } from './db';
+import { useAuthStore } from '@/stores/auth';
 
 function makeDraft(overrides: Partial<FeedbackDraft> = {}): FeedbackDraft {
   return {
@@ -32,6 +33,7 @@ function makeDraft(overrides: Partial<FeedbackDraft> = {}): FeedbackDraft {
 describe('feedback drafts (REL-02 durable layer)', () => {
   beforeEach(async () => {
     setTokenOverride('test-feedback-session-token');
+    useAuthStore.setState({ sessionToken: 'test-feedback-session-token' });
     closeDb();
     const dbs = (await indexedDB.databases?.()) ?? [];
     await Promise.all(
@@ -48,9 +50,11 @@ describe('feedback drafts (REL-02 durable layer)', () => {
   });
   afterEach(() => {
     setTokenOverride(null);
+    useAuthStore.setState({ sessionToken: null });
   });
 
   it('fails when unauthenticated: writes no draft and reports error', async () => {
+    useAuthStore.setState({ sessionToken: null });
     setTokenOverride(null);
     await expect(saveFeedbackDraft(makeDraft())).rejects.toThrow(
       'Authentication required for sensitive offline storage',

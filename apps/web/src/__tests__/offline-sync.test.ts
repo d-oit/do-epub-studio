@@ -8,6 +8,7 @@ import {
 } from '../lib/offline/sync';
 import * as db from '../lib/offline/db';
 import { api, apiRequest } from '../lib/api';
+import { useAuthStore } from '../stores/auth';
 
 // Mock the API
 vi.mock('../lib/api', () => ({
@@ -41,6 +42,14 @@ describe('Offline Sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
+
+    // The replay engine writes to `readerAuth`-protected worker routes, so a
+    // drain needs a live session to send a bearer token with.
+    useAuthStore.setState({
+      sessionToken: 'offline-sync-session-token',
+      bookId: 'book-1',
+      isAuthenticated: true,
+    });
 
     // Mock navigator.onLine
     Object.defineProperty(globalThis, 'navigator', {

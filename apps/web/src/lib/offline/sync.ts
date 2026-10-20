@@ -5,7 +5,6 @@ import {
   removeSyncQueueItem,
   updateSyncQueueItem,
   type SyncQueueItem,
-  type AnnotationEntry,
 } from './db';
 import { settleAnnotationCreation, failAnnotationCreation } from './annotation-mutations';
 import { syncItem, markAsSynced, type FeedbackSyncPayload } from './sync-item';
@@ -18,6 +17,7 @@ import { logClientEvent } from '../client-logger';
 import { clearResolvedConflicts } from './conflict-resolution';
 import { MAX_RETRY_ATTEMPTS, calculateRetryDelay } from './sync-policy';
 import { sortByMutationDependency } from './sync-order';
+import { buildCanonicalAnnotationEntry } from './sync-canonical-entry';
 
 let onPermissionRevoked: ((bookId: string) => void) | null = null;
 let retryTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -164,41 +164,7 @@ async function attemptSync(): Promise<void> {
         }
 
         const res = result.annotation;
-        let canonicalEntry: AnnotationEntry;
-        if (res.type === 'highlight') {
-          const hl = res.item;
-          canonicalEntry = {
-            id: hl.id,
-            bookId: capturedBookId ?? '',
-            type: 'highlight',
-            cfi: hl.cfiRange ?? '',
-            text: hl.selectedText,
-            chapter: hl.chapterRef ?? undefined,
-            color: hl.color,
-            createdAt: new Date(hl.createdAt).getTime(),
-            updatedAt: new Date(hl.updatedAt).getTime(),
-            synced: true,
-            mutationId: item.mutationId,
-          };
-        } else {
-          const cm = res.item;
-          canonicalEntry = {
-            id: cm.id,
-            bookId: capturedBookId ?? '',
-            type: 'comment',
-            cfi: cm.cfiRange ?? '',
-            text: cm.selectedText ?? undefined,
-            comment: cm.body,
-            chapter: cm.chapterRef ?? undefined,
-            displayName: cm.displayName,
-            status: cm.status === 'deleted' ? 'open' : cm.status,
-            visibility: cm.visibility,
-            createdAt: new Date(cm.createdAt).getTime(),
-            updatedAt: new Date(cm.updatedAt).getTime(),
-            synced: true,
-            mutationId: item.mutationId,
-          };
-        }
+        const canonicalEntry = buildCanonicalAnnotationEntry(res, capturedBookId, item.mutationId);
 
         await settleAnnotationCreation(item, canonicalEntry, capturedToken);
         processed.add(item.id);
