@@ -138,3 +138,16 @@ None of these prerequisites prevents publishing this roadmap now.
   ETA/speed), with a privacy note and a disabled empty state. Verified by the
   export test in `apps/web/src/__tests__/info-panel.test.tsx` (parseable JSON,
   25 min/12 pages/25 min remaining, second book absent, no token/email/URL).
+
+## Acceptance revalidation 2026-10-20 (GOAP-1002 S1; local)
+
+- **N3 (device-local export) now distinguishes an unreadable store from an
+  empty one.** `InfoPanel` resolves the device-local summary against the book
+  it was computed for and carries an explicit `failed` state, so a storage
+  read error is reported as unavailable instead of being rendered as "no
+  reading activity". A book switch never renders or exports the previous
+  book's metrics under the new book's id.
+- **The export stays offline.** The export reads the already-computed local
+  summary and writes it as JSON; it makes no API call.
+- **N1 (synced history) and N2 (book-only admin aggregate) are unchanged.**
+  The revalidation covers the N3 local-export path only.

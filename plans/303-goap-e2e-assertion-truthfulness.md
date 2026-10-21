@@ -54,13 +54,43 @@ CONTENT')` — `Expected substring: "CHAPTER ONE CONTENT" / Received string:
 - `grep -rn "\|\| true)" apps/tests/*.spec.ts` → no matches: the constant-true
   family is gone from the suite.
 
-## Lane note (open, not fixed here)
+## Lane coverage follow-up (closed 2026-10-20)
 
-The three specs are tagged `@mobile`, and the PR-side lane runs
-`pnpm test:e2e:smoke` (`--grep @smoke`), so **no PR check executes them** — only
-the scheduled cross-browser job does. The mirror-image gap is therefore explicit:
-the A4 truthfulness fix itself **shipped untested in #1264**, and the
-wrong-fixture assertion only surfaced when these files were run by hand. Promoting
-a mock-lane PR job (or tagging these specs `@smoke`) is a CI policy decision that
-belongs in its own slice; recorded here so the observation is not lost with the
-fix.
+The three corrected A4 assertions are now tagged `@smoke`. The new reader
+TOC/reload regression is also tagged. The existing PR dev and preview smoke
+commands filter for `@smoke`, so these behavioral checks are selected without
+adding a separate job or changing required-check policy.
+
+Local verification (2026-10-20): the targeted `@smoke` command passed 9 tests
+on Chromium in dev mode. This proves selection and behavior in that lane only;
+WebKit, Pixel, and preview results remain CI evidence and are not claimed here.
+
+## PWA lane flake: the selection toolbar race (closed 2026-10-21)
+
+The PWA E2E lane failed intermittently on `main` (CI runs 39585020306 and
+39473294405, both "Run PWA E2E tests (service workers enabled)"), and it was
+observed locally at a 1-in-5 rate — so it is a pre-existing defect, not a
+regression from the reader changes on this branch. Two distinct races sat
+behind it:
+
+- **The service worker may not be activated when the page reloads.**
+  `registerType: 'prompt'` means only pages loaded _after_ activation are
+  controlled, and activation is asynchronous. A reload issued while the worker
+  is still installing lands on an uncontrolled client, and the "Service
+  Worker must control the page" assertion fails. The spec now waits for
+  `registration.active` before the reload, so the reload necessarily produces
+  a controlled client.
+- **The selection helper returned before the app had seen the selection.**
+  `selectReaderPassage` builds a DOM Range inside the book frame and
+  dispatches a `mouseup` there, but the annotation toolbar is rendered by the
+  app in the _top_ document after React processes that event. The helper
+  returned as soon as the range was selected, so a caller could look for the
+  "Comment" control before it was mounted; the failure then looked like a
+  missing toolbar rather than a race in the helper. The helper now waits for
+  the toolbar to appear, which is the app's own acknowledgement that it saw
+  the selection.
+
+Local verification (2026-10-21): eight consecutive `--grep @pwa
+--project=pwa-chromium --retries=0` runs passed 16/16. The `--retries=0`
+matters — the flake previously hid behind Playwright's automatic retry, which
+is exactly how it reached `main` unnoticed.

@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import {
   securityHeaders,
   minimalSecurityHeaders,
@@ -6,6 +8,37 @@ import {
   applyMinimalSecurityHeaders,
 } from '../lib/security-headers';
 import { defined } from './helpers';
+
+/**
+ * The Permissions-Policy directives `docs/security-posture.md` (adopted)
+ * requires on every response surface. GOAP-1009 P-04: `geolocation=()` was
+ * missing from both the Pages and the Worker header sources, so these are
+ * asserted explicitly and MUST NOT be dropped again.
+ */
+const REQUIRED_PERMISSIONS_POLICY = ['camera=()', 'microphone=()', 'geolocation=()'] as const;
+
+/**
+ * The full feature set shared by the Pages `_headers` and both Worker
+ * header maps (header parity, GOAP-1009 P-04).
+ */
+const PARITY_PERMISSIONS_POLICY = [
+  'camera=()',
+  'microphone=()',
+  'geolocation=()',
+  'payment=()',
+  'usb=()',
+  'magnetometer=()',
+  'gyroscope=()',
+  'accelerometer=()',
+] as const;
+
+/** Split a Permissions-Policy header value into its trimmed directives. */
+function parsePolicy(value: string): string[] {
+  return value
+    .split(',')
+    .map((directive) => directive.trim())
+    .filter(Boolean);
+}
 
 describe('security headers', () => {
   it('defines full security headers', () => {
@@ -77,5 +110,47 @@ describe('security headers', () => {
     const csp = minimalSecurityHeaders['Content-Security-Policy'];
     expect(csp).toContain("default-src 'none'");
     expect(csp).toContain("frame-ancestors 'none'");
+  });
+
+  // GOAP-1009 P-04 — docs/security-posture.md (adopted) requires
+  // `geolocation=()`; the Pages and Worker header sources had omitted it.
+  // These assertions pin the required directives per source so a future
+  // change cannot silently drop a feature restriction.
+  it('full Permissions-Policy disables the adopted features (geolocation)', () => {
+    const policy = defined(securityHeaders['Permissions-Policy'], 'Permissions-Policy');
+    const directives = parsePolicy(policy);
+
+    for (const required of REQUIRED_PERMISSIONS_POLICY) {
+      expect(directives).toContain(required);
+    }
+    expect(directives).toEqual([...PARITY_PERMISSIONS_POLICY]);
+  });
+
+  it('minimal Permissions-Policy disables the adopted features (geolocation)', () => {
+    const policy = defined(
+      minimalSecurityHeaders['Permissions-Policy'],
+      'minimal Permissions-Policy',
+    );
+    const directives = parsePolicy(policy);
+
+    for (const required of REQUIRED_PERMISSIONS_POLICY) {
+      expect(directives).toContain(required);
+    }
+    expect(directives).toEqual([...PARITY_PERMISSIONS_POLICY]);
+  });
+
+  it('Pages _headers emits the same Permissions-Policy as the Worker', () => {
+    const headersPath = path.resolve(__dirname, '../../../web/public/_headers');
+    const content = fs.readFileSync(headersPath, 'utf-8');
+
+    const match = content.match(/^[ \t]*Permissions-Policy:[ \t]*(.+)$/m);
+    if (!match) throw new Error('Permissions-Policy header not found in apps/web/public/_headers');
+
+    const directives = parsePolicy(defined(match[1], 'Pages Permissions-Policy'));
+
+    for (const required of REQUIRED_PERMISSIONS_POLICY) {
+      expect(directives).toContain(required);
+    }
+    expect(directives).toEqual([...PARITY_PERMISSIONS_POLICY]);
   });
 });

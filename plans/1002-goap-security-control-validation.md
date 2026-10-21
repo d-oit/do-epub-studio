@@ -1,6 +1,6 @@
 # GOAP-1002: Security control validation and remediation contracts
 
-**Status:** DONE — S1/S2/S4 implemented 2026-10-05 (user-authorized); S3 stays evidence collection, deployed validation outstanding
+**Status:** DONE — S1/S2/S4 implemented 2026-10-05 (user-authorized); S1 race and S5 replay authentication closed 2026-10-20; S3 stays evidence collection, deployed validation outstanding
 **Date:** 2026-10-04
 **Type:** Security control-gap backlog (source review only; no policy change)
 **Source audit:** `plans/1000-goap-implementation-security-e2e-feature-audit.md`
@@ -84,6 +84,19 @@ A before redemption → deny despite a live B grant; a reused token is denied. N
 cross-account escalation and no probabilistic or nondeterministic runtime
 behavior is claimed.
 
+## S5 — Unauthenticated offline replay (added 2026-10-20)
+
+| ID  | Priority and classification                   | Read anchors                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Acceptance contract                                                                                                                                                                                                          |
+| --- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S5  | P1, source-only; production effect unobserved | The offline replay engine and two read paths call `readerAuth`-protected routes without a bearer token: `lib/offline/progress-conflict.ts` (progress PUT, conflict remote read), `lib/offline/annotation-sync.ts` (comment resolve PATCH, bookmark POST), `lib/offline/sync-item.ts` (reading-insight POST), `lib/offline/permissions.ts` (`/api/access/validate`). The worker rejects a tokenless request in `apps/worker/src/middleware/auth.ts` via `requireAuth`; the raw `api.*` helper resolves for any HTTP status, so a 401 looked like a success. | Every client call to a protected route carries the session token. A queued replay reaches the server and settles; a rejected replay is retried rather than dropped; a progress conflict resolves against the remote version. |
+
+This finding was raised by the S1 work on 2026-10-20, not by the original
+2026-10-04 source review, and is recorded in
+`plans/1000-goap-implementation-security-e2e-feature-audit.md` as S5 so the
+finding IDs of the two records stay aligned. It is a correctness and
+data-loss defect on the offline path, not a disclosure: the server refused
+every unauthenticated request.
+
 ## Controls reviewed, no new defect established
 
 Attributed to source review of the security-relevant surfaces:
@@ -154,3 +167,81 @@ was changed).
   and passes the i18n parity test. Full web unit suite: 150 files / 1481 tests.
 - Translation review: the 12 non-English strings were written without native
   review and need a fluent reviewer before release.
+
+## Revalidation 2026-10-18 (GOAP-1009; audit-only)
+
+- The local live reader session was terminated after the background
+  `validate-all` request returned `401 SESSION_INVALID` without an
+  `Authorization` header, despite the session remaining unexpired in local
+  D1. `apiRaw` routes that 401 through auth-loss logout. This distinct periodic
+  poll defect is tracked in GOAP-1010; it is not a cross-account disclosure
+  finding and the existing logout-teardown test does not cover this trigger.
+- Public Pages and API responses omit `geolocation=()` from
+  `Permissions-Policy`, although `docs/security-posture.md` requires it; the
+  current Pages `_headers` and Worker header source also omit the directive.
+  Deployment SHA remains unverified, so the public response is not attributed
+  to this checkout. Operator revalidation is still required; no header or
+  policy change was made.
+
+## S1/S5 implementation 2026-10-20: session-bound teardown and authenticated replay
+
+**Status:** Source-level S1 race closed and proved locally. Deployed/operator
+evidence remains outstanding; no cross-account readability claim is made.
+
+- **Late write cannot repopulate a purged store.** Sensitive writers now
+  capture the owning session token and re-check it at their commit boundary:
+  `lib/offline/db.ts` (`saveProgress`, `addToSyncQueue`, `updateSyncQueueItem`,
+  `cachePermission`, `saveBookFile`, `saveReadingInsight`, `saveConflicts`),
+  `lib/offline/annotation-mutations.ts` (`saveAnnotation`,
+  `persistAnnotationCreation`, `settleAnnotationCreation`,
+  `failAnnotationCreation`) and `lib/offline/feedback-drafts.ts`
+  (`saveFeedbackDraft`, `deleteFeedbackDraft`, `deleteFeedbackDraftByMutation`,
+  `markFeedbackDraft`). The shared helpers `captureSessionToken()` and
+  `assertSessionToken()` in `lib/offline/db.ts` are the single convention; a
+  stale write rejects with `Session expired` (HTTP 401 semantics) instead of
+  persisting after the purge.
+- **Logout order is session-first.** `useReaderLogout` now cancels scheduled
+  sync retries, clears the auth session (which also resets in-memory reader
+  state), and only then purges device data. The previous order purged first
+  and signed out afterwards.
+- **In-flight authenticated requests stop with their session.** The API client
+  tracks authenticated request controllers and aborts them when the session
+  token changes or is cleared, for both `apiRequest` and the raw `api.*`
+  helpers. Request handles are tracked, not bearer-token strings. Aborting a
+  browser request is not a server-side rollback and no such claim is made.
+- **Progress writes are skipped when the owning session is gone.**
+  `useEpubProgress` checks session ownership before the write and again after
+  it, and handles the commit-boundary fence's 401 refusal instead of letting
+  it escape. Without the checks, a sign-out racing a save enqueued the old
+  session's progress under a replacement session and surfaced the refusal as
+  an unhandled promise rejection.
+- **Protected-route calls carry the session token.** The queued progress,
+  annotation-resolve, bookmark and reading-insight replays, the
+  progress-conflict remote read and the permission check now send the bearer
+  token through the shared `requireSessionToken()` helper
+  (`lib/offline/session.ts`). A replay that the server rejects is a failure,
+  not a success: the raw `api.*` helper resolves for any HTTP status, so a
+  401 used to be recorded as a synced item and dropped.
+- **Design record.** `analysis/triz-core-2026-10-20.md` records the two
+  contradictions (complete purge vs. asynchronous persistence; stopping stale
+  replay vs. preserving active-session queue semantics) and the resolution
+  that separates them in time and by condition. `plans/003-system-design.md`
+  records the component contracts and their limits.
+- **Proof.** `apps/web/src/__tests__/logout-teardown.test.ts` releases a
+  delayed-encryption sync write after the logout purge and asserts the store
+  stays empty; the case was observed failing on the unguarded implementation
+  and passes with the commit-boundary fence.
+  `apps/web/src/lib/api/core.test.ts` proves both typed and raw
+  authenticated fetches abort on a session change.
+  `apps/web/src/lib/offline/session.test.ts` proves every protected-route
+  replay call carries the bearer token and that a rejected insight replay is
+  a failure rather than a silent success.
+  `apps/web/src/features/reader/hooks/__tests__/useEpubProgress.test.ts`
+  proves the progress save is skipped — and never rejects — when the owning
+  session ended or was replaced, both before the call and while the write was
+  in flight.
+  `apps/tests/logout-device-data.spec.ts` proves the browser-level purge
+  (`chromium` 1/1, `pwa-chromium` 1/1).
+- **Limits.** Deployed behavior remains unclaimed. The commit-boundary fence
+  rejects a stale write; it does not make the ciphertext that existed before
+  the purge unreadable, and no cross-account readability claim is made.

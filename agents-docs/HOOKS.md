@@ -7,8 +7,11 @@ Supported by: Claude Code, OpenCode.
 
 ## Golden Rules
 
-- **Success = silent** (exit 0, nothing enters context)
-- **Failure = explicit** (exit 2, errors surfaced to agent for remediation)
+- **Enforcement hooks: success is silent** (exit 0; no unnecessary output).
+- **Failure is explicit** (use the event's documented exit behavior; surface actionable errors).
+- **Context-injection hooks are an intentional exception**: `SessionStart` may inject bounded
+  context (the repository's documentation index and changelog) into the session. It is not
+  enforcement, so it prints its context on success.
 - **Context-efficient** - swallow passing output; stream only failures
 
 ## Common Use Cases

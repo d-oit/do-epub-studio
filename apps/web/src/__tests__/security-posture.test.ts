@@ -89,6 +89,41 @@ describe('Security Posture (Web)', () => {
     expect(csp).toContain('report-uri /api/csp-report');
   });
 
+  it('asserts Permissions-Policy in _headers disables the adopted features (geolocation)', () => {
+    const headersPath = path.resolve(__dirname, '../../public/_headers');
+    const content = fs.readFileSync(headersPath, 'utf-8');
+
+    const policyMatch = content.match(/^[ \t]*Permissions-Policy:[ \t]*(.+)$/m);
+    if (!policyMatch) throw new Error('Permissions-Policy header not found in _headers');
+
+    const policy = defined(policyMatch[1], 'Permissions-Policy value');
+    const directives = policy
+      .split(',')
+      .map((directive) => directive.trim())
+      .filter(Boolean);
+
+    // docs/security-posture.md (adopted) requires these features to be
+    // disabled. GOAP-1009 P-04: `geolocation=()` was missing from this
+    // source and MUST NOT be dropped again.
+    for (const required of ['camera=()', 'microphone=()', 'geolocation=()']) {
+      expect(directives).toContain(required);
+    }
+
+    // Exact directive set — kept identical to the Worker header maps
+    // (`apps/worker/src/lib/security-headers.ts`) so the two surfaces
+    // cannot drift apart again.
+    expect(directives).toEqual([
+      'camera=()',
+      'microphone=()',
+      'geolocation=()',
+      'payment=()',
+      'usb=()',
+      'magnetometer=()',
+      'gyroscope=()',
+      'accelerometer=()',
+    ]);
+  });
+
   it('fonts are self-hosted via @fontsource imports, not loaded from external origins (SE3 — ADR-123 / Plan 122)', () => {
     const indexPath = path.resolve(__dirname, '../../index.html');
     const indexContent = fs.readFileSync(indexPath, 'utf-8');

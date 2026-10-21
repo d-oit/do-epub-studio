@@ -101,3 +101,20 @@ recorded so downstream claims stay accurate:
   production-browser proof exists that those fetches succeed under the
   enforced CSP; this audit records a deployment acceptance requirement and
   does not change CSP or asset ownership.
+
+## Revalidation 2026-10-18 (GOAP-1009; audit-only)
+
+- Current `AssistancePanel` registers `createTransformersEditorialPlugin()`;
+  the current engine uses `onnx-community/Qwen2.5-0.5B-Instruct`, q8 and a
+  300-second generation bound. Its roughly 500 MB model load is an explicit,
+  user-initiated action with progress; review does not download implicitly.
+  Focused UI/dispatch tests passed, but they use injected or mocked engines.
+- No model load or live inference was run: no local model availability was
+  established, and the labelled download was not initiated. The prior 5/7
+  corpus result and residual timeouts remain historical; human creator style
+  acceptance remains outstanding.
+- The current Pages CSP allows `connect-src 'self' https://*.cloudflare.com`,
+  not the external Hugging Face/ORT endpoints used by the on-demand engine.
+  The production-browser CSP acceptance in F10 remains unresolved because the
+  deployed SHA/config is unavailable. The 2026-09-30 F1 note above is
+  historical; this audit does not rewrite it or change CSP/runtime policy.

@@ -178,3 +178,17 @@ Removing a Worker route cannot disprove a mocked browser test.
   create→reload→delete→reload persistence and asserts parsed Markdown export
   content (selected book present, second book absent) via the existing local
   export surface.
+
+## Revalidation 2026-10-18 (GOAP-1009; audit-only)
+
+- Fresh local `creator-real-stack.spec.ts` run: 3/3 real Worker/D1 authorization
+  tests passed for assigned creator, submitter and outsider visibility.
+- The current tree contains `apps/tests/offline-annotations.spec.ts`; its
+  offline-create/reload/replay/settle journey is covered by the PWA Chromium
+  lane.
+- The real application locale is selected before the direction and overflow
+  assertions in `apps/tests/viewport-regression.spec.ts`; all 5 tests passed
+  on Chromium in dev mode (2026-10-20).
+
+These revalidations update the current status of E1–E4; they do not rewrite
+the original 2026-10-05 acceptance record.

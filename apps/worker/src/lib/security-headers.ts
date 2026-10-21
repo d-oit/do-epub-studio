@@ -22,9 +22,9 @@ export const securityHeaders: Readonly<Record<string, string>> = Object.freeze({
   // Control referrer information
   'Referrer-Policy': 'strict-origin-when-cross-origin',
 
-  // Restrict browser features (no camera, mic, payment, etc.)
+  // Restrict browser features (no camera, mic, geolocation, payment, etc.)
   'Permissions-Policy':
-    'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
 
   // Content Security Policy — restrict resource loading for API responses
   // API endpoints should not render content; this is a defense-in-depth measure.
@@ -49,7 +49,7 @@ export const minimalSecurityHeaders: Readonly<Record<string, string>> = Object.f
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Permissions-Policy':
-    'camera=(), microphone=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()',
 
   // Minimal CSP for file responses — restrict framing and default loading
   'Content-Security-Policy':
