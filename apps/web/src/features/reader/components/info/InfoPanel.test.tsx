@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { type ReactNode } from 'react';
 import { InfoPanel } from './InfoPanel';
@@ -53,9 +53,14 @@ describe('InfoPanel', () => {
     vi.clearAllMocks();
   });
 
-  it('calls useFocusTrap with isOpen and the panel ref when open', () => {
+  it('calls useFocusTrap with isOpen and the panel ref when open', async () => {
     mockCompute.mockResolvedValue(null);
-    render(<InfoPanel {...baseProps} isOpen={true} />);
+    // The local summary resolves after the render, so the state update must be
+    // flushed inside `act` (ADR-275).
+    await act(async () => {
+      render(<InfoPanel {...baseProps} isOpen={true} />);
+      await Promise.resolve();
+    });
     expect(mockUseFocusTrap).toHaveBeenCalledWith(
       true,
       expect.objectContaining({ current: expect.any(HTMLElement) }),

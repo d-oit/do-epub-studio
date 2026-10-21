@@ -2,12 +2,13 @@ import {
   getDB,
   encryptEntry,
   decryptEntry,
+  captureSessionToken,
+  assertSessionToken,
   ANNOTATION_PLAINTEXT,
   SYNC_QUEUE_PLAINTEXT,
   type AnnotationEntry,
   type SyncQueueItem,
 } from './db';
-import { useAuthStore } from '@/stores/auth';
 
 type AnnotationChangeListener = (bookId: string) => void;
 const listeners = new Set<AnnotationChangeListener>();
@@ -29,17 +30,12 @@ function notifyAnnotationChange(bookId: string): void {
   }
 }
 
-function assertCurrentSession(sessionToken: string): void {
-  if (!sessionToken || sessionToken !== useAuthStore.getState().sessionToken) {
-    const error = new Error('Session expired');
-    (error as Error & { status?: number }).status = 401;
-    throw error;
-  }
-}
-
 export async function saveAnnotation(entry: AnnotationEntry): Promise<void> {
+  const sessionToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const stored = await encryptEntry(entry, ANNOTATION_PLAINTEXT);
+  assertSessionToken(sessionToken);
   await db.put('annotations', stored);
 }
 
@@ -67,11 +63,16 @@ export async function getUnsyncedAnnotations(): Promise<AnnotationEntry[]> {
   );
 }
 
+/**
+ * A mutation is owned by the session that created it: the caller passes the
+ * token captured when the mutation started, and the write is refused once
+ * that session is no longer current (S1/GOAP-1002).
+ */
 export async function persistAnnotationCreation(
   entry: AnnotationEntry,
   sessionToken: string,
 ): Promise<void> {
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   const queueItem: SyncQueueItem = {
     id: crypto.randomUUID(),
@@ -89,9 +90,10 @@ export async function persistAnnotationCreation(
   const encryptedAnnotation = await encryptEntry(entry, ANNOTATION_PLAINTEXT);
   const encryptedQueue = await encryptEntry(queueItem, SYNC_QUEUE_PLAINTEXT);
 
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const tx = db.transaction(['annotations', 'syncQueue'], 'readwrite');
   await Promise.all([
     tx.objectStore('annotations').put(encryptedAnnotation),
@@ -107,7 +109,7 @@ export async function settleAnnotationCreation(
   entry: AnnotationEntry,
   sessionToken: string,
 ): Promise<void> {
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   const encryptedEntry = await encryptEntry(entry, ANNOTATION_PLAINTEXT);
 
@@ -123,9 +125,10 @@ export async function settleAnnotationCreation(
     }
   }
 
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const tx = db.transaction(['annotations', 'syncQueue'], 'readwrite');
   const annotationsStore = tx.objectStore('annotations');
   const queueStore = tx.objectStore('syncQueue');
@@ -148,7 +151,7 @@ export async function failAnnotationCreation(
   detail: string,
   sessionToken: string,
 ): Promise<void> {
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   let baseAnnotation: Partial<AnnotationEntry> = {};
   if (item.payload && typeof item.payload === 'object' && 'annotation' in item.payload) {
@@ -178,9 +181,10 @@ export async function failAnnotationCreation(
 
   const encryptedEntry = await encryptEntry(failedEntry, ANNOTATION_PLAINTEXT);
 
-  assertCurrentSession(sessionToken);
+  assertSessionToken(sessionToken);
 
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const tx = db.transaction(['annotations', 'syncQueue'], 'readwrite');
   await Promise.all([
     tx.objectStore('annotations').put(encryptedEntry),

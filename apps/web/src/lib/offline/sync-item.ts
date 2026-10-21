@@ -4,6 +4,7 @@ import { createFeedback } from '../api/feedback';
 import type { FeedbackKind, FeedbackCategory, FeedbackAnchor } from '../api/feedback';
 import type { SyncQueueItem } from './db';
 import { saveProgress, getUnsyncedProgress } from './db';
+import { requireSessionToken } from './session';
 import { deleteFeedbackDraftByMutation } from './feedback-drafts';
 import { saveAnnotation, getUnsyncedAnnotations } from './annotation-mutations';
 import { syncAnnotation, type AnnotationCreateResult } from './annotation-sync';
@@ -23,11 +24,25 @@ export interface ReadingInsightSyncPayload {
 
 export async function syncReadingInsight(item: SyncQueueItem): Promise<void> {
   const payload = item.payload as ReadingInsightSyncPayload;
-  await api.post(`/api/books/${payload.bookId}/insights/sync`, {
-    bookId: payload.bookId,
-    buckets: payload.buckets,
-    mutationId: payload.mutationId,
-  });
+  const token = requireSessionToken();
+  // The insights route is authenticated (`readerAuth`), so the replay must
+  // carry the session token and must inspect the response: a raw `api.post`
+  // resolves for any HTTP status, so a 401/403 would otherwise be recorded
+  // as a successful sync and the queued item would be dropped.
+  const response = await api.post(
+    `/api/books/${payload.bookId}/insights/sync`,
+    {
+      bookId: payload.bookId,
+      buckets: payload.buckets,
+      mutationId: payload.mutationId,
+    },
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!response.ok) {
+    const err = new Error(`Reading insight sync failed with status ${response.status}`);
+    (err as Error & { status?: number }).status = response.status;
+    throw err;
+  }
 }
 
 export interface FeedbackSyncPayload {

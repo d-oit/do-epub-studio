@@ -285,9 +285,11 @@ export function ReaderPage() {
   ]);
 
   useEffect(() => {
-    if (!bookId) return;
-    return setupZombieDetection((id) => setRevokedBooks((prev) => new Set(prev).add(id)));
-  }, [bookId, setRevokedBooks]);
+    if (!bookId || !sessionToken) return;
+    return setupZombieDetection(sessionToken, (id) =>
+      setRevokedBooks((prev) => new Set(prev).add(id)),
+    );
+  }, [bookId, sessionToken, setRevokedBooks]);
 
   useEffect(() => {
     if (revokedBooks.has(bookId || '')) {
@@ -331,9 +333,7 @@ export function ReaderPage() {
         toc={toc}
         currentChapter={currentChapter}
         onToggleToc={() => togglePanel('toc')}
-        onToggleSearch={() => {
-          togglePanel('search');
-        }}
+        onToggleSearch={() => togglePanel('search')}
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
@@ -343,9 +343,7 @@ export function ReaderPage() {
         onLogout={() => void handleLogout()}
         t={tFn}
         isFixedLayout={isFixedLayout}
-        onToggleFixedLayoutControls={() => {
-          togglePanel('fl-controls');
-        }}
+        onToggleFixedLayoutControls={() => togglePanel('fl-controls')}
       />
       {activePanel === 'settings' && (
         <ReaderSettingsPanel
@@ -392,9 +390,7 @@ export function ReaderPage() {
         <SearchPanel
           isOpen
           book={bookRef.current}
-          onClose={() => {
-            setActivePanel(null);
-          }}
+          onClose={() => setActivePanel(null)}
           onNavigate={(cfi) => {
             if (renditionRef.current) void renditionRef.current.display(cfi);
           }}
@@ -517,9 +513,7 @@ export function ReaderPage() {
       )}
       {activePanel === 'notifications' && (
         <NotificationPanel
-          onNavigateToComment={(_bookId, _commentId) => {
-            setActivePanel('comments');
-          }}
+          onNavigateToComment={() => setActivePanel('comments')}
           t={tFn}
           onClose={() => setActivePanel(null)}
           token={sessionToken}

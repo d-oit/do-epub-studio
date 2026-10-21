@@ -800,6 +800,8 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'جارٍ تحميل السجل المتزامن…',
   'reader.syncedUnavailable': 'سجل القراءة المتزامن غير متاح',
   'reader.noLocalActivity': 'لم يُسجَّل بعد أي نشاط قراءة محلي على هذا الجهاز.',
+  'reader.localInsightsUnavailable':
+    'إحصاءات القراءة المحلية غير متاحة — تعذّرت قراءة تخزين الجهاز.',
   'reader.noSyncedHistory': 'لا يوجد سجل قراءة متزامن لهذا الكتاب.',
   'reader.exportInsights': 'تصدير إحصاءات القراءة (JSON)',
   'reader.exportInsightsNote':

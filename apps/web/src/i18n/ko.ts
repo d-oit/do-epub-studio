@@ -776,6 +776,8 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': '동기화된 기록을 불러오는 중…',
   'reader.syncedUnavailable': '동기화된 독서 기록을 사용할 수 없습니다',
   'reader.noLocalActivity': '이 기기에 아직 로컬 독서 활동이 기록되지 않았습니다.',
+  'reader.localInsightsUnavailable':
+    '로컬 독서 통계를 사용할 수 없습니다 — 기기 저장소를 읽지 못했습니다.',
   'reader.noSyncedHistory': '이 책에 대한 동기화된 독서 기록이 없습니다.',
   'reader.exportInsights': '독서 통계 내보내기(JSON)',
   'reader.exportInsightsNote':

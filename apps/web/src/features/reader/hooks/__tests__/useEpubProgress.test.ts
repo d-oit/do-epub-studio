@@ -76,11 +76,15 @@ function lastPutCfi(): string {
 describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // `clearAllMocks` resets call history but NOT implementations, so a test
+    // that installs a rejecting mock would otherwise leak into the next one.
     vi.mocked(apiRequest).mockResolvedValue({
       revision: 1,
       updatedAt: '2025-01-01T00:00:00Z',
     });
     vi.mocked(getProgress).mockResolvedValue(undefined);
+    vi.mocked(saveProgress).mockResolvedValue(undefined);
+    vi.mocked(queueSync).mockResolvedValue(undefined);
     vi.mocked(generateMutationId).mockReturnValue('test-mutation-id');
     vi.useFakeTimers();
     setOnline(true);
@@ -88,7 +92,10 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
       progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
       progressRestored: true,
     });
-    useAuthStore.setState({ sessionToken: null, bookId: null });
+    // The handler under test owns the session `token-123` (see makeHandler),
+    // so the store must hold that same session: a progress write may only
+    // happen while the session that opened the book is still current.
+    useAuthStore.setState({ sessionToken: 'token-123', bookId: 'book-1' });
   });
 
   afterEach(() => {
@@ -289,5 +296,207 @@ describe('createRelocatedHandler — progress PUT debounce (GOAP-224 B6)', () =>
     await handler.onRelocated({ start: { cfi: 'epubcfi(/6/8)', href: 'ch1.xhtml' } });
     await handler.flush();
     expect(saveProgress).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes nothing once the owning session ended, and never rejects', async () => {
+    const { handler } = makeHandler();
+
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+
+    // The session ends before the debounced save fires — the reader was
+    // closed or the session expired. The local store is purged by the
+    // teardown, so the pending write must be dropped, not attempted: the
+    // commit-boundary fence would refuse it, and the refusal surfaced as an
+    // unhandled promise rejection because `flush()` discards its promise.
+    useAuthStore.setState({ sessionToken: null, bookId: null });
+
+    await expect(handler.flush()).resolves.toBeUndefined();
+    expect(apiRequest).not.toHaveBeenCalled();
+    expect(saveProgress).not.toHaveBeenCalled();
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('writes nothing once the owning session was replaced by another one', async () => {
+    const { handler } = makeHandler();
+
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+
+    // A different session is now current. The pending write belongs to the
+    // previous one, and saving it would encrypt the previous session's
+    // progress under the new session's key.
+    useAuthStore.setState({ sessionToken: 'token-456', bookId: 'book-1' });
+
+    await expect(handler.flush()).resolves.toBeUndefined();
+    expect(apiRequest).not.toHaveBeenCalled();
+    expect(saveProgress).not.toHaveBeenCalled();
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('does not write the old session progress when the session is replaced while the request is in flight', async () => {
+    // The online PUT is deferred, so the session can be replaced *after* the
+    // write started but *before* it falls back to the offline queue. That
+    // fallback is the dangerous path: `saveProgress` captures the current
+    // token as its encryption key, so writing there after a session change
+    // would encrypt the previous session's progress under the new session's
+    // key — two sessions in one store.
+    // Built with the Promise constructor rather than `Promise.withResolvers`
+    // because apps/web compiles against the ES2022 lib (lib es2024 is not
+    // enabled) — the same constraint `lib/api/core.test.ts` documents.
+    let rejectRequest: (reason: Error) => void = () => {};
+    const requestResult = new Promise<{ revision: number; updatedAt: string }>(
+      (_resolve, reject) => {
+        rejectRequest = reject;
+      },
+    );
+    vi.mocked(apiRequest).mockReturnValue(requestResult);
+
+    const { handler } = makeHandler();
+    await handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+
+    // Fire the save without awaiting it: the PUT is still pending.
+    const flushed = handler.flush();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(apiRequest).toHaveBeenCalledTimes(1);
+
+    // The session is replaced while the request is pending.
+    useAuthStore.setState({ sessionToken: 'token-456', bookId: 'book-1' });
+
+    // The request now fails (the old session was aborted), which sends the
+    // write down the offline-queue fallback.
+    rejectRequest(new Error('Session expired'));
+    await flushed;
+
+    // The fallback must not have written anything for the replaced session.
+    expect(saveProgress).not.toHaveBeenCalled();
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('does not enqueue the old session progress when the session is replaced while the save is in flight', async () => {
+    // The offline write is deferred, so the session can be replaced after
+    // `saveProgress` started but before it settled. The write itself is
+    // fenced by the commit-boundary fence, but `queueSync` captures the
+    // *current* token for its own fence — so without a second ownership
+    // check, the old session's progress would be enqueued under the
+    // replacement session.
+    //
+    // Built with the Promise constructor rather than `Promise.withResolvers`
+    // because apps/web compiles against the ES2022 lib (lib es2024 is not
+    // enabled).
+    let resolveSave: () => void = () => {};
+    const pendingSave = new Promise<void>((resolve) => {
+      resolveSave = resolve;
+    });
+    vi.mocked(saveProgress).mockReturnValue(pendingSave);
+
+    setOnline(false);
+    const { handler } = makeHandler();
+
+    // The offline path persists immediately, so the save is already in
+    // flight when the session changes.
+    const relocated = handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveProgress).toHaveBeenCalledTimes(1);
+
+    // The session is replaced while the save is pending.
+    useAuthStore.setState({ sessionToken: 'token-456', bookId: 'book-1' });
+    resolveSave();
+    await relocated;
+
+    // The enqueue must not have happened for the replaced session.
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('does not reject when the session is replaced and the write is refused mid-write', async () => {
+    // The real `saveProgress` does not merely complete late when the session
+    // changes — the commit-boundary fence rejects it with a 401 ("Session
+    // expired"). That rejection used to escape `queueOffline` → `flush()`,
+    // and because `flush()` discards its promise it surfaced as a
+    // `window.unhandledrejection` in the page.
+    //
+    // Built with the Promise constructor rather than `Promise.withResolvers`
+    // because apps/web compiles against the ES2022 lib (lib es2024 is not
+    // enabled).
+    let rejectSave: (reason: Error) => void = () => {};
+    const pendingSave = new Promise<void>((_resolve, reject) => {
+      rejectSave = reject;
+    });
+    vi.mocked(saveProgress).mockReturnValue(pendingSave);
+
+    setOnline(false);
+    const { handler } = makeHandler();
+
+    const relocated = handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveProgress).toHaveBeenCalledTimes(1);
+
+    // The session is replaced while the write is pending, so the fence
+    // refuses the write with the 401 ownership-loss refusal.
+    useAuthStore.setState({ sessionToken: 'token-456', bookId: 'book-1' });
+    const refusal = new Error('Session expired');
+    (refusal as Error & { status?: number }).status = 401;
+    rejectSave(refusal);
+
+    // The refusal is expected and must not escape as a rejection.
+    await expect(relocated).resolves.toBeUndefined();
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('still propagates a genuine storage failure', async () => {
+    // The ownership-loss refusal is the only failure that is swallowed. A
+    // real storage error (quota, broken IndexedDB) must keep propagating:
+    // hiding it would turn a broken offline store into silent data loss.
+    const storageFailure = new Error('QuotaExceededError');
+    vi.mocked(saveProgress).mockRejectedValue(storageFailure);
+
+    setOnline(false);
+    const { handler } = makeHandler();
+
+    await expect(
+      handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } }),
+    ).rejects.toThrow('QuotaExceededError');
+    expect(queueSync).not.toHaveBeenCalled();
+  });
+
+  it('does not reject when the enqueue is refused because the session ended', async () => {
+    // The enqueue is fenced the same way the write is: `addToSyncQueue`
+    // re-checks the owning session after its own awaits, so it can refuse
+    // with the same 401 while the enqueue is in flight.
+    //
+    // Built with the Promise constructor rather than `Promise.withResolvers`
+    // because apps/web compiles against the ES2022 lib (lib es2024 is not
+    // enabled).
+    let rejectEnqueue: (reason: Error) => void = () => {};
+    const pendingEnqueue = new Promise<void>((_resolve, reject) => {
+      rejectEnqueue = reject;
+    });
+    vi.mocked(queueSync).mockReturnValue(pendingEnqueue);
+
+    setOnline(false);
+    const { handler } = makeHandler();
+
+    const relocated = handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queueSync).toHaveBeenCalledTimes(1);
+
+    // The session ends while the enqueue is pending.
+    useAuthStore.setState({ sessionToken: null, bookId: null });
+    const refusal = new Error('Session expired');
+    (refusal as Error & { status?: number }).status = 401;
+    rejectEnqueue(refusal);
+
+    // The refusal is expected and must not escape as a rejection.
+    await expect(relocated).resolves.toBeUndefined();
+  });
+
+  it('still propagates a genuine enqueue failure', async () => {
+    const enqueueFailure = new Error('IndexedDB write failed');
+    vi.mocked(queueSync).mockRejectedValue(enqueueFailure);
+
+    setOnline(false);
+    const { handler } = makeHandler();
+
+    await expect(
+      handler.onRelocated({ start: { cfi: 'epubcfi(/6/4)', href: 'ch1.xhtml' } }),
+    ).rejects.toThrow('IndexedDB write failed');
   });
 });

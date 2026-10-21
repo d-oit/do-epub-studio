@@ -23,6 +23,7 @@ vi.mock('../lib/client-logger', () => ({
 
 import { apiRequest } from '../lib/api';
 import { saveProgress, queueSync } from '../lib/offline';
+import { useAuthStore } from '../stores';
 
 describe('createRelocatedHandler', () => {
   beforeEach(() => {
@@ -32,6 +33,10 @@ describe('createRelocatedHandler', () => {
       progressRestored: true,
       currentChapter: null,
     });
+    // The handler under test owns the session `token-123`, so the store must
+    // hold that same session: a progress write may only happen while the
+    // session that opened the book is still current.
+    useAuthStore.setState({ sessionToken: 'token-123', bookId: 'book-1' });
   });
 
   it('creates handler function', () => {

@@ -202,7 +202,7 @@ test.describe('Admin console', () => {
     await expect(page).toHaveURL(/\/admin\/login$/);
   });
 
-  test('@mobile reader session expiry redirects to login', async ({ page }) => {
+  test('@mobile @smoke reader session expiry redirects to login', async ({ page }) => {
     await mockReaderApi(page);
     await loginAsReader(page);
     await expect(page).toHaveURL(/\/read\/my-test-book$/);

@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import type { Mock } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
+import type { ReactElement } from 'react';
 import { InfoPanel } from '../features/reader/components/info/InfoPanel';
+import * as readingInsights from '../lib/offline/reading-insights';
+import * as apiModule from '../lib/api';
+import { useAuthStore } from '../stores/auth';
 
 vi.mock('../lib/offline/reading-insights', () => ({
   computeInsightSummary: vi.fn().mockResolvedValue(null),
@@ -9,6 +14,13 @@ vi.mock('../lib/offline/reading-insights', () => ({
 vi.mock('../lib/api', () => ({
   apiRequest: vi.fn(),
 }));
+
+/**
+ * Both modules are mocked, so the handles are untyped: the real signatures are
+ * generic and narrower than what the mocks exercise.
+ */
+const mockCompute = readingInsights.computeInsightSummary as unknown as Mock;
+const mockApiRequest = apiModule.apiRequest as unknown as Mock;
 
 const mockT = (key: string) => {
   const translations: Record<string, string> = {
@@ -40,6 +52,8 @@ const mockT = (key: string) => {
     'reader.syncedActiveTime': 'Synced Active Time',
     'reader.syncedPagesRead': 'Synced Pages Read',
     'reader.noLocalActivity': 'No local reading activity recorded on this device yet.',
+    'reader.localInsightsUnavailable':
+      'Local reading insights unavailable — device storage could not be read.',
     'reader.noSyncedHistory': 'No synchronized reading history for this book.',
     'reader.exportInsights': 'Export Reading Insights (JSON)',
   };
@@ -51,12 +65,30 @@ describe('InfoPanel', () => {
   const mockBookId = 'test-book-id';
   const mockProgressPercent = 42;
 
+  /**
+   * Renders the panel and lets the local-summary promise settle inside `act`.
+   * The summary resolves after the synchronous test body would otherwise end,
+   * which produced an unwrapped state update (ADR-275).
+   */
+  const renderPanel = async (element: ReactElement): Promise<void> => {
+    await act(async () => {
+      render(element);
+      await Promise.resolve();
+    });
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Each test declares its own summary outcome; a rejected promise left over
+    // from an earlier test would otherwise leak into the next one.
+    mockCompute.mockReset();
+    mockCompute.mockResolvedValue(null);
+    mockApiRequest.mockReset();
+    useAuthStore.setState({ sessionToken: null });
   });
 
-  it('renders nothing when isOpen is false', () => {
-    render(
+  it('renders nothing when isOpen is false', async () => {
+    await renderPanel(
       <InfoPanel
         isOpen={false}
         onClose={onClose}
@@ -69,8 +101,8 @@ describe('InfoPanel', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('renders dialog when isOpen is true', () => {
-    render(
+  it('renders dialog when isOpen is true', async () => {
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -83,8 +115,8 @@ describe('InfoPanel', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
-  it('shows no metadata message when metadata is null', () => {
-    render(
+  it('shows no metadata message when metadata is null', async () => {
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -97,14 +129,14 @@ describe('InfoPanel', () => {
     expect(screen.getByText('No metadata available')).toBeInTheDocument();
   });
 
-  it('shows book details when metadata provided', () => {
+  it('shows book details when metadata provided', async () => {
     const metadata = {
       title: 'My Book',
       creator: 'Author Name',
       publisher: 'Publisher',
       language: 'en',
     };
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -117,9 +149,9 @@ describe('InfoPanel', () => {
     expect(screen.getByText('My Book')).toBeInTheDocument();
   });
 
-  it('shows description when provided', () => {
+  it('shows description when provided', async () => {
     const metadata = { title: 'Book', description: 'A great book' };
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -132,8 +164,8 @@ describe('InfoPanel', () => {
     expect(screen.getByText('A great book')).toBeInTheDocument();
   });
 
-  it('calls onClose when clicking close button', () => {
-    render(
+  it('calls onClose when clicking close button', async () => {
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -147,8 +179,8 @@ describe('InfoPanel', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('calls onClose when pressing Escape', () => {
-    render(
+  it('calls onClose when pressing Escape', async () => {
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -162,7 +194,7 @@ describe('InfoPanel', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('shows accessibility metadata when available', () => {
+  it('shows accessibility metadata when available', async () => {
     const metadata = {
       title: 'Book',
       accessibility: {
@@ -177,7 +209,7 @@ describe('InfoPanel', () => {
         certifierReport: 'https://example.com/report',
       },
     };
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -191,7 +223,7 @@ describe('InfoPanel', () => {
     expect(screen.getByText('WCAG 2.1 AA')).toBeInTheDocument();
   });
 
-  it('shows flashing hazard badge', () => {
+  it('shows flashing hazard badge', async () => {
     const metadata = {
       title: 'Book',
       accessibility: {
@@ -206,7 +238,7 @@ describe('InfoPanel', () => {
         certifierReport: undefined,
       },
     };
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -219,7 +251,7 @@ describe('InfoPanel', () => {
     expect(screen.getByText('Flashing')).toBeInTheDocument();
   });
 
-  it('shows certification report link', () => {
+  it('shows certification report link', async () => {
     const metadata = {
       title: 'Book',
       accessibility: {
@@ -234,7 +266,7 @@ describe('InfoPanel', () => {
         certifierReport: 'https://example.com/report',
       },
     };
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -249,11 +281,8 @@ describe('InfoPanel', () => {
 
   // N1: synced reading history is separately labelled and never summed with local
   it('renders synced history separately from device-local metrics', async () => {
-    const { apiRequest } = await import('../lib/api');
-    const { useAuthStore } = await import('../stores/auth');
-    const { computeInsightSummary } = await import('../lib/offline/reading-insights');
     useAuthStore.setState({ sessionToken: 'tok-n1' });
-    vi.mocked(computeInsightSummary).mockResolvedValue({
+    mockCompute.mockResolvedValue({
       totalActiveMinutes: 15,
       totalActivePages: 7,
       estimatedMinutesRemaining: 20,
@@ -262,7 +291,7 @@ describe('InfoPanel', () => {
       chapterDurations: [],
       readingSpeedWpm: null,
     });
-    vi.mocked(apiRequest).mockResolvedValue({
+    mockApiRequest.mockResolvedValue({
       totalActiveMinutes: 120,
       totalActivePages: 60,
       currentStreakDays: 3,
@@ -272,7 +301,7 @@ describe('InfoPanel', () => {
       ],
     });
 
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -297,8 +326,7 @@ describe('InfoPanel', () => {
 
   // N3: offline JSON export of the selected book's local insight summary
   it('exports a parseable JSON summary of the selected book only', async () => {
-    const { computeInsightSummary } = await import('../lib/offline/reading-insights');
-    vi.mocked(computeInsightSummary).mockResolvedValue({
+    mockCompute.mockResolvedValue({
       totalActiveMinutes: 25,
       totalActivePages: 12,
       estimatedMinutesRemaining: 25,
@@ -318,7 +346,7 @@ describe('InfoPanel', () => {
     const revokeObjectUrlSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
 
-    render(
+    await renderPanel(
       <InfoPanel
         isOpen={true}
         onClose={onClose}
@@ -356,5 +384,31 @@ describe('InfoPanel', () => {
     clickSpy.mockRestore();
     createObjectUrlSpy.mockRestore();
     revokeObjectUrlSpy.mockRestore();
+  });
+
+  // A storage failure must not be reported as "no reading activity": the panel
+  // has to say the device store is unavailable.
+  it('reports unavailable device storage instead of no local activity', async () => {
+    mockCompute.mockRejectedValue(new Error('IndexedDB read failed'));
+
+    await renderPanel(
+      <InfoPanel
+        isOpen={true}
+        onClose={onClose}
+        metadata={{ title: 'Book' }}
+        bookId={mockBookId}
+        progressPercent={mockProgressPercent}
+        t={mockT}
+      />,
+    );
+
+    expect(
+      await screen.findByText(
+        'Local reading insights unavailable — device storage could not be read.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('No local reading activity recorded on this device yet.')).toBeNull();
+    // Nothing may be exported from a store that could not be read.
+    expect(screen.getByRole('button', { name: 'Export Reading Insights (JSON)' })).toBeDisabled();
   });
 });

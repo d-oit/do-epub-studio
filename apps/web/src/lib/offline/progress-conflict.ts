@@ -1,6 +1,7 @@
 import { apiRequest } from '../api';
 import { recordConflict, ConflictType, flushConflictWrites } from './conflict-resolution';
 import type { SyncQueueItem } from './db';
+import { requireSessionToken } from './session';
 import { logClientEvent } from '../client-logger';
 
 /** Outcome of one sync-queue item attempt (owned here so the progress
@@ -48,6 +49,7 @@ export async function syncProgress(item: SyncQueueItem): Promise<ProgressSyncRes
   const payload = item.payload as ProgressSyncPayload;
   return apiRequest<ProgressSyncResult>(`/api/books/${payload.bookId}/progress`, {
     method: 'PUT',
+    token: requireSessionToken(),
     body: JSON.stringify({
       locator: { cfi: payload.cfi },
       progressPercent: payload.percentage,
@@ -72,7 +74,12 @@ export async function handleProgressConflict(
 
   let remoteData: RemoteProgressResponse | undefined;
   try {
-    remoteData = await apiRequest<RemoteProgressResponse>(`/api/books/${payload.bookId}/progress`);
+    // The progress route is behind `readerAuth`, so the conflict read needs
+    // the session token; without it the server answers 401 and the conflict
+    // can never be resolved against the remote version.
+    remoteData = await apiRequest<RemoteProgressResponse>(`/api/books/${payload.bookId}/progress`, {
+      token: requireSessionToken(),
+    });
   } catch (remoteError) {
     if (
       typeof remoteError === 'object' &&

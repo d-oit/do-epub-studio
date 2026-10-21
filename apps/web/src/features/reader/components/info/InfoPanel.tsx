@@ -66,6 +66,25 @@ interface InfoPanelProps {
   t: (key: string) => string;
 }
 
+/**
+ * The device-local summary, resolved against the book it was computed for.
+ *
+ * - `idle`: no book selected.
+ * - `loading`: the store read for `bookId` is in flight.
+ * - `ready`: the summary belongs to `bookId` and may be rendered and exported.
+ * - `failed`: the store could not be read. This is NOT "no activity" — the
+ *   panel must say the storage is unavailable instead of claiming an empty
+ *   reading history.
+ *
+ * The resolved book id travels with the summary, so a book switch can never
+ * render — or export — the previous book's metrics under the new book id.
+ */
+type LocalInsightsState =
+  | { status: 'idle' }
+  | { status: 'loading'; bookId: string }
+  | { status: 'ready'; bookId: string; summary: InsightSummary | null }
+  | { status: 'failed'; bookId: string };
+
 export function InfoPanel({
   isOpen,
   onClose,
@@ -76,7 +95,7 @@ export function InfoPanel({
 }: InfoPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const sessionToken = useAuthStore((state) => state.sessionToken);
-  const [insights, setInsights] = useState<InsightSummary | null>(null);
+  const [localInsights, setLocalInsights] = useState<LocalInsightsState>({ status: 'idle' });
   const [syncedInsights, setSyncedInsights] = useState<SyncedInsights | null>(null);
   const [syncedLoading, setSyncedLoading] = useState(false);
   const [syncedError, setSyncedError] = useState<string | null>(null);
@@ -85,14 +104,27 @@ export function InfoPanel({
   useFocusTrap(isOpen, panelRef);
 
   useEffect(() => {
-    if (!isOpen || !bookId) return;
+    if (!isOpen || !bookId) {
+      setLocalInsights({ status: 'idle' });
+      return;
+    }
     let cancelled = false;
+    // A reload of the same book keeps its metrics on screen until the new
+    // summary arrives; a book switch starts from a loading state, so the
+    // previous book's metrics are never carried over.
+    setLocalInsights((prev) =>
+      prev.status === 'ready' && prev.bookId === bookId ? prev : { status: 'loading', bookId },
+    );
     computeInsightSummary(bookId, progressPercent)
       .then((summary) => {
-        if (!cancelled) setInsights(summary);
+        if (cancelled) return;
+        setLocalInsights({ status: 'ready', bookId, summary });
       })
       .catch(() => {
-        if (!cancelled) setInsights(null);
+        // A storage read failure is an explicit state, distinct from an empty
+        // store: reporting it as "no reading activity" would be a false claim.
+        if (cancelled) return;
+        setLocalInsights({ status: 'failed', bookId });
       });
     return () => {
       cancelled = true;
@@ -131,7 +163,11 @@ export function InfoPanel({
   }, [isOpen, bookId, sessionToken]);
 
   const handleExportInsights = useCallback(() => {
-    if (!insights || !bookId) return;
+    // Only the selected book's own summary may be exported: a summary computed
+    // for a different book is refused rather than written under this book id.
+    if (!bookId || localInsights.status !== 'ready' || localInsights.bookId !== bookId) return;
+    const insights = localInsights.summary;
+    if (!insights) return;
     const exportData = {
       bookId,
       exportedAt: new Date().toISOString(),
@@ -156,14 +192,23 @@ export function InfoPanel({
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-  }, [insights, bookId]);
+  }, [localInsights, bookId]);
 
   if (!isOpen) return null;
 
   const a11y = metadata?.accessibility;
   const hasA11y = a11y && (a11y.summary || a11y.features.length > 0 || a11y.hazards.length > 0);
+  // The summary is only shown when it belongs to the selected book. A reload of
+  // the same book keeps its metrics on screen; a book switch shows neither the
+  // previous book's metrics nor an "unavailable" claim for the new book.
+  const bookInsights =
+    localInsights.status === 'ready' && localInsights.bookId === bookId
+      ? localInsights.summary
+      : null;
+  const localUnavailable = localInsights.status === 'failed' && localInsights.bookId === bookId;
   const hasLocalInsights =
-    insights && (insights.totalActiveMinutes > 0 || insights.totalActivePages > 0);
+    bookInsights !== null &&
+    (bookInsights.totalActiveMinutes > 0 || bookInsights.totalActivePages > 0);
 
   return (
     <aside
@@ -248,7 +293,8 @@ export function InfoPanel({
             metadata could not be read. */}
         <div className="pt-2">
           <InsightsSection
-            insights={insights}
+            insights={bookInsights}
+            localUnavailable={localUnavailable}
             syncedInsights={syncedInsights}
             syncedError={syncedError}
             syncedLoading={syncedLoading}

@@ -6,6 +6,7 @@ import type { ReactNode } from 'react';
 const clearAllEncryptedData = vi.fn<() => Promise<void>>();
 const logClientEvent = vi.fn();
 const apiRequest = vi.fn<() => Promise<unknown>>();
+const cancelPendingRetry = vi.fn();
 
 vi.mock('../lib/offline/db', () => ({
   clearAllEncryptedData: () => clearAllEncryptedData(),
@@ -15,6 +16,9 @@ vi.mock('../lib/client-logger', () => ({
 }));
 vi.mock('../lib/api', () => ({
   apiRequest: () => apiRequest(),
+}));
+vi.mock('../lib/offline/sync', () => ({
+  cancelPendingRetry: () => cancelPendingRetry(),
 }));
 
 import { useReaderLogout } from '../features/reader/hooks/useReaderLogout';
@@ -96,5 +100,31 @@ describe('S1: useReaderLogout device-data teardown', () => {
       expect.objectContaining({ event: 'reader.logout_cleanup_failed' }),
     );
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('invalidates auth and cancels retries before purging device data', async () => {
+    const order: string[] = [];
+    const unsubscribe = useAuthStore.subscribe((state, previousState) => {
+      if (previousState.sessionToken && !state.sessionToken) order.push('logout');
+    });
+    apiRequest.mockImplementation(() => {
+      order.push('server-logout');
+      return Promise.resolve({});
+    });
+    cancelPendingRetry.mockImplementation(() => {
+      order.push('cancel-retry');
+    });
+    clearAllEncryptedData.mockImplementation(() => {
+      order.push('purge');
+      return Promise.resolve();
+    });
+
+    const { result } = renderLogout();
+    await act(async () => {
+      await result.current();
+    });
+    unsubscribe();
+
+    expect(order).toEqual(['server-logout', 'cancel-retry', 'logout', 'purge']);
   });
 });

@@ -34,5 +34,12 @@ setup() {
 
 @test "scorecard workflow pins the new scorecard-action SHA" {
     WORKFLOW="$BATS_TEST_DIRNAME/../../.github/workflows/scorecard.yml"
-    grep -qE "uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc" "$WORKFLOW"
+    # The pinned SHA must be one the allowlist accepts. Asserting a fixed
+    # SHA here went stale when a Dependabot bump moved the workflow pin: the
+    # allowlist carried both the old and the new entry, but the test still
+    # named the old one, so it failed while the workflow was correct.
+    PINNED=$(grep -oE "ossf/scorecard-action@[0-9a-f]{40}" "$WORKFLOW" | head -1)
+    [ -n "$PINNED" ]
+    run is_allowed_sha "$PINNED"
+    [ "$status" -eq 0 ]
 }

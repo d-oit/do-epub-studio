@@ -806,6 +806,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'Загрузка синхронизированной истории…',
   'reader.syncedUnavailable': 'Синхронизированная история чтения недоступна',
   'reader.noLocalActivity': 'На этом устройстве пока не зафиксировано локальной активности чтения.',
+  'reader.localInsightsUnavailable':
+    'Локальная статистика чтения недоступна — не удалось прочитать хранилище устройства.',
   'reader.noSyncedHistory': 'Для этой книги нет синхронизированной истории чтения.',
   'reader.exportInsights': 'Экспорт статистики чтения (JSON)',
   'reader.exportInsightsNote':

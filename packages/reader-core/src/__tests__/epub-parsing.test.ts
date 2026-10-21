@@ -71,16 +71,6 @@ function extractTag(xml: string, tag: string): string | null {
   return m?.[1]?.trim() ?? null;
 }
 
-function extractAllTags(xml: string, tag: string): string[] {
-  const results: string[] = [];
-  const regex = new RegExp(`<${tag}(?:[^>]*)>([^<]*)</${tag}>`, 'gi');
-  let m: RegExpExecArray | null;
-  while ((m = regex.exec(xml)) !== null) {
-    results.push(m[1]!.trim());
-  }
-  return results;
-}
-
 function extractAttrs(xml: string, tag: string, attr: string): string[] {
   const results: string[] = [];
   const tagRegex = new RegExp(`<${tag}([^>]*)>`, 'gi');
@@ -198,41 +188,6 @@ function parseSpineItems(buf: Buffer): Array<{ idref: string; properties: string
   }));
 }
 
-function parseTocItems(buf: Buffer): Array<{ label: string; href: string }> {
-  const entries = readZipEntries(buf);
-  const containerStr = entries.get('META-INF/container.xml')?.toString('utf-8') ?? '';
-  const opfPath = extractAttrs(containerStr, 'rootfile', 'full-path')[0] ?? '';
-  const opfXml = entries.get(opfPath)?.toString('utf-8') ?? '';
-  const opfDir = opfPath.substring(0, opfPath.lastIndexOf('/') + 1);
-
-  // Find nav documents from spine
-  const spineIdrefs = extractAttrs(opfXml, 'itemref', 'idref');
-  const spineProps = extractAttrs(opfXml, 'itemref', 'properties');
-  const manifestHrefs = extractAttrs(opfXml, 'item', 'href');
-  const manifestIds = extractAttrs(opfXml, 'item', 'id');
-
-  const toc: Array<{ label: string; href: string }> = [];
-
-  for (let i = 0; i < spineIdrefs.length; i++) {
-    const idref = spineIdrefs[i]!;
-    const prop = spineProps[i];
-    if (prop?.includes('nav')) {
-      const idx = manifestIds.indexOf(idref);
-      if (idx !== -1) {
-        const href = manifestHrefs[idx]!;
-        const navXml = entries.get(opfDir + href)?.toString('utf-8') ?? '';
-        const links = extractAllTags(navXml, 'a');
-        const linkHrefs = extractAttrs(navXml, 'a', 'href');
-        for (let j = 0; j < links.length && j < linkHrefs.length; j++) {
-          toc.push({ label: links[j]!, href: linkHrefs[j]! });
-        }
-      }
-    }
-  }
-
-  return toc;
-}
-
 function generateSpineCfi(spineIndex: number): string {
   return `epubcfi(/6/${spineIndex + 2})`;
 }
@@ -313,14 +268,12 @@ describe('Metadata extraction', () => {
 });
 
 describe('Spine parsing', () => {
-  it('parses spine items from minimal EPUB', () => {
+  it('keeps the navigation document out of the minimal EPUB spine', () => {
     const buf = readEpubFixture('minimal.epub');
     const spine = parseSpineItems(buf);
-    expect(spine).toHaveLength(2);
-    expect(spine[0]?.idref).toBe('nav');
-    expect(spine[0]?.properties).toBe('nav');
-    expect(spine[1]?.idref).toBe('section0001');
-    expect(spine[1]?.properties).toBeNull();
+    expect(spine).toHaveLength(1);
+    expect(spine[0]?.idref).toBe('section0001');
+    expect(spine[0]?.properties).toBeNull();
   });
 
   it('returns empty array for EPUB with no spine', () => {
@@ -336,22 +289,6 @@ describe('Spine parsing', () => {
     expect(spine[0]?.idref).toBe('nav1');
     expect(spine[1]?.idref).toBe('nav2');
     expect(spine[2]?.idref).toBe('content');
-  });
-});
-
-describe('TOC parsing', () => {
-  it('parses TOC from nav document', () => {
-    const buf = readEpubFixture('minimal.epub');
-    const toc = parseTocItems(buf);
-    expect(toc.length).toBeGreaterThanOrEqual(1);
-    expect(toc[0]?.label).toBe('Start');
-    expect(toc[0]?.href).toBe('section0001.xhtml');
-  });
-
-  it('handles EPUB with no nav in spine', () => {
-    const buf = readEpubFixture('no-spine.epub');
-    const toc = parseTocItems(buf);
-    expect(toc).toHaveLength(0);
   });
 });
 

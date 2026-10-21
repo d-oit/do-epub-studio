@@ -1,4 +1,4 @@
-import { getDB, encryptEntry, decryptEntry } from './db';
+import { getDB, encryptEntry, decryptEntry, captureSessionToken, assertSessionToken } from './db';
 
 export type FeedbackDraftKind = 'comment' | 'suggestion';
 export type FeedbackDraftDelivery = 'draft' | 'pending' | 'sent' | 'failed' | 'blocked';
@@ -51,8 +51,11 @@ function notify(): void {
 }
 
 export async function saveFeedbackDraft(draft: FeedbackDraft): Promise<void> {
+  const sessionToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const stored = await encryptEntry(draft, FEEDBACK_DRAFT_PLAINTEXT);
+  assertSessionToken(sessionToken);
   await db.put('feedbackDrafts', stored);
   notify();
 }
@@ -77,19 +80,24 @@ export async function loadFeedbackDrafts(
 }
 
 export async function deleteFeedbackDraft(id: string): Promise<void> {
+  const sessionToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(sessionToken);
   await db.delete('feedbackDrafts', id);
   notify();
 }
 
 export async function deleteFeedbackDraftByMutation(mutationId: string): Promise<void> {
+  const sessionToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const all = await db.getAll('feedbackDrafts');
   const decrypted = await Promise.all(
     (all as Record<string, unknown>[]).map((e) =>
       decryptEntry<FeedbackDraft>(e, FEEDBACK_DRAFT_PLAINTEXT),
     ),
   );
+  assertSessionToken(sessionToken);
   const match = decrypted.find((e) => e !== null && e.mutationId === mutationId);
   if (match) {
     await db.delete('feedbackDrafts', match.id);
@@ -102,10 +110,14 @@ export async function markFeedbackDraft(
   delivery: FeedbackDraftDelivery,
   error?: string,
 ): Promise<void> {
+  const sessionToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(sessionToken);
   const stored = (await db.get('feedbackDrafts', id)) as Record<string, unknown> | undefined;
+  assertSessionToken(sessionToken);
   if (!stored) return;
   const draft = await decryptEntry<FeedbackDraft>(stored, FEEDBACK_DRAFT_PLAINTEXT);
+  assertSessionToken(sessionToken);
   if (!draft) return;
   await saveFeedbackDraft({
     ...draft,

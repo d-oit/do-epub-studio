@@ -788,6 +788,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'Synchronisierter Verlauf wird geladen…',
   'reader.syncedUnavailable': 'Synchronisierter Leseverlauf nicht verfügbar',
   'reader.noLocalActivity': 'Auf diesem Gerät wurde noch keine Leseaktivität erfasst.',
+  'reader.localInsightsUnavailable':
+    'Lokale Lese-Insights nicht verfügbar — der Gerätespeicher konnte nicht gelesen werden.',
   'reader.noSyncedHistory': 'Für dieses Buch liegt kein synchronisierter Leseverlauf vor.',
   'reader.exportInsights': 'Lese-Statistik exportieren (JSON)',
   'reader.exportInsightsNote':

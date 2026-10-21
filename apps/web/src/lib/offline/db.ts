@@ -25,6 +25,27 @@ function token(): string | null {
   return useAuthStore.getState().sessionToken ?? null;
 }
 
+/**
+ * Capture the session token that owns a sensitive local write.
+ *
+ * Callers re-check the captured token with `assertSessionToken` after every
+ * await and immediately before the IndexedDB write, so a write that started
+ * under a session cannot commit after that session ended (S1/GOAP-1002).
+ */
+export function captureSessionToken(): string {
+  const current = token();
+  if (!current) throw new Error('Authentication required for sensitive offline storage');
+  return current;
+}
+
+/** Reject a sensitive write whose owning session is no longer current. */
+export function assertSessionToken(expectedToken: string): void {
+  if (expectedToken && token() === expectedToken) return;
+  const error = new Error('Session expired');
+  (error as Error & { status?: number }).status = 401;
+  throw error;
+}
+
 export function setTokenOverride(mockToken: string | null): void {
   tokenOverride = mockToken;
 }
@@ -33,8 +54,7 @@ export async function encryptEntry<T extends object>(
   entry: T,
   plaintextKeys: readonly (keyof T)[],
 ): Promise<Record<string, unknown>> {
-  const t = token();
-  if (!t) throw new Error('Authentication required for sensitive offline storage');
+  const t = captureSessionToken();
 
   const plaintext: Record<string, unknown> = {};
   const sensitive: Record<string, unknown> = {};
@@ -186,8 +206,11 @@ export async function getDB(): Promise<IDBPDatabase> {
 }
 
 export async function saveProgress(entry: ProgressEntry): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(entry, PROGRESS_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('progress', stored);
 }
 
@@ -217,8 +240,11 @@ export async function getUnsyncedProgress(): Promise<ProgressEntry[]> {
 }
 
 export async function addToSyncQueue(item: SyncQueueItem): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(item, SYNC_QUEUE_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('syncQueue', stored);
 }
 
@@ -239,14 +265,20 @@ export async function removeSyncQueueItem(id: string): Promise<void> {
 }
 
 export async function updateSyncQueueItem(item: SyncQueueItem): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(item, SYNC_QUEUE_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('syncQueue', stored);
 }
 
 export async function cachePermission(permission: PermissionCache): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(permission, PERMISSION_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('permissions', stored);
 }
 
@@ -290,8 +322,11 @@ export async function clearAllPermissionCache(): Promise<void> {
  * the reader falls back to it only when the network is unavailable.
  */
 export async function saveBookFile(entry: BookFileEntry): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(entry, BOOK_FILE_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('bookFiles', stored);
 }
 
@@ -321,8 +356,11 @@ export async function clearAllEncryptedData(): Promise<void> {
 }
 
 export async function saveReadingInsight(entry: ReadingInsightEntry): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await encryptEntry(entry, READING_INSIGHT_PLAINTEXT);
+  assertSessionToken(expectedToken);
   await db.put('readingInsights', stored);
 }
 
@@ -367,10 +405,13 @@ export async function getAllReadingInsights(): Promise<ReadingInsightEntry[]> {
  * conflicts requiring user resolution.
  */
 export async function saveConflicts(conflicts: ConflictRecord[]): Promise<void> {
+  const expectedToken = captureSessionToken();
   const db = await getDB();
+  assertSessionToken(expectedToken);
   const stored = await Promise.all(
     conflicts.map((c) => encryptEntry<ConflictRecord>(c, CONFLICT_PLAINTEXT)),
   );
+  assertSessionToken(expectedToken);
   const tx = db.transaction('conflicts', 'readwrite');
   void tx.store.clear();
   for (const row of stored) {

@@ -1,16 +1,50 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { logClientEventMock } = vi.hoisted(() => ({ logClientEventMock: vi.fn() }));
-const { logoutMock } = vi.hoisted(() => ({ logoutMock: vi.fn() }));
-const authState = { sessionToken: null as string | null };
+const { logClientEventMock, logoutMock, authState, setSessionToken, subscribeAuthStore } =
+  vi.hoisted(() => {
+    const logClientEventMock = vi.fn();
+    const logoutMock = vi.fn();
+    const authState = { sessionToken: null as string | null };
+    const listeners = new Set<
+      (
+        state: { sessionToken: string | null },
+        previousState: { sessionToken: string | null },
+      ) => void
+    >();
+
+    return {
+      logClientEventMock,
+      logoutMock,
+      authState,
+      setSessionToken: (sessionToken: string | null) => {
+        const previousState = { sessionToken: authState.sessionToken };
+        authState.sessionToken = sessionToken;
+        const state = { sessionToken };
+        for (const listener of listeners) listener(state, previousState);
+      },
+      subscribeAuthStore: (
+        listener: (
+          state: { sessionToken: string | null },
+          previousState: { sessionToken: string | null },
+        ) => void,
+      ) => {
+        listeners.add(listener);
+        return () => {
+          listeners.delete(listener);
+        };
+      },
+    };
+  });
 
 vi.mock('../client-logger', () => ({ logClientEvent: logClientEventMock }));
 vi.mock('../../stores/locale', () => ({ getCurrentLocale: () => 'en' }));
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: { getState: () => ({ logout: logoutMock, ...authState }) },
+  useAuthStore: {
+    getState: () => ({ logout: logoutMock, ...authState }),
+    subscribe: subscribeAuthStore,
+  },
 }));
-
-import { apiRequest } from './core';
+import { api, apiRequest } from './core';
 
 /**
  * fetch that rejects with the abort reason as soon as the signal fires.
@@ -60,6 +94,39 @@ describe('apiRequest abort handling', () => {
     expect(events()).not.toContain('api.timeout');
   });
 
+  it('aborts authenticated requests when their session is cleared', async () => {
+    const fetchMock = abortableFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    setSessionToken('token-a');
+
+    const pending = apiRequest('/api/books/book-1/progress', { token: 'token-a' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    setSessionToken(null);
+
+    await expect(pending).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(events()).toContain('api.cancelled');
+  });
+
+  it('aborts raw authenticated requests when their session changes', async () => {
+    const fetchMock = abortableFetch();
+    vi.stubGlobal('fetch', fetchMock);
+    setSessionToken('token-a');
+
+    const pending = api.post(
+      '/api/books/book-1/insights/sync',
+      { mutationId: 'mutation-1' },
+      { headers: { Authorization: 'Bearer token-a' } },
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    setSessionToken('token-b');
+
+    await expect(pending).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('reports an expired deadline as api.timeout and does not retry it', async () => {
     vi.useFakeTimers();
     const fetchMock = abortableFetch();
@@ -75,7 +142,7 @@ describe('apiRequest abort handling', () => {
   });
 });
 
-describe('apiRequest 401 handling', () => {
+describe('401 handling', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.sessionToken = null;
@@ -91,6 +158,16 @@ describe('apiRequest 401 handling', () => {
       /Session expired/,
     );
     expect(logoutMock).toHaveBeenCalledWith('expired');
+  });
+
+  it('does not log out a live session when tokenless raw validation returns 401', async () => {
+    vi.stubGlobal('fetch', unauthorizedFetch());
+    authState.sessionToken = 'token-a';
+
+    const response = await api.get('/api/access/validate-all');
+
+    expect(response.status).toBe(401);
+    expect(logoutMock).not.toHaveBeenCalled();
   });
 
   it('keeps the newer session signed in when a stale request returns 401', async () => {

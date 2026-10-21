@@ -51,9 +51,50 @@ export function createRelocatedHandler(
   let timer: ReturnType<typeof setTimeout> | null = null;
   let pending: { cfi: string; progressPercent: number } | null = null;
 
+  /**
+   * Whether the session that opened the book is still the current one.
+   *
+   * The handler captures the session token at creation; a progress write may
+   * only happen while that exact session is current. A cleared session
+   * (sign-out, expiry) and a replaced one (a new sign-in) are both "not
+   * ours" — in the replaced case the local store is about to be written
+   * under a different session's encryption key.
+   */
+  const ownsSession = (): boolean => useAuthStore.getState().sessionToken === sessionToken;
+
+  /**
+   * Whether a write failure is the expected ownership-loss refusal.
+   *
+   * The commit-boundary fence rejects a write whose owning session ended
+   * mid-write with a 401 (`assertSessionToken` in `lib/offline/db.ts`). That
+   * is a normal outcome of a sign-out racing a save, not a storage failure.
+   * The 401 status is the discriminator — a message string would be a
+   * fragile contract, and a genuine storage error (quota, broken
+   * IndexedDB) carries no 401 and must keep propagating.
+   */
+  const isOwnershipLoss = (error: unknown): boolean =>
+    (error as { status?: number } | null)?.status === 401;
+
   let writeChain: Promise<void> = Promise.resolve();
   const persist = (payload: { cfi: string; progressPercent: number }): Promise<void> => {
     const pendingSave = writeChain.then(async () => {
+      // A progress write belongs to the session that opened the book. Once
+      // that session is gone (sign-out, expiry) or replaced (a new sign-in),
+      // the local store has been purged and the write would either be
+      // refused by the commit-boundary fence — or worse, be encrypted under
+      // the *replacement* session's key, mixing two sessions in one store.
+      // Skipping the write keeps the rejection off the unhandled-rejection
+      // path: `flush()` and the debounce timer discard this promise.
+      if (!ownsSession()) {
+        logClientEvent({
+          level: 'info',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: 'reader.progress_save_skipped_session_changed',
+          metadata: { bookId },
+        });
+        return;
+      }
       const { cfi, progressPercent } = payload;
       const mutationId = generateMutationId();
       let storedProgress;
@@ -84,17 +125,83 @@ export function createRelocatedHandler(
           baseRevision,
           ...(dependsOnMutationId ? { dependsOnMutationId } : {}),
         };
-        await saveProgress({
-          id: `${bookId}-progress`,
-          bookId,
-          cfi,
-          percentage: progressPercent,
-          lastRead: Date.now(),
-          synced: false,
-          mutationId,
-          baseRevision,
-        });
-        await queueSync('progress', queuePayload, mutationId);
+        // The ownership check comes BEFORE the write, not after it.
+        // `saveProgress` captures the *current* session token for its
+        // encryption key, so a write that runs after the session was
+        // replaced would encrypt the previous session's progress under the
+        // new session's key — two sessions in one store. Checking afterwards
+        // would be too late: the write would already have happened.
+        if (!ownsSession()) {
+          logClientEvent({
+            level: 'info',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            event: 'reader.progress_queue_skipped_session_changed',
+            metadata: { bookId },
+          });
+          return;
+        }
+        try {
+          await saveProgress({
+            id: `${bookId}-progress`,
+            bookId,
+            cfi,
+            percentage: progressPercent,
+            lastRead: Date.now(),
+            synced: false,
+            mutationId,
+            baseRevision,
+          });
+        } catch (error) {
+          // The commit-boundary fence refuses a write whose owning session
+          // ended mid-write ("Session expired"). That refusal is expected
+          // here and must not escape: `flush()` and the debounce timer
+          // discard this promise, so an escaping rejection becomes an
+          // unhandled rejection in the page. A genuine storage failure
+          // (a quota error, a broken IndexedDB) is a different thing and is
+          // reported, not swallowed.
+          if (!isOwnershipLoss(error)) throw error;
+          logClientEvent({
+            level: 'info',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            event: 'reader.progress_write_skipped_session_changed',
+            metadata: { bookId },
+          });
+          return;
+        }
+        // And again AFTER the write. `saveProgress` awaits the encryption
+        // before its IndexedDB transaction, so the session can be replaced
+        // inside that await: the write then completes under the old
+        // session, and `queueSync` — which captures the current token for
+        // its own fence — would enqueue the old session's progress under the
+        // replacement session. The enqueue must be skipped as well.
+        if (!ownsSession()) {
+          logClientEvent({
+            level: 'info',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            event: 'reader.progress_enqueue_skipped_session_changed',
+            metadata: { bookId },
+          });
+          return;
+        }
+        try {
+          await queueSync('progress', queuePayload, mutationId);
+        } catch (error) {
+          // The enqueue is fenced the same way the write is: `addToSyncQueue`
+          // re-checks the owning session after its own awaits and refuses
+          // with the same 401 when the session ended in the meantime. That
+          // refusal is expected and must not escape either.
+          if (!isOwnershipLoss(error)) throw error;
+          logClientEvent({
+            level: 'info',
+            traceId: createTraceId(),
+            spanId: createSpanId(),
+            event: 'reader.progress_enqueue_refused_session_changed',
+            metadata: { bookId },
+          });
+        }
       };
 
       if (!navigator.onLine || pendingProgress) {
