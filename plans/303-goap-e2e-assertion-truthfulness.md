@@ -67,30 +67,51 @@ WebKit, Pixel, and preview results remain CI evidence and are not claimed here.
 
 ## PWA lane flake: the selection toolbar race (closed 2026-10-21)
 
-The PWA E2E lane failed intermittently on `main` (CI runs 39585020306 and
-39473294405, both "Run PWA E2E tests (service workers enabled)"), and it was
-observed locally at a 1-in-5 rate — so it is a pre-existing defect, not a
-regression from the reader changes on this branch. Two distinct races sat
-behind it:
+The PWA E2E lane failed intermittently on `main` (CI runs 39595316851,
+39585020306 and 39473294405, all "Run PWA E2E tests (service workers
+enabled)"), and it was observed locally at a 1-in-5 rate — so it is a
+pre-existing defect, not a regression from the reader changes on this branch.
+Three distinct races sat behind it, and each one failed a _different_
+assertion, which is why the symptom looked different on every run:
 
 - **The service worker may not be activated when the page reloads.**
   `registerType: 'prompt'` means only pages loaded _after_ activation are
-  controlled, and activation is asynchronous. A reload issued while the worker
-  is still installing lands on an uncontrolled client, and the "Service
-  Worker must control the page" assertion fails. The spec now waits for
-  `registration.active` before the reload, so the reload necessarily produces
-  a controlled client.
+  controlled, and activation is asynchronous. A reload issued while the
+  worker is still installing lands on an uncontrolled client, and the
+  "Service Worker must control the page" assertion fails. This affected
+  `offline-annotations`, `offline-reader` and `offline-sync-conflicts`.
+- **The controller is attached to the new document asynchronously.**
+  `pwa-strategies` asserted the controller with a single synchronous read
+  right after the reload, which races the reload itself.
 - **The selection helper returned before the app had seen the selection.**
   `selectReaderPassage` builds a DOM Range inside the book frame and
   dispatches a `mouseup` there, but the annotation toolbar is rendered by the
   app in the _top_ document after React processes that event. The helper
   returned as soon as the range was selected, so a caller could look for the
   "Comment" control before it was mounted; the failure then looked like a
-  missing toolbar rather than a race in the helper. The helper now waits for
-  the toolbar to appear, which is the app's own acknowledgement that it saw
-  the selection.
+  missing toolbar rather than a race in the helper.
+- **Re-selecting the same passage produced no event at all.** The app reads
+  the selection on `selectionchange` (settled) and on `mouseup`. The helper
+  re-added the _identical_ range over the previous one, and re-adding the
+  same range is not a change: the browser fires no `selectionchange`, so the
+  app never re-read the selection and the toolbar never reappeared. The
+  app's own `clearSelection` helper exists for this but is not called on the
+  highlight path, so the old range is still live. The helper now clears the
+  range first and lets the browser observe the change before adding it
+  back.
+- **The "Comment" button the test clicked was sometimes the wrong one.** The
+  reader banner carries a "Comment" button as well as the selection
+  toolbar's. A locator that matched either could act on the banner's
+  control, which opens no dialog. All six such locators are now scoped to
+  `[data-container-name="annotation-toolbar"]`.
 
-Local verification (2026-10-21): eight consecutive `--grep @pwa
---project=pwa-chromium --retries=0` runs passed 16/16. The `--retries=0`
-matters — the flake previously hid behind Playwright's automatic retry, which
-is exactly how it reached `main` unnoticed.
+The fix is one shared helper, `waitForServiceWorkerActivation()` in
+`apps/tests/fixtures.ts`, called before every controlled reload; a selection
+helper that clears the previous range and waits for the toolbar; and a poll
+instead of a synchronous read for the controller. The helper exists because
+the same sequence was open-coded in five specs, and each copy drifted.
+
+Local verification (2026-10-21): `--grep @pwa --project=pwa-chromium
+--retries=0` runs passed 16/16, including runs under concurrent load. The
+`--retries=0` matters — the flake previously hid behind Playwright's
+automatic retry, which is exactly how it reached `main` unnoticed.

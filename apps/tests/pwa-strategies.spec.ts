@@ -1,24 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { waitForServiceWorkerActivation } from './fixtures';
 
 test.describe('PWA Caching Strategies', () => {
   test.beforeEach(async ({ page }) => {
     // 1. Visit the app online to install the worker (cold precache on
     //    first visit takes a while — do not reload mid-install).
     await page.goto('/', { waitUntil: 'networkidle' });
-    const activated = await page.evaluate(async () => {
-      try {
-        await Promise.race([
-          navigator.serviceWorker.ready.then(() => undefined),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SW ready timeout')), 60000),
-          ),
-        ]);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-    expect(activated, 'Service Worker must install and activate in pwa-chromium').toBe(true);
+    await waitForServiceWorkerActivation(page);
 
     // 2. Reload under the activated worker for control: registerType
     //    'prompt' ships no clients.claim, so first-load pages stay
@@ -26,11 +14,16 @@ test.describe('PWA Caching Strategies', () => {
     //    never a skip (E2E-02).
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
-    const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
-    expect(
-      controlled,
-      'Service Worker must be active and controlling the page in pwa-chromium',
-    ).toBe(true);
+    // The controller is attached to the *new* document asynchronously, so
+    // a single synchronous read races the reload and intermittently reports
+    // "not controlled" on a page that is about to be controlled. Poll
+    // instead: the assertion still fails loudly when control never arrives.
+    await expect
+      .poll(async () => page.evaluate(() => Boolean(navigator.serviceWorker.controller)), {
+        timeout: 15_000,
+        message: 'Service Worker must be active and controlling the page in pwa-chromium',
+      })
+      .toBe(true);
   });
 
   test('@mobile @pwa @pwa Navigation requests return index.html from cache when offline', async ({

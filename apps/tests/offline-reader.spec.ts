@@ -1,5 +1,10 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
-import { createMinimalEpub, mockReaderApi, loginAsReader } from './fixtures';
+import {
+  createMinimalEpub,
+  mockReaderApi,
+  loginAsReader,
+  waitForServiceWorkerActivation,
+} from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Constants (offline-specific overrides)
@@ -91,6 +96,10 @@ test.describe('Offline reader', () => {
     // loaded after activation are controlled (same pattern as the cached-API
     // test above). This controlled online reload is a boot step, not an
     // assertion target — page.route mocks are bypassed under SW control.
+    // The activation must be awaited first: a reload issued while the worker
+    // is still installing lands on an uncontrolled client, and the control
+    // assertion below then fails intermittently.
+    await waitForServiceWorkerActivation(page);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
       .poll(
@@ -184,9 +193,11 @@ test.describe('Offline reader', () => {
 
     // The worker uses registerType 'prompt' (no clients.claim: update control
     // stays with the user), so only pages loaded after SW activation are
-    // controlled. Reload before asserting control — if the SW still does not
-    // control the page after reload, the hard assert below fails loudly
-    // (E2E-02: never silently skip missing SW control).
+    // controlled. Wait for the activation, then reload before asserting
+    // control — a reload issued while the worker is still installing lands
+    // on an uncontrolled client, and the hard assert below would then fail
+    // intermittently (E2E-02: never silently skip missing SW control).
+    await waitForServiceWorkerActivation(page);
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
 

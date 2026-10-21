@@ -13,7 +13,8 @@
 - fix(reader): distinguish unreadable device-local reading insights from empty data, and keep populated local metrics when the synced request fails.
 - fix(auth): authenticate periodic grant validation and limit 401 teardown to the rejected current session.
 - test(reader): correct minimal EPUB navigation metadata and verify TOC chapter content plus CFI restoration after reload.
-- fix(e2e): remove the PWA lane's intermittent failure — wait for the service worker to activate before the controlled reload, and wait for the annotation toolbar to appear after selecting a passage; the flake also failed on `main`.
+- fix(e2e): remove the PWA lane's intermittent failure — wait for the service worker to activate before the controlled reload, clear the previous selection before re-selecting a passage so the app observes the change, and scope the selection-toolbar locators so the reader banner's "Comment" button is not acted on instead; the flake also failed on `main`.
+- fix(ci): assert the installed `do-harness` matches the version CI pins, so a newer local binary reports a version mismatch instead of failing the compliance and DORA checks as if their content had drifted.
 - fix(worker): annotation exports now escape single quotes (HTML) and Markdown syntax (Markdown) in user content to prevent injection.
 - refactor(web): replace unsafe `as unknown as` casts in reader/offline code with typed internals; fix a latent Buffer pooled-backing bug in offline crypto
 - feat(offline): create ordinary highlights and shared comments offline with encrypted local records, idempotent replay, and durable failed-sync state.

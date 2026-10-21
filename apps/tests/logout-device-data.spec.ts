@@ -29,7 +29,13 @@
 
 import { test, expect, type Page } from '@playwright/test';
 import { encryptJSON } from '../web/src/lib/offline/crypto';
-import { createMinimalEpub, loginAsReader, mockReaderApi, TEST_USER } from './fixtures';
+import {
+  createMinimalEpub,
+  loginAsReader,
+  mockReaderApi,
+  TEST_USER,
+  waitForServiceWorkerActivation,
+} from './fixtures';
 
 // ---------------------------------------------------------------------------
 // Constants (fake data on reserved domains only)
@@ -728,30 +734,11 @@ test.describe('S1 reader sign-out device-data teardown (GOAP-1002)', () => {
     // The service worker must be active before the offline revisit, otherwise
     // the offline navigation would fail for the wrong reason. The dev server
     // does not build a worker, so this lane needs the built app.
-    await expect
-      .poll(
-        async () =>
-          page.evaluate(async () => {
-            try {
-              const { promise, reject } = Promise.withResolvers<never>();
-              const timeout = setTimeout(() => reject(new Error('SW ready timeout')), 10000);
-              try {
-                await Promise.race([navigator.serviceWorker.ready, promise]);
-              } finally {
-                clearTimeout(timeout);
-              }
-              return true;
-            } catch {
-              return false;
-            }
-          }),
-        {
-          timeout: 60000,
-          message:
-            'Service Worker must install and activate in pwa-chromium (the @pwa lane needs PLAYWRIGHT_MODE=preview; the dev server ships no worker)',
-        },
-      )
-      .toBe(true);
+    // The worker must be installed AND activated before the controlled
+    // reload below: registerType 'prompt' ships no clients.claim, so only
+    // pages loaded after activation are controlled. The lane needs
+    // PLAYWRIGHT_MODE=preview; the dev server ships no worker.
+    await waitForServiceWorkerActivation(page);
 
     // registerType 'prompt' ships no clients.claim: only pages loaded after
     // activation are controlled. Reload, then wait for control.

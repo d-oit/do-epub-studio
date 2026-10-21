@@ -58,6 +58,26 @@ setup() {
 
 # --- compliance document ----------------------------------------------------
 
+@test "the installed do-harness matches the version CI pins" {
+    # The compliance document and the DORA policy are artifacts of a SPECIFIC
+    # harness version - the one `.github/workflows/ci.yml` installs for the
+    # `harness-contract` job. A newer local binary changes the compliance
+    # output and the dora policy schema, and the two checks below then fail
+    # with what looks like content drift but is a version mismatch. Assert the
+    # pin first so the failure names the real cause.
+    if ! command -v do-harness >/dev/null 2>&1; then
+        skip "do-harness is not installed"
+    fi
+    local pinned
+    pinned="$(grep -oE 'DO_HARNESS_VERSION: v[0-9.]+' "$REPO_ROOT/.github/workflows/ci.yml" | head -1 | awk '{print $2}')"
+    [ -n "$pinned" ]
+    # `do-harness --version` prints the version without the leading "v".
+    local expected="${pinned#v}"
+    run do-harness --version
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"$expected"* ]]
+}
+
 @test "compliance document exists and is the generated content" {
     [ -f "$REPO_ROOT/docs/compliance-mapping.md" ]
     run grep -c "do not edit by hand" "$REPO_ROOT/docs/compliance-mapping.md"
