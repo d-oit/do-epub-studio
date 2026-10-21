@@ -1,0 +1,13 @@
+{
+  "window_days": 180,
+  "percentile_method": "nearest-rank",
+  "min_deploys": 0,
+  "max_change_failure_rate": 1.0,
+  "max_mttr_hours": 168,
+  "max_lead_p90_days": 90,
+  "max_unrestored": 0,
+  "tag_glob": "refs/tags/v*",
+  "merge_strategy": "squash",
+  "revert_pattern": "^revert(\\(|:)",
+  "bot_allowlist": ["dependabot", "github-actions"]
+}

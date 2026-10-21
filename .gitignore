@@ -94,7 +94,17 @@ junit.xml
 packages/ui/storybook-static/
 .mimocode/.cron-lock
 .mimocode/plans/
-.claude/
+
+# Claude Code provider state. Only the project-shared settings file is
+# tracked (it registers the repo's SessionStart hook); everything else in
+# .claude/ stays ignored: settings.local.json (machine-local), skills/
+# (symlinks into .agents/skills/), and worktrees/ (agent scratch trees).
+#
+# The pattern is `.claude/*` rather than `.claude/` on purpose: git cannot
+# re-include a file whose parent *directory* is excluded, so a negation
+# under a `.claude/` rule would never take effect.
+.claude/*
+!.claude/settings.json
 
 # Generated test corpus
 packages/reader-core/src/__fixtures__/corpus/

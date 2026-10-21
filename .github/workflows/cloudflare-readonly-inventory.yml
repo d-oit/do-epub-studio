@@ -1,0 +1,181 @@
+name: Cloudflare read-only inventory
+run-name: Cloudflare inventory - ${{ github.event_name }}
+# CI uses token-based Wrangler auth. `wrangler login` is interactive OAuth;
+# `wrangler logout` invalidates stored OAuth credentials.
+# `CLOUDFLARE_READONLY_API_TOKEN` needs Pages Read + Workers Scripts Read.
+# Lighthouse keeps its separate write-scoped `CLOUDFLARE_API_TOKEN`.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-readonly-inventory
+  cancel-in-progress: false
+
+jobs:
+  inventory:
+    if: github.ref == 'refs/heads/main'
+    name: Cloudflare read-only inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      FORCE_COLOR: '0'
+      WRANGLER_LOG: error
+      WRANGLER_LOG_SANITIZE: 'true'
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - name: Check Cloudflare secret availability without printing values
+        env:
+          CLOUDFLARE_READONLY_API_TOKEN: ${{ secrets.CLOUDFLARE_READONLY_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          if [[ -z "${CLOUDFLARE_READONLY_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo 'Required secrets CLOUDFLARE_READONLY_API_TOKEN and CLOUDFLARE_ACCOUNT_ID are unavailable to this workflow run.' >&2
+            exit 1
+          fi
+          echo 'Required Cloudflare secret names are available; values were not printed.'
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: List production Pages deployments (metadata only)
+        env:
+          CLOUDFLARE_READONLY_API_TOKEN: ${{ secrets.CLOUDFLARE_READONLY_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          raw="$(mktemp)"
+          trap 'rm -f "$raw"' EXIT
+          pnpm --dir apps/worker exec wrangler pages deployment list \
+            --project-name do-epub-studio \
+            --environment production \
+            --json > "$raw"
+          echo '### Production Pages deployments (metadata only)' | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -c '
+            (if type == "array" then .
+             elif (.result | type) == "array" then .result
+             elif (.deployments | type) == "array" then .deployments
+             else error("Unexpected Wrangler deployment response")
+             end)
+            | map({
+                id: .id,
+                url: .url,
+                environment: .environment,
+                created_on: .created_on,
+                branch: .deployment_trigger.metadata.branch,
+                commit_hash: .deployment_trigger.metadata.commit_hash
+              })
+          ' "$raw" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: List Pages project bindings and variable names only
+        env:
+          CLOUDFLARE_READONLY_API_TOKEN: ${{ secrets.CLOUDFLARE_READONLY_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          raw="$(mktemp)"
+          trap 'rm -f "$raw"' EXIT
+          status="$(curl --silent --show-error --output "$raw" --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${CLOUDFLARE_READONLY_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/do-epub-studio" || true)"
+          if [[ "$status" != '200' ]]; then
+            printf 'Pages project settings unavailable (HTTP %s; response body suppressed).\n' "${status:-network error}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if ! jq -e '.success == true' "$raw" >/dev/null; then
+            echo 'Pages API returned an unsuccessful response; body suppressed.' | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo '### Pages project (binding identifiers and variable names only)' | tee -a "$GITHUB_STEP_SUMMARY"
+          jq '
+            def env_names:
+              if type == "object" then
+                [to_entries[] | {name: .key, type: (.value.type // "unknown")}]
+              elif type == "array" then
+                map({name: (.name // .binding // "unknown"), type: (.type // "unknown")})
+              else [] end;
+            def pick($keys):
+              if type == "array" then
+                map(select(type == "object") | with_entries(select(.key as $key | $keys | index($key))))
+              else [] end;
+            def deployment:
+              {
+                id: .id,
+                url: .url,
+                environment: .environment,
+                created_on: .created_on,
+                branch: .deployment_trigger.metadata.branch,
+                commit_hash: .deployment_trigger.metadata.commit_hash
+              };
+            def env_config($config):
+              {
+                compatibility_date: $config.compatibility_date,
+                compatibility_flags: ($config.compatibility_flags // []),
+                env_var_names: (($config.env_vars // {}) | env_names),
+                bindings: {
+                  d1: (($config.d1_databases // []) | pick(["binding", "id", "database_name"])),
+                  kv: (($config.kv_namespaces // []) | pick(["binding", "namespace_id"])),
+                  durable_objects: (($config.durable_object_namespaces // []) | pick(["binding", "name", "namespace_id", "class_name"])),
+                  r2: (($config.r2_buckets // []) | pick(["binding", "name", "jurisdiction"])),
+                  services: (($config.services // []) | pick(["binding", "service", "environment", "entrypoint"])),
+                  queues: (($config.queue_producers // []) | pick(["binding", "name"])),
+                  ai: (($config.ai_bindings // []) | pick(["binding", "project_id"])),
+                  analytics_engine: (($config.analytics_engine_datasets // []) | pick(["binding", "dataset"])),
+                  hyperdrive: (($config.hyperdrive_bindings // []) | pick(["binding", "id"])),
+                  vectorize: (($config.vectorize_bindings // []) | pick(["binding", "index_name"]))
+                }
+              };
+            .result as $project
+            | {
+                name: $project.name,
+                production_branch: $project.production_branch,
+                domains: $project.domains,
+                canonical_deployment: ($project.canonical_deployment | deployment),
+                production: env_config($project.deployment_configs.production // {}),
+                preview: env_config($project.deployment_configs.preview // {})
+              }
+          ' "$raw" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: List Pages secret names only
+        env:
+          CLOUDFLARE_READONLY_API_TOKEN: ${{ secrets.CLOUDFLARE_READONLY_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          echo '### Pages secret names (values are never returned)' | tee -a "$GITHUB_STEP_SUMMARY"
+          pnpm --dir apps/worker exec wrangler pages secret list \
+            --project-name do-epub-studio | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Read Worker cron configuration (not firing history)
+        env:
+          CLOUDFLARE_READONLY_API_TOKEN: ${{ secrets.CLOUDFLARE_READONLY_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          set +x
+          raw="$(mktemp)"
+          trap 'rm -f "$raw"' EXIT
+          status="$(curl --silent --show-error --output "$raw" --write-out '%{http_code}' \
+            --header "Authorization: Bearer ${CLOUDFLARE_READONLY_API_TOKEN}" \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/do-epub-studio-worker/schedules" || true)"
+          echo '### Worker cron configuration (configuration is not proof of firing)' | tee -a "$GITHUB_STEP_SUMMARY"
+          if [[ "$status" != '200' ]] || ! jq -e '.success == true' "$raw" >/dev/null 2>&1; then
+            printf 'Schedule configuration unavailable (HTTP %s; response body suppressed).\n' "${status:-network error}" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          jq '{schedules: [.result.schedules[]? | {cron, created_on, modified_on}]}' "$raw" | tee -a "$GITHUB_STEP_SUMMARY"
