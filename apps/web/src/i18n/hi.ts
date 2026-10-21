@@ -798,6 +798,8 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'सिंक किया गया इतिहास लोड हो रहा है…',
   'reader.syncedUnavailable': 'सिंक किया गया पठन इतिहास उपलब्ध नहीं है',
   'reader.noLocalActivity': 'इस डिवाइस पर अभी तक कोई स्थानीय पठन गतिविधि दर्ज नहीं हुई है।',
+  'reader.localInsightsUnavailable':
+    'स्थानीय पठन आँकड़े उपलब्ध नहीं हैं — डिवाइस स्टोरेज पढ़ा नहीं जा सका।',
   'reader.noSyncedHistory': 'इस पुस्तक के लिए कोई सिंक किया गया पठन इतिहास नहीं है।',
   'reader.exportInsights': 'पठन आँकड़े निर्यात करें (JSON)',
   'reader.exportInsightsNote':

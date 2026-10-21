@@ -26,12 +26,18 @@ function formatMinutes(minutes: number): string {
 
 export function InsightsSection({
   insights,
+  localUnavailable,
   syncedInsights,
   syncedError,
   syncedLoading,
   t,
 }: {
   insights: InsightSummary | null;
+  /**
+   * The device-local store could not be read. This is a distinct state from an
+   * empty store: unavailable storage must not be reported as "no activity".
+   */
+  localUnavailable?: boolean;
   syncedInsights?: SyncedInsights | null;
   syncedError?: string | null;
   syncedLoading?: boolean;
@@ -127,6 +133,10 @@ export function InsightsSection({
               </div>
             )}
           </dl>
+        ) : localUnavailable ? (
+          <p className="text-xs text-foreground-muted italic">
+            {t('reader.localInsightsUnavailable')}
+          </p>
         ) : (
           <p className="text-xs text-foreground-muted">{t('reader.noLocalActivity')}</p>
         )}

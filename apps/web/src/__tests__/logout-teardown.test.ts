@@ -1,9 +1,10 @@
 import 'fake-indexeddb/auto';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useAuthStore } from '../stores/auth';
 import { useReaderStore } from '../stores/reader';
-import { getDB, clearAllEncryptedData, setTokenOverride } from '../lib/offline/db';
+import { getDB, clearAllEncryptedData, setTokenOverride, addToSyncQueue } from '../lib/offline/db';
 
+import * as offlineCrypto from '../lib/offline/crypto';
 describe('S1: Logout and auth-loss device-data teardown', () => {
   beforeEach(async () => {
     setTokenOverride('test-token');
@@ -93,5 +94,42 @@ describe('S1: Logout and auth-loss device-data teardown', () => {
     expect(await dbAfter.get('progress', 'p1')).toBeUndefined();
     expect(await dbAfter.get('annotations', 'a1')).toBeUndefined();
     expect(await dbAfter.get('feedbackDrafts', 'f1')).toBeUndefined();
+  });
+
+  it('does not recreate a sync row when encryption finishes after logout purge', async () => {
+    setTokenOverride(null);
+    let releaseEncryption: ((ciphertext: string) => void) | undefined;
+    let signalEncryptionStarted: (() => void) | undefined;
+    const encryptionStarted = new Promise<void>((resolve) => {
+      signalEncryptionStarted = resolve;
+    });
+    const encryptSpy = vi.spyOn(offlineCrypto, 'encryptJSON').mockImplementation(
+      () =>
+        new Promise<string>((resolve) => {
+          releaseEncryption = resolve;
+          signalEncryptionStarted?.();
+        }),
+    );
+    const item = {
+      id: 'sync-row-started-before-logout',
+      type: 'progress' as const,
+      payload: { bookId: 'book-1', cfi: 'cfi', percentage: 40, mutationId: 'late-mutation' },
+      mutationId: 'late-mutation',
+      createdAt: Date.now(),
+      attempts: 0,
+    };
+    const pendingWrite = addToSyncQueue(item);
+
+    try {
+      await encryptionStarted;
+      useAuthStore.getState().logout();
+      await clearAllEncryptedData();
+      releaseEncryption?.('encrypted-after-logout');
+      await expect(pendingWrite).rejects.toThrow('Session expired');
+      expect(await (await getDB()).get('syncQueue', item.id)).toBeUndefined();
+    } finally {
+      releaseEncryption?.('encrypted-after-logout');
+      encryptSpy.mockRestore();
+    }
   });
 });

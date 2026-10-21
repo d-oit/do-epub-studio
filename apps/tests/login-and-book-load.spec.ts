@@ -131,7 +131,7 @@ test.describe('Login and book load (desktop)', () => {
     }
   });
 
-  test('@mobile shows loading state while book URL is pending, then renders the chapter', async ({
+  test('@mobile @smoke shows loading state while book URL is pending, then renders the chapter', async ({
     page,
   }) => {
     let resolveFileUrl: (value: unknown) => void;

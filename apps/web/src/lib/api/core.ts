@@ -37,6 +37,30 @@ export interface ApiRequestOptions extends RequestInit {
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 200;
+// Keep request handles, not bearer tokens, so an auth transition can abort stale work.
+const authenticatedRequests = new Set<AbortController>();
+
+useAuthStore.subscribe?.((state, previousState) => {
+  if (state.sessionToken === previousState.sessionToken) return;
+  for (const controller of authenticatedRequests) controller.abort();
+  authenticatedRequests.clear();
+});
+
+function trackAuthenticatedRequest(
+  sessionToken: string | null,
+  controller: AbortController,
+): () => void {
+  if (!sessionToken) return () => {};
+  if (useAuthStore.getState().sessionToken !== sessionToken) {
+    controller.abort();
+    return () => {};
+  }
+
+  authenticatedRequests.add(controller);
+  return () => {
+    authenticatedRequests.delete(controller);
+  };
+}
 
 /**
  * Retries on network errors (TypeError) and 5xx; never on 4xx or timeouts.
@@ -66,13 +90,13 @@ function requestToken(headers: HeadersInit | undefined): string | null {
 }
 
 /**
- * Logs out only when the rejection belongs to the session that is still
- * current. A 401 for a token the store has since replaced (an in-flight
- * request from a previous session) must not sign out the newer session.
+ * Logs out only when the rejected request carries the session token that is
+ * still current. Requests without a token cannot invalidate a live session,
+ * and a stale request cannot sign out a newer session.
  */
 function handleUnauthorized(rejectedToken: string | null) {
   const state = useAuthStore.getState();
-  if (rejectedToken && state.sessionToken && rejectedToken !== state.sessionToken) return;
+  if (!rejectedToken || !state.sessionToken || rejectedToken !== state.sessionToken) return;
   state.logout('expired');
   // S1 (GOAP-1002): device-data teardown on auth loss. The dynamic import
   // keeps the IndexedDB layer + `idb` out of the shell bundle (ADR-107 §3);
@@ -107,10 +131,12 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       controller.abort(new DOMException('Request timeout', 'TimeoutError'));
     }, timeoutMs ?? DEFAULT_TIMEOUT_MS);
 
-    if (requestInit.signal) {
+    if (requestInit.signal?.aborted) {
+      controller.abort(requestInit.signal.reason);
+    } else if (requestInit.signal) {
       requestInit.signal.addEventListener(
         'abort',
-        () => requestInit.signal && controller.abort(requestInit.signal.reason),
+        () => controller.abort(requestInit.signal?.reason),
         { once: true },
       );
     }
@@ -125,6 +151,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
     };
 
     const sentToken = requestToken(headers);
+    const releaseSessionRequest = trackAuthenticatedRequest(sentToken, controller);
 
     let responseStatus: number | undefined;
     try {
@@ -204,7 +231,10 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       const errorName = (error as Error).name;
       // Caller cancellation (unmount, superseded request) is not a failure and
       // must not be reported as one; only our own deadline is a timeout.
-      if (!timedOut && (errorName === 'AbortError' || requestInit.signal?.aborted)) {
+      if (
+        !timedOut &&
+        (controller.signal.aborted || errorName === 'AbortError' || requestInit.signal?.aborted)
+      ) {
         logClientEvent({
           level: 'info',
           event: 'api.cancelled',
@@ -248,6 +278,8 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
         spanId,
         metadata: { endpoint, attempt: attempt + 1, error: (error as Error).message },
       });
+    } finally {
+      releaseSessionRequest();
     }
   }
   throw new Error('Max retries exceeded');
@@ -262,20 +294,37 @@ async function apiRaw(
 ): Promise<Response> {
   const traceId = createTraceId();
   const spanId = createSpanId();
-  // nosemgrep: node/ssrf — endpoint is always an internal path literal, never user-supplied
-  const res = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Trace-Id': traceId,
-      'X-Span-Id': spanId,
-      'Accept-Language': getCurrentLocale(),
-      ...options?.headers,
-    },
-    body: data ? JSON.stringify(data) : undefined,
-    ...options,
-  });
   const sentToken = requestToken(options?.headers);
+  const controller = new AbortController();
+  if (options?.signal?.aborted) {
+    controller.abort(options.signal.reason);
+  } else if (options?.signal) {
+    options.signal.addEventListener('abort', () => controller.abort(options.signal?.reason), {
+      once: true,
+    });
+  }
+  const releaseSessionRequest = trackAuthenticatedRequest(sentToken, controller);
+
+  let res: Response;
+  try {
+    // nosemgrep: node/ssrf — endpoint is always an internal path literal, never user-supplied
+    res = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Trace-Id': traceId,
+        'X-Span-Id': spanId,
+        'Accept-Language': getCurrentLocale(),
+        ...options?.headers,
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    releaseSessionRequest();
+  }
+
   if (
     res.status === 401 &&
     !endpoint.includes('/api/access/request') &&

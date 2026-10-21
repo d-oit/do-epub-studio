@@ -113,3 +113,27 @@ if ! node "$REPO_ROOT/scripts/check-untrusted-ingest-sinks.mjs"; then
     FAILED=1
 fi
 echo ""
+
+# llms-drift (GOAP-276 Phase 2): the paths and commands that
+# `llms.txt`/`llms-full.txt` hand to every agent must still exist. A stale
+# path turns the injected session context into a list of lies.
+printf '%sChecking LLM context drift...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/check-llms-drift.sh"; then
+    FAILED=1
+fi
+echo ""
+
+# compliance-drift (GOAP-276 Phase 2): the committed compliance
+# mapping must match what the harness currently reports.
+printf '%sChecking compliance document drift...%s\n' "${BLUE}" "${NC}"
+if ! "$REPO_ROOT/scripts/generate-compliance-doc.sh" --check; then
+    FAILED=1
+fi
+echo ""
+
+# dora-report (GOAP-276 Phase 2): report-only. A deployment-metrics
+# breach is a trend signal to look at, never a merge condition, so this can
+# only warn.
+printf '%sReporting DORA deployment metrics...%s\n' "${BLUE}" "${NC}"
+"$REPO_ROOT/scripts/report-dora.sh" || true
+echo ""

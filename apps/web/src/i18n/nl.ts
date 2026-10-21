@@ -784,6 +784,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'Gesynchroniseerde geschiedenis laden…',
   'reader.syncedUnavailable': 'Gesynchroniseerde leesgeschiedenis niet beschikbaar',
   'reader.noLocalActivity': 'Op dit apparaat is nog geen lokale leesactiviteit vastgelegd.',
+  'reader.localInsightsUnavailable':
+    'Lokale leesstatistieken niet beschikbaar — de opslag van het apparaat kon niet worden gelezen.',
   'reader.noSyncedHistory': 'Geen gesynchroniseerde leesgeschiedenis voor dit boek.',
   'reader.exportInsights': 'Leesstatistieken exporteren (JSON)',
   'reader.exportInsightsNote':

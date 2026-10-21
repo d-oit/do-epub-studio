@@ -14,6 +14,9 @@
       "format:check",
       "coverage-parity",
       "untrusted-ingest",
+      "llms-drift",
+      "compliance-drift",
+      "dora-report",
       "gate-parity"
     ]
   },

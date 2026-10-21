@@ -718,6 +718,37 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   });
 }
 
+/**
+ * Waits until the service worker is ACTIVATED, so a reload issued next is
+ * guaranteed to land on a controlled client.
+ *
+ * `registerType: 'prompt'` means only pages loaded *after* activation are
+ * controlled, and activation is asynchronous. A reload issued while the
+ * worker is still installing lands on an uncontrolled client, and the
+ * "Service Worker must control the page" assertion fails intermittently —
+ * the flake that failed the PWA lane on `main` (CI runs 39595316851,
+ * 39585020306, 39473294405).
+ *
+ * Call this BEFORE the reload, then assert the controller on the reloaded
+ * page. The activation wait is what makes that assertion deterministic.
+ */
+export async function waitForServiceWorkerActivation(page: Page): Promise<void> {
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(async () => {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            return Boolean(registration.active);
+          } catch {
+            return false;
+          }
+        }),
+      { timeout: 15000, message: 'Service Worker must activate before the controlled reload' },
+    )
+    .toBe(true);
+}
+
 export async function loginAsAdmin(page: Page) {
   await page.goto('/admin/login');
   await page.getByLabel('Email Address').fill(ADMIN_USER.email);
@@ -757,13 +788,20 @@ export const EPUB_CONTENT_FRAME_SELECTOR = `${EPUB_CONTENT_HOST_SELECTOR} iframe
  * the matching text node and dispatching a `mouseup`, so the annotation
  * toolbar sees a real selection (restored with the A1 offline-annotations
  * spec, GOAP-311).
+ *
+ * The `mouseup` is dispatched from inside the frame, but the toolbar is
+ * rendered by the *app* in the top document after React processes the
+ * selection event. The helper therefore waits for the toolbar to appear:
+ * without that wait the caller can look for the "Comment" control before it
+ * is mounted, and the failure looks like a missing toolbar rather than a
+ * race in the helper.
  */
 export async function selectReaderPassage(page: Page, text: string): Promise<void> {
   const iframeLocator = page.locator(`${EPUB_CONTENT_FRAME_SELECTOR}, iframe`).first();
   await iframeLocator.waitFor({ state: 'attached', timeout: 15000 });
 
   const selected = await page.evaluate(
-    ({ targetText, frameSelector }) => {
+    async ({ targetText, frameSelector }) => {
       const iframes = Array.from(
         document.querySelectorAll<HTMLIFrameElement>(`${frameSelector}, iframe`),
       );
@@ -788,7 +826,15 @@ export async function selectReaderPassage(page: Page, text: string): Promise<voi
             range.setEnd(node, index + targetText.length);
             const selection = win.getSelection();
             if (selection) {
+              // Clear the PREVIOUS selection first, and let the browser
+              // observe the change. Re-adding the identical range over an
+              // existing one is not a change, so no `selectionchange` fires
+              // and the app never re-reads the selection — the selection
+              // toolbar then never reappears for a second selection of the
+              // same passage (the app's own `clearSelection` helper is not
+              // called on the highlight path, so the range is still there).
               selection.removeAllRanges();
+              await new Promise((resolve) => setTimeout(resolve, 0));
               selection.addRange(range);
               win.dispatchEvent(
                 new (win as Window & typeof globalThis).MouseEvent('mouseup', { bubbles: true }),
@@ -807,4 +853,16 @@ export async function selectReaderPassage(page: Page, text: string): Promise<voi
   if (!selected) {
     throw new Error(`Target text "${text}" not found in iframe to select`);
   }
+
+  // The selection toolbar is the app's acknowledgement that it saw the
+  // selection. Wait for it so the caller never races the render.
+  //
+  // The locator is scoped to the toolbar's own container: the reader banner
+  // also carries a "Comment" button, and waiting for a bare "Comment" button
+  // would be satisfied by that one — the caller would then act on the
+  // banner's control instead of the selection toolbar's, and the selection
+  // toolbar would never open.
+  await page
+    .locator('[data-container-name="annotation-toolbar"]')
+    .waitFor({ state: 'visible', timeout: 15000 });
 }

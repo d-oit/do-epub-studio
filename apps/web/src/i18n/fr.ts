@@ -790,6 +790,8 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'reader.syncedUnavailable': 'Historique de lecture synchronisé indisponible',
   'reader.noLocalActivity':
     "Aucune activité de lecture locale enregistrée sur cet appareil pour l'instant.",
+  'reader.localInsightsUnavailable':
+    'Statistiques de lecture locales indisponibles — le stockage de l’appareil n’a pas pu être lu.',
   'reader.noSyncedHistory': 'Aucun historique de lecture synchronisé pour ce livre.',
   'reader.exportInsights': 'Exporter les statistiques de lecture (JSON)',
   'reader.exportInsightsNote':

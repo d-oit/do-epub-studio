@@ -70,6 +70,14 @@ When a computational sensor fires:
 6. If the fix was non-obvious, capture it with the `learn` skill in
    `agents-docs/LEARNINGS.md`.
 
+The same protocol closes the loop at CI level, where the sensor is a
+GitHub check rather than a local command: `scripts/atomic-commit/verify.sh`
+exits `1` for a failed check (fix → verify locally → stage explicit paths →
+re-run the flow) and `2` for an inconclusive run (stop and diagnose
+manually — never retry). The canonical procedure, including the
+never-`git add -A` staging rule, is `scripts/AGENTS.md` § "CI self-fix
+loop".
+
 ## Fail-Fast Policy
 
 If the same subtask fails a sensor 3 consecutive times: halt and surface a

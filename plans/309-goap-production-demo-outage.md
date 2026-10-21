@@ -74,3 +74,23 @@ Closed 2026-10-09 after PRs #1279 (honest state) and #1293 (outage repair).
 - **W2 & W4 (DB Client & Error Contract):** Hardened `apps/worker/src/db/client.ts` to explicitly check for missing `env.DB` bindings and throw a structured `AppError` (`DB_NOT_CONFIGURED`, HTTP 500) rather than unhandled `TypeError` exceptions.
 - **W3 (Honest Demo UX):** Honest error state handling verified in `DemoLogin.tsx` and `AdminLoginPage.tsx` when demo endpoints return `DEMO_DISABLED` or non-OK codes, avoiding broken fallback loops. Shipped copy `login.demoUnavailable` ("The demo is not available on this deployment. Sign in with your own credentials or request access from the book owner.", `en.ts:45-46`, 13 catalogs); unit proof `LoginPage.test.tsx:533-551`, `AdminLoginPage.test.tsx:426-441`.
 - **W5 (Production Smoke Coverage):** Updated release workflow (`.github/workflows/release.yml`) post-deploy health check to verify HTTP 200 on `/api/catalog?limit=1` (DB-backed endpoint) in addition to `/api/health`. E2E smoke assertions verified in `apps/tests/cloudflare-login.spec.ts`.
+
+## Revalidation 2026-10-18 (GOAP-1009; audit-only)
+
+- Public reader demo returned `403 DEMO_DISABLED`; the unavailable alert stayed
+  on `/login` without falling through to credential access. Public admin login
+  showed credential-only controls. The public catalog returned `200` with an
+  empty result; this is not evidence of a catalog outage or a missing demo
+  record. No public session or content was accessed.
+- Source/runbook condition needs operator resolution: the Pages runbook
+  specifies `ENVIRONMENT=production` together with
+  `DEMO_LOGIN_ENABLED=1` and `DEMO_ACCOUNTS_PROD_ALLOWLIST`, but
+  `isProductionLike()` returns `true` immediately when `ENVIRONMENT` is
+  `production`, before checking the Pages allowlist. Therefore the documented
+  two-flag enablement cannot succeed if Pages has that production variable.
+  Effective Pages variables are unverified; the observed generic refusal does
+  not establish which gate caused it.
+- The local live-demo suite passed 4/4, but its reader assertions stop at the
+  reader shell/toolbar. Actual seeded chapter navigation failed locally; the
+  follow-up acceptance is recorded in GOAP-1010. This does not change the
+  public fail-closed policy or this plan's historical closure.

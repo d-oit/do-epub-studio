@@ -32,6 +32,8 @@ release = [
   "untrusted-ingest",
   "gate-parity",
   "coverage-parity",
+  "llms-drift",
+  "compliance-drift",
 ]
 
 # GOAP-269 Phase 4: the upstream `web-ui` pack (d-o-hub/do-harness#75,
@@ -316,4 +318,37 @@ when-changed = [
   "scripts/validate-coverage-parity.sh",
   "codecov.yml",
   "**/vitest.config.*",
+]
+
+# GOAP-276 Phase 2: report-only DORA trend. The script always exits 0 — a
+# deployment-metrics breach is a signal to look at, not a merge condition, so
+# this is deliberately outside the `release` set's hard-gate semantics.
+[[sensors]]
+name = "dora"
+argv = ["bash", "scripts/report-dora.sh"]
+when-changed = [
+  "plans/dora.json",
+  "scripts/report-dora.sh",
+]
+
+# GOAP-276 Phase 2: the LLM context files hand every agent a list of paths and
+# commands. A stale entry turns that list into a set of lies, so the check
+# fails when a referenced path or command no longer exists.
+[[sensors]]
+name = "llms-drift"
+argv = ["bash", "scripts/check-llms-drift.sh"]
+when-changed = [
+  "llms.txt",
+  "llms-full.txt",
+  "scripts/check-llms-drift.sh",
+]
+
+# GOAP-276 Phase 2: the committed compliance mapping must match what the
+# harness currently reports.
+[[sensors]]
+name = "compliance-drift"
+argv = ["bash", "scripts/generate-compliance-doc.sh", "--check"]
+when-changed = [
+  "docs/compliance-mapping.md",
+  "scripts/generate-compliance-doc.sh",
 ]
