@@ -106,3 +106,21 @@ issue #1278 closed after PRs #1279/#1293. The local D1 seed recipe in §Steps
 follows the official local-development flow (`wrangler d1 migrations apply
 --local`, Miniflare-backed `wrangler dev`):
 https://developers.cloudflare.com/d1/best-practices/local-development/
+
+## Revalidation 2026-10-18 (GOAP-1009; audit-only)
+
+- Re-ran `E2E_LIVE_DEMO=1` against the disposable local Worker: all 4 tests
+  passed for reader/admin endpoint login, credential login and wrong-password
+  refusal. These assertions establish the authenticated shell, not rendered
+  chapter text.
+- The separate seeded-reader journey fetched the EPUB successfully and showed
+  TOC `Start`, but selecting it navigated the rendition frame to
+  `/read/section0001.xhtml` and displayed the app shell rather than
+  `Hello, EPUB world!`; reload restoration was therefore not reached. The
+  reader-content and session-poll defects are assigned to GOAP-1010. The
+  existing done status records the original shell-level acceptance and is not
+  rewritten here.
+
+## GOAP-1010 closure note (2026-10-18; local-only)
+
+The separate GOAP-1010 follow-up now verifies authenticated periodic polls and the real local EPUB TOC/content/reload path. See the implementation evidence in [GOAP-1010](1010-goap-reader-runtime-follow-ups.md) and the audit follow-up in [GOAP-1009](1009-goap-production-readiness-audit.md). This closes only the earlier local demo-reader blockers; public/deployed demo behavior remains unverified, and the original shell-level GOAP-256 acceptance above is unchanged.

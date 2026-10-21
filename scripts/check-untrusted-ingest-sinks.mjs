@@ -30,6 +30,8 @@ const DEFAULT_TARGETS = [
   '.agents/skills/github-pr-autopilot',
   'scripts/smart-update-pr.sh',
   '.github/workflows/bot-repush-guard.yml',
+  '.github/workflows/duplicate-pr-guard.yml',
+  'scripts/check-duplicate-prs.mjs',
 ];
 
 const SINKS = [

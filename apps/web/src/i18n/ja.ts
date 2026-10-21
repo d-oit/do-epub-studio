@@ -785,6 +785,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': '同期履歴を読み込み中…',
   'reader.syncedUnavailable': '同期された読書履歴は利用できません',
   'reader.noLocalActivity': 'この端末にはまだ読書アクティビティが記録されていません。',
+  'reader.localInsightsUnavailable':
+    '端末内の読書統計を利用できません — 端末のストレージを読み取れませんでした。',
   'reader.noSyncedHistory': 'この本の同期された読書履歴はありません。',
   'reader.exportInsights': '読書統計をエクスポート（JSON）',
   'reader.exportInsightsNote': '端末内の指標のみ。個人情報、メール、認証情報は含まれません。',

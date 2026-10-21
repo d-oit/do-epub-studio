@@ -1,8 +1,8 @@
 import { apiRequest } from '../api';
 import { createHighlight, createComment } from '../api/annotations';
-import { useAuthStore } from '@/stores/auth';
 import type { Highlight, Comment } from '@/stores/reader';
 import type { SyncQueueItem, AnnotationEntry } from './db';
+import { requireSessionToken } from './session';
 
 /** Annotation payload synced from the offline queue. */
 interface AnnotationSyncPayload {
@@ -17,6 +17,7 @@ export type AnnotationCreateResult =
 async function syncAnnotationResolve(payload: AnnotationSyncPayload): Promise<void> {
   await apiRequest(`/api/comments/${payload.annotation.id}`, {
     method: 'PATCH',
+    token: requireSessionToken(),
     body: JSON.stringify({ status: payload.annotation.status }),
   });
 }
@@ -48,6 +49,7 @@ async function syncAnnotationBookmark(
 ): Promise<void> {
   await apiRequest(`/api/books/${payload.bookId}/bookmarks`, {
     method: 'POST',
+    token: requireSessionToken(),
     body: JSON.stringify({
       mutationId,
       locator: {
@@ -92,12 +94,7 @@ export async function syncAnnotation(
     return undefined;
   }
 
-  const token = useAuthStore.getState().sessionToken;
-  if (!token) {
-    const err = new Error('Session expired');
-    (err as Error & { status?: number }).status = 401;
-    throw err;
-  }
+  const token = requireSessionToken();
 
   // Widened so the default branch can name the unrecognized value: the
   // exhaustive switch below already narrows it to `never` there.

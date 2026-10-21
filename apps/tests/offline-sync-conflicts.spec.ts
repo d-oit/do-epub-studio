@@ -6,6 +6,7 @@ import {
   mockReaderApi,
   selectReaderPassage,
   suppressWorkboxErrors,
+  waitForServiceWorkerActivation,
 } from './fixtures';
 
 // ---------------------------------------------------------------------------
@@ -280,7 +281,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
 
     await selectReaderPassage(pageA, 'TWO CLIENT DIVERGENCE PASSAGE');
     await pageA
-      .locator('button')
+      .locator('[data-container-name="annotation-toolbar"] button')
       .filter({ hasText: /^Comment$/ })
       .click();
     const modalA = pageA.getByRole('dialog', { name: 'Comment' });
@@ -299,7 +300,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     // Context B remains online and creates a competing comment
     await selectReaderPassage(pageB, 'TWO CLIENT DIVERGENCE PASSAGE');
     await pageB
-      .locator('button')
+      .locator('[data-container-name="annotation-toolbar"] button')
       .filter({ hasText: /^Comment$/ })
       .click();
     const modalB = pageB.getByRole('dialog', { name: 'Comment' });
@@ -493,7 +494,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
       for (const { page, commentText } of offlineComments) {
         await selectReaderPassage(page, 'TWO TAB SINGLE FLIGHT PASSAGE');
         await page
-          .locator('button')
+          .locator('[data-container-name="annotation-toolbar"] button')
           .filter({ hasText: /^Comment$/ })
           .click();
         const modal = page.getByRole('dialog', { name: 'Comment' });
@@ -830,7 +831,11 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
       .poll(() => getChapterText(page), { timeout: 30000 })
       .toContain('CHAPTER ONE RELOAD');
 
-    // Reload online once to acquire SW control and seed external-assets SW cache
+    // Reload online once to acquire SW control and seed external-assets SW
+    // cache. The worker must be ACTIVATED first: `registerType: 'prompt'`
+    // means only pages loaded after activation are controlled, so a reload
+    // issued while it is still installing lands on an uncontrolled client.
+    await waitForServiceWorkerActivation(page);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
       .poll(
@@ -867,7 +872,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     // Create an offline comment
     await selectReaderPassage(page, 'CHAPTER ONE RELOAD CONTENT');
     await page
-      .locator('button')
+      .locator('[data-container-name="annotation-toolbar"] button')
       .filter({ hasText: /^Comment$/ })
       .click();
     const modal = page.getByRole('dialog', { name: 'Comment' });

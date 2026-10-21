@@ -751,6 +751,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': '正在加载同步历史…',
   'reader.syncedUnavailable': '同步阅读历史不可用',
   'reader.noLocalActivity': '此设备尚未记录本地阅读活动。',
+  'reader.localInsightsUnavailable': '本地阅读统计不可用 — 无法读取设备存储。',
   'reader.noSyncedHistory': '此书籍没有同步的阅读历史。',
   'reader.exportInsights': '导出阅读统计（JSON）',
   'reader.exportInsightsNote': '仅限设备本地指标。不包含个人数据、电子邮件或凭据。',

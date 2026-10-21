@@ -1,0 +1,146 @@
+name: Duplicate PR Guard
+
+run-name: Duplicate PR guard - ${{ github.event_name }}
+
+# GOAP-276 Phase 2 — "Duplicate-PR pre-flight guard (scheduled detection
+# workflow)".
+#
+# This workflow DETECTS duplicate open pull requests. It is read-only by
+# construction: it holds `pull-requests: read` / `contents: read` and nothing
+# else, so it cannot close, re-title, comment on or otherwise mutate a pull
+# request even if it wanted to. A detected duplicate turns the run red and
+# publishes the offending pull-request numbers and URLs to the job summary;
+# a human decides what to close.
+#
+# The duplicate rule is deliberately conservative and lives in
+# `scripts/check-duplicate-prs.mjs`: two open pull requests are duplicates
+# only when they share one base branch AND one normalized title (NFKC,
+# control characters to spaces, whitespace runs collapsed, trimmed,
+# lower-cased). No fuzzy matching, no conventional-commit prefix stripping,
+# no author/branch/file heuristics — every one of those raises the
+# false-positive rate of a check that turns a scheduled run red.
+
+on:
+  schedule:
+    # Tuesdays 07:30 UTC. Off the hour on purpose: the other scheduled
+    # workflows in this repository run at :00 and share the runner queue.
+    - cron: '30 7 * * 2'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+# Nothing is granted by default; the job opts in to exactly what it reads.
+permissions: {}
+
+jobs:
+  duplicate-pr-guard:
+    name: Duplicate open PR guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: '22'
+
+      # A guard that can never report a duplicate is a green check that means
+      # nothing, so the detector proves itself before its verdict is trusted.
+      # The self-test is hermetic: duplicate match, different base branch and
+      # non-duplicate, with no network access.
+      - name: Verify the detector is not vacuous
+        run: node scripts/check-duplicate-prs.mjs --self-test
+
+      # End-to-end proof against the committed fixture: the fixture contains
+      # one duplicate pair, so the scanner must exit 1. The exit code is
+      # captured rather than propagated, because a non-1 exit means the
+      # detector regressed, not that the fixture is clean.
+      - name: Fixture proof (the duplicate pair must be detected)
+        run: |
+          status=0
+          node scripts/check-duplicate-prs.mjs \
+            --input scripts/__tests__/fixtures/open-pull-requests.json \
+            --repo example/repo || status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "Expected exit code 1 (duplicate found) for the fixture, got $status." >&2
+            exit 1
+          fi
+
+      # Collect the open pull requests, page by page. The response is
+      # projected down to the four fields the rule needs, so no pull-request
+      # body or other prose is ever read or written to disk. The payload is
+      # JSON on disk and is parsed with JSON.parse — pull-request text is
+      # never interpolated into a shell command.
+      - name: Collect open pull requests (read-only, paginated)
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_PAYLOAD: ${{ runner.temp }}/open-pull-requests.json
+        with:
+          script: |
+            const fs = require('node:fs');
+            const { owner, repo } = context.repo;
+            const perPage = 100;
+            const pulls = [];
+
+            for (let page = 1; ; page += 1) {
+              const { data } = await github.rest.pulls.list({
+                owner,
+                repo,
+                state: 'open',
+                per_page: perPage,
+                page,
+              });
+              for (const pull of data) {
+                pulls.push({
+                  number: pull.number,
+                  title: pull.title,
+                  base: { ref: pull.base?.ref ?? '' },
+                  draft: pull.draft === true,
+                  html_url: pull.html_url,
+                });
+              }
+              if (data.length < perPage) break;
+            }
+
+            fs.writeFileSync(
+              process.env.PR_PAYLOAD,
+              JSON.stringify({ repo: `${owner}/${repo}`, pulls }, null, 2),
+            );
+            core.info(`Collected ${pulls.length} open pull request(s).`);
+
+      # Exits 1 when duplicates are found, which fails the job and therefore
+      # the scheduled run. It only reads the payload file.
+      - name: Detect duplicate open pull requests
+        run: |
+          node scripts/check-duplicate-prs.mjs \
+            --input "$PR_PAYLOAD" \
+            --summary "$REPORT" \
+            --repo "$GITHUB_REPOSITORY"
+        env:
+          PR_PAYLOAD: ${{ runner.temp }}/open-pull-requests.json
+          REPORT: ${{ runner.temp }}/duplicate-pr-report.md
+
+      # `always()` so the report is published even when the detection step
+      # failed — the report is the actionable part of a red run.
+      - name: Publish the report to the job summary
+        if: always()
+        run: |
+          if [ -f "$REPORT" ]; then
+            cat "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'The duplicate-PR report was not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+        env:
+          REPORT: ${{ runner.temp }}/duplicate-pr-report.md

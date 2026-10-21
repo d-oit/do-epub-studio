@@ -40,13 +40,7 @@ const config: KnipConfig = {
       // are still found by knip's vitest plugin.
       vitest: { config: [] },
       // These are all consumed via CLI or config files that knip doesn't trace.
-      ignoreDependencies: [
-        'wrangler',
-        'js-yaml',
-        'impeccable',
-        'madge',
-        'rollup-plugin-visualizer',
-      ],
+      ignoreDependencies: ['js-yaml', 'impeccable', 'madge', 'rollup-plugin-visualizer'],
     },
 
     // ---- apps/web --------------------------------------------------------

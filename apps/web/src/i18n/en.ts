@@ -783,6 +783,8 @@ export const en = {
   'reader.loadingSynced': 'Loading synchronized history…',
   'reader.syncedUnavailable': 'Synced reading history unavailable',
   'reader.noLocalActivity': 'No local reading activity recorded on this device yet.',
+  'reader.localInsightsUnavailable':
+    'Local reading insights unavailable — device storage could not be read.',
   'reader.noSyncedHistory': 'No synchronized reading history for this book.',
   'reader.exportInsights': 'Export Reading Insights (JSON)',
   'reader.exportInsightsNote':

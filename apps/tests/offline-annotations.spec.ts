@@ -8,6 +8,7 @@ import {
   selectReaderPassage,
   suppressWorkboxErrors,
   TEST_USER,
+  waitForServiceWorkerActivation,
 } from './fixtures';
 
 const EPUB_BUFFER = createMinimalEpub(
@@ -332,6 +333,13 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     await expect.poll(getChapterText, { timeout: 30000 }).toContain('OFFLINE ANNOTATION PASSAGE');
 
+    // Wait for the service worker to be ACTIVATED before reloading:
+    // `registerType: 'prompt'` means only pages loaded after activation are
+    // controlled, and the activation is asynchronous. A reload issued while
+    // the worker is still installing lands on an uncontrolled client, so the
+    // "must control the page" check below fails intermittently.
+    await waitForServiceWorkerActivation(page);
+
     // Reload to ensure SW controls the client
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
@@ -381,7 +389,11 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     // Select passage again and create ordinary comment
     await selectReaderPassage(page, 'OFFLINE ANNOTATION PASSAGE');
-    const commentSelectionBtn = page.locator('button').filter({ hasText: /^Comment$/ });
+    // Scope the locator to the selection toolbar: the reader banner carries a
+    // "Comment" button too, and acting on that one opens no comment dialog.
+    const commentSelectionBtn = page
+      .locator('[data-container-name="annotation-toolbar"] button')
+      .filter({ hasText: /^Comment$/ });
     await commentSelectionBtn.focus();
     await page.keyboard.press('Enter');
     const commentModal = page.getByRole('dialog', { name: 'Comment' });
@@ -538,7 +550,9 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     rejectCommentWrites = true;
     await selectReaderPassage(page, 'OFFLINE ANNOTATION PASSAGE');
-    const selectionCommentButton = page.locator('button').filter({ hasText: /^Comment$/ });
+    const selectionCommentButton = page
+      .locator('[data-container-name="annotation-toolbar"] button')
+      .filter({ hasText: /^Comment$/ });
     await selectionCommentButton.focus();
     await page.keyboard.press('Enter');
     const rejectedCommentModal = page.getByRole('dialog', { name: 'Comment' });

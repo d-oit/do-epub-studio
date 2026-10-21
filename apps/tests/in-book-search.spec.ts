@@ -64,7 +64,7 @@ test.describe('In-book search', () => {
     await expect(page.getByRole('search')).not.toBeVisible();
   });
 
-  test('@mobile search panel shows empty state for no results', async ({ page }) => {
+  test('@mobile @smoke search panel shows empty state for no results', async ({ page }) => {
     suppressWorkboxErrors(page);
     await loginAsReader(page, SEARCH_BOOK_USER.bookSlug);
     await expect(page).toHaveURL(/\/read\/search-test-book/);

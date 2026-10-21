@@ -7,6 +7,7 @@ import {
   type PermissionCache,
 } from './db';
 import { api } from '../api';
+import { useAuthStore } from '@/stores/auth';
 
 const PERMISSION_CACHE_TTL = 24 * 60 * 60 * 1000;
 
@@ -33,13 +34,22 @@ export async function validatePermission(bookId: string): Promise<CachedPermissi
   }
 
   try {
-    const response = await api.get(`/api/access/validate?bookId=${bookId}`);
+    // `/api/access/validate` resolves the session from the bearer token, so
+    // the check must carry it; without it the server answers 401 and the
+    // permission is never refreshed from the server.
+    const sessionToken = useAuthStore.getState().sessionToken;
+    if (!sessionToken) throw new Error('Session expired');
+    const response = await api.get(`/api/access/validate?bookId=${bookId}`, {
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
     if (response.ok) {
-      const data = (await response.json()) as {
-        grantId: string;
-        canComment: boolean;
-        canDownloadOffline: boolean;
+      // The worker answers with the standard `{ ok, data }` envelope, so the
+      // payload lives under `data`. Reading the envelope directly yields
+      // `undefined` for every field.
+      const envelope = (await response.json()) as {
+        data: { grantId: string; canComment: boolean; canDownloadOffline: boolean };
       };
+      const data = envelope.data;
       const permission: PermissionCache = {
         bookId,
         grantId: data.grantId,
@@ -93,16 +103,29 @@ export async function clearAllPermissions(): Promise<void> {
   await clearAllPermissionCache();
 }
 
-export function setupZombieDetection(onRevoked: (bookId: string) => void): () => void {
+export function setupZombieDetection(
+  sessionToken: string,
+  onRevoked: (bookId: string) => void,
+): () => void {
   let intervalId: ReturnType<typeof setInterval> | null = null;
 
   const checkPermissions = async (): Promise<void> => {
     if (!navigator.onLine) return;
 
     try {
-      const response = await api.get('/api/access/validate-all');
+      const response = await api.get('/api/access/validate-all', {
+        headers: { Authorization: `Bearer ${sessionToken}` },
+      });
       if (response.ok) {
-        const data = (await response.json()) as { grantIds: string[]; revokedBookIds: string[] };
+        // The worker answers with the standard `{ ok, data }` envelope, so the
+        // payload lives under `data`. Reading the envelope directly made
+        // `new Set(undefined)` throw, and the surrounding catch swallowed it —
+        // so a revoked grant was never detected and the poll silently did
+        // nothing on every interval.
+        const envelope = (await response.json()) as {
+          data: { grantIds: string[]; revokedBookIds: string[] };
+        };
+        const data = envelope.data;
         const validGrantIds = new Set(data.grantIds);
         const revokedBookIds = new Set(data.revokedBookIds);
 

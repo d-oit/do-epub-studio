@@ -1,0 +1,58 @@
+{
+  "_comment": [
+    "Deterministic fixture for scripts/check-duplicate-prs.mjs (GOAP-276 Phase 2).",
+    "Shaped like the GitHub REST API `GET /repos/{owner}/{repo}/pulls` response so the",
+    "scanner can be exercised end to end with no network access.",
+    "The `_comment` key is ignored by the scanner; the `pulls` array is the payload.",
+    "The three cases the detector must distinguish:",
+    "  - #101 / #102 — same title, same base branch  => DUPLICATE (one group)",
+    "  - #103 / #104 — same title, different base    => not a duplicate",
+    "  - #105 / #106 — different titles, same base   => not a duplicate",
+    "All identities are obviously fake (example/repo), per the privacy-first policy."
+  ],
+  "repo": "example/repo",
+  "pulls": [
+    {
+      "number": 101,
+      "title": "fix(reader): keep the CFI anchor when the chapter is renamed",
+      "base": { "ref": "main" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/101"
+    },
+    {
+      "number": 102,
+      "title": "Fix(reader): Keep the CFI anchor when the chapter is renamed",
+      "base": { "ref": "main" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/102"
+    },
+    {
+      "number": 103,
+      "title": "chore(deps): bump the lint toolchain",
+      "base": { "ref": "main" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/103"
+    },
+    {
+      "number": 104,
+      "title": "chore(deps): bump the lint toolchain",
+      "base": { "ref": "release/1.x" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/104"
+    },
+    {
+      "number": 105,
+      "title": "docs(adr): index the new duplicate-PR guard ADR",
+      "base": { "ref": "main" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/105"
+    },
+    {
+      "number": 106,
+      "title": "docs(adr): index the new duplicate-PR guard decision record",
+      "base": { "ref": "main" },
+      "draft": false,
+      "html_url": "https://github.com/example/repo/pull/106"
+    }
+  ]
+}

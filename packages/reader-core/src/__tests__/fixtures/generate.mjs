@@ -137,7 +137,7 @@ function contentOpf(opts) {
   const manifest = opts.manifest
     .map(
       (item) =>
-        `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"/>`,
+        `    <item id="${escapeXml(item.id)}" href="${escapeXml(item.href)}" media-type="${escapeXml(item.mediaType)}"${item.properties ? ` properties="${escapeXml(item.properties)}"` : ''}/>`,
     )
     .join('\n');
 
@@ -215,10 +215,10 @@ async function generateMinimalEpub() {
           language: 'en',
           identifier: 'urn:uuid:test-001',
           manifest: [
-            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml' },
+            { id: 'nav', href: 'nav.xhtml', mediaType: 'application/xhtml+xml', properties: 'nav' },
             { id: 'section0001', href: 'section0001.xhtml', mediaType: 'application/xhtml+xml' },
           ],
-          spine: [{ idref: 'nav', properties: 'nav' }, { idref: 'section0001' }],
+          spine: [{ idref: 'section0001' }],
         }),
         'utf-8',
       ),
