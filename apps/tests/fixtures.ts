@@ -757,6 +757,13 @@ export const EPUB_CONTENT_FRAME_SELECTOR = `${EPUB_CONTENT_HOST_SELECTOR} iframe
  * the matching text node and dispatching a `mouseup`, so the annotation
  * toolbar sees a real selection (restored with the A1 offline-annotations
  * spec, GOAP-311).
+ *
+ * The `mouseup` is dispatched from inside the frame, but the toolbar is
+ * rendered by the *app* in the top document after React processes the
+ * selection event. The helper therefore waits for the toolbar to appear:
+ * without that wait the caller can look for the "Comment" control before it
+ * is mounted, and the failure looks like a missing toolbar rather than a
+ * race in the helper.
  */
 export async function selectReaderPassage(page: Page, text: string): Promise<void> {
   const iframeLocator = page.locator(`${EPUB_CONTENT_FRAME_SELECTOR}, iframe`).first();
@@ -807,4 +814,11 @@ export async function selectReaderPassage(page: Page, text: string): Promise<voi
   if (!selected) {
     throw new Error(`Target text "${text}" not found in iframe to select`);
   }
+
+  // The selection toolbar is the app's acknowledgement that it saw the
+  // selection. Wait for it so the caller never races the render.
+  await page
+    .locator('button', { hasText: /^(Highlight|Comment)$/ })
+    .first()
+    .waitFor({ state: 'visible', timeout: 15000 });
 }

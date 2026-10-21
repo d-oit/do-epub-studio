@@ -332,6 +332,28 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
 
     await expect.poll(getChapterText, { timeout: 30000 }).toContain('OFFLINE ANNOTATION PASSAGE');
 
+    // Wait for the service worker to be ACTIVATED before reloading.
+    // `registerType: 'prompt'` means only pages loaded after activation are
+    // controlled, and the activation is asynchronous: a reload issued while
+    // the worker is still installing lands on an uncontrolled client, so the
+    // "must control the page" check below fails intermittently. Waiting for
+    // the activation first removes the race — the reload then necessarily
+    // produces a controlled client.
+    await expect
+      .poll(
+        async () =>
+          page.evaluate(async () => {
+            try {
+              const registration = await navigator.serviceWorker.ready;
+              return Boolean(registration.active);
+            } catch {
+              return false;
+            }
+          }),
+        { timeout: 15000, message: 'Service Worker must activate before the controlled reload' },
+      )
+      .toBe(true);
+
     // Reload to ensure SW controls the client
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
