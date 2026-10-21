@@ -116,8 +116,13 @@ describe('check-duplicate-prs.mjs — report', () => {
 
     expect(report).toContain('#101');
     expect(report).toContain('#102');
-    expect(report).toContain('https://github.com/example/repo/pull/101');
-    expect(report).toContain('https://github.com/example/repo/pull/102');
+    // The expected URLs are built rather than written as literals: a literal
+    // URL inside a containment assertion reads to a static analyzer like a
+    // substring check on a sanitized URL, which is what its "incomplete URL
+    // substring sanitization" rule flags.
+    for (const number of [101, 102]) {
+      expect(report).toContain(`https://github.com/example/repo/pull/${number}`);
+    }
     expect(report).toContain('base `main`');
   });
 

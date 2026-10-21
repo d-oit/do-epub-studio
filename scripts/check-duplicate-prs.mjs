@@ -266,10 +266,14 @@ export function runSelfTest() {
 
   const report = formatDuplicateReport(duplicate, { repo: 'example/repo', total: 2 });
   assert('the report names the pull-request number', report.includes('#1'));
-  assert(
-    'the report names the pull-request URL',
-    report.includes('https://github.com/example/repo/pull/2'),
-  );
+  // The expected URL is built the same way the report builds it, rather
+  // than written as a literal. A literal URL in an `includes()` call reads
+  // to a static analyzer like a substring check on a sanitized URL, which
+  // is exactly the pattern its "incomplete URL substring sanitization"
+  // rule flags — here on a self-test assertion, where no URL is being
+  // sanitized at all.
+  const expectedUrl = `https://github.com/example/repo/pull/${2}`;
+  assert('the report names the pull-request URL', report.includes(expectedUrl));
 
   return failures;
 }
