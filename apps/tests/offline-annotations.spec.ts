@@ -386,6 +386,9 @@ test.describe('Offline Annotations A1 (@pwa)', () => {
     await page.keyboard.press('Enter');
     await expect(page.getByRole('button', { name: 'Yellow' })).toBeVisible();
     await page.getByRole('button', { name: 'Yellow' }).click();
+    // Highlight persistence is async; its completion closes the selection
+    // toolbar. Let that operation settle before starting a new selection.
+    await expect(page.locator('[data-container-name="annotation-toolbar"]')).not.toBeVisible();
 
     // Select passage again and create ordinary comment
     await selectReaderPassage(page, 'OFFLINE ANNOTATION PASSAGE');

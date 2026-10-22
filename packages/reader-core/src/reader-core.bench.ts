@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { bench, beforeAll, describe } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { createLocator, parseLocator, locatorToString } from './locator';
 import { reanchorByText } from './reanchor';
@@ -81,43 +81,108 @@ describe('reader-core performance', () => {
       },
       { id: '3', label: 'Chapter 3', href: 'ch3.xhtml' },
     ];
+    const FUZZY_TARGET = 'important concepts key ideas topic discussion';
+    const FUZZY_CONTENT = 'The chapter discusses important concepts and key ideas about the topic.';
+    const FUZZY_TOC = [{ id: 'fuzzy', label: 'Fuzzy chapter', href: 'fuzzy.xhtml' }];
+    const LARGE_TEXT = `${FUZZY_CONTENT} `.repeat(2800);
+    const stressToc = [{ id: '1', label: 'Large Chapter', href: 'large.xhtml' }];
+    const ROOT_COUNT = 500;
+    const CHILDREN_PER_ROOT = 10;
+    const TRAVERSAL_TARGET = 'last child target phrase';
+    const LAST_CHILD_HREF = `root-${ROOT_COUNT - 1}-child-${CHILDREN_PER_ROOT - 1}.xhtml`;
+
     function mockLoadContent(href: string): Promise<string> {
       if (href === 'ch3.xhtml') return Promise.resolve('Some other content here.');
       if (href === 'ch2-1.xhtml')
         return Promise.resolve('The quick brown fox jumps over the lazy dog.');
+      if (href === 'fuzzy.xhtml') return Promise.resolve(FUZZY_CONTENT);
       return Promise.resolve('Nothing interesting here.');
     }
+
+    function stressLoadContent(): Promise<string> {
+      return Promise.resolve(LARGE_TEXT);
+    }
+
+    const TOC_WITH_ANCHORS = Array.from({ length: 50 }, (_, i) => ({
+      id: i.toString(),
+      label: `Section ${i}`,
+      href: `large.xhtml#sec${i}`,
+    }));
+
+    const traversalToc = Array.from({ length: ROOT_COUNT }, (_, rootIndex) => ({
+      id: `root-${rootIndex}`,
+      label: `Root ${rootIndex}`,
+      href: `root-${rootIndex}.xhtml`,
+      subitems: Array.from({ length: CHILDREN_PER_ROOT }, (_, childIndex) => ({
+        id: `root-${rootIndex}-child-${childIndex}`,
+        label: `Child ${childIndex}`,
+        href: `root-${rootIndex}-child-${childIndex}.xhtml`,
+      })),
+    }));
+
+    function traversalLoadContent(href: string): Promise<string> {
+      return Promise.resolve(
+        href === LAST_CHILD_HREF
+          ? `The ${TRAVERSAL_TARGET} appears here.`
+          : 'An unrelated chapter with no matching words.',
+      );
+    }
+
+    beforeAll(async () => {
+      const fuzzyResult = await reanchorByText(FUZZY_TARGET, FUZZY_TOC, mockLoadContent);
+      if (!fuzzyResult.success || fuzzyResult.matchType !== 'fuzzy') {
+        throw new Error('Fuzzy benchmark fixture did not produce a fuzzy match.');
+      }
+
+      const stressResult = await reanchorByText(FUZZY_TARGET, stressToc, stressLoadContent);
+      if (!stressResult.success || stressResult.matchType !== 'fuzzy') {
+        throw new Error('Large-content benchmark fixture did not produce a fuzzy match.');
+      }
+
+      let anchorLoadCount = 0;
+      const anchorResult = await reanchorByText('missing target phrase', TOC_WITH_ANCHORS, () => {
+        anchorLoadCount += 1;
+        return Promise.resolve(LARGE_TEXT);
+      });
+      if (anchorResult.success || anchorLoadCount !== 1) {
+        throw new Error('50-anchor benchmark fixture did not load its chapter exactly once.');
+      }
+
+      let traversalLoadCount = 0;
+      const traversalResult = await reanchorByText(TRAVERSAL_TARGET, traversalToc, async (href) => {
+        traversalLoadCount += 1;
+        return traversalLoadContent(href);
+      });
+      if (
+        !traversalResult.success ||
+        traversalResult.chapterHref !== LAST_CHILD_HREF ||
+        traversalLoadCount !== ROOT_COUNT * (CHILDREN_PER_ROOT + 1)
+      ) {
+        throw new Error('TOC traversal benchmark fixture did not reach its last child.');
+      }
+    });
 
     bench('reanchor: Pass 1 (exact match in subitem)', async () => {
       await reanchorByText(targetText, toc, mockLoadContent);
     });
 
-    const targetTextFuzzy = 'The fast brown fox leaps over a sleepy dog.';
     bench('reanchor: Pass 2 (fuzzy match)', async () => {
-      await reanchorByText(targetTextFuzzy, toc, mockLoadContent);
+      await reanchorByText(FUZZY_TARGET, FUZZY_TOC, mockLoadContent);
     });
 
     describe('stress tests', () => {
-      const LARGE_TEXT = 'The quick brown fox jumps over the lazy dog. '.repeat(4000);
-      const stressToc = [{ id: '1', label: 'Large Chapter', href: 'large.xhtml' }];
-      function stressLoadContent(): Promise<string> {
-        return Promise.resolve(LARGE_TEXT);
-      }
-      const stressTarget =
-        'The fast brown fox leaps over a sleepy dog but it is quite long and has many words to check overlap with.';
+      const stressTarget = FUZZY_TARGET;
 
       bench('reanchor: Pass 2 Stress (200KB, many words)', async () => {
         await reanchorByText(stressTarget, stressToc, stressLoadContent);
       });
 
-      const TOC_WITH_ANCHORS = Array.from({ length: 50 }, (_, i) => ({
-        id: i.toString(),
-        label: `Section ${i}`,
-        href: `large.xhtml#sec${i}`,
-      }));
-
       bench('reanchor: 50 anchors in 1 chapter (caching test)', async () => {
-        await reanchorByText('No match', TOC_WITH_ANCHORS, stressLoadContent);
+        await reanchorByText('missing target phrase', TOC_WITH_ANCHORS, stressLoadContent);
+      });
+
+      bench('reanchor: TOC traversal (500 roots, 10 children, last child)', async () => {
+        await reanchorByText(TRAVERSAL_TARGET, traversalToc, traversalLoadContent);
       });
     });
   });

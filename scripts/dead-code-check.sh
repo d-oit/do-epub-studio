@@ -31,11 +31,10 @@ fi
 echo ""
 
 echo "=== madge: circular dependencies ==="
-MADGE_OUT="$(pnpm madge --circular --extensions ts,tsx \
-  apps/web/src apps/worker/src \
-  packages/shared/src packages/schema/src \
-  packages/reader-core/src packages/ui/src \
-  packages/testkit/src 2>&1)" || true
+if ! MADGE_OUT="$(node scripts/madge-circular-check.cjs 2>&1)"; then
+    echo "Madge resolution failed; skipped imports are blocking." >&2
+    FAILED=1
+fi
 
 echo "$MADGE_OUT"
 
