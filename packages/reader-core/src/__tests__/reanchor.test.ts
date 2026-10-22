@@ -95,6 +95,56 @@ describe('reanchorByText', () => {
     expect(result.chapterHref).toBe('section3a.xhtml');
   });
 
+  it('preserves nested preorder and preferred chapter priority without mutating the TOC', async () => {
+    const toc: TocItem[] = [
+      {
+        id: 'a',
+        label: 'A',
+        href: 'a.xhtml',
+        subitems: [
+          { id: 'a1', label: 'A1', href: 'a1.xhtml' },
+          { id: 'a2', label: 'A2', href: 'a2.xhtml' },
+        ],
+      },
+      { id: 'b', label: 'B', href: 'b.xhtml' },
+    ];
+    const tocBefore = structuredClone(toc);
+    const loadContent = vi.fn((href: string) => {
+      if (href === 'a2.xhtml' || href === 'b.xhtml') {
+        return Promise.resolve('The target text appears here.');
+      }
+      return Promise.resolve('Different chapter contents.');
+    });
+
+    const defaultResult = await reanchorByText('target text', toc, loadContent);
+    const preferredResult = await reanchorByText('target text', toc, loadContent, {
+      preferChapter: 'b.xhtml',
+    });
+
+    expect(defaultResult.chapterHref).toBe('a2.xhtml');
+    expect(preferredResult.chapterHref).toBe('b.xhtml');
+    expect(toc).toEqual(tocBefore);
+  });
+
+  it('keeps the first preorder href for duplicate fragments and loads the base chapter once', async () => {
+    const toc: TocItem[] = [
+      {
+        id: 'root',
+        label: 'Root',
+        href: 'shared.xhtml#first',
+        subitems: [{ id: 'child', label: 'Child', href: 'shared.xhtml#second' }],
+      },
+      { id: 'later', label: 'Later', href: 'shared.xhtml#third' },
+    ];
+    const loadContent = vi.fn().mockResolvedValue('The target text appears here.');
+
+    const result = await reanchorByText('target text', toc, loadContent);
+
+    expect(result.chapterHref).toBe('shared.xhtml#first');
+    expect(loadContent).toHaveBeenCalledTimes(1);
+    expect(loadContent).toHaveBeenCalledWith('shared.xhtml');
+  });
+
   it('returns failure when not found anywhere', async () => {
     const loadContent = vi.fn().mockResolvedValue('Completely different content.');
     const result = await reanchorByText('target text not present', mockToc, loadContent);
