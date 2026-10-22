@@ -100,8 +100,9 @@ export async function reanchorByText(
   const baseToHref = new Map<string, string>();
   // Use iterative stack-based traversal to avoid recursion overhead
   const stack: TocItem[] = [];
-  for (const item of [...toc].reverse()) {
-    stack.push(item);
+  for (let i = toc.length - 1; i >= 0; i--) {
+    const item = toc[i];
+    if (item) stack.push(item);
   }
 
   while (stack.length > 0) {
@@ -116,8 +117,9 @@ export async function reanchorByText(
     }
 
     if (item.subitems) {
-      for (const sub of [...item.subitems].reverse()) {
-        stack.push(sub);
+      for (let i = item.subitems.length - 1; i >= 0; i--) {
+        const sub = item.subitems[i];
+        if (sub) stack.push(sub);
       }
     }
   }
