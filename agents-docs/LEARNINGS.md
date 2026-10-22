@@ -877,3 +877,7 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 ### Reader re-anchoring fallback path
 
 - **`src/reanchor.ts` is the direct/Worker-unavailable fallback, not the browser worker implementation**: `src/index.ts` exports the public `reanchorByText` through `reanchor-worker.ts`, which calls the direct implementation only when a Worker is unavailable. Keep verification claims specific to the path changed.
+
+### Production patch lockfile integrity
+
+- PR #1369's duplicated Zod keys coexisted with a stale Transformers peer/snapshot reference. Deleting duplicate keys alone would not repair the graph. Regenerate from the final main lock with pnpm's exact-target recipe, restore caret specifiers, and validate package/snapshot correspondence plus frozen installation. Transformers 4.3.1 resolves with the current `@types/node@26.6.5` peer; keep ONNX build approval unchanged.
