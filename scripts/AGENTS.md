@@ -86,3 +86,5 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 ## Affected-package verification has one scheduler
 
 - A recursive `pnpm --filter "...[origin/main]" run test:unit` can select the root package as well as workspace packages. The root script starts Turbo, duplicating those workspace suites beside the directly launched ones. `verify:fast` uses Turbo's equivalent dependent filter with `--concurrency=1`; preserve the shared redaction timing assertion rather than loosening it to accommodate duplicate scheduling.
+- The root `test:unit` and coverage-passthrough commands serialize workspace tasks with Turbo's `--concurrency=1` before the `--` separator. Prove serialization from a forced run's `.turbo/runs` execution intervals, not its elapsed time; PR #1370 verified 8 uncached, non-overlapping tasks with Turbo 2.11.9.
+- A fresh bare-unit run can report missing `coverage/**` outputs because the same task caches reports when invoked with `--coverage`. Do not remove those outputs to silence a bare run: it would lose cached coverage artifacts. The explicit disposition and task-contract blocker are ADR-1013 / GOAP-1013.
