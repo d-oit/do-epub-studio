@@ -13,6 +13,7 @@ Correcting a benchmark fixture in PR #1377 caused CI to compare different worklo
 - The baseline implementation runs the same corrected reader-core benchmark fixture as the head. The baseline implementation and locked dependency graph remain unchanged; no implementation source is copied from the head. The comparison threshold and combined-rme rule remain unchanged.
 - The Full Quality Gate installs the same pinned, checksum-verified do-harness binary as the completion-contract job. A job cannot rely on another job's filesystem installation.
 - Browser interaction failures remain blocking until diagnosed and exercised. A passing subset or a retry without cause analysis does not replace the failed consumer journey.
+- Affected unit tasks have one scheduler: Turbo with the existing changed-package/dependent filter and one task at a time. Recursive pnpm must not launch the root orchestrator alongside the same workspace suites. A timing-assertion failure does not authorize relaxing the assertion or changing redaction behavior without separate evidence.
 
 ## Consequences
 

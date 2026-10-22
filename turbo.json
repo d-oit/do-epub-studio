@@ -73,6 +73,9 @@
       ],
       "outputs": ["coverage/**"]
     },
+    "@do-epub-studio/e2e#test:unit": {
+      "outputs": []
+    },
     "test": {
       "dependsOn": ["test:unit"]
     },

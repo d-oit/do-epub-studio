@@ -82,3 +82,7 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 
 - `scripts/madge-circular-check.cjs` attaches Vite and Cloudflare import mappings to the same `filing-cabinet` instance used by Madge's nested `dependency-tree`; keep the check fail-closed on unresolved imports.
 - The runtime cycle graph follows TS/TSX and code dependencies only. CSS, declaration files, and other assets are not runtime-code edges; do not suppress skipped-module warnings or claim the static check proves runtime behavior.
+
+## Affected-package verification has one scheduler
+
+- A recursive `pnpm --filter "...[origin/main]" run test:unit` can select the root package as well as workspace packages. The root script starts Turbo, duplicating those workspace suites beside the directly launched ones. `verify:fast` uses Turbo's equivalent dependent filter with `--concurrency=1`; preserve the shared redaction timing assertion rather than loosening it to accommodate duplicate scheduling.
