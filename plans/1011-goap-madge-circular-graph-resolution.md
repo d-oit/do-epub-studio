@@ -1,6 +1,6 @@
 # GOAP-1011: Model repository imports in Madge's circular-dependency graph
 
-**Status:** IN PROGRESS — implementation and targeted proof complete; full quality gate pending.
+**Status:** DONE — targeted behavior tests, local full quality gate, and CI Full Quality Gate passed.
 **Owner:** PR #1377 repair
 **Related:** ADR-1011 (`plans/1011-adr-madge-runtime-graph.md`), `scripts/dead-code-check.sh`
 
@@ -30,8 +30,8 @@ Keep cycle detection over runtime code, resolve the repository's valid bundler/p
 
 - `bats scripts/tests/madge-circular-check.bats` — 4/4 passed.
 - `./scripts/dead-code-check.sh` — passed; 712 code files processed, no skipped imports or cycles.
-- Full quality gate with the new checker: pending.
+- Full quality gate with the new checker: passed locally and in CI run `39761528260` (`Full Quality Gate`).
 
 ## Completion
 
-Implementation and targeted proofs are in PR #1377. Update this record to DONE only after the full quality gate passes.
+Implementation, 4/4 targeted proofs, and the full quality gate are complete in PR #1377.

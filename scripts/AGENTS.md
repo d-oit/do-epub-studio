@@ -76,6 +76,7 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 
 - **The regression decision is TWO bars**: a head run fails CI only when its ops/s drop clears the 30% policy threshold AND exceeds the combined relative margin of error (`rme_baseline + rme_head`) — the drop must be distinguishable from the two measurements' own noise. Drops inside the noise band print `≈` and never fail; under-threshold drops print `⚠️`. The default threshold lives in `scripts/compare-benchmarks.mjs`; CI passes no override, and `scripts/__tests__/compare-benchmarks.test.mjs` pins the decision table.
 - **Why 30% and not 20%**: the `Benchmark` job's baseline/head runs on shared GitHub runners reach ±28% reported rme on the jsdom reader-core benches; a single comparison moved untouched benchmarks by −14…−19% and failed PR #1294 at −20.99% while paired local runs measured no difference. Full evidence in `plans/312-adr-benchmark-regression-gate-noise.md`. Do not raise or lower a bar here without benchmark evidence — that is "weakening a sensor" per ADR-246.
+- **Fixture changes are not implementation regressions.** CI must run the same corrected benchmark inputs against base and head. PR #1377 changed the 50-anchor query from an early return to a chapter scan; comparing old and new fixtures under one name reported a false −99.99% regression. Keep the implementation and dependency graph on the base revision, not the obsolete benchmark input.
 
 ## Madge circular graph resolution
 
