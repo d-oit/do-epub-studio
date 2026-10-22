@@ -31,11 +31,11 @@
     "@cloudflare/workers-types": "^5.20261016.1",
     "@do-epub-studio/testkit": "workspace:*",
     "@types/node": "^26",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "4.1.12",
     "eslint": "^10.13.0",
     "jszip": "^3.10.2",
     "typescript": "^6.0.3",
-    "vitest": "4.1.11",
+    "vitest": "4.1.12",
     "wrangler": "^4.151.1"
   }
 }
