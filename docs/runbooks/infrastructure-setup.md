@@ -96,7 +96,8 @@ the reader grant **there**:
 ```bash
 # once per account; keep the returned id in wrangler.toml [env.preview]
 pnpm exec wrangler d1 create do-epub-studio-preview
-pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations apply do-epub-studio-preview --remote
+# from the repository root; [env.preview] declares the DB and its migrations_dir
+pnpm exec wrangler d1 migrations apply DB --remote --env preview
 ```
 
 Production binds `do-epub-studio` only and must stay free of demo rows: a shared

@@ -31,6 +31,7 @@ WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
 binding = "DB"
 database_name = "do-epub-studio-preview"
 database_id = "0211de6a-1eb5-422c-9fb0-27360a25bb6a"
+migrations_dir = "packages/schema/migrations"
 
 [[env.preview.kv_namespaces]]
 binding = "CACHE_KV"
