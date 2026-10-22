@@ -71,9 +71,12 @@
         "tsconfig*.json",
         "package.json"
       ],
-      "outputs": ["coverage/**"]
+      "outputs": []
     },
     "@do-epub-studio/e2e#test:unit": {
+      "outputs": []
+    },
+    "@do-epub-studio/e2e#test:coverage": {
       "outputs": []
     },
     "test": {

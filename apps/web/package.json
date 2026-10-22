@@ -14,6 +14,7 @@
     "bundle:budget": "node ../../scripts/check-bundle-budget.mjs",
     "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 node ../../scripts/check-bundle-budget.mjs",
     "test:unit": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run",
+    "test:coverage": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vitest run --coverage",
     "test": "echo \"Use test:unit or pnpm test:e2e from root\"",
     "test:e2e": "echo \"Run pnpm test:e2e from root\""
   },

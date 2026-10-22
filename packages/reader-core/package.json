@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "scripts": {
     "test:unit": "node src/__tests__/fixtures/generate.mjs && vitest --run",
+    "test:coverage": "node src/__tests__/fixtures/generate.mjs && vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings 0",
     "bench": "vitest bench"
