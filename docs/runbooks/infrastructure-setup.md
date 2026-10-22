@@ -19,9 +19,12 @@ Worker deployment, no `VITE_API_BASE_URL`, and no CORS** — the web app's
 production default (`window.location.origin`) already targets same-origin
 `/api/*`.
 
-Cloudflare resources (D1, R2, KV) are bound to the Pages project via the
-dashboard. The Worker's `wrangler.jsonc` is still used for **local dev**
-(`wrangler dev`) and tests only.
+Cloudflare resources (D1, R2, KV) are bound to the Pages project by the **root
+`wrangler.toml`** — bindings set through the dashboard/API
+(`deployment_configs`) were not applied to Git-integrated builds (issue #1014),
+and keeping them in the file makes the production and preview resources
+reviewable in code. Secrets stay in the dashboard. The Worker's `wrangler.jsonc`
+is still used for **local dev** (`wrangler dev`) and tests only.
 
 ---
 
@@ -80,6 +83,26 @@ Redeploy the project for the binding to take effect.
 pnpm exec wrangler d1 execute do-epub-studio --remote --command="SELECT COUNT(*) FROM books"
 pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations list do-epub-studio
 ```
+
+### Preview database
+
+Preview deployments bind their **own** database from
+`[env.preview.d1_databases]` in the root `wrangler.toml`
+(`do-epub-studio-preview`). Preview is the only environment that opens the demo
+gates (`DEMO_LOGIN_ENABLED=1`, `DEMO_ACCOUNTS_PROD_ALLOWLIST=demo-preview`), so
+the ADR-233 demo seed writes the demo accounts, the placeholder demo book and
+the reader grant **there**:
+
+```bash
+# once per account; keep the returned id in wrangler.toml [env.preview]
+pnpm exec wrangler d1 create do-epub-studio-preview
+# from the repository root; [env.preview] declares the DB and its migrations_dir
+pnpm exec wrangler d1 migrations apply DB --remote --env preview
+```
+
+Production binds `do-epub-studio` only and must stay free of demo rows: a shared
+database exposes the documented demo credentials through the production
+credential path (`/api/access/request`), which the demo flags do not gate.
 
 > **Note:** `TURSO_DATABASE_URL` / `@libsql/client` is only used by the
 > standalone demo-account seed script (locally pointed at the D1 sqlite file —

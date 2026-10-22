@@ -22,10 +22,16 @@ WEBAUTHN_RP_ID = "do-epub-studio.pages.dev"
 WEBAUTHN_RP_NAME = "d.o.EPUB Studio"
 WEBAUTHN_ORIGIN = "https://do-epub-studio.pages.dev"
 
+# Preview binds its own D1 (plan 1009 P-02). Preview is the only environment that
+# enables the demo gates, so the ADR-233 demo seed writes its demo accounts,
+# book and grant here. Sharing production's database made those rows reachable
+# through the production credential path (/api/access/request), which the demo
+# flags do not gate.
 [[env.preview.d1_databases]]
 binding = "DB"
-database_name = "do-epub-studio"
-database_id = "dd47f3de-9ea0-4a00-898d-c49cc0dd271f"
+database_name = "do-epub-studio-preview"
+database_id = "0211de6a-1eb5-422c-9fb0-27360a25bb6a"
+migrations_dir = "packages/schema/migrations"
 
 [[env.preview.kv_namespaces]]
 binding = "CACHE_KV"
