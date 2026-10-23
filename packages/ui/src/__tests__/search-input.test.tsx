@@ -25,11 +25,14 @@ describe('SearchInput', () => {
     expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
   });
 
-  it('clears value when clear button clicked', () => {
+  it('clears value and restores focus to input when clear button clicked', () => {
     const onChange = vi.fn();
     render(<SearchInput value="hello" onChange={onChange} />);
-    fireEvent.click(screen.getByLabelText('Clear search'));
+    const clearButton = screen.getByLabelText('Clear search');
+    expect(clearButton).toHaveAttribute('title', 'Clear search');
+    fireEvent.click(clearButton);
     expect(onChange).toHaveBeenCalledWith('');
+    expect(document.activeElement).toBe(screen.getByRole('searchbox'));
   });
 
   it('clears value when Escape key is pressed in the search input', () => {
