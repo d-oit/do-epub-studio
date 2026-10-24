@@ -17,10 +17,27 @@ describe('Rate Limiting Middleware', () => {
   });
 
   describe('getRateLimitConfig', () => {
-    it('returns auth limit for auth endpoints', () => {
-      const { config, category } = getRateLimitConfig('/api/access/request');
-      expect(config.maxRequests).toBe(10);
-      expect(category).toBe('auth');
+    it('returns auth limit for auth, MFA, and recovery endpoints', () => {
+      const authEndpoints = [
+        '/api/access/request',
+        '/api/access/refresh',
+        '/api/access/logout',
+        '/api/access/recovery-request',
+        '/api/access/verify-recovery',
+        '/api/admin/login',
+        '/api/admin/login/mfa/start',
+        '/api/admin/login/mfa/verify',
+        '/api/admin/login/mfa/recovery-verify',
+        '/api/admin/logout',
+        '/api/admin/recovery-request',
+        '/api/admin/recovery-verify',
+      ];
+
+      for (const endpoint of authEndpoints) {
+        const { config, category } = getRateLimitConfig(endpoint);
+        expect(config.maxRequests).toBe(10);
+        expect(category).toBe('auth');
+      }
     });
 
     it('returns file limit for file endpoints', () => {
