@@ -14,10 +14,17 @@ const API_LIMIT: RateLimitConfig = { maxRequests: 60, windowMs: 60_000 };
 
 const AUTH_ROUTES = new Set([
   '/api/access/request',
-  '/api/admin/login',
   '/api/access/refresh',
-  '/api/admin/logout',
   '/api/access/logout',
+  '/api/access/recovery-request',
+  '/api/access/verify-recovery',
+  '/api/admin/login',
+  '/api/admin/login/mfa/start',
+  '/api/admin/login/mfa/verify',
+  '/api/admin/login/mfa/recovery-verify',
+  '/api/admin/logout',
+  '/api/admin/recovery-request',
+  '/api/admin/recovery-verify',
 ]);
 
 export function getRateLimitConfig(path: string): { config: RateLimitConfig; category: string } {
