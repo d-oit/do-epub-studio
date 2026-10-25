@@ -22,6 +22,10 @@ export async function checkRateLimitDO(
   key: string,
   config?: RateLimitConfig,
 ): Promise<RateLimitResult> {
+  // Pages intentionally has no local Durable Object binding. Return the
+  // existing unavailable sentinel so callers with a D1 fallback can use it.
+  if (!env.RATE_LIMITER) return { allowed: true, remaining: 0, resetAt: 0 };
+
   try {
     const id = env.RATE_LIMITER.idFromName(namespace);
     const obj = env.RATE_LIMITER.get(id);
@@ -55,6 +59,8 @@ export async function checkRateLimitDO(
  * Used to clear per-user lockout and failure counters on successful login.
  */
 export async function deleteRateLimitKey(env: Env, namespace: string, key: string): Promise<void> {
+  if (!env.RATE_LIMITER) return;
+
   try {
     const id = env.RATE_LIMITER.idFromName(namespace);
     const obj = env.RATE_LIMITER.get(id);

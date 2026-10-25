@@ -5,7 +5,12 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button } from '../../components/ui';
 import { LoginHeader } from '../../components/LoginHeader';
-import { resolveHelpUrl, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
+import {
+  resolveHelpUrl,
+  DEMO_READER_EMAIL,
+  DEMO_READER_PASSWORD,
+  DEMO_BOOK_SLUG,
+} from '../../config/demo-config';
 import { LoginHero, LoginFeatureList } from './LoginHero';
 import { LoginMobileInfo } from './LoginMobileInfo';
 import { LoginForm, RecoveryForm } from './LoginForm';
@@ -26,7 +31,7 @@ interface AuthState {
 export function LoginPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
@@ -42,6 +47,9 @@ export function LoginPage() {
   const fillDemoCredentials = () => {
     if (emailRef.current) emailRef.current.value = DEMO_READER_EMAIL;
     if (passwordRef.current) passwordRef.current.value = DEMO_READER_PASSWORD;
+    const demoParams = new URLSearchParams(searchParams);
+    demoParams.set('book', DEMO_BOOK_SLUG);
+    setSearchParams(demoParams, { replace: true });
     emailRef.current?.focus();
   };
 

@@ -16,6 +16,7 @@ let LOCAL_CACHE_VERSION = 'v1';
 
 export interface EdgeCacheEnv {
   CACHE_KV?: KVNamespace;
+  ENVIRONMENT?: string;
 }
 
 /**
@@ -88,7 +89,11 @@ export async function buildCacheKey(
   // fail with a 500 wherever `caches.default` exists (wrangler dev and
   // production), while unit tests — which have no Cache API — passed.
   const keyPath = `${keyUrl.pathname}${keyUrl.search}`;
-  const key = `https://edge-cache.invalid/${encodeURIComponent(resolvedPrefix)}${keyPath}`;
+  // Preview and production can share a cache and the KV invalidation version,
+  // while reading different D1 databases. Preserve the request origin and
+  // environment in every key so one deployment cannot serve another's catalog.
+  const scope = `${encodeURIComponent(url.origin)}/${encodeURIComponent(env?.ENVIRONMENT ?? '')}`;
+  const key = `https://edge-cache.invalid/${encodeURIComponent(resolvedPrefix)}/${scope}${keyPath}`;
   return new Request(key, { method: 'GET', headers: filtered });
 }
 

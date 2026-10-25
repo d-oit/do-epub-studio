@@ -32,7 +32,8 @@ import { logAudit } from '../audit';
 import { logRiskEvent, RISK_EVENTS } from '../audit/risk';
 import { queryFirst } from '../db/client';
 import { apiError } from '../lib/api-error';
-import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { checkRateLimit } from '../lib/rate-limit-fallback';
+import { DEMO_READER_EMAIL, DEMO_ADMIN_EMAIL, isDemoLoginEnabled } from '../lib/demo-policy';
 
 export const demoRouter = new Hono<{
   Bindings: Env;
@@ -41,10 +42,6 @@ export const demoRouter = new Hono<{
 
 type DemoContext = Context<{ Bindings: Env; Variables: { requestContext: RequestContext } }>;
 
-/** Reserved demo account identifiers (ADR-233 seed contract). */
-const DEMO_READER_EMAIL = 'demo.reader@example.local';
-const DEMO_ADMIN_EMAIL = 'demo.admin@example.local';
-
 interface DemoUserRow extends JsonRow {
   id: string;
   email: string;
@@ -52,22 +49,6 @@ interface DemoUserRow extends JsonRow {
   created_by_demo: number;
   disabled_at: string | null;
   compromised_at: string | null;
-}
-
-/**
- * Production indicators (any one is enough). Mirrors the seed-script guard
- * so the worker and seed agree on what "production" means.
- */
-function isProductionLike(env: Env): boolean {
-  if (String(env.ENVIRONMENT || '').toLowerCase() === 'production') return true;
-  if (env.CF_PAGES === '1' && !env.DEMO_ACCOUNTS_PROD_ALLOWLIST) return true;
-  if (
-    String(env.TURSO_DATABASE_URL || '')
-      .toLowerCase()
-      .includes('production')
-  )
-    return true;
-  return false;
 }
 
 function demoDisabled(c: DemoContext) {
@@ -82,16 +63,12 @@ async function checkDemoGates(
   c: DemoContext,
   rateLimitKey: string,
 ): Promise<Response | { ipHash: string }> {
-  if (c.env.DEMO_LOGIN_ENABLED !== '1') {
-    return demoDisabled(c);
-  }
-
-  if (isProductionLike(c.env)) {
+  if (!isDemoLoginEnabled(c.env)) {
     return demoDisabled(c);
   }
 
   const ipHash = await hashString(getClientIp(c));
-  const rateLimit = await checkRateLimitDO(c.env, rateLimitKey, ipHash, {
+  const rateLimit = await checkRateLimit(c.env, rateLimitKey, ipHash, {
     maxRequests: 10,
     windowMs: 60_000,
   });

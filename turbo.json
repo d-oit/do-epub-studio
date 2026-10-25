@@ -11,7 +11,16 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["VITE_API_BASE_URL", "NODE_ENV"],
+      "passThroughEnv": ["WRANGLER_LOG_PATH", "WRANGLER_SEND_METRICS"],
+      "env": [
+        "VITE_API_BASE_URL",
+        "VITE_DEMO_LOGIN_ENABLED",
+        "VITE_DEMO_BOOK_SLUG",
+        "VITE_DEMO_READER_PASSWORD",
+        "VITE_DEMO_ADMIN_PASSWORD",
+        "VITE_HELP_URL",
+        "NODE_ENV"
+      ],
       "inputs": [
         "src/**",
         "index.html",
@@ -27,7 +36,17 @@
     },
     "build:analyze": {
       "dependsOn": ["^build"],
-      "env": ["ANALYZE", "VITE_API_BASE_URL", "NODE_ENV"],
+      "passThroughEnv": ["WRANGLER_LOG_PATH", "WRANGLER_SEND_METRICS"],
+      "env": [
+        "ANALYZE",
+        "VITE_API_BASE_URL",
+        "VITE_DEMO_LOGIN_ENABLED",
+        "VITE_DEMO_BOOK_SLUG",
+        "VITE_DEMO_READER_PASSWORD",
+        "VITE_DEMO_ADMIN_PASSWORD",
+        "VITE_HELP_URL",
+        "NODE_ENV"
+      ],
       "inputs": [
         "src/**",
         "index.html",
