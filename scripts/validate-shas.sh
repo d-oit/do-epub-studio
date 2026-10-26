@@ -126,6 +126,8 @@ ALLOWED_SHAS=(
     "ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e"
     "github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee"
     "chromaui/action@e50abd573c8a789526f165fec06137a7c21d7299"
+# Appended 2026-10-26 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1"
 )
 
 # Function to check if an action@sha is allowed
