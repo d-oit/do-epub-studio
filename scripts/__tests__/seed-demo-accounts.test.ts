@@ -40,11 +40,17 @@ function makeDb(): {
 } {
   const calls: Array<{ sql: string; args?: Array<string | number | null> }> = [];
   let bookExists = false;
+  const users = new Map();
+  let grantExists = false;
   const db: SeedSqlRunner = async (sql, args = []) => {
     calls.push({ sql, args });
+    if (sql.includes('INSERT INTO users')) users.set(args[1], { id: args[0], created_by_demo: 1 });
+    if (sql.includes('INSERT INTO book_access_grants')) grantExists = true;
     if (sql.includes('INSERT INTO books')) bookExists = true;
     if (sql.includes('FROM books')) return { rows: bookExists ? [{ id: 'book-1' }] : [] };
-    if (sql.includes('FROM users')) return { rows: [] };
+    if (sql.includes('FROM users')) return { rows: users.has(args[0]) ? [users.get(args[0])] : [] };
+    if (sql.includes('FROM book_access_grants'))
+      return { rows: grantExists ? [{ id: 'grant-1' }] : [] };
     return { rows: [] };
   };
   return { db, calls };
@@ -278,6 +284,41 @@ describe('seed-demo-accounts.mjs (ADR-233)', () => {
       // disabled_at is passed as a real timestamp for the admin in non-local.
       expect(typeof adminWrite?.args?.[5]).toBe('string');
       expect(adminWrite?.args?.[5]).not.toBeNull();
+    });
+
+    it('enables the administrator only on explicit preview opt-in', async () => {
+      const { db, calls } = makeDb();
+      await seedDemoAccounts({
+        db,
+        hasPassword: mockHash,
+        env: env({
+          ENVIRONMENT: 'preview',
+          DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview',
+          DEMO_ADMIN_ENABLED: '1',
+        }),
+      });
+      const admin = calls.find(
+        ({ sql, args }) =>
+          sql.includes('INSERT INTO users') && args?.includes(RESERVED.admin.email),
+      );
+      expect(admin?.args?.[5]).toBeNull();
+    });
+
+    it('rejects administrator opt-in outside an allowlisted preview before writes', async () => {
+      for (const override of [
+        { ENVIRONMENT: 'staging', DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview' },
+        { ENVIRONMENT: 'preview', DEMO_ACCOUNTS_PROD_ALLOWLIST: '' },
+        { ENVIRONMENT: 'production', DEMO_ACCOUNTS_PROD_ALLOWLIST: 'demo-preview' },
+      ]) {
+        const { db, calls } = makeDb();
+        const result = await seedDemoAccounts({
+          db,
+          hasPassword: mockHash,
+          env: env({ ...override, DEMO_ADMIN_ENABLED: '1' }),
+        });
+        expect(result.ok).toBe(false);
+        expect(calls).toHaveLength(0);
+      }
     });
   });
 

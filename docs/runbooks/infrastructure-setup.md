@@ -89,9 +89,9 @@ pnpm --filter @do-epub-studio/worker exec wrangler d1 migrations list do-epub-st
 Preview deployments bind their **own** database from
 `[env.preview.d1_databases]` in the root `wrangler.toml`
 (`do-epub-studio-preview`). Preview is the only environment that opens the demo
-gates (`DEMO_LOGIN_ENABLED=1`, `DEMO_ACCOUNTS_PROD_ALLOWLIST=demo-preview`), so
-the ADR-233 demo seed writes the demo accounts, the placeholder demo book and
-the reader grant **there**:
+gates (`DEMO_LOGIN_ENABLED=1`, `DEMO_ACCOUNTS_PROD_ALLOWLIST=demo-preview`).
+The explicit [preview demo setup](demo-preview.md) provisions the accounts,
+reader grant and readable sample EPUB **there**, after validating isolation:
 
 ```bash
 # once per account; keep the returned id in wrangler.toml [env.preview]
@@ -100,9 +100,9 @@ pnpm exec wrangler d1 create do-epub-studio-preview
 pnpm exec wrangler d1 migrations apply DB --remote --env preview
 ```
 
-Production binds `do-epub-studio` only and must stay free of demo rows: a shared
-database exposes the documented demo credentials through the production
-credential path (`/api/access/request`), which the demo flags do not gate.
+Production binds `do-epub-studio` only and must stay free of demo rows. Both
+dedicated demo endpoints and ordinary demo credential sign-in enforce the
+environment policy. Keep the databases separate even with those guards.
 
 > **Note:** `TURSO_DATABASE_URL` / `@libsql/client` is only used by the
 > standalone demo-account seed script (locally pointed at the D1 sqlite file —
@@ -118,14 +118,14 @@ credential path (`/api/access/request`), which the demo flags do not gate.
 
 ```bash
 pnpm exec wrangler r2 bucket create do-epub-studio-books
+pnpm exec wrangler r2 bucket create do-epub-studio-books-preview
 ```
 
 ### Bind to the Pages project
 
-Dashboard → Pages project → **Settings → Bindings → Add → R2 bucket**:
-
-- Variable name: `BOOKS_BUCKET`
-- R2 bucket: `do-epub-studio-books`
+The root `wrangler.toml` declares `BOOKS_BUCKET` for production and preview.
+Preview uses `do-epub-studio-books-preview`; it must never use the production
+bucket. Config-file bindings are the source of truth for Pages deployments.
 
 ---
 
@@ -159,11 +159,15 @@ APP_BASE_URL                  # https://do-epub-studio.pages.dev (frontend origi
 ENVIRONMENT                   # production
 WEBAUTHN_RP_ID                # do-epub-studio.pages.dev
 WEBAUTHN_ORIGIN               # https://do-epub-studio.pages.dev
-DEMO_LOGIN_ENABLED            # set to 1 to enable public demo endpoints
-DEMO_ACCOUNTS_PROD_ALLOWLIST  # allowlist key/flag when enabling demo on Pages (ADR-244/309)
 ```
 
-> **Demo Login Policy (ADR-244 / GOAP-309):** By default, demo endpoints fail-close (`403 DEMO_DISABLED`) in production-like environments (`CF_PAGES=1` or `ENVIRONMENT=production`). To explicitly enable the demo endpoints on a public Cloudflare Pages deployment (e.g. `do-epub-studio.pages.dev`), both `DEMO_LOGIN_ENABLED=1` and `DEMO_ACCOUNTS_PROD_ALLOWLIST` must be configured in the Pages project environment settings. If omitted, demo endpoints remain fail-closed.
+> **Demo Login Policy (ADR-1014):** `ENVIRONMENT=production` always rejects demo
+> login; adding an allowlist never overrides it. Use an isolated preview for
+> public demonstrations. Root `wrangler.toml` sets its runtime demo flags;
+> the [preview setup](demo-preview.md) supplies accounts, book content and
+> optional admin enablement. Preview builds must set
+> `VITE_DEMO_LOGIN_ENABLED=1` to show the admin demo controls. Runtime flags do
+> not change an already-built frontend.
 
 Secret generation:
 

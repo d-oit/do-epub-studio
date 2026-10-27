@@ -11,7 +11,7 @@
 //  * Refuses to run unless DEMO_ACCOUNTS_ENABLED === '1' AND the environment
 //    is not production (ENVIRONMENT === 'production', or CF_PAGES === '1'
 //    without an explicit demo-allowlist, or TURSO_DATABASE_URL containing
-//    'production'), AND DEMO_ADMIN_PASSWORD is set by the operator.
+//    'production'). Public fixture passwords may be overridden by the operator.
 //  * Never writes plaintext passwords anywhere, and never logs hashes either.
 //  * On any guard failure it sets process.exitCode = 1 and logs a clear reason.
 //
@@ -91,7 +91,40 @@ export function checkGuards(env = {}) {
   if (isProductionLike(env)) {
     return 'Refusing to seed demo accounts: environment is production.';
   }
+  if (
+    env.DEMO_ADMIN_ENABLED === '1' &&
+    (env.ENVIRONMENT !== 'preview' || !env.DEMO_ACCOUNTS_PROD_ALLOWLIST)
+  ) {
+    return 'DEMO_ADMIN_ENABLED requires an explicitly allowlisted, isolated preview.';
+  }
   return null;
+}
+
+/** Refuse to take over reserved identities or a book created outside this seed. */
+export async function assertDemoOwnership(db, bookSlug) {
+  const users = new Map();
+  for (const { email } of Object.values(RESERVED)) {
+    const result = await db('SELECT id, created_by_demo FROM users WHERE lower(email) = lower(?)', [
+      email,
+    ]);
+    const user = result.rows?.[0];
+    if (user && user.created_by_demo !== 1) {
+      throw new Error('Reserved demo email belongs to a non-demo account; refusing to overwrite.');
+    }
+    users.set(email, user);
+  }
+  const book = await findBook(db, bookSlug);
+  if (!book) return;
+  const admin = users.get(RESERVED.admin.email);
+  const ownership =
+    admin &&
+    (await db(
+      'SELECT id FROM book_access_grants WHERE book_id = ? AND email = ? AND invited_by_user_id = ?',
+      [book.id, RESERVED.reader.email, admin.id],
+    ));
+  if (!ownership?.rows?.length) {
+    throw new Error('Demo book is not owned by the demo seed; refusing to overwrite.');
+  }
 }
 
 async function loadArgon2() {
@@ -165,7 +198,10 @@ export async function seedDemoAccounts({
   }
 
   const isLocal = String(env.ENVIRONMENT || 'local').toLowerCase() === 'local';
-  const adminDisabledAt = isLocal ? null : new Date().toISOString();
+  const adminDisabledAt =
+    isLocal || env.DEMO_ADMIN_ENABLED === '1' ? null : new Date().toISOString();
+
+  await assertDemoOwnership(db, bookSlug);
 
   // Documented public demo credentials (non-production only; the production
   // guard above fails closed). Operators may override via env, but the demo
@@ -236,7 +272,7 @@ export async function seedDemoAccounts({
   log.log(
     `✓ Seeded demo accounts (reader=${RESERVED.reader.email}, admin=${RESERVED.admin.email}).`,
   );
-  return { ok: true, readerUserId, adminUserId, revoked };
+  return { ok: true, readerUserId, adminUserId, bookId, revoked };
 }
 
 async function findUserId(db, email) {
@@ -303,6 +339,7 @@ const upsertGrantSql =
   'allowed = 1, ' +
   'comments_allowed = 1, ' +
   'offline_allowed = 1, ' +
+  'expires_at = NULL, ' +
   'invited_by_user_id = excluded.invited_by_user_id, ' +
   'revoked_at = NULL, ' +
   "updated_at = datetime('now')";

@@ -881,3 +881,8 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 ### Production patch lockfile integrity
 
 - PR #1369's duplicated Zod keys coexisted with a stale Transformers peer/snapshot reference. Deleting duplicate keys alone would not repair the graph. Regenerate from the final main lock with pnpm's exact-target recipe, restore caret specifiers, and validate package/snapshot correspondence plus frozen installation. Transformers 4.3.1 resolves with the current `@types/node@26.6.5` peer; keep ONNX build approval unchanged.
+
+# Demo preview deployment
+
+- Pages preview `APP_BASE_URL` cannot use the production origin: signed EPUB URLs would reach the production D1/R2 bindings. `apps/web/functions/api/[[path]].ts` derives preview link and WebAuthn origins from the incoming Pages URL.
+- Root `wrangler pages deploy apps/web/dist` discovers repository-root `functions/`, not `apps/web/functions/`. Keep the root forwarding entry and compile it when validating deployed demo access.
