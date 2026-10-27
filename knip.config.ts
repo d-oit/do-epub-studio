@@ -32,7 +32,7 @@ const config: KnipConfig = {
   workspaces: {
     // ---- repo root -------------------------------------------------------
     '.': {
-      entry: ['commitlint.config.{js,ts,mjs,cjs}'],
+      entry: ['commitlint.config.{js,ts,mjs,cjs}', 'functions/api/\\[\\[path\\]\\].ts'],
       project: [],
       // The root has no vitest config of its own (each workspace project runs
       // its own; the removed `vitest.workspace.ts` used `defineWorkspace`, which

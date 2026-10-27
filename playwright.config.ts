@@ -4,6 +4,7 @@ const isCI = Boolean(process.env.CI);
 const includeWebkit = process.env.PLAYWRIGHT_INCLUDE_WEBKIT === '1';
 const mode = process.env.PLAYWRIGHT_MODE || 'dev';
 const isPreview = mode === 'preview';
+const demoPreviewUrl = process.env.E2E_DEMO_PREVIEW_URL;
 const port = isPreview ? 4173 : 5173;
 
 // Live-lane selection is env-only and MUST NOT consult process.argv: worker
@@ -16,7 +17,7 @@ const isLiveLane =
   Boolean(process.env.CLOUDFLARE_PREVIEW_URL) ||
   process.env.PLAYWRIGHT_PROJECT === 'live-cloudflare';
 
-const LOCAL_MOCK_TEST_IGNORE = ['**/cloudflare-login.spec.ts'];
+const LOCAL_MOCK_TEST_IGNORE = ['**/cloudflare-login.spec.ts', '**/demo-preview.spec.ts'];
 export default defineConfig({
   testDir: './apps',
   testMatch: ['**/*.spec.ts'],
@@ -48,79 +49,89 @@ export default defineConfig({
   },
   // The live lane targets a remote deployment; never start (or accidentally
   // receive traffic on) a local dev server there (E2E-02).
-  webServer: isLiveLane
-    ? undefined
-    : {
-        command: isPreview
-          ? `pnpm --filter @do-epub-studio/web preview --host 127.0.0.1 --port ${port}`
-          : `pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port ${port}`,
-        url: `http://127.0.0.1:${port}`,
-        reuseExistingServer: !isCI,
-        timeout: 120_000,
-        env: {
-          // Enable client telemetry at info level so E2E tests can wait for
-          // `reader.progress_loaded` and similar events. Production deploys
-          // keep the default warn level via VITE_LOG_LEVEL.
-          VITE_LOG_LEVEL: 'info',
+  webServer:
+    isLiveLane || demoPreviewUrl
+      ? undefined
+      : {
+          command: isPreview
+            ? `pnpm --filter @do-epub-studio/web preview --host 127.0.0.1 --port ${port}`
+            : `pnpm --filter @do-epub-studio/web dev --host 127.0.0.1 --port ${port}`,
+          url: `http://127.0.0.1:${port}`,
+          reuseExistingServer: !isCI,
+          timeout: 120_000,
+          env: {
+            // Enable client telemetry at info level so E2E tests can wait for
+            // `reader.progress_loaded` and similar events. Production deploys
+            // keep the default warn level via VITE_LOG_LEVEL.
+            VITE_LOG_LEVEL: 'info',
+          },
         },
-      },
-  projects: isLiveLane
+  projects: demoPreviewUrl
     ? [
         {
-          name: 'live-cloudflare',
-          use: {
-            ...devices['Desktop Chrome'],
-            baseURL: process.env.CLOUDFLARE_PREVIEW_URL || 'http://127.0.0.1:5173',
-          },
-          testMatch: ['**/cloudflare-login.spec.ts'],
+          name: 'demo-preview',
+          use: { ...devices['Desktop Chrome'], baseURL: demoPreviewUrl },
+          testMatch: ['**/demo-preview.spec.ts'],
           testIgnore: [],
         },
       ]
-    : [
-        {
-          name: 'chromium',
-          use: { ...devices['Desktop Chrome'] },
-          testIgnore: LOCAL_MOCK_TEST_IGNORE,
-          grepInvert: /@pwa/,
-        },
-        {
-          name: 'firefox',
-          use: { ...devices['Desktop Firefox'] },
-          testIgnore: LOCAL_MOCK_TEST_IGNORE,
-          grepInvert: /@pwa/,
-        },
-        ...(includeWebkit
-          ? [
-              {
-                name: 'webkit',
-                use: { ...devices['Desktop Safari'] },
-                testIgnore: LOCAL_MOCK_TEST_IGNORE,
-                grepInvert: /@pwa/,
-              },
-            ]
-          : []),
-        {
-          name: 'iphone',
-          use: { ...devices['iPhone 15'] },
-          testIgnore: LOCAL_MOCK_TEST_IGNORE,
-          grep: /@mobile/,
-          grepInvert: /@pwa/,
-        },
-        {
-          name: 'pixel',
-          use: { ...devices['Pixel 7'] },
-          testIgnore: LOCAL_MOCK_TEST_IGNORE,
-          grep: /@mobile/,
-          grepInvert: /@pwa/,
-        },
-        {
-          name: 'pwa-chromium',
-          use: {
-            ...devices['Desktop Chrome'],
-            serviceWorkers: 'allow' as const,
+    : isLiveLane
+      ? [
+          {
+            name: 'live-cloudflare',
+            use: {
+              ...devices['Desktop Chrome'],
+              baseURL: process.env.CLOUDFLARE_PREVIEW_URL || 'http://127.0.0.1:5173',
+            },
+            testMatch: ['**/cloudflare-login.spec.ts'],
+            testIgnore: [],
           },
-          testIgnore: LOCAL_MOCK_TEST_IGNORE,
-          grep: /@pwa/,
-        },
-      ],
+        ]
+      : [
+          {
+            name: 'chromium',
+            use: { ...devices['Desktop Chrome'] },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grepInvert: /@pwa/,
+          },
+          {
+            name: 'firefox',
+            use: { ...devices['Desktop Firefox'] },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grepInvert: /@pwa/,
+          },
+          ...(includeWebkit
+            ? [
+                {
+                  name: 'webkit',
+                  use: { ...devices['Desktop Safari'] },
+                  testIgnore: LOCAL_MOCK_TEST_IGNORE,
+                  grepInvert: /@pwa/,
+                },
+              ]
+            : []),
+          {
+            name: 'iphone',
+            use: { ...devices['iPhone 15'] },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grep: /@mobile/,
+            grepInvert: /@pwa/,
+          },
+          {
+            name: 'pixel',
+            use: { ...devices['Pixel 7'] },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grep: /@mobile/,
+            grepInvert: /@pwa/,
+          },
+          {
+            name: 'pwa-chromium',
+            use: {
+              ...devices['Desktop Chrome'],
+              serviceWorkers: 'allow' as const,
+            },
+            testIgnore: LOCAL_MOCK_TEST_IGNORE,
+            grep: /@pwa/,
+          },
+        ],
 });

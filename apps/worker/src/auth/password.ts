@@ -2,6 +2,7 @@ import type { Env, JsonRow } from '../lib/env';
 import { queryFirst, execute } from '../db/client';
 import { AppError } from '../lib/http-errors';
 import { argon2id, argon2Verify } from 'argon2-wasm-edge';
+import { canUseDemoCredentials, isReservedDemoEmail } from '../lib/demo-policy';
 
 export interface GrantRow extends JsonRow {
   id: string;
@@ -63,6 +64,24 @@ export async function validateGrant(
   email: string,
   password?: string,
 ): Promise<{ valid: boolean; grant?: GrantRow; book?: BookRow; error?: string }> {
+  // Published demo passwords must not bypass a disabled demo endpoint.
+  if (!canUseDemoCredentials(env, email)) {
+    return { valid: false, error: 'Access denied' };
+  }
+
+  if (isReservedDemoEmail(email)) {
+    const user = await queryFirst<{
+      created_by_demo: number;
+      disabled_at: string | null;
+      compromised_at: string | null;
+    }>(env, 'SELECT created_by_demo, disabled_at, compromised_at FROM users WHERE email = ?', [
+      email.toLowerCase(),
+    ]);
+    if (!user || user.created_by_demo !== 1 || user.disabled_at || user.compromised_at) {
+      return { valid: false, error: 'Access denied' };
+    }
+  }
+
   const book = (await queryFirst(
     env,
     `SELECT id, slug, title, author_name, visibility, cover_image_url

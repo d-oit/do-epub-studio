@@ -210,6 +210,8 @@
 | 1012 | Repair PR #1377 CI evidence (GOAP) | `plans/1012-goap-pr1377-ci-evidence.md` | DONE (benchmark workload parity, pinned harness prerequisite, and offline-comment sequencing repaired; full local benchmark comparison and 16/16 PWA smoke passed; final CI remains the PR merge prerequisite) |
 | 1013 | Optional coverage outputs on bare unit runs (GOAP) | `plans/1013-goap-optional-unit-coverage-outputs.md` | RESOLVED (PR #1383 cuts over to a dedicated test:coverage task; cold and cached coverage runs restore every report and bare unit runs print 0 diagnostics) |
 
+| 1014 | Isolated and complete preview demo provisioning | `plans/1014-adr-demo-deployment.md` | Accepted; implementation and local demo validation complete in `plans/1014-goap-demo-deployment.md`; required hosted CI pending |
+
 ## Pending
 
 None. The next ADR number is chosen by the next plan author; see ADR-083 for the rule.

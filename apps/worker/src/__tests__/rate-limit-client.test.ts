@@ -1,9 +1,14 @@
-import { describe, it, expect, vi } from 'vitest';
-import { checkRateLimitDO } from '../lib/rate-limit-client';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { checkRateLimitDO, deleteRateLimitKey } from '../lib/rate-limit-client';
+import { logAppError } from '../lib/observability';
 import type { Env } from '../lib/env';
 import type { RateLimiterDO } from '../lib/rate-limiter-do';
 
+vi.mock('../lib/observability', () => ({ logAppError: vi.fn() }));
+
 describe('checkRateLimitDO', () => {
+  beforeEach(() => vi.clearAllMocks());
+
   const makeMockDO = (response: Record<string, unknown>) => ({
     fetch: vi.fn().mockResolvedValue({
       ok: true,
@@ -50,6 +55,17 @@ describe('checkRateLimitDO', () => {
     );
   });
 
+  it('returns the unavailable sentinel without logging when Pages has no DO binding', async () => {
+    const env = {} as Env;
+    expect(await checkRateLimitDO(env, 'test', 'user@example.com')).toEqual({
+      allowed: true,
+      remaining: 0,
+      resetAt: 0,
+    });
+    await deleteRateLimitKey(env, 'test', 'user@example.com');
+    expect(logAppError).not.toHaveBeenCalled();
+  });
+
   it('returns allowed: false when DO returns allowed: false', async () => {
     const mockDO = makeMockDO({ allowed: false, remaining: 0, resetAt: 123456789 });
     const env = makeEnv(mockDO);
@@ -90,5 +106,22 @@ describe('checkRateLimitDO', () => {
     const result = await checkRateLimitDO(env, 'test', 'user@example.com');
 
     expect(result.allowed).toBe(true);
+    expect(logAppError).toHaveBeenCalledWith('rate_limit_client.error', expect.any(Error), {
+      namespace: 'test',
+      key: 'user@example.com',
+    });
+  });
+
+  it('still logs genuine DO failures while deleting a key', async () => {
+    const error = new Error('DO unavailable');
+    const mockDO = { fetch: vi.fn().mockRejectedValue(error) };
+    await deleteRateLimitKey(makeEnv(mockDO), 'test', 'user@example.com');
+    expect(mockDO.fetch).toHaveBeenCalledWith('http://rate-limiter/key/test/user%40example.com', {
+      method: 'DELETE',
+    });
+    expect(logAppError).toHaveBeenCalledWith('rate_limit_client.delete_key.error', error, {
+      namespace: 'test',
+      key: 'user@example.com',
+    });
   });
 });

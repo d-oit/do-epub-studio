@@ -63,6 +63,16 @@ describe('edge-cache helpers', () => {
       expect((await buildCacheKey(r1)).url).toBe((await buildCacheKey(r2)).url);
     });
 
+    it('isolates identical paths by request origin and runtime environment', async () => {
+      const productionRequest = new Request('https://example.com/api/catalog');
+      const previewRequest = new Request('https://preview.example.com/api/catalog');
+      const productionKey = await buildCacheKey(productionRequest, { ENVIRONMENT: 'production' });
+      const previewKey = await buildCacheKey(previewRequest, { ENVIRONMENT: 'preview' });
+      const sameOriginPreview = await buildCacheKey(productionRequest, { ENVIRONMENT: 'preview' });
+      expect(productionKey.url).not.toBe(previewKey.url);
+      expect(productionKey.url).not.toBe(sameOriginPreview.url);
+    });
+
     it('forwards Accept-Language into the key headers', async () => {
       const request = new Request('https://example.com/api/catalog', {
         headers: { 'Accept-Language': 'fr-FR' },
@@ -81,6 +91,50 @@ describe('edge-cache helpers', () => {
   });
 
   describe('withEdgeCache', () => {
+    it.each(['https://preview.example.com', 'https://example.com'])(
+      'keeps a preview catalog isolated from production at %s with a shared cache and KV',
+      async (previewOrigin) => {
+        const cache = installMockCache();
+        const CACHE_KV = { get: () => Promise.resolve('shared-version') } as unknown as KVNamespace;
+        const productionHandler = vi.fn(() =>
+          Promise.resolve(Response.json({ book: 'production' })),
+        );
+        const previewHandler = vi.fn(() => Promise.resolve(Response.json({ book: 'demo' })));
+        const productionRequest = new Request('https://example.com/api/catalog?limit=1');
+        const previewRequest = new Request(`${previewOrigin}/api/catalog?limit=1`);
+        const productionOptions = {
+          cacheControl: PUBLIC_CACHE_CONTROL,
+          env: { CACHE_KV, ENVIRONMENT: 'production' },
+        };
+        const previewOptions = {
+          cacheControl: PUBLIC_CACHE_CONTROL,
+          env: { CACHE_KV, ENVIRONMENT: 'preview' },
+        };
+        const ctx = { waitUntil: vi.fn() };
+        const first = await withEdgeCache(
+          productionRequest,
+          productionHandler,
+          productionOptions,
+          ctx,
+        );
+        expect(await first.json()).toEqual({ book: 'production' });
+        const preview = await withEdgeCache(previewRequest, previewHandler, previewOptions, ctx);
+        expect(preview.headers.get('x-cache')).toBe('MISS');
+        expect(await preview.json()).toEqual({ book: 'demo' });
+        const repeated = await withEdgeCache(
+          productionRequest,
+          productionHandler,
+          productionOptions,
+          ctx,
+        );
+        expect(repeated.headers.get('x-cache')).toBe('HIT');
+        expect(await repeated.json()).toEqual({ book: 'production' });
+        expect(productionHandler).toHaveBeenCalledOnce();
+        expect(previewHandler).toHaveBeenCalledOnce();
+        expect(cache.store.size).toBe(2);
+      },
+    );
+
     it('returns MISS on first call and HIT on second', async () => {
       const cache = installMockCache();
       const handler = vi.fn((): Promise<Response> =>

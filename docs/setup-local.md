@@ -81,6 +81,10 @@ an operator action documented in
 
 ### Demo accounts (optional)
 
+For a deployed demo with a readable sample EPUB and an optional preview
+administrator, use the [preview provisioning runbook](runbooks/demo-preview.md).
+The legacy account-only seed below creates an empty placeholder book.
+
 The demo-login sandbox seed (`scripts/seed-demo-accounts.mjs`, ADR-233) speaks
 the libsql/SQLite protocol and is pointed at the local D1 sqlite file. Apply
 migrations first and seed **before** starting `wrangler dev` (sqlite

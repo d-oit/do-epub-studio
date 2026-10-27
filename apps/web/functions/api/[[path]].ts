@@ -13,8 +13,7 @@
  * plus vars/secrets are configured on the Pages project in the Cloudflare
  * dashboard. Notes:
  *  - The `RATE_LIMITER` Durable Object cannot be created inside a Pages
- *    project, so rate limiting fails open (documented behavior in
- *    `apps/worker/src/lib/rate-limit-client.ts`).
+ *    project. Demo login uses the D1 fallback when that binding is absent.
  *  - Email Sending is not a Pages Function binding; recovery email falls back
  *    to `LoggingEmailTransport` (login is unaffected).
  */
@@ -43,5 +42,18 @@ export async function onRequest(context: PagesFunctionContext): Promise<Response
     },
     props: {},
   };
-  return app.fetch(context.request, context.env, executionCtx as ExecutionContext);
+  // Pages preview URLs vary per deployment/branch. The config's production
+  // origin must not send signed demo EPUB URLs, invitation links or WebAuthn
+  // ceremonies to production's unrelated database and bucket.
+  const url = new URL(context.request.url);
+  const env =
+    context.env.ENVIRONMENT === 'preview'
+      ? {
+          ...context.env,
+          APP_BASE_URL: url.origin,
+          WEBAUTHN_RP_ID: url.hostname,
+          WEBAUTHN_ORIGIN: url.origin,
+        }
+      : context.env;
+  return app.fetch(context.request, env, executionCtx as ExecutionContext);
 }

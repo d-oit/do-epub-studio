@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import type * as ReactRouter from 'react-router-dom';
 import { LoginPage } from './LoginPage';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 
 const mockNavigate = vi.fn();
-const mockUseSearchParams = vi.fn(() => [new URLSearchParams(), vi.fn()]);
+const mockUseSearchParams = vi.fn<typeof ReactRouter.useSearchParams>(() => [
+  new URLSearchParams(),
+  vi.fn(),
+]);
 
 vi.mock('../../lib/api', () => ({
   apiRequest: vi.fn(),
@@ -480,19 +484,43 @@ describe('LoginPage', () => {
       expect(screen.getByText('login.demoFillCredentials')).toBeInTheDocument();
     });
 
-    it('fills demo credentials into the form fields', () => {
-      mockIsDemoLoginEnabled.mockReturnValue(true);
-      render(
-        <MemoryRouter>
-          <LoginPage />
-        </MemoryRouter>,
-      );
+    it.each(['/login', '/login?book=another-book'])(
+      'fills demo credentials and signs in to the demo book from %s',
+      async (entry) => {
+        const { useSearchParams } = await vi.importActual<typeof ReactRouter>('react-router-dom');
+        mockUseSearchParams.mockImplementation(useSearchParams);
+        mockIsDemoLoginEnabled.mockReturnValue(true);
+        vi.mocked(apiRequest).mockResolvedValueOnce({
+          sessionToken: 'demo-credential-token',
+          book: { id: 'demo-book-id', slug: 'demo', title: 'Demo Book', authorName: 'Author' },
+          capabilities: null,
+        });
+        render(
+          <MemoryRouter initialEntries={[entry]}>
+            <LoginPage />
+          </MemoryRouter>,
+        );
 
-      fireEvent.click(screen.getByText('login.demoFillCredentials'));
+        fireEvent.click(screen.getByText('login.demoFillCredentials'));
 
-      expect(screen.getByLabelText('login.emailLabel')).toHaveValue('demo.reader@example.local');
-      expect(screen.getByLabelText('login.passwordLabel')).toHaveValue('demo-reader-password');
-    });
+        expect(screen.getByLabelText('login.emailLabel')).toHaveValue('demo.reader@example.local');
+        expect(screen.getByLabelText('login.passwordLabel')).toHaveValue('demo-reader-password');
+        expect(screen.getByText('login.submit')).toBeEnabled();
+        fireEvent.click(screen.getByText('login.submit'));
+
+        await waitFor(() => {
+          expect(apiRequest).toHaveBeenCalledWith('/api/access/request', {
+            method: 'POST',
+            body: JSON.stringify({
+              email: 'demo.reader@example.local',
+              password: 'demo-reader-password',
+              bookSlug: 'demo',
+            }),
+          });
+          expect(mockNavigate).toHaveBeenCalledWith('/read/demo');
+        });
+      },
+    );
 
     it('handles successful demo login', async () => {
       mockIsDemoLoginEnabled.mockReturnValue(true);

@@ -1,5 +1,7 @@
 name = "do-epub-studio"
 pages_build_output_dir = "apps/web/dist"
+compatibility_date = "2026-05-30"
+compatibility_flags = ["nodejs_compat"]
 
 # Pages Functions bindings (GOAP-252 / issue #1014). Declared here so the
 # Cloudflare Pages Git-integrated build attaches them to the `/api/*` function
@@ -10,6 +12,11 @@ pages_build_output_dir = "apps/web/dist"
 binding = "DB"
 database_name = "do-epub-studio"
 database_id = "dd47f3de-9ea0-4a00-898d-c49cc0dd271f"
+migrations_dir = "packages/schema/migrations"
+
+[[r2_buckets]]
+binding = "BOOKS_BUCKET"
+bucket_name = "do-epub-studio-books"
 
 [[kv_namespaces]]
 binding = "CACHE_KV"
@@ -32,6 +39,12 @@ binding = "DB"
 database_name = "do-epub-studio-preview"
 database_id = "0211de6a-1eb5-422c-9fb0-27360a25bb6a"
 migrations_dir = "packages/schema/migrations"
+
+# Demo assets must never share production's object namespace. Provision this
+# bucket explicitly before running scripts/seed-demo-preview.mjs.
+[[env.preview.r2_buckets]]
+binding = "BOOKS_BUCKET"
+bucket_name = "do-epub-studio-books-preview"
 
 [[env.preview.kv_namespaces]]
 binding = "CACHE_KV"
