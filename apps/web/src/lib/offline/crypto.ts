@@ -32,33 +32,20 @@ function textToArrayBuffer(text: string): ArrayBuffer {
   return toArrayBuffer(encoded);
 }
 
-async function getWebCrypto(): Promise<Crypto> {
-  // Prefer Node's webcrypto under Node runtimes (vitest/SSR). In browsers the
-  // `node:crypto` specifier is unavailable; some dev servers shim `node:*`
-  // builtins into a stub whose `webcrypto` export is `undefined` instead of
-  // rejecting, so only accept it when it actually yields a Crypto, else fall
-  // back to the global `crypto`.
-  try {
-    const { webcrypto } = await import('node:crypto');
-    if (webcrypto) {
-      // Node's webcrypto is typed against its own CryptoKey/KeyUsage, whose
-      // `usages` union is stricter than the DOM's (e.g. 'decapsulateBits'), so
-      // TS rejects a plain `as Crypto`. Runtime-compatible; isolate the bridge.
-      return webcrypto as unknown as Crypto;
-    }
-  } catch {
-    // fall through to the browser global
+function getWebCrypto(): Crypto {
+  const webCrypto = globalThis.crypto;
+  if (!webCrypto?.subtle) {
+    throw new Error('Web Crypto API is unavailable in this environment.');
   }
-  return crypto;
+  return webCrypto;
 }
 
-async function getSubtle(): Promise<SubtleCrypto> {
-  const webCrypto = await getWebCrypto();
-  return webCrypto.subtle;
+function getSubtle(): SubtleCrypto {
+  return getWebCrypto().subtle;
 }
 
 async function deriveKey(token: string, salt: ArrayBuffer): Promise<CryptoKey> {
-  const subtle = await getSubtle();
+  const subtle = getSubtle();
   const keyMaterial = await subtle.importKey(
     'raw',
     textToArrayBuffer(token),
@@ -77,11 +64,11 @@ async function deriveKey(token: string, salt: ArrayBuffer): Promise<CryptoKey> {
 }
 
 export async function encrypt(plaintext: string, token: string): Promise<string> {
-  const webCrypto = await getWebCrypto();
+  const webCrypto = getWebCrypto();
   const salt = toArrayBuffer(webCrypto.getRandomValues(new Uint8Array(SALT_LENGTH)));
   const iv = toArrayBuffer(webCrypto.getRandomValues(new Uint8Array(IV_LENGTH)));
   const key = await deriveKey(token, salt);
-  const subtle = await getSubtle();
+  const subtle = getSubtle();
 
   const encrypted = await subtle.encrypt(
     { name: ALGORITHM, iv },
@@ -98,7 +85,7 @@ export async function encrypt(plaintext: string, token: string): Promise<string>
 }
 
 export async function decrypt(ciphertext: string, token: string): Promise<string> {
-  const subtle = await getSubtle();
+  const subtle = getSubtle();
   const combined = base64ToUint8Array(ciphertext);
   const salt = toArrayBuffer(combined.slice(0, SALT_LENGTH));
   const iv = toArrayBuffer(combined.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH));

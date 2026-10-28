@@ -42,7 +42,7 @@ describe('ReaderSettingsPanel', () => {
 
   it('shows font settings when not fixed-layout', () => {
     render(<ReaderSettingsPanel {...mockProps} isFixedLayout={false} />);
-    expect(screen.getByLabelText('reader.settings.fontSize.medium')).toBeTruthy();
+    expect(screen.getByLabelText(/reader\.settings\.fontSize\.medium/)).toBeTruthy();
     expect(screen.getByText('reader.fontFamily')).toBeTruthy();
   });
 

@@ -6,6 +6,13 @@ import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 export type PageDirection = 'ltr' | 'rtl' | 'default';
 export type WritingMode = 'horizontal-tb' | 'vertical-rl' | 'vertical-lr';
 
+const FONT_SIZE_ABBREV = {
+  small: 'A',
+  medium: 'A+',
+  large: 'A++',
+  xlarge: 'A+++',
+} as const;
+
 interface ReaderSettingsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -105,33 +112,28 @@ export function ReaderSettingsPanel({
             <legend className="eyebrow block mb-2">{t('reader.fontSize')}</legend>
             <div className="flex gap-1.5 p-1 bg-background-secondary rounded-lg">
               {/* eslint-disable-next-line i18next/no-literal-string -- option keys passed to t() */}
-              {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => (
-                <button
-                  key={size}
-                  onClick={() => onSetFontSize(size)}
-                  aria-pressed={fontSize === size}
-                  aria-label={t(`reader.settings.fontSize.${size}`)}
-                  className={`
-                    min-h-11 flex-1 py-1.5 text-xs rounded-md transition-all duration-150 outline-none
-                    focus-visible:ring-2 focus-visible:ring-accent
-                    ${
-                      fontSize === size
-                        ? 'bg-background shadow-sm text-foreground font-semibold'
-                        : 'text-foreground-muted hover:text-foreground'
-                    }
-                  `}
-                >
-                  {/* eslint-disable i18next/no-literal-string -- font size abbreviations */}
-                  {size === 'small'
-                    ? 'A'
-                    : size === 'medium'
-                      ? 'A+'
-                      : size === 'large'
-                        ? 'A++'
-                        : 'A+++'}
-                  {/* eslint-enable i18next/no-literal-string */}
-                </button>
-              ))}
+              {(['small', 'medium', 'large', 'xlarge'] as const).map((size) => {
+                const abbrev = FONT_SIZE_ABBREV[size];
+                return (
+                  <button
+                    key={size}
+                    onClick={() => onSetFontSize(size)}
+                    aria-pressed={fontSize === size}
+                    aria-label={`${abbrev} - ${t(`reader.settings.fontSize.${size}`)}`}
+                    className={`
+                      min-h-11 flex-1 py-1.5 text-xs rounded-md transition-all duration-150 outline-none
+                      focus-visible:ring-2 focus-visible:ring-accent
+                      ${
+                        fontSize === size
+                          ? 'bg-background shadow-sm text-foreground font-semibold'
+                          : 'text-foreground-muted hover:text-foreground'
+                      }
+                    `}
+                  >
+                    {abbrev}
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
         )}

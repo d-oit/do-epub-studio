@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuthStore } from '../stores/auth';
-import type { SyncQueueItem } from '../lib/offline/db';
+import { getSyncQueue, type SyncQueueItem } from '../lib/offline/db';
+import { retrySyncItem } from '../lib/offline/sync';
 
-// Load offline storage only after the reader opens the recovery UI.
 interface SyncRecoveryPanelProps {
   pendingCount: number;
 }
@@ -24,7 +24,6 @@ export function SyncRecoveryPanel({ pendingCount }: SyncRecoveryPanelProps) {
     setIsLoading(true);
     setLoadFailed(false);
     try {
-      const { getSyncQueue } = await import('../lib/offline/db');
       const queue = await getSyncQueue();
       setFailedItems(queue.filter((item) => item.permanentError));
     } catch {
@@ -41,7 +40,6 @@ export function SyncRecoveryPanel({ pendingCount }: SyncRecoveryPanelProps) {
   const handleRetry = useCallback(
     async (id: string) => {
       try {
-        const { retrySyncItem } = await import('../lib/offline/sync');
         await retrySyncItem(id);
         await refresh();
       } catch {

@@ -114,6 +114,15 @@ environment policy. Keep the databases separate even with those guards.
 
 ## 3. R2 Bucket
 
+### Account Activation (Prerequisite)
+
+R2 Object Storage requires explicit subscription activation in the Cloudflare Dashboard
+before buckets can be listed or created. If not activated, the Cloudflare API rejects
+requests with error `10042: Please enable R2 through the Cloudflare Dashboard`.
+
+1. Visit the Cloudflare Dashboard: `https://dash.cloudflare.com/<account_id>/r2/overview`
+2. Click **Enable R2** / add the R2 subscription to the account.
+
 ### Creation
 
 ```bash
@@ -126,6 +135,20 @@ pnpm exec wrangler r2 bucket create do-epub-studio-books-preview
 The root `wrangler.toml` declares `BOOKS_BUCKET` for production and preview.
 Preview uses `do-epub-studio-books-preview`; it must never use the production
 bucket. Config-file bindings are the source of truth for Pages deployments.
+
+Set `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the operator's
+environment. `wrangler login` alone is insufficient for this preflight: use an
+API token with read access to the configured D1 databases, KV namespace and R2
+buckets. The check fails closed when credentials are absent or the API cannot
+verify a resource:
+
+```bash
+pnpm preflight:cloudflare
+```
+
+Cloudflare references: [Pages Wrangler configuration](https://developers.cloudflare.com/pages/functions/wrangler-configuration/),
+[Pages Functions bindings](https://developers.cloudflare.com/pages/functions/bindings/),
+[R2 bucket creation](https://developers.cloudflare.com/r2/buckets/create-buckets/).
 
 ---
 

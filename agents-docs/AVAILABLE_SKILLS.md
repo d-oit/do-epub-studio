@@ -46,6 +46,7 @@ Auto-generated from skill definitions. Run this script to regenerate.
 
 | `agent-browser` | Browser automation CLI for AI agents. Use when the user needs to interact with websites, including navigating pages, filling forms, clicking buttons, taking screenshots, extracting data, testing web apps, or automating any browser task. Triggers include requests to "open a website", "fill out a form", "click a button", "take a screenshot", "scrape data from a page", "test this web app", "login to a site", "automate browser actions", or any task requiring programmatic web interaction. |
 | `cicd-pipeline` | Design and implement CI/CD pipelines with GitHub Actions, GitLab CI, and Forgejo Actions. Use for automated testing, deployment strategies, security scanning, and multi-environment workflows. |
+| `cloudflare-deployment` | Manage and troubleshoot Cloudflare Pages and Worker deployments. Activate for deployment failures, resource bindings (D1, R2, KV), fail-closed preflight validation, and Pages API log analysis. |
 | `cloudflare-worker-api` | Structure Worker API routes and handlers. Activate for route definition, response helpers, and typed handler patterns. Auth belongs to secure-invite-and-access. |
 | `epub-rendering-and-cfi` | Implement resilient EPUB rendering and annotation anchoring per ADR-006. Activate for reader-core, TOC, locator, or highlight anchoring changes. |
 | `frontend-design` | Apply frontend design best practices: layout planning, OKLCH design tokens, responsive component architecture, View Transitions, and budget validation. |

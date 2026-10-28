@@ -62,6 +62,11 @@ vi.mock('../lib/api', () => ({
 }));
 
 vi.mock('../lib/offline', () => ({
+  getAllReadingInsights: vi
+    .fn()
+    .mockResolvedValue([
+      { bookId: 'book-1', date: '2026-06-24', activeMinutes: 5, activePages: 2 },
+    ]),
   queueSync: vi.fn().mockResolvedValue(undefined),
   generateMutationId: vi.fn().mockReturnValue('mut-1'),
 }));
@@ -77,17 +82,9 @@ vi.mock('@do-epub-studio/shared', () => ({
   createSpanId: vi.fn().mockReturnValue('span-1'),
 }));
 
-vi.mock('../lib/offline/db', () => ({
-  getAllReadingInsights: vi
-    .fn()
-    .mockResolvedValue([
-      { bookId: 'book-1', date: '2026-06-24', activeMinutes: 5, activePages: 2 },
-    ]),
-}));
-
 import { useReadingTimer } from '../features/reader/hooks/useReadingTimer';
 import { apiRequest } from '../lib/api';
-import { getAllReadingInsights } from '../lib/offline/db';
+import { getAllReadingInsights } from '../lib/offline';
 import { computeInsightSummary, ReadingTimer } from '../lib/offline/reading-insights';
 describe('useReadingTimer', () => {
   beforeEach(() => {

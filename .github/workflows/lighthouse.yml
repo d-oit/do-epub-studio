@@ -63,6 +63,12 @@ jobs:
         # ADR-1014: previews use isolated demo resources. UI visibility never
         # enables a server account; the explicit preview seed owns that step.
         run: VITE_HELP_URL=/help VITE_DEMO_LOGIN_ENABLED=1 pnpm build
+      - name: Verify Cloudflare bindings before Pages deployment
+        if: steps.secrets.outputs.available == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm preflight:cloudflare
 
       - name: Deploy preview to Cloudflare Pages
         if: steps.secrets.outputs.available == 'true'

@@ -5,7 +5,7 @@ import { useAuthStore } from '../../../stores/auth';
 import { apiRequest } from '../../../lib/api';
 import { createTraceId, createSpanId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../../../lib/client-logger';
-import { queueSync, generateMutationId } from '../../../lib/offline';
+import { getAllReadingInsights, queueSync, generateMutationId } from '../../../lib/offline';
 
 interface InsightSummary {
   totalActiveMinutes: number;
@@ -51,7 +51,6 @@ export function useReadingTimer(bookId: string | null) {
   const syncToServer = useCallback(async () => {
     if (!sessionToken || !bookId) return;
 
-    const { getAllReadingInsights } = await import('../../../lib/offline/db');
     const entries = await getAllReadingInsights();
     const bookEntries = entries.filter((e) => e.bookId === bookId);
 
