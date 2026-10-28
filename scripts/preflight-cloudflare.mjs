@@ -261,7 +261,7 @@ export async function runPreflight({
     return { ok: false, error: 'CREDENTIALS_MISSING', bindings };
   }
 
-  log.log(`Checking Cloudflare resources for account ${credentials.accountId}...`);
+  log.log('Checking Cloudflare resources...');
   const result = await verifyCloudflareResources({
     accountId: credentials.accountId,
     token: credentials.token,
