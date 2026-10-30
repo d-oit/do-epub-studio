@@ -33,9 +33,11 @@ interface ResultMessage {
 }
 
 function normalizeText(text: string, isAlreadyLower = false): string {
+  // Match sequences of 2+ whitespace characters first (\s{2,}) or individual non-space
+  // whitespace characters ([^\S ]+) while leaving single ASCII space separators untouched.
   return (isAlreadyLower ? text : text.toLowerCase())
     .replace(/[^\p{L}\p{N}\s]+/gu, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\s{2,}|[^\S ]+/g, ' ')
     .trim();
 }
 
