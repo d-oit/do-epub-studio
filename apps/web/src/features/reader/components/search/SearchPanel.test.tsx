@@ -208,7 +208,7 @@ describe('SearchPanel', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('renders clear button when query is present and clears query on click', () => {
+  it('renders clear button with title attribute when query is present and restores focus on clear', () => {
     mockUseReaderSearch.mockReturnValue({ results: [], isSearching: false, error: null });
 
     render(
@@ -227,9 +227,11 @@ describe('SearchPanel', () => {
     fireEvent.change(input, { target: { value: 'fox' } });
     const clearBtn = screen.getByRole('button', { name: 'reader.clearSearch' });
     expect(clearBtn).toBeInTheDocument();
+    expect(clearBtn).toHaveAttribute('title', 'reader.clearSearch');
 
     fireEvent.click(clearBtn);
     expect(input).toHaveValue('');
+    expect(document.activeElement).toBe(input);
     expect(screen.queryByRole('button', { name: 'reader.clearSearch' })).not.toBeInTheDocument();
   });
 

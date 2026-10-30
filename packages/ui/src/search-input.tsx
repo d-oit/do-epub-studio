@@ -1,4 +1,4 @@
-import { useState, useId, useEffect } from 'react';
+import { useState, useId, useEffect, useRef } from 'react';
 
 export interface SearchInputProps {
   value: string;
@@ -20,6 +20,7 @@ export function SearchInput({
   debounceMs = 0,
 }: SearchInputProps) {
   const id = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [local, setLocal] = useState(value);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export function SearchInput({
     setLocal('');
     if (onClear) onClear();
     else onChange('');
+    inputRef.current?.focus();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -51,6 +53,7 @@ export function SearchInput({
         {ariaLabel}
       </label>
       <input
+        ref={inputRef}
         id={id}
         type="search"
         value={debounceMs > 0 ? local : value}
@@ -68,6 +71,7 @@ export function SearchInput({
           type="button"
           onClick={handleClear}
           aria-label="Clear search"
+          title="Clear search"
           className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md min-w-[28px] min-h-[28px] p-1 text-foreground-muted hover:text-foreground hover:bg-background-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors"
         >
           <svg
