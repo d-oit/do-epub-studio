@@ -12,7 +12,6 @@ export {
   revokeAllReaderSessionsForUser,
   listAdminSessionsForUser,
   type AdminAssuranceLevel,
-  type AdminSessionSummary,
 } from './admin-session-inventory';
 
 export interface AdminAuthContext {
