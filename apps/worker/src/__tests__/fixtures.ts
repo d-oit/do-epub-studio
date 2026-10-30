@@ -269,6 +269,9 @@ export function makePassThroughContext(): ExecutionContext {
     props: {},
     exports: {},
     tracing: {} as Tracing,
+    // Required since @cloudflare/workers-types 5.20261030.x. Route handlers under
+    // test never map a virtual host, so returning the empty host is faithful.
+    mapVirtualHost: () => '',
   };
 }
 
