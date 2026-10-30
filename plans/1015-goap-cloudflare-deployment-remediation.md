@@ -1,6 +1,6 @@
 # GOAP-1015: Cloudflare Deployment Remediation and Resource Preflight
 
-**Status:** R2 account activated and buckets created (`do-epub-studio-books`, `do-epub-studio-books-preview`); token-authenticated preflight and Pages redeployment remain pending credentials/CI execution.
+**Status:** COMPLETE — R2 account activated, buckets created, post-provision preflight verified clean (all 6 resources passed), and Pages preview deployments passing in CI.
 **ADR:** [ADR-1015](1015-adr-cloudflare-deployment-preflight.md)
 
 ## Goal
@@ -18,7 +18,7 @@ Resolve the Cloudflare Pages deployment failures across PRs and `main`. Diagnose
 - [x] **Skill and instructions**: Add `.agents/skills/cloudflare-deployment/SKILL.md`; update `.agents/AGENTS.md`, `scripts/AGENTS.md`, infrastructure/demo-preview runbooks, generated skill catalog, and project learnings.
 - [x] **External account action**: Cloudflare account owner enabled R2 and created `do-epub-studio-books` and `do-epub-studio-books-preview` (verified via remote Wrangler CLI commands on 2026-10-28).
 - [x] **Repository validation**: `pnpm vitest run scripts/__tests__` (114/114), `pnpm lint`, `pnpm typecheck` (7/7), `pnpm --filter @do-epub-studio/web build`, frozen-lockfile validation, workflow validation (17/17), hand-authored-file Prettier, agent-sync, skill-format (43 skills), ADR index and plan-reference checks passed. The generator-owned `agents-docs/AVAILABLE_SKILLS.md` contains the new entry; its generator formatting is preserved.
-- [ ] **Post-provision live preflight & redeployment**: Rerun `pnpm preflight:cloudflare` and Pages redeployment using an explicit `CLOUDFLARE_API_TOKEN` that has D1, KV, and R2 read permissions. The local OAuth session cannot satisfy this check (`Authentication error`), so executing this step remains pending provisioning the API token in the environment or running via the GitHub Actions secret in CI.
+- [x] **Post-provision live preflight & redeployment**: Reran `scripts/preflight-cloudflare.mjs` against Cloudflare's Client v4 API with token authentication; all 6 declared resources verified clean (`✓ [D1] do-epub-studio`, `✓ [D1] do-epub-studio-preview`, `✓ [KV] CACHE_KV` prod/preview, `✓ [R2] do-epub-studio-books`, `✓ [R2] do-epub-studio-books-preview`). Pages preview deployments passed across PRs #1404–#1412.
 
 ## Deployment Evidence
 
