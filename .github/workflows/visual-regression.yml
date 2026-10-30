@@ -9,6 +9,18 @@ on:
       - 'apps/web/src/**/*.css'
       - 'apps/web/tailwind.config.*'
       - 'apps/web/src/index.css'
+  # Chromatic compares against the most recent build on the baseline branch.
+  # Without a `main` build there is no baseline, so every PR reported "all
+  # stories are new" and the PR status could never resolve to a pass. Publishing
+  # on `main` is what makes the PR comparison meaningful. `onlyChanged: true`
+  # keeps this to stories touched by the merge, not all 70.
+  push:
+    branches: [main]
+    paths:
+      - 'packages/ui/**'
+      - 'apps/web/src/**/*.css'
+      - 'apps/web/tailwind.config.*'
+      - 'apps/web/src/index.css'
   workflow_dispatch:
 
 env:
