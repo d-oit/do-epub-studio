@@ -1,4 +1,3 @@
-/* eslint-disable react-compiler/react-compiler */
 import { useEffect, useRef } from 'react';
 import type { Rendition } from '@intity/epub-js';
 import type { MutableRefObject } from 'react';

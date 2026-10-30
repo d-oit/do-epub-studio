@@ -1,4 +1,3 @@
-/* eslint-disable react-compiler/react-compiler */
 import { useEffect, useRef, useState } from 'react';
 import type { Rendition } from '@intity/epub-js';
 import type { MutableRefObject, RefObject } from 'react';
@@ -156,7 +155,7 @@ export function useEpubRendition({
       readerDirection !== 'default' ? readerDirection : loadedEpub.direction;
     applyDirectionAndWritingMode(rendition, direction, readerWritingMode);
   }, [rendition, loadedEpub, readerDirection, readerWritingMode]);
-
+  /* eslint-disable react-hooks/immutability -- epubjs mutable rendition layout settings */
   useEffect(() => {
     if (!rendition || !fixedLayoutRef.current) return;
     const layout = (rendition as EpubRenditionInternals).layout?.settings;
@@ -164,6 +163,7 @@ export function useEpubRendition({
     const cfi = rendition.location?.start?.cfi;
     if (cfi) void rendition.display(cfi);
   }, [readerSpread, rendition, fixedLayoutRef]);
+  /* eslint-enable react-hooks/immutability */
 
   useEffect(() => {
     if (!rendition || !fixedLayoutRef.current) return;
