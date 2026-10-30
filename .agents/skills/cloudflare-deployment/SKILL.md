@@ -42,7 +42,7 @@ export CLOUDFLARE_API_TOKEN='<token-with-D1-KV-R2-read-access>'
 pnpm preflight:cloudflare
 ```
 
-Both environment variables are required. A stored Wrangler OAuth session was rejected by these resource API calls in this environment; use an API token with the listed resource-read permissions, not login state alone. Missing credentials, API permission failures, network failures, malformed bindings, missing resources, and R2 error 10042 all fail closed. The script does not create or mutate resources. An API permission failure is not reported as a missing resource.
+Both environment variables are required. `npx wrangler` and the preflight script both use `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Missing credentials, API permission failures, network failures, malformed bindings, missing resources, and R2 error 10042 all fail closed. The script does not create or mutate resources. An API permission failure is not reported as a missing resource.
 
 Cloudflare's automatic Pages Git integration does not wait for this repository's Actions job. The permanent correction for the observed deploy failures is therefore account provisioning, not reliance on this preflight alone.
 

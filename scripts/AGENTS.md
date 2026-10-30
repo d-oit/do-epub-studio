@@ -101,9 +101,10 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 
 - `preflight-cloudflare.mjs` requires explicit `CLOUDFLARE_API_TOKEN` and
   `CLOUDFLARE_ACCOUNT_ID`; no local-account inference or config-only green path.
-  A stored Wrangler OAuth session was rejected by these resource API calls here;
-  provide an API token with read scopes. Per-resource D1/KV/R2 GETs avoid list
-  pagination false negatives; distinguish 404 from permission errors and R2 10042.
+  Pass the token via environment variable (`export CLOUDFLARE_API_TOKEN=...`),
+  which is also respected by `npx wrangler` and direct Client v4 REST calls.
+  Per-resource D1/KV/R2 GETs avoid list pagination false negatives; distinguish
+  404 from permission errors and R2 10042.
 - `@intity/epub-js` is pinned to `0.3.96` in both consuming manifests and the
   lockfile. A range (`^0.3.96`) let a Dependabot lock refresh select `0.3.103`,
   whose missing declarations failed the Cloudflare preview build.
