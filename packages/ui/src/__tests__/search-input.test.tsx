@@ -15,9 +15,11 @@ describe('SearchInput', () => {
     expect(onChange).toHaveBeenCalledWith('a');
   });
 
-  it('shows clear button when value is non-empty', () => {
+  it('shows clear button with title when value is non-empty', () => {
     render(<SearchInput value="x" onChange={() => {}} />);
-    expect(screen.getByLabelText('Clear search')).toBeInTheDocument();
+    const clearBtn = screen.getByLabelText('Clear search');
+    expect(clearBtn).toBeInTheDocument();
+    expect(clearBtn).toHaveAttribute('title', 'Clear search');
   });
 
   it('hides clear button when value is empty', () => {
@@ -25,11 +27,13 @@ describe('SearchInput', () => {
     expect(screen.queryByLabelText('Clear search')).not.toBeInTheDocument();
   });
 
-  it('clears value when clear button clicked', () => {
+  it('clears value and restores focus to input when clear button clicked', () => {
     const onChange = vi.fn();
     render(<SearchInput value="hello" onChange={onChange} />);
+    const input = screen.getByRole('searchbox');
     fireEvent.click(screen.getByLabelText('Clear search'));
     expect(onChange).toHaveBeenCalledWith('');
+    expect(document.activeElement).toBe(input);
   });
 
   it('clears value when Escape key is pressed in the search input', () => {

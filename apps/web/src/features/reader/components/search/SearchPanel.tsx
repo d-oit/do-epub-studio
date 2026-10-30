@@ -177,6 +177,7 @@ export function SearchPanel({ isOpen, book, onClose, onNavigate, t }: SearchPane
               type="button"
               onClick={handleClear}
               aria-label={t('reader.clearSearch')}
+              title={t('reader.clearSearch')}
               className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center rounded-md min-w-[28px] min-h-[28px] p-1 text-foreground-muted hover:text-foreground hover:bg-background-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent transition-colors ${
                 isSearching ? 'right-9' : 'right-2'
               }`}
