@@ -102,7 +102,7 @@ if [ -d "$REPO_ROOT/node_modules" ]; then
     # Check key dependencies
     KEY_DEPS=("vite" "typescript" "eslint" "vitest")
     for dep in "${KEY_DEPS[@]}"; do
-        if [ -d "$REPO_ROOT/node_modules/$dep" ]; then
+        if [ -d "$REPO_ROOT/node_modules/$dep" ] || [ -d "$REPO_ROOT/apps/web/node_modules/$dep" ]; then
             echo -e "    ${GREEN}✓${NC} $dep"
         else
             echo -e "    ${RED}✗${NC} $dep missing"
