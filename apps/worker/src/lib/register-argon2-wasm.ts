@@ -5,10 +5,10 @@ import { setWASMModules } from 'argon2-wasm-edge';
 // Pages build compile them at deploy time and hand us `WebAssembly.Module`
 // instances, which argon2-wasm-edge's `setWASMModules()` accepts. The wasm
 // files are resolved from the package itself (no `exports` map) so no binaries
-// are tracked in the repo.
-// @ts-expect-error - wrangler's CompiledWasm rule types `.wasm` imports.
+// are tracked in the repo. Wrangler's CompiledWasm rule types `.wasm` imports
+// via the generated `declare module '*.wasm'` in `worker-configuration.d.ts`,
+// so no `@ts-expect-error` is needed here any more.
 import argon2Wasm from 'argon2-wasm-edge/wasm/argon2.wasm';
-// @ts-expect-error - wrangler's CompiledWasm rule types `.wasm` imports.
 import blake2bWasm from 'argon2-wasm-edge/wasm/blake2b.wasm';
 
 let registered = false;
@@ -22,7 +22,6 @@ let registered = false;
  */
 export async function registerArgon2Wasm(): Promise<void> {
   if (registered) return;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- argon2Wasm/blake2bWasm are pre-compiled WASM modules typed as `any` by wrangler's CompiledWasm rule
   await setWASMModules({ argon2WASM: argon2Wasm, blake2bWASM: blake2bWasm });
   registered = true;
 }

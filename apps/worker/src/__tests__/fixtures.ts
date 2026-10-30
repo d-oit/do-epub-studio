@@ -193,7 +193,7 @@ export function makeEnv(): Env {
   return {
     BOOKS_BUCKET: makeMockBucket(),
     DB: mockDB as unknown as D1Database,
-    SENDER_EMAIL: {} as unknown as SendEmail,
+    EMAIL_SEND: {} as unknown as SendEmail,
     CACHE_KV: {
       get: vi.fn().mockResolvedValue(null),
       put: vi.fn().mockResolvedValue(undefined),
