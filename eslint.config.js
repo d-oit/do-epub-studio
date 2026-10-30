@@ -3,7 +3,6 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
-import reactCompiler from 'eslint-plugin-react-compiler';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import unicorn from 'eslint-plugin-unicorn';
 import promise from 'eslint-plugin-promise';
@@ -32,7 +31,6 @@ export default tseslint.config(
     plugins: {
       react: reactPlugin,
       'react-hooks': reactHooks,
-      'react-compiler': reactCompiler,
       'jsx-a11y': jsxA11y,
       unicorn,
       promise,
@@ -69,7 +67,12 @@ export default tseslint.config(
       'no-useless-assignment': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'react-compiler/react-compiler': 'warn',
+      'react-hooks/static-components': 'warn',
+      'react-hooks/use-memo': 'warn',
+      'react-hooks/preserve-manual-memoization': 'warn',
+      'react-hooks/incompatible-library': 'warn',
+      'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
       // eslint-plugin-react: only keeping rules that TypeScript can't catch
       'react/jsx-key': 'error',
       'react/jsx-no-target-blank': 'error',
