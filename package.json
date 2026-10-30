@@ -28,7 +28,8 @@
     "bundle:budget": "pnpm --filter @do-epub-studio/web bundle:budget",
     "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce",
     "knip": "knip",
-    "check:dead-code": "scripts/dead-code-check.sh"
+    "check:dead-code": "scripts/dead-code-check.sh",
+    "preflight:cloudflare": "node scripts/preflight-cloudflare.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
@@ -65,11 +66,20 @@
     "wrangler": "^4.151.1"
   },
   "pnpm": {
+    "auditConfig": {
+      "ignoreCves": [
+        "CVE-2023-54404"
+      ],
+      "ignoreGhsas": [
+        "GHSA-mrhx-c7xc-m3w5"
+      ]
+    },
     "overrides": {
       "sharp": ">=0.35.5",
-      "fast-uri": ">=3.1.8",
+      "fast-uri": ">=4.2.3",
       "serialize-javascript": ">=7.0.3",
-      "undici": ">=7.29.1"
+      "undici": ">=7.29.1",
+      "@cloudflare/vitest-pool-workers>zod": ">=4.6.6"
     }
   }
 }

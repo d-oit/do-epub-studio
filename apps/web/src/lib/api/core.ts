@@ -98,11 +98,10 @@ function handleUnauthorized(rejectedToken: string | null) {
   const state = useAuthStore.getState();
   if (!rejectedToken || !state.sessionToken || rejectedToken !== state.sessionToken) return;
   state.logout('expired');
-  // S1 (GOAP-1002): device-data teardown on auth loss. The dynamic import
-  // keeps the IndexedDB layer + `idb` out of the shell bundle (ADR-107 §3);
-  // the teardown only runs on auth loss, never at startup.
-  void import('../offline/db')
-    .then(({ clearAllEncryptedData }) => clearAllEncryptedData())
+  // Load teardown code only when auth expires; it keeps IndexedDB out of the
+  // shell's static dependency graph.
+  void import('../offline/auth-loss-cleanup')
+    .then(({ clearEncryptedDataOnAuthLoss }) => clearEncryptedDataOnAuthLoss())
     .catch((err) => {
       console.error('Device data teardown failed on auth loss', err);
     });

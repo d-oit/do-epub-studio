@@ -92,3 +92,18 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 - A recursive `pnpm --filter "...[origin/main]" run test:unit` can select the root package as well as workspace packages. The root script starts Turbo, duplicating those workspace suites beside the directly launched ones. `verify:fast` uses Turbo's equivalent dependent filter with `--concurrency=1`; preserve the shared redaction timing assertion rather than loosening it to accommodate duplicate scheduling.
 - The root `test:unit` and `test:coverage` commands serialize workspace tasks with Turbo's `--concurrency=1`. Prove serialization from a forced run's `.turbo/runs` execution intervals, not its elapsed time; PR #1370 verified 8 uncached, non-overlapping tasks with Turbo 2.11.9.
 - `test:unit` and `test:coverage` are separate Turbo tasks (ADR-1013): only `test:coverage` declares `coverage/**`, so a bare unit run neither declares nor produces reports and prints no missing-output diagnostics (measured 7 before the split, 0 after). Every workspace package must define `test:coverage` or `turbo run test:coverage` silently drops that suite from CI's coverage step; all eight do, each mirroring its own `test:unit` invocation.
+
+## Cloudflare resource preflight (scripts/preflight-cloudflare.mjs)
+
+- `scripts/preflight-cloudflare.mjs` validates that all D1, KV, and R2 resources declared in `wrangler.toml` exist in the target Cloudflare account before deployment.
+- When an account has not enabled R2 Object Storage in the Cloudflare Dashboard, the API rejects with error code 10042 ("Please enable R2 through the Cloudflare Dashboard"). The script detects this condition and fails closed with actionable dashboard and CLI instructions.
+- Never remove required runtime bindings (`BOOKS_BUCKET`) to bypass preflight or deployment failures; `files.ts:41` requires R2 to stream EPUB bytes and ADR-1014 requires isolated preview R2.
+
+- `preflight-cloudflare.mjs` requires explicit `CLOUDFLARE_API_TOKEN` and
+  `CLOUDFLARE_ACCOUNT_ID`; no local-account inference or config-only green path.
+  A stored Wrangler OAuth session was rejected by these resource API calls here;
+  provide an API token with read scopes. Per-resource D1/KV/R2 GETs avoid list
+  pagination false negatives; distinguish 404 from permission errors and R2 10042.
+- `@intity/epub-js` is pinned to `0.3.96` in both consuming manifests and the
+  lockfile. A range (`^0.3.96`) let a Dependabot lock refresh select `0.3.103`,
+  whose missing declarations failed the Cloudflare preview build.

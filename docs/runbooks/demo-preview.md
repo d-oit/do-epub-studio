@@ -8,7 +8,9 @@ override `ENVIRONMENT=production` (ADR-1014).
 ## Provision the resources
 
 From the repository root, authenticate Wrangler using your normal Cloudflare
-credentials and create resources if they do not already exist:
+credentials and create resources if they do not already exist. (Note: R2 Object
+Storage must be enabled in the Cloudflare Dashboard first; otherwise Wrangler
+returns error `10042: Please enable R2 through the Cloudflare Dashboard`):
 
 ```bash
 pnpm exec wrangler d1 create do-epub-studio-preview
@@ -27,13 +29,18 @@ The checked-in preview configuration supplies `ENVIRONMENT=preview`,
 
 ## Seed accounts and a readable EPUB
 
-Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` through your normal secret
-manager. The token needs access to the preview D1 database and R2 bucket.
-Run this explicit operator command; it is never a production deployment hook:
+Set `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` through your normal
+secret manager. Wrangler's interactive login alone is not an API token for
+preflight. The token needs read access to every declared D1, KV, and R2 resource
+plus the preview D1/R2 permissions required by seeding. Run the mandatory
+remote check before deployment or seeding:
 
 ```bash
+pnpm preflight:cloudflare
 node scripts/seed-demo-preview.mjs --remote
 ```
+
+The seed command is never a production deployment hook.
 
 It applies pending D1 migrations, seeds the reserved reader and disabled
 administrator, generates a two-chapter EPUB, uploads it to preview R2 and
