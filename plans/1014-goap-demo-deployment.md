@@ -1,6 +1,6 @@
 # GOAP-1014: Complete deployed demo setup
 
-**Status:** IMPLEMENTED — required hosted CI remains the merge prerequisite
+**Status:** IMPLEMENTED — merged as PR #1391 (2026-10-27); the Pages preview deployment gap it could not resolve was closed by #1404.
 **ADR:** [ADR-1014](1014-adr-demo-deployment.md)
 
 ## Goal and boundaries
@@ -16,7 +16,7 @@ Implement the user's requested demo deployment fixes in a new PR. The reader and
 - [x] Runtime/configuration (medium): bind Pages R2, use the existing D1 rate limiter for demo routes, and keep production guards consistent with documentation. Verify demo route/configuration tests.
 - [x] Integration (medium): run focused suites, full quality gate and a local real-stack chapter-reading journey. Record material environment limits and fix actionable failures.
 - [x] Record scoped learnings, stage explicit paths and attempt the atomic commit workflow.
-- [ ] Required hosted CI passes before merge. Publish for review using the connected GitHub integration because the atomic workflow refuses to commit while its online audit is unavailable.
+- [x] Required hosted CI passes before merge. (Resolved: PR #1391 passed all required status checks and merged; the remaining Cloudflare Pages deployment check failed for the missing R2 bucket resolved in #1404).
 
 Independent source/edit ownership: frontend reviewer owns web login UI/tests and Turbo input config; seed reviewer owns seed scripts/tests; coordinator owns Pages config, demo rate limiting, docs/plans and integration checks. Heavy tests run serially.
 
