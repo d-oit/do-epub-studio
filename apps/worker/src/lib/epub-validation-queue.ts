@@ -14,7 +14,9 @@ export async function enqueueEpubValidation(
   if (!env.EPUB_VALIDATION_QUEUE) return;
   await env.EPUB_VALIDATION_QUEUE.send(message);
 }
-function getValidatedRunnerUrl(rawUrl: string): URL {
+// Worker configuration owns this URL; HTTP requests and queue messages never
+// supply it. Pin the path so only the configured runner receives validation.
+export function getValidatedRunnerUrl(rawUrl: string): URL {
   const parsed = new URL(rawUrl);
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
     throw new Error('invalid_runner_url');
