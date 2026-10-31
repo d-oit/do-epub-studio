@@ -14,6 +14,13 @@ export async function enqueueEpubValidation(
   if (!env.EPUB_VALIDATION_QUEUE) return;
   await env.EPUB_VALIDATION_QUEUE.send(message);
 }
+function getValidatedRunnerUrl(rawUrl: string): URL {
+  const parsed = new URL(rawUrl);
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('invalid_runner_url');
+  }
+  return new URL('/validate', parsed.origin);
+}
 
 export async function processEpubValidationQueue(
   batch: MessageBatch<EpubValidationMessage>,
@@ -64,7 +71,8 @@ async function validateRevision(env: Env, message: EpubValidationMessage): Promi
   if (!object || object.size > 100 * 1024 * 1024 || object.size !== row.file_size_bytes)
     throw new Error('source_unavailable');
 
-  const response = await fetch(new URL('/validate', env.EPUBCHECK_RUNNER_URL), {
+  const endpoint = getValidatedRunnerUrl(env.EPUBCHECK_RUNNER_URL);
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${env.EPUBCHECK_RUNNER_TOKEN}`,

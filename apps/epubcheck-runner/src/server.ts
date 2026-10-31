@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -185,11 +185,11 @@ async function executeEpubcheck(
   let output = '';
   let outputBytes = 0;
   const timer = setTimeout(() => child.kill('SIGKILL'), MAX_RUNTIME_MS);
-  const capture = (chunk: Buffer) => {
+  function capture(chunk: Buffer): void {
     outputBytes += chunk.byteLength;
     if (outputBytes > MAX_OUTPUT_BYTES) child.kill('SIGKILL');
     else output += chunk.toString('utf8');
-  };
+  }
   child.stdout.on('data', capture);
   child.stderr.on('data', capture);
   child.once('error', (error) => reject(error));
