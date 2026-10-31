@@ -900,3 +900,13 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 - **The generator now emits its own `interface Env` inside `declare namespace Cloudflare`.** A hand-written `interface Env extends CloudflareEnv` that re-declares a binding with a different type fails with `TS2430 incorrect extends`. Keep `src/lib/env.ts` as an `Omit<CloudflareEnv, RelaxedKeys> & {…}` alias so bindings the Pages deployment lacks (Email Sending) can stay optional without fighting the generated shape.
 - **`EMAIL_SEND`, not `SENDER_EMAIL`.** `apps/worker/wrangler.jsonc` declares `send_email` as `EMAIL_SEND`; the previously committed types advertised a stale `SENDER_EMAIL` that exists in no config. Regenerating is what surfaces binding renames that hand-maintained types hide.
 - Generated `.wasm` module declarations make the `@ts-expect-error` directives and the `no-unsafe-assignment` suppression in `src/lib/register-argon2-wasm.ts` obsolete; both become hard errors under `--max-warnings 0` once removed lazily.
+
+### EPUB capability fixture corpus
+
+### GOAP-1017: EPUB Conformance, Interchange, and Queue Validation (2026-10-31)
+
+- **`fflate.Unzip` recurses synchronously on large archives**: Pushing a large archive with 10,000+ entries into `Unzip.push(data, true)` in a single call causes a stack overflow (`RangeError: Maximum call stack size exceeded`). Feeding data in 64 KiB chunks (`unzip.push(data.subarray(offset, offset + CHUNK), end)`) and breaking the loop when `finished` is set allows thousands of entries to be validated safely without exceeding the V8 call stack.
+- **Cloudflare `waitUntil()` cancels after 30 seconds**: Official Cloudflare Workers documentation specifies that `ctx.waitUntil()` tasks running longer than 30 seconds after HTTP response delivery are cancelled by the runtime. Long-running or resilient post-upload work (such as full EPUBCheck execution) must be dispatched through Cloudflare Queues with bounded retry backoff and dead-letter queues rather than running under `waitUntil()`.
+- **Preflight resource verification extends to Queues**: `scripts/preflight-cloudflare.mjs` verifies declared production and preview `queues` bindings against the Cloudflare Client v4 accounts API (`GET /client/v4/accounts/{id}/queues`) with pagination, failing closed if a declared queue does not exist.
+
+- Capability fixture ZIP generation shares `packages/reader-core/src/__tests__/fixtures/zip-builder.mjs` with the pre-existing generator; generated archives are ignored binaries and the package test scripts must generate them before Vitest reads them.

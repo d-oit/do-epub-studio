@@ -32,7 +32,8 @@ type RelaxedKeys =
   | 'DEMO_BOOK_SLUG'
   | 'DEMO_ACCOUNTS_PROD_ALLOWLIST'
   | 'WEBAUTHN_RP_NAME'
-  | 'CF_PAGES';
+  | 'CF_PAGES'
+  | 'EPUB_VALIDATION_QUEUE';
 
 export type Env = Omit<CloudflareEnv, RelaxedKeys> & {
   EMAIL_SEND?: SendEmail;
@@ -46,6 +47,9 @@ export type Env = Omit<CloudflareEnv, RelaxedKeys> & {
   CF_PAGES?: string;
   SESSION_SIGNING_SECRET: string;
   INVITE_TOKEN_SECRET: string;
+  EPUB_VALIDATION_QUEUE?: Queue<{ bookId: string; revisionId: string }>;
+  EPUBCHECK_RUNNER_URL?: string;
+  EPUBCHECK_RUNNER_TOKEN?: string;
 };
 
 export type JsonRow = Record<string, string | number | null | undefined>;

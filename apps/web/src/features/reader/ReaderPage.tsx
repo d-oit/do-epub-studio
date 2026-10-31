@@ -34,6 +34,7 @@ import {
   FixedLayoutControls,
   ScrollProgressBar,
 } from './components';
+import { AnnotationInterchangeBar } from './components/toolbar/AnnotationInterchangeBar';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
 import { NotificationPanel } from './components/notifications/NotificationPanel';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
@@ -44,6 +45,12 @@ import { initAiPlugins } from '../../lib/ai-plugins';
 // ADR-107 route boundary rules (catalog/admin/auth must not import
 // reader-core). Idempotent.
 initAiPlugins();
+const WIDTHS: Record<string, string> = {
+  narrow: 'max-w-xl',
+  normal: 'max-w-3xl',
+  wide: 'max-w-5xl',
+  full: 'max-w-full',
+};
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -85,19 +92,17 @@ export function ReaderPage() {
   const setReaderSpread = useReaderStore((s) => s.setReaderSpread);
   const setReaderZoom = useReaderStore((s) => s.setReaderZoom);
 
-  const readerTheme = usePreferencesStore((s) => s.reader.theme);
-  const readerFontSize = usePreferencesStore((s) => s.reader.fontSize);
-  const readerFontFamily = usePreferencesStore((s) => s.reader.fontFamily);
-  const readerPageWidth = usePreferencesStore((s) => s.reader.pageWidth);
-  const readerDirection = usePreferencesStore((s) => s.reader.direction);
-  const readerWritingMode = usePreferencesStore((s) => s.reader.writingMode);
-  const aiEnabled = usePreferencesStore((s) => s.reader.aiEnabled);
-  const setTheme = usePreferencesStore((s) => s.setTheme);
-  const setFontFamily = usePreferencesStore((s) => s.setFontFamily);
-  const setFontSize = usePreferencesStore((s) => s.setFontSize);
-  const setDirection = usePreferencesStore((s) => s.setDirection);
-  const setWritingMode = usePreferencesStore((s) => s.setWritingMode);
-  const setAiEnabled = usePreferencesStore((s) => s.setAiEnabled);
+  const {
+    theme: readerTheme,
+    fontSize: readerFontSize,
+    fontFamily: readerFontFamily,
+    pageWidth: readerPageWidth,
+    direction: readerDirection,
+    writingMode: readerWritingMode,
+    aiEnabled,
+  } = usePreferencesStore(useShallow((s) => s.reader));
+  const { setTheme, setFontFamily, setFontSize, setDirection, setWritingMode, setAiEnabled } =
+    usePreferencesStore();
 
   const { t, locale } = useTranslation();
 
@@ -129,6 +134,11 @@ export function ReaderPage() {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const resetSelection = () => {
+    setSelection(null);
+    setShowCommentInput(false);
+    setIsCommentMode(false);
+  };
   /**
    * A5/GOAP-300: resolve the signed book-file URL, caching it encrypted at rest
    * so an offline reload can still open the book. A failed *online* request
@@ -298,12 +308,13 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       void flushInsights().catch(() => {});
       void syncInsightsToServer().catch(() => {});
-    };
-  }, [flushInsights, syncInsightsToServer]);
+    },
+    [flushInsights, syncInsightsToServer],
+  );
 
   const handleLogout = useReaderLogout();
 
@@ -313,11 +324,7 @@ export function ReaderPage() {
       setActivePanel(null);
     }
   };
-
-  const pageWidthClass =
-    { narrow: 'max-w-xl', normal: 'max-w-3xl', wide: 'max-w-5xl', full: 'max-w-full' }[
-      readerPageWidth
-    ] ?? 'max-w-3xl';
+  const pageWidthClass = WIDTHS[readerPageWidth] ?? 'max-w-3xl';
   const tFn = t as (key: string) => string;
 
   return (
@@ -345,6 +352,7 @@ export function ReaderPage() {
         isFixedLayout={isFixedLayout}
         onToggleFixedLayoutControls={() => togglePanel('fl-controls')}
       />
+      <AnnotationInterchangeBar bookId={bookId} bookTitle={bookTitle} onError={setError} />
       {activePanel === 'settings' && (
         <ReaderSettingsPanel
           isOpen
@@ -429,11 +437,7 @@ export function ReaderPage() {
             setIsCommentMode(true);
           }}
           onFeedback={(kind) => feedback.openComposer(kind, selection)}
-          onClose={() => {
-            setSelection(null);
-            setShowCommentInput(false);
-            setIsCommentMode(false);
-          }}
+          onClose={resetSelection}
         />
       )}
       <CommentInputModal
@@ -441,15 +445,9 @@ export function ReaderPage() {
         selection={selection}
         onSubmit={async (text) => {
           await handleCreateComment(text, selection);
-          setSelection(null);
-          setShowCommentInput(false);
-          setIsCommentMode(false);
+          resetSelection();
         }}
-        onCancel={() => {
-          setShowCommentInput(false);
-          setIsCommentMode(false);
-          setSelection(null);
-        }}
+        onCancel={resetSelection}
         placeholder={t('comment.placeholder')}
         submitLabel={t('annotation.comment')}
       />

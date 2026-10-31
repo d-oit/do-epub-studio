@@ -178,6 +178,32 @@ jobs:
       - name: Run web-ui audit suite
         run: node --test scripts/web-ui/audit.test.mjs scripts/web-ui/audit.browser.test.mjs
 
+  epubcheck-fixtures:
+    name: EPUBCheck Fixtures Validation
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: ./.github/actions/setup-pnpm
+
+      - name: Validate synthetic fixtures with EPUBCheck
+        run: pnpm check:epub-fixtures
+
+      - name: Upload EPUBCheck report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: epubcheck-report
+          path: epubcheck-report.json
+          retention-days: 7
   dep-scan:
     name: Dependency Vulnerability Scan
     needs: setup

@@ -657,15 +657,14 @@ function sanitizeElementAttributes(el: Element, policy: ExternalUrlPolicy): void
       el.removeAttribute(name);
       continue;
     }
-    if (name === 'href' || name === 'xlink:href') {
-      if (isLinkable === undefined) {
+    const isSrc = name === 'src';
+    if (isSrc || name === 'href' || name === 'xlink:href') {
+      if (!isSrc && isLinkable === undefined) {
         const localName = el.localName;
-        // SVG local names preserve case (feImage) in both HTML and XHTML/XML parse
-        // modes, so compare case-insensitively rather than relying on one casing.
         isLinkable =
           localName === 'use' || localName === 'image' || equalsIgnoreCase(localName, 'feimage');
       }
-      if (isLinkable && attr.value && shouldStripHref(attr.value, policy)) {
+      if ((isSrc || isLinkable) && attr.value && shouldStripHref(attr.value, policy)) {
         el.removeAttribute(name);
       }
     }

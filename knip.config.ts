@@ -23,6 +23,7 @@ const config: KnipConfig = {
     enumMembers: 'warn',
     duplicates: 'warn',
   },
+  ignoreBinaries: ['java'],
 
   // Exports that are also referenced in the same file (e.g. DEFAULT_EXPIRY_DAYS
   // used inside the same module it is exported from) are not dead code.

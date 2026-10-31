@@ -69,6 +69,37 @@
     "enabled": true,
     "head_sampling_rate": 1,
   },
+  "queues": {
+    "producers": [
+      { "binding": "EPUB_VALIDATION_QUEUE", "queue": "do-epub-studio-epub-validation" },
+    ],
+    "consumers": [
+      {
+        "queue": "do-epub-studio-epub-validation",
+        "max_batch_size": 1,
+        "max_retries": 5,
+        "dead_letter_queue": "do-epub-studio-epub-validation-dlq",
+      },
+    ],
+  },
+  "env": {
+    "preview": {
+      "name": "do-epub-studio-worker-preview",
+      "queues": {
+        "producers": [
+          { "binding": "EPUB_VALIDATION_QUEUE", "queue": "do-epub-studio-epub-validation-preview" },
+        ],
+        "consumers": [
+          {
+            "queue": "do-epub-studio-epub-validation-preview",
+            "max_batch_size": 1,
+            "max_retries": 5,
+            "dead_letter_queue": "do-epub-studio-epub-validation-preview-dlq",
+          },
+        ],
+      },
+    },
+  },
   "migrations": [
     {
       "tag": "v1",

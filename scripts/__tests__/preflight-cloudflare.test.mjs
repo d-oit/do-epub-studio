@@ -44,15 +44,16 @@ describe('preflight-cloudflare', () => {
         d1: sampleConfig.d1_databases,
         kv: sampleConfig.kv_namespaces,
         r2: sampleConfig.r2_buckets,
+        queues: [],
       },
       preview: {
         d1: sampleConfig.env.preview.d1_databases,
         kv: sampleConfig.env.preview.kv_namespaces,
         r2: sampleConfig.env.preview.r2_buckets,
+        queues: [],
       },
     });
   });
-
   it('verifies declared resources through their resource-specific API endpoints', async () => {
     const requestedUrls = [];
     const fetchImpl = vi.fn(async (url) => {
@@ -199,5 +200,57 @@ describe('preflight-cloudflare', () => {
     expect(requestedUrls).toContain(
       '/client/v4/accounts/test-account/r2/buckets/do-epub-studio-books-preview',
     );
+  });
+
+  it('verifies declared Queues against Cloudflare accounts API and reports missing queues', async () => {
+    const queueConfig = {
+      ...sampleConfig,
+      queues: {
+        producers: [{ binding: 'QUEUE_A', queue: 'prod-queue' }],
+        consumers: [{ queue: 'prod-queue' }],
+      },
+      env: {
+        preview: {
+          ...sampleConfig.env.preview,
+          queues: {
+            producers: [{ binding: 'QUEUE_A', queue: 'preview-queue' }],
+          },
+        },
+      },
+    };
+
+    const bindings = extractResourceBindings(queueConfig);
+    expect(bindings.production.queues).toHaveLength(1);
+    expect(bindings.preview.queues).toHaveLength(1);
+
+    const fetchImpl = vi.fn(async (url) => {
+      const path = new URL(url).pathname;
+      if (path.includes('/queues')) {
+        return apiResponse(200, {
+          success: true,
+          result: [{ queue_name: 'prod-queue' }],
+          result_info: { total_pages: 1 },
+        });
+      }
+      return successfulApiResponse();
+    });
+
+    const result = await verifyCloudflareResources({
+      accountId: 'test-account',
+      token: 'test-token',
+      bindings,
+      fetchImpl,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.verified.map((v) => v.name)).toContain('prod-queue');
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        type: 'QUEUE_MISSING',
+        name: 'preview-queue',
+        env: 'preview',
+        code: 404,
+      }),
+    ]);
   });
 });

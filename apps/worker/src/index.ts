@@ -10,6 +10,7 @@ import type { Env } from './lib/env';
 import { registerArgon2Wasm } from './lib/register-argon2-wasm';
 import { runTelemetryRetention } from './lib/telemetry-retention';
 
+import { processEpubValidationQueue } from './lib/epub-validation-queue';
 export { RateLimiterDO };
 
 const handle = async (...args: Parameters<typeof app.fetch>): Promise<Response> => {
@@ -40,6 +41,9 @@ export default {
       }),
       makeFetchHandler(),
     ).fetch(request, env, ctx);
+  },
+  queue(batch: MessageBatch<{ bookId: string; revisionId: string }>, env: Env): Promise<void> {
+    return processEpubValidationQueue(batch, env);
   },
   /**
    * A8/GOAP-310: the documented 90-day telemetry retention executes through

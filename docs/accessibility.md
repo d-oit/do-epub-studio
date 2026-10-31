@@ -1,125 +1,117 @@
-# Accessibility Guide
+# Accessibility guide
 
-**Target:** WCAG 2.1 Level AA compliance across all user-facing surfaces.
+## Scope and target
 
-## Principles
+WCAG 2.2 Level AA is the product's assessed accessibility target. It is a target
+for ongoing design and testing, **not a claim that this application, any route,
+or any EPUB conforms to WCAG or is certified accessible**. Conformance requires
+assessment of complete pages and processes, including human evaluation of
+publication content and relevant combinations of technology. Record observations
+with the reusable [manual accessibility test record](accessibility-manual-test-record.md).
 
-1. **Perceivable** — content is presentable in ways all users can perceive
-2. **Operable** — UI components are navigable via keyboard, assistive tech, and touch
-3. **Understandable** — content and controls behave predictably
-4. **Robust** — content works with current and future assistive technologies
+App UI and publication content are separate test surfaces. The reader hosts EPUB
+content in a scripts-disabled sandboxed frame. App scans must not traverse or
+inspect publisher HTML as if it were app-owned DOM. The frame element itself is
+app-owned: check its accessible name and the user's ability to navigate into and
+out of it. Publication-level checks require inspecting the synthetic/approved
+publication as publication content, never treating publisher markup as trusted
+application interface.
 
-## Testing
+## WCAG 2.2 criteria added to the assessment
 
-### Automated (axe-core)
+These criteria were added in WCAG 2.2. The level shown is the normative WCAG
+level; applicability is assessed per route, process, and publication.
 
-E2E accessibility audits run against every major page in
-`apps/tests/accessibility-audit.spec.ts`:
+| Criterion                                     | Level | Assessment evidence and scope                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------------- | ----: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **2.4.11 Focus Not Obscured (Minimum)**       |    AA | Manually inspect focused controls in app chrome and reader controls at representative viewport sizes, including open panels, dialogs, sticky areas, and overlays. Verify the focused item is at least partially visible and not wholly hidden by author-created content. Axe does not establish this criterion.                                             |
+| **2.5.7 Dragging Movements**                  |    AA | For every feature requiring dragging, manually verify a single-pointer alternative that does not require a dragging movement. Keyboard operation alone does not satisfy the criterion's single-pointer alternative requirement. Record applicable drag interactions and alternatives; axe cannot establish equivalence.                                     |
+| **2.5.8 Target Size (Minimum)**               |    AA | Assess pointer targets against the 24-by-24 CSS pixel minimum or applicable spacing/equivalent exceptions. Include the criterion's exceptions when documenting a result. Automated target-size rule results are screening evidence, not a complete contextual determination.                                                                                |
+| **3.3.7 Redundant Entry**                     |     A | Inspect multi-step processes and verify information previously entered or provided by the user is auto-populated or selectable, unless re-entry is essential, required for security, or the prior information is no longer valid. Record the process and the applicable exception, if any.                                                                  |
+| **3.3.8 Accessible Authentication (Minimum)** |    AA | For authentication steps, verify that a cognitive function test is not required unless an allowed exception applies, such as an alternative authentication method, a mechanism assisting completion, or object recognition. Password-manager and paste support are relevant; record the actual path. Do not infer compliance from a successful login alone. |
 
-- Login page
-- Reader view
-- Settings panel
-- Table of Contents
-- Admin login, books, grants, audit pages
+**3.2.6 Consistent Help is Level A**, not AA. Assess it where help mechanisms are
+provided on multiple pages: their relative order should remain consistent unless
+the user initiates a change. Record whether help is present and the pages
+compared. **2.4.13 Focus Appearance is Level AAA**, not AA; it may be considered
+as a higher-level design goal but must not be reported as an AA criterion.
 
-Reader audits scan the **app-owned** surfaces (toolbar, panels, sidebars). The
-book content itself renders inside a scripts-disabled sandboxed frame
-(`sandbox="allow-same-origin"`, the ADR-006 sanitizer + egress-guard
-contract), which axe cannot audit: `@axe-core/playwright` runs
-`axe.runPartial` per frame and awaits each result, and the injected script
-never executes in such a frame, so that await never settles (measured: a plain
-`srcdoc` frame finishes the same partial run in ~80 ms, the identical document
-with `sandbox="allow-same-origin"` never returns). The reader scans therefore
-exclude `[data-epub-content-host]` — the host `ReaderViewer` renders — instead
-of hanging until the 60 s test timeout.
+## Automated app-interface coverage
 
-The exclusion covers the `<iframe>` element too, and `frame-title` is one of
-the checks axe applies to that element **in this document** (it needs no
-scripts inside the frame), so the contract is enforced directly instead of
-being dropped with the subtree:
+`apps/tests/accessibility-audit.spec.ts` uses axe-core with WCAG A/AA tags,
+including the WCAG 2.2 AA tag, on representative login, reader, creator, and
+admin routes and reader panels. These scans test rendered app-owned UI only.
+The EPUB frame host is excluded to prevent traversal into sandboxed publisher
+content; its `<iframe>` element remains checked separately for a non-empty
+accessible name. Axe results do not establish WCAG conformance and cannot decide
+content quality, meaningful image alternatives, reading order, keyboard
+usability, target-size exceptions, or the other contextual/manual criteria.
 
-- `ReaderViewer` names every generated frame as epub.js creates it (the book
-  title, `reader.untitledBook` when unknown), and
-- `accessibility-audit.spec.ts` asserts the accessible name of the book frame
-  before running the scan.
+The browser tests also exercise keyboard opening/dismissal of reader settings
+and contents, movement of focus while open, and focus restoration to each
+trigger. This is a regression check for those transitions, not a substitute for
+manual keyboard testing across the full interface.
 
-EPUB-level accessibility metadata is covered separately by
-`packages/reader-core/src/epub-accessibility.ts`.
+## Manual publication and reader procedure
 
-Run audits locally:
+Use synthetic or approved test publications; never paste private EPUB text or
+personal data into test reports, logs, or fixtures. Record exact browser,
+assistive technology, route, content identifier, and actions in the reusable
+record. Mark untested items as **Not tested** rather than implying coverage.
 
-```bash
-pnpm test:e2e --grep "accessibility"
-```
+1. **Keyboard and reader frame:** Start outside the reader frame and navigate
+   using Tab, Shift+Tab, Enter, Space, arrow keys where the control pattern
+   calls for them, and Escape where dismissal is supported. Confirm visible,
+   logical focus, no keyboard trap, reachable reader controls, and a way to
+   enter and leave the named publication frame. Open and close each panel/dialog
+   and check focus placement and restoration. Do not rely on a pointer.
+2. **Reading order and structure:** With a screen reader, browse by headings,
+   landmarks, paragraphs, lists, and other structure. Compare the announced
+   sequence with the intended publication order, including notes, sidebars,
+   page breaks, and reading-system controls. Identify structural issues in the
+   EPUB separately from app chrome.
+3. **Image alternatives:** Inspect informative, decorative, and complex images.
+   Verify alternatives convey the relevant purpose/information, decorative
+   images do not add noise, and complex visual information has an equivalent
+   explanation. A non-empty `alt` attribute alone is not evidence of a useful
+   alternative.
+4. **Tables:** Navigate each data table with the screen reader and determine
+   whether row/column headers and relationships are announced with cells.
+   Check captions and table purpose; identify layout tables that are exposed
+   misleadingly as data tables. Include small and multi-level header examples
+   when present.
+5. **Zoom, reflow, and fixed layout:** Increase text/browser zoom (including
+   200%) and inspect a narrow viewport in reflowable content for clipping,
+   lost controls, and unnecessary two-dimensional scrolling. For fixed-layout
+   publications, inspect enlarged regions and all content, record required
+   horizontal/vertical panning, and note any content that cannot be reached or
+   read; do not label fixed layout as reflowable.
+6. **Language:** Check the declared publication language and sample passages
+   whose language changes. Listen to determine whether the screen reader uses
+   the expected pronunciation/language behavior. Check app interface locale
+   separately from publication language.
+7. **Evidence and defects:** Note action/result pairs, not just “works.” Classify
+   each issue as app UI, publication content, or their interaction. Keep
+   evidence redacted or synthetic and link defect identifiers without embedding
+   publication text.
 
-### Manual
+### Machine and human evidence boundaries
 
-- **Keyboard navigation** — Tab through all interactive elements; focus must be
-  visible and follow a logical order.
-- **Screen reader** — Test with VoiceOver (macOS), NVDA (Windows), or Orca (Linux).
-- **Zoom** — Content must reflow at 200% zoom without horizontal scrolling.
+Automated axe scans can flag a subset of detectable markup and accessibility
+rule failures on the scanned app-owned DOM. They cannot assess a publication's
+meaning, whether alternate text is useful, actual reading order, usability with
+assistive technology, all keyboard paths, cognitive demands, or contextual
+exceptions. A zero-violation scan is not proof of WCAG conformance.
 
-## Patterns
+Manual keyboard and assistive-technology observations are evidence only for the
+recorded environment, route, content, and actions. A browser test that sends
+keyboard events is not a screen-reader test. No NVDA, VoiceOver, or other
+screen-reader result should be reported unless that journey was actually
+performed and documented.
 
-### Focus Management
+## Related references
 
-- `useFocusTrap` (packages/ui) — traps focus inside modal panels (TOC, Settings,
-  Comments, Bookmarks)
-- `SkipToContent` link — first focusable element on every page; jumps to
-  `#main-content`
-- Focus is restored to the triggering element when a panel closes
-
-### ARIA Landmarks
-
-The app shell uses semantic landmarks:
-
-- `<header>` — mobile top bar
-- `<nav>` — Sidebar (desktop) and BottomTabBar (mobile)
-- `<main id="main-content">` — primary content area
-- `<aside>` — reader side-panels (TOC, Comments, Settings)
-
-### Live Regions
-
-`LiveRegion` component (packages/ui) announces dynamic content changes:
-
-- Panel open/close transitions
-- Offline/online status changes
-- Error messages and toast notifications
-
-### Color & Contrast
-
-- All colors use OKLCH design tokens from `globals.css`
-- Minimum 4.5:1 contrast for normal text, 3:1 for large text (WCAG AA)
-- Semantic states (success, error, warning) include icon or text reinforcement
-  — not color alone
-
-### Touch Targets
-
-- Minimum 44×44px for all interactive elements
-- `.touch-target` utility class available in `globals.css`
-- Navigation items, toolbar buttons, and form controls all meet minimum size
-
-### Reduced Motion
-
-- `globals.css` respects `prefers-reduced-motion: reduce` by setting
-  `animation-duration: 0.01ms` and `transition-duration: 0.01ms`
-- CSS animations and transitions are disabled; JS animations should check
-  `window.matchMedia('(prefers-reduced-motion: reduce)')`
-
-## RTL Support
-
-RTL (right-to-left) layout is implemented for Arabic. The app shell keeps
-`<html dir>` and `<html lang>` in sync with the active UI locale via
-`useDocumentLocale` (`apps/web/src/hooks/useDocumentLocale.ts`); Arabic
-(`ar`) renders `dir="rtl"`, all other supported locales render `ltr`. The
-reader honors `document.documentElement.dir` as its default text direction.
-Full RTL viewport regression coverage (no horizontal overflow on mobile,
-tablet, and desktop) is enforced by `apps/tests/viewport-regression.spec.ts`
-(RTL runs across the 320–1440 + landscape matrix).
-
-## References
-
-- [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/)
+- [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/)
+- [WCAG 2.2 Understanding documents](https://www.w3.org/WAI/WCAG22/Understanding/)
 - [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
-- [axe-core Rules](https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md)
-- Coding guide §8 — Accessibility architecture decisions
+- [axe-core rule descriptions](https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md)

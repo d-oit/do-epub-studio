@@ -17,6 +17,14 @@ import { NotFoundError, AppError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 import { handleBookFileUpload } from './books-upload';
 import { handleGetBookRevisions, handleMigrateBookRevision } from './books-revisions';
+import { enqueueEpubValidation } from '../../lib/epub-validation-queue';
+import {
+  handleDownloadRevisionReport,
+  handleGetRevisionReport,
+  handleListRevisionReports,
+  handleRetryRevisionValidation,
+  handleUpdateRevisionRemediation,
+} from './books-validation';
 
 export const booksRouter = new Hono<{
   Bindings: Env;
@@ -130,26 +138,38 @@ booksRouter.post(
   async (c) => {
     const bookId = c.req.param('id');
     const body = c.req.valid('json');
+    const object = await c.env.BOOKS_BUCKET.head(body.storageKey);
+    const fileSizeBytes = object?.size ?? body.fileSizeBytes ?? 0;
+    if (fileSizeBytes > 100 * 1024 * 1024) {
+      throw new AppError('Uploaded file exceeds the EPUB size limit', 'VALIDATION_ERROR', 400);
+    }
     const fileId = crypto.randomUUID();
     const now = new Date().toISOString();
 
     await execute(
       c.env,
       `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
-     VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         fileId,
         bookId,
         body.storageKey,
         body.originalFilename,
         body.mimeType ?? 'application/epub+zip',
-        body.fileSizeBytes ?? 0,
+        fileSizeBytes,
         body.sha256 ?? null,
         body.epubVersion ?? null,
         body.validationResults ? JSON.stringify(body.validationResults) : null,
         now,
       ],
     );
+    await execute(
+      c.env,
+      `INSERT INTO epub_validation_reports (id, book_id, revision_id, validator_version, status, safety_status, created_at, updated_at)
+       VALUES (?, ?, ?, '5.4.0', 'pending', 'pending', ?, ?)`,
+      [crypto.randomUUID(), bookId, fileId, now, now],
+    );
+    await enqueueEpubValidation(c.env, { bookId, revisionId: fileId });
     // A replacement upload invalidates the old index; chapters in the same payload rebuild it.
     if (body.chapters && body.chapters.length > 0) {
       await replaceBookSearchIndex(c.env, bookId, body.chapters);
@@ -190,6 +210,25 @@ booksRouter.post(
 );
 
 booksRouter.get('/:id/revisions', adminAuth, handleGetBookRevisions);
+booksRouter.get('/:id/validation-reports', adminAuth, handleListRevisionReports);
+booksRouter.get('/:id/revisions/:revisionId/validation', adminAuth, handleGetRevisionReport);
+booksRouter.get(
+  '/:id/revisions/:revisionId/validation.json',
+  adminAuth,
+  handleDownloadRevisionReport,
+);
+booksRouter.post(
+  '/:id/revisions/:revisionId/validation/retry',
+  adminAuth,
+  requireStepUp,
+  handleRetryRevisionValidation,
+);
+booksRouter.patch(
+  '/:id/revisions/:revisionId/accessibility-remediation',
+  adminAuth,
+  requireStepUp,
+  async (c) => handleUpdateRevisionRemediation(c, await c.req.json()),
+);
 
 booksRouter.post(
   '/:id/revisions/:revisionId/migrate',
