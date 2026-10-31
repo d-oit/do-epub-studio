@@ -105,26 +105,85 @@ test.describe('Accessibility audit (axe-core)', () => {
     expect(accessibilityScanResults.violations).toHaveLength(0);
   });
 
-  test('@mobile keyboard navigation: can close panels with Escape', async ({ page }) => {
+  test('@mobile keyboard navigation restores focus after reader dialogs and panels close', async ({
+    page,
+  }) => {
     suppressWorkboxErrors(page);
     await mockReaderApi(page, { includeBookmarks: false });
     await loginAsReader(page);
 
-    // Open Settings
-    await clickToolbarButton(page, /Settings/i);
-    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).toBeVisible();
-
-    // Close with Escape
+    const settingsTrigger = page.getByRole('button', { name: /Settings/i });
+    await settingsTrigger.focus();
+    await page.keyboard.press('Enter');
+    const settingsDialog = page.getByRole('dialog');
+    await expect(settingsDialog).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(settingsDialog.locator(':focus')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog').getByText('Settings', { exact: true })).not.toBeVisible();
+    await expect(settingsDialog).not.toBeVisible();
+    await expect(settingsTrigger).toBeFocused();
 
-    // Open TOC
-    await page.getByLabel('Contents').click();
-    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
-
-    // Close with Escape
+    const contentsTrigger = page.getByLabel('Contents');
+    await contentsTrigger.focus();
+    await page.keyboard.press('Enter');
+    const contentsPanel = page.getByRole('heading', { name: 'Contents' });
+    await expect(contentsPanel).toBeVisible();
+    await page.keyboard.press('Tab');
+    await expect(page.locator(':focus')).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('heading', { name: 'Contents' })).not.toBeVisible();
+    await expect(contentsPanel).not.toBeVisible();
+    await expect(contentsTrigger).toBeFocused();
+  });
+
+  test('@mobile creator workspace has no accessibility violations', async ({ page }) => {
+    suppressWorkboxErrors(page);
+    await page.addInitScript(() => {
+      window.localStorage.setItem(
+        'do-epub-auth',
+        JSON.stringify({
+          state: {
+            sessionToken: 'creator-session-token',
+            sessionExpiresAt: Date.now() + 86400000,
+            bookId: 'book-1',
+            bookSlug: 'test-book',
+            bookTitle: 'Test Book',
+            email: 'creator@example.com',
+            capabilities: {
+              canRead: true,
+              canComment: true,
+              canHighlight: true,
+              canBookmark: true,
+              canDownloadOffline: true,
+              canExportNotes: true,
+              canManageAccess: false,
+            },
+            isAuthenticated: true,
+            isAdmin: false,
+            sessionExpired: false,
+          },
+          version: 0,
+        }),
+      );
+    });
+    await page.route('**/api/creator/books', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          data: [{ id: 'book-1', slug: 'test-book', title: 'The Great Creator Novel' }],
+        }),
+      });
+    });
+    await page.goto('/creator');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.getByText('The Great Creator Novel')).toBeVisible();
+
+    const accessibilityScanResults = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze();
+
+    expect(accessibilityScanResults.violations).toHaveLength(0);
   });
 
   test('@mobile admin login page has no critical accessibility violations', async ({ page }) => {

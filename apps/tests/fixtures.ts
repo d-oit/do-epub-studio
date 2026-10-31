@@ -435,6 +435,14 @@ export async function mockReaderApi(
       body: JSON.stringify({ ok: true, data: { count: 0, notifications: [], total: 0 } }),
     });
   });
+
+  await pageOrContext.route('**/api/books/*/annotation-interchange', async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, data: null }),
+    });
+  });
   if (opts.includeFeedback !== false) {
     await pageOrContext.route('**/api/books/*/feedback', async (route: Route) => {
       await route.fulfill({

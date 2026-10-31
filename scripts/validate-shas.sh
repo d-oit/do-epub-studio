@@ -134,6 +134,7 @@ ALLOWED_SHAS=(
     "github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370"
     "github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370"
     "chromaui/action@5bcadb5104b09e360e210c54f95a7437c2d82bab"
+    "actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad"
 )
 
 # Function to check if an action@sha is allowed

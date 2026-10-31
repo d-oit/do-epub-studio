@@ -8,3 +8,4 @@ export { useReadingTimer } from './useReadingTimer';
 export { useReaderDataLoader } from './useReaderDataLoader';
 export { useBookFileUrl } from './useBookFileUrl';
 export { useOptimisticAnnotationStore } from './useOptimisticAnnotations';
+export { useAnnotationInterchange } from './useAnnotationInterchange';

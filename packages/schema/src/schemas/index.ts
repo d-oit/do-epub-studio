@@ -12,3 +12,5 @@ export * from './insights';
 export * from './telemetry';
 export * from './feedback';
 export * from './invitations';
+export * from './epub-validation';
+export * from './annotation-interchange';

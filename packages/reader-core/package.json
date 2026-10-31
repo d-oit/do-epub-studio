@@ -6,8 +6,9 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
-    "test:unit": "node src/__tests__/fixtures/generate.mjs && vitest --run",
-    "test:coverage": "node src/__tests__/fixtures/generate.mjs && vitest run --coverage",
+    "test:unit": "node src/__tests__/fixtures/generate.mjs && node src/__tests__/fixtures/generate-capabilities.mjs && vitest --run",
+    "test:coverage": "node src/__tests__/fixtures/generate.mjs && node src/__tests__/fixtures/generate-capabilities.mjs && vitest run --coverage",
+    "fixtures:capabilities": "node src/__tests__/fixtures/generate-capabilities.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings 0",
     "bench": "vitest bench"

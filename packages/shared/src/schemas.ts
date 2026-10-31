@@ -38,6 +38,17 @@ export {
   InvitationStatusSchema,
   InvitationDeliveryStatusSchema,
   formatZodError,
+  ANNOTATION_INTERCHANGE_FORMAT,
+  ANNOTATION_INTERCHANGE_VERSION,
+  ANNOTATION_INTERCHANGE_MAX_BYTES,
+  ANNOTATION_INTERCHANGE_MAX_EXTENSION_BYTES,
+  InterchangeLocatorSchema,
+  InterchangeAnnotationSchema,
+  AnnotationInterchangeDocumentSchema,
+  EPUBCHECK_VERSION,
+  EpubFindingSchema,
+  EpubRunnerResultSchema,
+  AccessibilityRemediationSchema,
 } from '@do-epub-studio/schema';
 
 export type {
@@ -74,4 +85,10 @@ export type {
   InvitationRole,
   InvitationStatus,
   InvitationDeliveryStatus,
+  AnnotationInterchangeDocument,
+  InterchangeAnnotation,
+  InterchangeLocator,
+  EpubFinding,
+  EpubRunnerResult,
+  AccessibilityRemediation,
 } from '@do-epub-studio/schema';

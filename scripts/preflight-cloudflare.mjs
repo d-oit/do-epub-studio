@@ -15,6 +15,20 @@ const require = createRequire(import.meta.url);
 const DEFAULT_CONFIG = fileURLToPath(new URL('../wrangler.toml', import.meta.url));
 const API_ROOT = 'https://api.cloudflare.com/client/v4/accounts';
 
+/** Extract queue references without conflating producers and consumers. */
+function extractQueueBindings(config = {}) {
+  const queues = new Map();
+  for (const producer of config.queues?.producers ?? []) {
+    const key = typeof producer?.queue === 'string' ? producer.queue : `producer:${queues.size}`;
+    queues.set(key, { queue: producer?.queue, binding: producer?.binding, role: 'producer' });
+  }
+  for (const consumer of config.queues?.consumers ?? []) {
+    const key = typeof consumer?.queue === 'string' ? consumer.queue : `consumer:${queues.size}`;
+    if (!queues.has(key)) queues.set(key, { queue: consumer?.queue, role: 'consumer' });
+  }
+  return [...queues.values()];
+}
+
 /** Extract resource bindings from the raw Wrangler configuration. */
 export function extractResourceBindings(config) {
   return {
@@ -22,11 +36,13 @@ export function extractResourceBindings(config) {
       d1: config.d1_databases ?? [],
       kv: config.kv_namespaces ?? [],
       r2: config.r2_buckets ?? [],
+      queues: extractQueueBindings(config),
     },
     preview: {
       d1: config.env?.preview?.d1_databases ?? [],
       kv: config.env?.preview?.kv_namespaces ?? [],
       r2: config.env?.preview?.r2_buckets ?? [],
+      queues: extractQueueBindings(config.env?.preview ?? {}),
     },
   };
 }
@@ -58,11 +74,11 @@ function resourceLabel(type, name, environment) {
 function invalidBinding(issues, type, binding, environment, field) {
   issues.push({
     type: `${type}_CONFIG_ERROR`,
-    name: binding.binding ?? binding.database_name ?? binding.bucket_name ?? type,
+    name: binding.binding ?? binding.queue ?? binding.database_name ?? binding.bucket_name ?? type,
     env: environment,
     code: 0,
-    message: `${resourceLabel(type, binding.binding ?? binding.database_name ?? binding.bucket_name ?? 'binding', environment)} is missing required Wrangler field '${field}'.`,
-    resolution: `Set '${field}' in the matching ${environment} binding in wrangler.toml.`,
+    message: `${resourceLabel(type, binding.binding ?? binding.queue ?? binding.database_name ?? binding.bucket_name ?? 'binding', environment)} is missing required Wrangler field '${field}'.`,
+    resolution: `Set '${field}' in the matching ${environment} binding in the Wrangler configuration.`,
   });
 }
 
@@ -131,6 +147,56 @@ async function checkResource({
   }
 }
 
+/** List Queue names once per account; Cloudflare's account list API is paginated. */
+async function listCloudflareQueueNames({ apiBase, headers, fetchImpl }) {
+  const queueNames = new Set();
+  const pageSize = 100;
+
+  for (let page = 1; page <= 100; page += 1) {
+    let response;
+    let data;
+    try {
+      response = await fetchImpl(`${apiBase}/queues?per_page=${pageSize}&page=${page}`, {
+        headers,
+      });
+      data = await response.json().catch(() => null);
+    } catch (error) {
+      return {
+        queueNames: null,
+        error: {
+          code: 0,
+          message: `Network error listing Cloudflare Queues: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      };
+    }
+
+    if (!response.ok || !data?.success || !Array.isArray(data.result)) {
+      const error = cloudflareError(data);
+      return {
+        queueNames: null,
+        error: {
+          code: error?.code ?? response.status,
+          message: error?.message ?? `Cloudflare API returned HTTP ${response.status}.`,
+        },
+      };
+    }
+
+    for (const queue of data.result) {
+      if (typeof queue?.queue_name === 'string') queueNames.add(queue.queue_name);
+    }
+
+    const totalPages = Number(data.result_info?.total_pages);
+    if (data.result.length < pageSize || (Number.isFinite(totalPages) && page >= totalPages)) {
+      return { queueNames, error: null };
+    }
+  }
+
+  return {
+    queueNames: null,
+    error: { code: 0, message: 'Cloudflare Queue list exceeded the 100-page preflight limit.' },
+  };
+}
+
 /** Check every declared D1, KV, and R2 resource against Cloudflare's API. */
 export async function verifyCloudflareResources({
   accountId,
@@ -145,6 +211,50 @@ export async function verifyCloudflareResources({
     'Content-Type': 'application/json',
   };
   const apiBase = `${API_ROOT}/${encodeURIComponent(accountId)}`;
+  const queueBindings = [
+    ...(bindings.production.queues ?? []).map((binding) => ({
+      binding,
+      environment: 'production',
+    })),
+    ...(bindings.preview.queues ?? []).map((binding) => ({ binding, environment: 'preview' })),
+  ];
+  const validQueueBindings = [];
+  for (const { binding, environment } of queueBindings) {
+    if (!binding.queue) {
+      invalidBinding(issues, 'QUEUE', binding, environment, 'queue');
+    } else if (binding.role === 'producer' && !binding.binding) {
+      invalidBinding(issues, 'QUEUE', binding, environment, 'binding');
+    } else {
+      validQueueBindings.push({ name: binding.queue, environment });
+    }
+  }
+
+  if (validQueueBindings.length > 0) {
+    const queueList = await listCloudflareQueueNames({ apiBase, headers, fetchImpl });
+    for (const { name, environment } of validQueueBindings) {
+      if (queueList.error) {
+        issues.push({
+          type: 'QUEUE_API_ERROR',
+          name,
+          env: environment,
+          code: queueList.error.code,
+          message: `${resourceLabel('QUEUE', name, environment)} could not be verified: ${queueList.error.message}`,
+          resolution: `Check that CLOUDFLARE_API_TOKEN has Queues Read access and verify CLOUDFLARE_ACCOUNT_ID (${accountId}).`,
+        });
+      } else if (!queueList.queueNames.has(name)) {
+        issues.push({
+          type: 'QUEUE_MISSING',
+          name,
+          env: environment,
+          code: 404,
+          message: `${resourceLabel('QUEUE', name, environment)} was not found in account ${accountId}.`,
+          resolution: `Create the Queue with 'pnpm exec wrangler queues create ${name}'.`,
+        });
+      } else {
+        verified.push({ type: 'QUEUE', name, env: environment });
+      }
+    }
+  }
 
   const resources = [
     ...bindings.production.d1.map((binding) => ({

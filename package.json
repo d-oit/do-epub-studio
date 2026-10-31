@@ -29,7 +29,8 @@
     "bundle:budget:enforce": "BUNDLE_BUDGET_FAIL_ON_VIOLATION=1 pnpm --filter @do-epub-studio/web bundle:budget:enforce",
     "knip": "knip",
     "check:dead-code": "scripts/dead-code-check.sh",
-    "preflight:cloudflare": "node scripts/preflight-cloudflare.mjs"
+    "preflight:cloudflare": "node scripts/preflight-cloudflare.mjs",
+    "check:epub-fixtures": "node scripts/check-epub-fixtures.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
