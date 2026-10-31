@@ -86,6 +86,17 @@ function parseFindings(output: string): Finding[] {
   }
   return findings;
 }
+const XML_ENTITIES: Record<string, string> = {
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&amp;': '&',
+};
+
+function decodeXml(str: string): string {
+  return str.replace(/&(?:lt|gt|quot|apos|amp);/g, (entity) => XML_ENTITIES[entity] ?? entity);
+}
 
 function metadataFromOpf(opf: string): Array<{ key: string; value: string; provenance: 'opf' }> {
   const metadata: Array<{ key: string; value: string; provenance: 'opf' }> = [];
@@ -103,11 +114,7 @@ function metadataFromOpf(opf: string): Array<{ key: string; value: string; prove
     const content = opf.indexOf('>', begin);
     const end = content < 0 ? -1 : opf.indexOf(`</${key}>`, content + 1);
     if (content < 0 || end < 0) continue;
-    const value = opf
-      .slice(content + 1, end)
-      .replaceAll('&amp;', '&')
-      .replaceAll('&lt;', '<')
-      .replaceAll('&gt;', '>')
+    const value = decodeXml(opf.slice(content + 1, end))
       .trim()
       .slice(0, 300);
     metadata.push({ key, value, provenance: 'opf' });
