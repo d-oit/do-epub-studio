@@ -17,6 +17,7 @@ import {
   type ReadingProgress,
 } from '../../../stores';
 import type { FontFamily } from '../../../stores/preferences';
+import type { WritingMode } from '../../../stores';
 import type { TocItem } from '../lib/epub-init';
 import type { PrefetchManager, SpineItem } from '../../../lib/prefetch-manager';
 import { collectSpineSections } from '../../../lib/epub-sections';
@@ -49,6 +50,7 @@ export function createThemeApplier({
   readerFontSize,
   readerLineHeight,
   readerFontFamily,
+  readerWritingMode,
 }: {
   rootRef: MutableRefObject<HTMLDivElement | null>;
   readerTheme: Theme;
@@ -56,6 +58,7 @@ export function createThemeApplier({
   readerFontSize: FontSize;
   readerLineHeight: number;
   readerFontFamily: FontFamily;
+  readerWritingMode: WritingMode;
 }): (rendition: Rendition) => void {
   return (rendition: Rendition) => {
     const container = rootRef.current;
@@ -85,11 +88,21 @@ export function createThemeApplier({
           : readerFontFamily === 'sans-serif'
             ? 'sans-serif'
             : 'monospace';
+      // Writing mode rides the theme stylesheet: `Contents.css` on the open
+      // chapter never reached the rendered body, while the theme is re-applied
+      // on every preference change (including the deselect-first cycle).
+      bodyStyles['writing-mode'] = readerWritingMode;
     }
     rendition.themes.registerRules('reader-theme', {
       body: bodyStyles,
       img: { filter: imgFilter },
     });
+    // `Themes.select()` is a no-op when the requested theme is already current
+    // (epub.js returns before re-appending), so a preference change would never
+    // reach the chapter that is on screen. Deselect first to force re-injection.
+    if (rendition.themes.current === 'reader-theme') {
+      rendition.themes.select(null);
+    }
     rendition.themes.select('reader-theme');
   };
 }
