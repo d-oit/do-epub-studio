@@ -142,14 +142,14 @@ describe('Admin Upload Route — streaming path (V12)', () => {
     expect(callArgs).toBeDefined();
     const bodyArg = callArgs?.[1];
     expect(bodyArg).toBeDefined();
-    // ReadableStream in production, or the original ArrayBuffer in
-    // test-pool environments where the runtime auto-buffers. Both are
-    // acceptable so long as the upload succeeded.
-    expect(['ReadableStream', 'ArrayBuffer']).toContain(
-      bodyArg instanceof ReadableStream || bodyArg instanceof ArrayBuffer
-        ? bodyArg.constructor.name
-        : 'unknown',
-    );
+    // Small uploads are handed to R2 as byte-exact `Uint8Array` (a stream with
+    // no known length is rejected by R2); the large path uses a fixed-length
+    // stream instead.
+    expect(
+      bodyArg instanceof ReadableStream ||
+        bodyArg instanceof ArrayBuffer ||
+        bodyArg instanceof Uint8Array,
+    ).toBe(true);
   });
 
   it('rejects a request with no Content-Length header', async () => {
