@@ -1,6 +1,22 @@
 import { test, expect, type Page } from '@playwright/test';
 import { createMinimalEpub, selectReaderPassage } from './fixtures';
 
+/** Reads the rendered chapter paragraph's computed font size. */
+const FONT_SIZE_PROBE = () => {
+  const doc = document.querySelector('iframe')?.contentDocument;
+  const paragraph = doc?.querySelector('p');
+  if (!paragraph || !doc?.defaultView) return null;
+  return doc.defaultView.getComputedStyle(paragraph).fontSize;
+};
+
+/** Reads the rendered chapter paragraph's computed writing mode. */
+const WRITING_MODE_PROBE = () => {
+  const doc = document.querySelector('iframe')?.contentDocument;
+  const paragraph = doc?.querySelector('p');
+  if (!paragraph || !doc?.defaultView) return null;
+  return doc.defaultView.getComputedStyle(paragraph).writingMode;
+};
+
 async function openStartChapter(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Contents', exact: true }).click();
   await page
@@ -61,16 +77,10 @@ test.describe('Provisioned demo preview', () => {
     await page.goto('/login');
     await page.getByRole('button', { name: 'Try the demo', exact: true }).click();
     await expect(page).toHaveURL(/\/read\/demo$/);
-    const fontOfChapter = () =>
-      page.evaluate(() => {
-        const doc = document.querySelector('iframe')?.contentDocument;
-        const paragraph = doc?.querySelector('p');
-        if (!paragraph || !doc?.defaultView) return null;
-        return doc.defaultView.getComputedStyle(paragraph).fontSize;
-      });
+    const fontOfChapter = () => page.evaluate(FONT_SIZE_PROBE);
 
     await openStartChapter(page);
-    await expect.poll(fontOfChapter, { timeout: 30000 }).not.toBeNull();
+    await expect.poll(() => page.evaluate(FONT_SIZE_PROBE), { timeout: 30000 }).not.toBeNull();
     const initialSize = await fontOfChapter();
 
     await page
@@ -81,28 +91,25 @@ test.describe('Provisioned demo preview', () => {
       .getByRole('button', { name: /- Large$/ })
       .first()
       .click();
-    await expect.poll(fontOfChapter, { timeout: 15000 }).toBe('18px');
+    await expect.poll(() => page.evaluate(FONT_SIZE_PROBE), { timeout: 15000 }).toBe('18px');
     expect(initialSize).not.toBe('18px');
 
     // Writing mode reaches the same rendered chapter (theme re-application).
-    const writingModeOfChapter = () =>
-      page.evaluate(() => {
-        const doc = document.querySelector('iframe')?.contentDocument;
-        const paragraph = doc?.querySelector('p');
-        if (!paragraph || !doc?.defaultView) return null;
-        return doc.defaultView.getComputedStyle(paragraph).writingMode;
-      });
     await page.getByRole('button', { name: 'Vertical RTL', exact: true }).click();
-    await expect.poll(writingModeOfChapter, { timeout: 15000 }).toBe('vertical-rl');
+    await expect
+      .poll(() => page.evaluate(WRITING_MODE_PROBE), { timeout: 15000 })
+      .toBe('vertical-rl');
     await page.getByRole('button', { name: 'Horizontal', exact: true }).click();
-    await expect.poll(writingModeOfChapter, { timeout: 15000 }).toBe('horizontal-tb');
+    await expect
+      .poll(() => page.evaluate(WRITING_MODE_PROBE), { timeout: 15000 })
+      .toBe('horizontal-tb');
 
     // Restore the default so later tests in this serial file start clean.
     await page
       .getByRole('button', { name: /- Medium$/ })
       .first()
       .click();
-    await expect.poll(fontOfChapter, { timeout: 15000 }).toBe('16px');
+    await expect.poll(() => page.evaluate(FONT_SIZE_PROBE), { timeout: 15000 }).toBe('16px');
     await expect(page.getByRole('alert').filter({ hasText: 'unexpected error' })).toHaveCount(0);
   });
 
