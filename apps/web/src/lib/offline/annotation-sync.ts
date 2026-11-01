@@ -54,8 +54,7 @@ async function syncAnnotationBookmark(
       mutationId,
       locator: {
         cfi: payload.annotation.cfi,
-        selectedText: payload.annotation.text ?? payload.annotation.cfi,
-        chapterRef: payload.annotation.chapter ?? '',
+        ...(payload.annotation.chapter ? { chapterRef: payload.annotation.chapter } : {}),
       },
       label: payload.annotation.text ?? '',
     }),

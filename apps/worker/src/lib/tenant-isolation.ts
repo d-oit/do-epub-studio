@@ -1,4 +1,8 @@
-import { MultiSignalLocatorSchema, ProgressLocatorSchema } from '@do-epub-studio/shared';
+import {
+  BookmarkLocatorSchema,
+  MultiSignalLocatorSchema,
+  ProgressLocatorSchema,
+} from '@do-epub-studio/shared';
 import { logAudit, type AuditEntityType } from '../audit';
 import { queryFirst } from '../db/client';
 import type { Env, JsonRow } from './env';
@@ -20,11 +24,15 @@ export async function parseLocatorRow(
   if (!locatorJson) return null;
 
   // Reading progress legitimately stores a CFI-only locator (its writer,
-  // ProgressLocatorSchema, treats text and chapter as optional); annotations
-  // require the full multi-signal locator. Validating progress rows against
-  // the annotation schema marked every progress row corrupt.
+  // ProgressLocatorSchema, treats text and chapter as optional); a bookmark is
+  // a saved position, so it stores a CFI plus optional chapter/text. Validating
+  // either against the annotation schema marked those rows corrupt.
   const schema =
-    context.entityType === 'progress' ? ProgressLocatorSchema : MultiSignalLocatorSchema;
+    context.entityType === 'progress'
+      ? ProgressLocatorSchema
+      : context.entityType === 'bookmark'
+        ? BookmarkLocatorSchema
+        : MultiSignalLocatorSchema;
 
   try {
     const parsed: unknown = JSON.parse(locatorJson);

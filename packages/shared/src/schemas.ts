@@ -15,6 +15,7 @@ export {
   CreateGrantSchema,
   UpdateGrantSchema,
   ProgressUpdateSchema,
+  BookmarkLocatorSchema,
   BookmarkCreateSchema,
   HighlightCreateSchema,
   HighlightUpdateSchema,
