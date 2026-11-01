@@ -61,15 +61,18 @@ describe('Security Posture (Web)', () => {
     expect(tokens).not.toContain("'unsafe-inline'");
     expect(tokens).not.toContain("'unsafe-eval'");
 
-    // Compensating control 2 (SE2 — ADR-123 / Plan 122): style-src is strict.
-    // 'unsafe-inline' is permitted ONLY for style-src-attr, which governs
-    // React component inline `style={}` attributes (CSP Level 3).
+    // Compensating control 2 (SE2 — ADR-123 / Plan 122, amended by ADR-1018):
+    // the app compiles its own CSS, but the EPUB engine styles book content by
+    // injecting <style> elements into the rendition frame, so plain style-src
+    // must allow inline styles. style-src still has no external origins and
+    // script-src stays strict.
     const styleSrcMatch = csp.match(/style-src ([^;]+)/);
     expect(styleSrcMatch).not.toBeNull();
     const styleTokens = (styleSrcMatch?.[1] ?? '').split(' ');
     expect(styleTokens).toContain("'self'");
-    expect(styleTokens).not.toContain("'unsafe-inline'");
+    expect(styleTokens).toContain("'unsafe-inline'");
     expect(styleTokens).not.toContain('https://fonts.googleapis.com');
+    expect(styleTokens).not.toContain('https://fonts.gstatic.com');
 
     const styleSrcAttrMatch = csp.match(/style-src-attr ([^;]+)/);
     expect(styleSrcAttrMatch).not.toBeNull();
