@@ -34,6 +34,20 @@ export interface ApiRequestOptions extends RequestInit {
   timeoutMs?: number;
 }
 
+/**
+ * Endpoints that answer 401 for a failed *credential check* while the caller's
+ * session is still valid. Tearing the session down on those responses logs the
+ * user out for mistyping a password, so they are handed back to the caller.
+ */
+function isCredentialCheckEndpoint(endpoint: string): boolean {
+  return (
+    endpoint.includes('/api/access/request') ||
+    endpoint.includes('/api/admin/login') ||
+    endpoint.includes('/api/admin/account/password-change') ||
+    endpoint.includes('/api/admin/account/step-up')
+  );
+}
+
 const DEFAULT_TIMEOUT_MS = 15000;
 const MAX_RETRIES = 3;
 const INITIAL_BACKOFF_MS = 200;
@@ -162,11 +176,7 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
       });
       clearTimeout(timeout);
       responseStatus = response.status;
-      if (
-        response.status === 401 &&
-        !endpoint.includes('/api/access/request') &&
-        !endpoint.includes('/api/admin/login')
-      ) {
+      if (response.status === 401 && !isCredentialCheckEndpoint(endpoint)) {
         handleUnauthorized(sentToken);
         const err = new Error('Session expired');
         (err as Error & { status?: number }).status = 401;
@@ -324,11 +334,7 @@ async function apiRaw(
     releaseSessionRequest();
   }
 
-  if (
-    res.status === 401 &&
-    !endpoint.includes('/api/access/request') &&
-    !endpoint.includes('/api/admin/login')
-  ) {
+  if (res.status === 401 && !isCredentialCheckEndpoint(endpoint)) {
     handleUnauthorized(sentToken);
   }
   logClientEvent({
