@@ -65,14 +65,14 @@ async function getChapterText(page: Page): Promise<string | null> {
 // ---------------------------------------------------------------------------
 
 test.describe('Offline reader', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, context }) => {
     page.on('console', (msg) => {
       if (msg.type() === 'error') console.log(`PAGE ERROR: ${msg.text()}`);
     });
     page.on('pageerror', (err) => {
       console.log(`PAGE UNCAUGHT ERROR: ${err.message}`);
     });
-    await mockReaderApi(page, {
+    await mockReaderApi(context, {
       bookSlug: TEST_USER.bookSlug,
       epubUrl: EPUB_URL,
       epubBuffer: EPUB_BUFFER,
@@ -86,19 +86,16 @@ test.describe('Offline reader', () => {
   }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
-    // Online, uncontrolled load: the fixture renders and the signed file URL
-    // is cached in the (encrypted) offline DB for the fallback below.
+    // Online load through context-level mocks: the signed file URL is cached
+    // in the (encrypted) offline DB for the fallback below.
     await expect
       .poll(() => getChapterText(page), { timeout: 30_000 })
       .toContain('OFFLINE TEST CONTENT');
 
-    // Acquire service-worker control: registerType 'prompt' means only pages
-    // loaded after activation are controlled (same pattern as the cached-API
-    // test above). This controlled online reload is a boot step, not an
-    // assertion target — page.route mocks are bypassed under SW control.
-    // The activation must be awaited first: a reload issued while the worker
-    // is still installing lands on an uncontrolled client, and the control
-    // assertion below then fails intermittently.
+    // Wait for the worker to activate before the controlled reload.
+    // `clients.claim()` may take control of this page immediately; the reload
+    // makes the following offline phase start from an active worker. The
+    // context-level mocks also cover the worker's own network fetches.
     await waitForServiceWorkerActivation(page);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect
@@ -191,12 +188,9 @@ test.describe('Offline reader', () => {
   }) => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
-    // The worker uses registerType 'prompt' (no clients.claim: update control
-    // stays with the user), so only pages loaded after SW activation are
-    // controlled. Wait for the activation, then reload before asserting
-    // control — a reload issued while the worker is still installing lands
-    // on an uncontrolled client, and the hard assert below would then fail
-    // intermittently (E2E-02: never silently skip missing SW control).
+    // `clients.claim()` takes control on activation without `skipWaiting()`,
+    // so updates still wait for a user refresh. Wait for activation, reload,
+    // then assert control before seeding/reading the real strategy cache.
     await waitForServiceWorkerActivation(page);
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
@@ -221,10 +215,9 @@ test.describe('Offline reader', () => {
         },
       )
       .toBe(true);
-    // Seed the strategy cache directly. With a controlling SW, page.route
-    // mocks are bypassed (the SW fetches from its own context, invisible to
-    // Playwright routing), so seed the real 'api-responses' cache that the
-    // NetworkFirst route in sw.ts reads.
+    // Seed the strategy cache directly: this test asserts the NetworkFirst
+    // offline-cache path, not the online mock response. A controlled worker
+    // reads the real 'api-responses' cache configured in sw.ts.
     await page.evaluate(async () => {
       const cache = await caches.open('api-responses');
       await cache.put(
@@ -351,7 +344,7 @@ test.describe('Offline reader', () => {
     await loginAsReader(page, TEST_USER.bookSlug);
 
     const syncBookmarks: { url: string; body: string }[] = [];
-    await page.route('**/api/books/*/bookmarks', async (route: Route) => {
+    await context.route('**/api/books/*/bookmarks', async (route: Route) => {
       if (route.request().method() === 'POST') {
         syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
       }
@@ -362,7 +355,7 @@ test.describe('Offline reader', () => {
       });
     });
 
-    await page.route('**/api/books/*/highlights', async (route: Route) => {
+    await context.route('**/api/books/*/highlights', async (route: Route) => {
       if (route.request().method() === 'POST') {
         syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
       }
@@ -373,7 +366,7 @@ test.describe('Offline reader', () => {
       });
     });
 
-    await page.route('**/api/books/*/progress', async (route: Route) => {
+    await context.route('**/api/books/*/progress', async (route: Route) => {
       if (route.request().method() === 'PUT') {
         syncBookmarks.push({ url: route.request().url(), body: route.request().postData() ?? '' });
       }
