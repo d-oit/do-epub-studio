@@ -58,13 +58,20 @@ export function useBookmarkHandlers(): UseBookmarkHandlersReturn {
 
       if (navigator.onLine) {
         try {
+          // A bookmark is a position, not a text range: send the CFI plus the
+          // chapter when known, and never a fabricated `selectedText`.
+          const chapterRef =
+            currentChapterRef.current ?? currentProgress.locator.chapterRef ?? null;
           // `apiRequest` unwraps the `{ ok, data }` envelope, so the created
           // bookmark record is returned directly. Defensively fall back to the
           // optimistic id if the server omits one.
           const res = await apiRequest<{ id?: string }>(`/api/books/${bookId}/bookmarks`, {
             method: 'POST',
             body: JSON.stringify({
-              locator: currentProgress.locator,
+              locator: {
+                cfi: currentProgress.locator.cfi,
+                ...(chapterRef ? { chapterRef } : {}),
+              },
               label: chapterName,
             }),
             token: sessionToken,

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { apiRequest } from '../../lib/api';
 import type { TFunction } from '../../hooks/useTranslation';
 import type { BookResponse } from '@do-epub-studio/shared';
+import { stepUpErrorFromResponse } from './step-up';
 
 interface CreateBookResponse {
   id: string;
@@ -9,7 +10,6 @@ interface CreateBookResponse {
 }
 
 interface UseAdminBookMutationsOptions {
-  sessionToken: string | null;
   executeWithStepUp: <T>(
     action: (token: string | null) => Promise<T>,
     token?: string,
@@ -20,7 +20,6 @@ interface UseAdminBookMutationsOptions {
 }
 
 export function useAdminBookMutations({
-  sessionToken,
   executeWithStepUp,
   onSuccess,
   refreshBooks,
@@ -125,30 +124,38 @@ export function useAdminBookMutations({
     setIsSubmitting(true);
 
     try {
-      const createResult = await executeWithStepUp(
-        (tok) =>
-          apiRequest<CreateBookResponse>('/api/admin/books', {
-            method: 'POST',
-            token: tok ?? undefined,
-            body: JSON.stringify({
-              title: bookTitle.trim(),
-              slug,
-              authorName: authorName.trim() || null,
-              visibility,
-            }),
+      const createResult = await executeWithStepUp((tok) =>
+        apiRequest<CreateBookResponse>('/api/admin/books', {
+          method: 'POST',
+          token: tok ?? undefined,
+          body: JSON.stringify({
+            title: bookTitle.trim(),
+            slug,
+            // `CreateBookSchema.authorName` is an optional string, not null;
+            // sending null failed validation for every book without an author.
+            ...(authorName.trim() ? { authorName: authorName.trim() } : {}),
+            visibility,
           }),
-        sessionToken ?? undefined,
+        }),
       );
 
       const uploadUrl = createResult.uploadUrl;
-      const uploadToken = sessionToken ?? '';
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: epubFile,
-        headers: {
-          Authorization: `Bearer ${uploadToken}`,
-          'Content-Type': 'application/octet-stream',
-        },
+      // The upload is itself a guarded mutation: a fresh session answers 428
+      // STEP_UP_REQUIRED, so run it inside the step-up wrapper instead of a raw
+      // fetch that can only fail.
+      const uploadResponse = await executeWithStepUp(async (tok) => {
+        const response = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: epubFile,
+          headers: {
+            Authorization: `Bearer ${tok}`,
+            'Content-Type': 'application/octet-stream',
+          },
+        });
+        if (response.status === 428) {
+          throw await stepUpErrorFromResponse(response);
+        }
+        return response;
       });
 
       if (!uploadResponse.ok) {
@@ -173,20 +180,18 @@ export function useAdminBookMutations({
         };
       };
 
-      await executeWithStepUp(
-        (tok) =>
-          apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
-            method: 'POST',
-            token: tok ?? undefined,
-            body: JSON.stringify({
-              storageKey: uploadResult.data.storageKey,
-              originalFilename: epubFile.name,
-              fileSizeBytes: epubFile.size,
-              mimeType: epubFile.type || 'application/epub+zip',
-              validationResults: uploadResult.data.validation,
-            }),
+      await executeWithStepUp((tok) =>
+        apiRequest(`/api/admin/books/${createResult.id}/upload-complete`, {
+          method: 'POST',
+          token: tok ?? undefined,
+          body: JSON.stringify({
+            storageKey: uploadResult.data.storageKey,
+            originalFilename: epubFile.name,
+            fileSizeBytes: epubFile.size,
+            mimeType: epubFile.type || 'application/epub+zip',
+            validationResults: uploadResult.data.validation,
           }),
-        sessionToken ?? undefined,
+        }),
       );
 
       if (uploadResult.data.validation) {
@@ -216,15 +221,20 @@ export function useAdminBookMutations({
     setRevisionError(null);
 
     try {
-      const uploadToken = sessionToken ?? '';
       const uploadUrl = `/api/admin/books/${revisionBook.id}/upload`;
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: revisionFile,
-        headers: {
-          Authorization: `Bearer ${uploadToken}`,
-          'Content-Type': 'application/octet-stream',
-        },
+      const uploadResponse = await executeWithStepUp(async (tok) => {
+        const response = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: revisionFile,
+          headers: {
+            Authorization: `Bearer ${tok}`,
+            'Content-Type': 'application/octet-stream',
+          },
+        });
+        if (response.status === 428) {
+          throw await stepUpErrorFromResponse(response);
+        }
+        return response;
       });
 
       if (!uploadResponse.ok) {
@@ -238,30 +248,26 @@ export function useAdminBookMutations({
         };
       };
 
-      const finalizeResult = await executeWithStepUp(
-        (tok) =>
-          apiRequest<{ id: string }>(`/api/admin/books/${revisionBook.id}/upload-complete`, {
-            method: 'POST',
-            token: tok ?? undefined,
-            body: JSON.stringify({
-              storageKey: uploadResult.data.storageKey,
-              originalFilename: revisionFile.name,
-              fileSizeBytes: revisionFile.size,
-              mimeType: revisionFile.type || 'application/epub+zip',
-              validationResults: uploadResult.data.validation,
-            }),
+      const finalizeResult = await executeWithStepUp((tok) =>
+        apiRequest<{ id: string }>(`/api/admin/books/${revisionBook.id}/upload-complete`, {
+          method: 'POST',
+          token: tok ?? undefined,
+          body: JSON.stringify({
+            storageKey: uploadResult.data.storageKey,
+            originalFilename: revisionFile.name,
+            fileSizeBytes: revisionFile.size,
+            mimeType: revisionFile.type || 'application/epub+zip',
+            validationResults: uploadResult.data.validation,
           }),
-        sessionToken ?? undefined,
+        }),
       );
 
-      await executeWithStepUp(
-        (tok) =>
-          apiRequest(`/api/admin/books/${revisionBook.id}/revisions/${finalizeResult.id}/migrate`, {
-            method: 'POST',
-            token: tok ?? undefined,
-            body: JSON.stringify({}),
-          }),
-        sessionToken ?? undefined,
+      await executeWithStepUp((tok) =>
+        apiRequest(`/api/admin/books/${revisionBook.id}/revisions/${finalizeResult.id}/migrate`, {
+          method: 'POST',
+          token: tok ?? undefined,
+          body: JSON.stringify({}),
+        }),
       );
 
       setRevisionBook(null);

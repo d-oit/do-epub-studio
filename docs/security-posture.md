@@ -75,31 +75,36 @@ sessions — which triggers the CSRF reversal above.
 `apps/web/public/_headers` is the single source of truth and is
 shipped to Cloudflare Pages. Current enforced values:
 
-| Header                       | Value                                                                                                                                                                                                                                                     |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Content-Security-Policy`    | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
-| `X-Frame-Options`            | `DENY`                                                                                                                                                                                                                                                    |
-| `X-Content-Type-Options`     | `nosniff`                                                                                                                                                                                                                                                 |
-| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                                                                                                                                                                                                         |
-| `Permissions-Policy`         | `camera=(), microphone=(), geolocation=()`                                                                                                                                                                                                                |
-| `Cross-Origin-Opener-Policy` | `same-origin`                                                                                                                                                                                                                                             |
+| Header                       | Value                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`    | `default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; style-src-attr 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://*.cloudflare.com; frame-ancestors 'none'; upgrade-insecure-requests` |
+| `X-Frame-Options`            | `DENY`                                                                                                                                                                                                                                                                    |
+| `X-Content-Type-Options`     | `nosniff`                                                                                                                                                                                                                                                                 |
+| `Referrer-Policy`            | `strict-origin-when-cross-origin`                                                                                                                                                                                                                                         |
+| `Permissions-Policy`         | `camera=(), microphone=(), geolocation=()`                                                                                                                                                                                                                                |
+| `Cross-Origin-Opener-Policy` | `same-origin`                                                                                                                                                                                                                                                             |
 
-The only `'unsafe-inline'` permitted is in `style-src-attr` (CSP Level 3),
-which governs React component inline `style={…}` attributes (e.g.
-progress-bar widths, virtualization offsets). `<style>` _elements_ and
-external stylesheets (`style-src`) are restricted to `'self'` only,
-which is sufficient because:
+`'unsafe-inline'` is permitted in `style-src-attr` (CSP Level 3), which
+governs React component inline `style={...}` attributes (e.g.
+progress-bar widths, virtualization offsets), and — per ADR-1018 — in
+`style-src`, because the EPUB engine styles book content exclusively by
+injecting `<style>` elements into the rendition frame. Without it the
+reader cannot apply font size, line height, font family, theme colours,
+or image constraints, and every blocked injection surfaced as a generic
+error toast. `style-src` still has no external origins:
 
-- Tailwind v4 + Vite compile all styles to a single bundled CSS file
-  served from the same origin in production builds.
-- Dynamic CSS variable updates (e.g. OKLCH theme tokens) flow through
-  React inline `style={…}` rather than injected `<style>` tags.
+- Tailwind v4 + Vite compile the app's own styles to a single bundled
+  CSS file served from the same origin in production builds.
 - Self-hosted fonts (per ADR-123 / Plan 122) eliminate external
   `style-src` and `font-src` origins.
+- `script-src` remains `'self' 'wasm-unsafe-eval'`; inline `<style>`
+  elements cannot escalate to script execution.
 
 The CSP for **scripts** is strict; any change to add `'unsafe-inline'`
-or `'unsafe-eval'` to `script-src` requires an ADR — and any change to
-re-add `'unsafe-inline'` to plain `style-src` also requires one.
+or `'unsafe-eval'` to `script-src` requires an ADR. The `style-src`
+relaxation is the one approved by ADR-1018 and pinned by
+`apps/web/src/__tests__/security-posture.test.ts`; widening it further
+(e.g. external style origins) requires a new ADR.
 
 ## ReDoS / bounded regex policy (ADR-034)
 

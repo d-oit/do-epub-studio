@@ -135,6 +135,47 @@ test.describe('Accessibility audit (axe-core)', () => {
     await expect(contentsTrigger).toBeFocused();
   });
 
+  test('@mobile reader annotation import is keyboard reachable with visible focus below the fixed toolbar', async ({
+    page,
+  }) => {
+    await mockReaderApi(page, { includeBookmarks: false });
+    await loginAsReader(page);
+
+    const toolbar = page.locator('[data-container-name="reader-toolbar"]');
+    const interchangeBar = page.getByRole('region', {
+      name: 'EPUB Annotations 1.0 Working Draft (experimental)',
+    });
+    const importLabel = page.locator('label').filter({ hasText: 'Import draft annotations JSON' });
+    const importInput = page.getByLabel('Import draft annotations JSON');
+    await expect(interchangeBar).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Export draft annotations JSON', exact: true }),
+    ).toBeVisible();
+    await expect(importLabel).toBeVisible();
+
+    const [toolbarBox, interchangeBox] = await Promise.all([
+      toolbar.boundingBox(),
+      interchangeBar.boundingBox(),
+    ]);
+    if (!toolbarBox || !interchangeBox) {
+      throw new Error('Reader toolbar and annotation interchange bar must have layout boxes');
+    }
+    expect(interchangeBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height);
+
+    let importFocused = false;
+    for (let tab = 0; tab < 30; tab++) {
+      await page.keyboard.press('Tab');
+      if (await importInput.evaluate((input) => input === document.activeElement)) {
+        importFocused = true;
+        break;
+      }
+    }
+    expect(importFocused).toBe(true);
+    expect(await importLabel.evaluate((label) => getComputedStyle(label).boxShadow)).not.toBe(
+      'none',
+    );
+  });
+
   test('@mobile creator workspace has no accessibility violations', async ({ page }) => {
     suppressWorkboxErrors(page);
     await page.addInitScript(() => {

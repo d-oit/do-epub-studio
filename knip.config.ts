@@ -68,8 +68,10 @@ const config: KnipConfig = {
 
     // ---- packages/reader-core --------------------------------------------
     'packages/reader-core': {
-      // Test helper file not imported by any test — pre-existing baseline
-      ignoreFiles: ['src/__tests__/fixtures/epub-helpers.ts'],
+      // Fixture builder consumed by the generator scripts, not by a test file
+      // knip traces; declaring it an entry keeps its exports from reading as
+      // dead code without hiding the file from analysis.
+      entry: ['src/__tests__/fixtures/epub-helpers.ts'],
     },
 
     // ---- packages/schema -------------------------------------------------

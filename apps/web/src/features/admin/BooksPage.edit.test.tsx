@@ -17,10 +17,12 @@ vi.mock('@do-epub-studio/shared', () => ({
   validateEpub: vi.fn(),
 }));
 
-vi.mock('../../stores/auth', () => ({
-  useAuthStore: (selector: (state: Record<string, unknown>) => unknown) =>
-    selector({ sessionToken: 'test-token' }),
-}));
+vi.mock('../../stores/auth', () => {
+  const state = { sessionToken: 'test-token', refreshSession: vi.fn() };
+  const useAuthStore = (selector: (current: typeof state) => unknown) => selector(state);
+  useAuthStore.getState = () => state;
+  return { useAuthStore };
+});
 
 vi.mock('../../components/LocaleSwitcher', () => ({
   LocaleSwitcher: () => <div data-testid="locale-switcher" />,

@@ -17,9 +17,12 @@ import {
   createThemeApplier,
   registerRenditionContentHooks,
 } from './useReaderEpub.helpers';
-import { applyDirectionAndWritingMode } from '../lib/epub-init';
+import { applyDirection } from '../lib/epub-init';
 import { resolveEffectiveSpread } from '../lib/epub-presentation';
 import type { LoadedEpub } from './useEpubLoader';
+
+/** Characters per generated location point: fine enough for a percentage bar. */
+const LOCATION_CHARS_PER_POINT = 150;
 import type { TFunction as TranslationFunction } from '../../../hooks/useTranslation';
 
 interface EpubRenditionOptions {
@@ -68,6 +71,7 @@ export function useEpubRendition({
     readerFontSize,
     readerLineHeight,
     readerFontFamily,
+    readerWritingMode,
   });
 
   useEffect(() => {
@@ -145,15 +149,81 @@ export function useEpubRendition({
     bookId,
   ]);
 
+  // Percentage-based progress (reader header, library "in progress" label)
+  // requires `book.locations`; without it every relocation reports
+  // `percentage: undefined` and the stored value stays 0%. Generate after the
+  // first paint so opening a book is not blocked, then re-report the current
+  // position so the percentage lands immediately.
   useEffect(() => {
-    if (rendition) applyThemeRef.current(rendition);
-  }, [rendition, readerTheme, readerFontSize, readerFontFamily, readerLineHeight]);
+    if (!loadedEpub || loadedEpub.presentation.fixedLayout) return;
+    const { book } = loadedEpub;
+    if (book.locations.size > 0) return;
+    let cancelled = false;
+    void book.locations
+      .generate(LOCATION_CHARS_PER_POINT)
+      .then(() => {
+        if (cancelled) return;
+        logClientEvent({
+          level: 'info',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: 'reader.locations_ready',
+          metadata: { bookId, count: book.locations.size },
+        });
+        // The engine types mark `reportLocation` private, though it is the
+        // documented way to re-emit the current relocation.
+        const current = renditionRef.current as unknown as {
+          reportLocation?: () => Promise<void>;
+        } | null;
+        void current?.reportLocation?.();
+      })
+      .catch((caught: unknown) => {
+        const error = caught instanceof Error ? caught : new Error(String(caught));
+        logClientEvent({
+          level: 'warn',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          event: 'reader.locations_failed',
+          error: { name: error.name, message: error.message },
+          metadata: { bookId },
+        });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loadedEpub, bookId, renditionRef]);
+
+  useEffect(() => {
+    if (!rendition) return;
+    applyThemeRef.current(rendition);
+    // The first section can render before this effect registers the theme
+    // (the engine's inject hook then had nothing to append), so saved
+    // preferences were ignored until the reader changed one. Re-apply once the
+    // first content exists.
+    if (rendition.getContents().length > 0) return;
+    const applyOnFirstContent = () => {
+      if (rendition.getContents().length === 0) return;
+      applyThemeRef.current(rendition);
+      rendition.off('rendered', applyOnFirstContent);
+    };
+    rendition.on('rendered', applyOnFirstContent);
+    return () => {
+      rendition.off('rendered', applyOnFirstContent);
+    };
+  }, [
+    rendition,
+    readerTheme,
+    readerFontSize,
+    readerFontFamily,
+    readerLineHeight,
+    readerWritingMode,
+  ]);
 
   useEffect(() => {
     if (!rendition || !loadedEpub) return;
     const direction: PageDirection =
       readerDirection !== 'default' ? readerDirection : loadedEpub.direction;
-    applyDirectionAndWritingMode(rendition, direction, readerWritingMode);
+    applyDirection(rendition, direction);
   }, [rendition, loadedEpub, readerDirection, readerWritingMode]);
   /* eslint-disable react-hooks/immutability -- epubjs mutable rendition layout settings */
   useEffect(() => {

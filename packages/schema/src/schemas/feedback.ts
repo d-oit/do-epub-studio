@@ -22,7 +22,11 @@ export const FeedbackStatusSchema = z.enum([
 export const FeedbackDispositionSchema = z.enum(['accepted', 'declined', 'resolved', 'open']);
 
 export const FeedbackAnchorSchema = z.object({
-  bookFileId: z.string().uuid().optional(),
+  // `book_files.id` is a TEXT primary key (the demo seed uses a deterministic
+  // `${slug}-${bookId}-${sha}` id). The route validates that the id belongs to
+  // this book, so the wire format only needs a bounded string — requiring a
+  // UUID rejected every feedback anchored to the seeded demo file.
+  bookFileId: z.string().min(1).max(200).optional(),
   chapterRef: z.string().max(255).optional(),
   cfi: z.string().max(2000).optional(),
   selectedText: z.string().min(1).max(5000),

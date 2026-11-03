@@ -4,6 +4,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { formatDateTime as formatDateTimeForLocale } from '../../lib/i18n-format';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
+import { signOutAdmin } from './admin-sign-out';
 import { Button, Input } from '../../components/ui';
 import { Breadcrumb } from '../../components/navigation';
 import { MfaSection } from './MfaSection';
@@ -35,7 +36,7 @@ function formatDateTime(value: string | null | undefined): string {
 }
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
-const ADMIN_ROUTES = { admin: '/admin' } as const;
+const ADMIN_ROUTES = { admin: '/admin', adminLogin: '/admin/login' } as const;
 
 export function AccountSettingsPage() {
   const { t } = useTranslation();
@@ -208,6 +209,17 @@ export function AccountSettingsPage() {
             <h2 className="font-display text-lg leading-snug text-foreground">
               {t('admin.sessions.title')}
             </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                void signOutAdmin().then(() => {
+                  void navigate(ADMIN_ROUTES.adminLogin);
+                });
+              }}
+            >
+              {t('admin.signOut')}
+            </Button>
             <Button
               variant="danger"
               size="sm"

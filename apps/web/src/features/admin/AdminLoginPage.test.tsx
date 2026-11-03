@@ -440,6 +440,51 @@ describe('AdminLoginPage', () => {
       expect(vi.mocked(apiRequest).mock.calls).toHaveLength(1);
       expect(vi.mocked(apiRequest).mock.calls[0]?.[0]).toBe('/api/demo/admin-login');
     });
+    it('does not route a structured rate limit to standard admin login', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      const rateLimited = Object.assign(new Error('Too many attempts'), {
+        code: 'TOO_MANY_REQUESTS',
+        status: 429,
+      });
+      vi.mocked(apiRequest).mockRejectedValueOnce(rateLimited);
+
+      renderLoginPage();
+      fireEvent.click(screen.getByText('admin.login.demoTry'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Too many attempts')).toBeInTheDocument();
+      });
+      expect(vi.mocked(apiRequest)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(apiRequest)).toHaveBeenCalledWith('/api/demo/admin-login', {
+        method: 'POST',
+      });
+      expect(mockSetAdminAuth).not.toHaveBeenCalled();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('uses standard admin login fallback after a transport failure', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockResolvedValueOnce({
+          token: 'fallback-admin-session',
+          user: { id: 'admin-1', email: 'demo.admin@example.local', role: 'admin' },
+        });
+
+      renderLoginPage();
+      fireEvent.click(screen.getByText('admin.login.demoTry'));
+
+      await waitFor(() => {
+        expect(mockSetAdminAuth).toHaveBeenCalledWith({
+          sessionToken: 'fallback-admin-session',
+          email: 'demo.admin@example.local',
+        });
+      });
+      expect(vi.mocked(apiRequest).mock.calls.map(([endpoint]) => endpoint)).toEqual([
+        '/api/demo/admin-login',
+        '/api/admin/login',
+      ]);
+    });
   });
 
   describe('hero and app info', () => {

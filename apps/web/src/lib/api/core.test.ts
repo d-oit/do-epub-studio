@@ -181,6 +181,17 @@ describe('401 handling', () => {
     await expect(pending).rejects.toThrow(/Session expired/);
     expect(logoutMock).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['password change', '/api/admin/account/password-change'],
+    ['step-up verification', '/api/admin/account/step-up'],
+  ])('does not log out for a failed %s credential check', async (_label, endpoint) => {
+    vi.stubGlobal('fetch', unauthorizedFetch());
+    authState.sessionToken = 'token-a';
+
+    await expect(apiRequest(endpoint, { method: 'POST', token: 'token-a' })).rejects.toBeTruthy();
+    expect(logoutMock).not.toHaveBeenCalled();
+  });
 });
 
 describe('apiRequest non-JSON response parsing', () => {

@@ -48,6 +48,7 @@ const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted
       render: { register: vi.fn() },
     },
     display: vi.fn(),
+    getContents: vi.fn(() => []),
     on: vi.fn(),
     off: vi.fn(),
     annotations: {
@@ -69,6 +70,7 @@ const { mockRendition, mockBook, mockEpubFn, createEpubLoaderMock } = vi.hoisted
       metadata: Promise.resolve(new Map()),
     },
     packaging: { direction: 'default', metadata: new Map() },
+    locations: { size: 0, generate: vi.fn().mockResolvedValue(undefined) },
     renderTo: vi.fn(() => rendition),
     destroy: vi.fn(),
   };

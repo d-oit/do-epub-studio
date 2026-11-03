@@ -77,6 +77,38 @@ test.describe('Demo login entry points (ADR-244)', () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
+  test('@mobile keeps a rate-limited reader demo on login without credential fallback', async ({
+    page,
+  }) => {
+    const requestPaths: string[] = [];
+    await page.route('**/api/demo/reader-login', async (route) => {
+      requestPaths.push(new URL(route.request().url()).pathname);
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Demo login rate limit reached.' },
+        }),
+      });
+    });
+    await page.route('**/api/access/request', async (route) => {
+      requestPaths.push(new URL(route.request().url()).pathname);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(DEMO_READER_RESPONSE),
+      });
+    });
+    await page.goto('/login?book=demo');
+
+    await page.getByRole('button', { name: 'Try the demo' }).click();
+
+    await expect(page.getByRole('alert')).toContainText('Demo login rate limit reached.');
+    await expect(page).toHaveURL(/\/login/);
+    expect(requestPaths).toEqual(['/api/demo/reader-login']);
+  });
+
   test('@mobile @smoke signs in as the demo reader with email + password', async ({ page }) => {
     // The demo reader account has a documented password; the normal
     // /api/access/request flow authenticates it against the seeded hash.
@@ -155,5 +187,36 @@ test.describe('Demo login entry points (ADR-244)', () => {
 
     await expect(page).toHaveURL(/\/admin\/books$/, { timeout: 15000 });
     await expect(page.locator('main#main-content')).toBeVisible({ timeout: 20000 });
+  });
+  test('@mobile keeps a rate-limited admin demo on login without credential fallback', async ({
+    page,
+  }) => {
+    const requestPaths: string[] = [];
+    await page.route('**/api/demo/admin-login', async (route) => {
+      requestPaths.push(new URL(route.request().url()).pathname);
+      await route.fulfill({
+        status: 429,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: false,
+          error: { code: 'TOO_MANY_REQUESTS', message: 'Demo login rate limit reached.' },
+        }),
+      });
+    });
+    await page.route('**/api/admin/login', async (route) => {
+      requestPaths.push(new URL(route.request().url()).pathname);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(DEMO_ADMIN_RESPONSE),
+      });
+    });
+    await page.goto('/admin/login');
+
+    await page.getByRole('button', { name: 'Try admin demo' }).click();
+
+    await expect(page.getByRole('alert')).toContainText('Demo login rate limit reached.');
+    await expect(page).toHaveURL(/\/admin\/login/);
+    expect(requestPaths).toEqual(['/api/demo/admin-login']);
   });
 });
