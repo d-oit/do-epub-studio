@@ -97,7 +97,7 @@ export function OverflowMenu({
       </Tooltip>
 
       {isMenuOpen && (
-        <div className="absolute right-0 mt-2 w-56 glass-panel rounded-xl shadow-xl border border-border p-2 z-[60] animate-scale-in">
+        <div className="absolute end-0 mt-2 w-56 max-w-[calc(100vw-1rem)] glass-panel rounded-xl shadow-xl border border-border p-2 z-[60] animate-scale-in">
           {/* B8: role="menu" + arrow-key navigation per WAI-ARIA Menu Button Pattern */}
           <div role="menu" className="flex flex-col gap-1" onKeyDown={handleMenuKeyDown}>
             <button

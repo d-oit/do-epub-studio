@@ -24,8 +24,31 @@ interface SyncEvent extends Event {
 // Clean up old caches during installation
 cleanupOutdatedCaches();
 
-// Precache app shell and assets
-precacheAndRoute(self.__WB_MANIFEST);
+// Precache app shell and assets. The manifest names the shell `index.html`,
+// but Cloudflare Pages answers `/index.html` with a 308 to `/`; following that
+// redirect from an `http` origin is upgraded to `https` by
+// `upgrade-insecure-requests` and the install fails with "Failed to fetch".
+// Key the shell by the URL that is actually served so the install never
+// depends on a redirect.
+const APP_SHELL_URL = '/';
+const precacheEntries = self.__WB_MANIFEST.map((entry) =>
+  typeof entry === 'string'
+    ? entry === 'index.html'
+      ? APP_SHELL_URL
+      : entry
+    : entry.url === 'index.html'
+      ? { ...entry, url: APP_SHELL_URL }
+      : entry,
+);
+precacheAndRoute(precacheEntries);
+
+// Control the page that triggered the first install without waiting for a
+// reload; until then, fetches on that first visit bypass the worker, so an
+// offline reload after a first visit failed with an uncontrolled document.
+// Updates still wait for the user's refresh prompt (no `skipWaiting`).
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(self.clients.claim());
+});
 
 // Enable navigation preload for faster SPA navigations when SW is active
 // NavigationPreloadManager may not exist in all browsers (e.g. Firefox)
@@ -37,7 +60,7 @@ if ('navigationPreload' in self.registration) {
 // Precached assets are handled by precacheAndRoute; this provides the SPA fallback
 // using createHandlerBoundToURL to avoid unnecessary network round-trips.
 registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('/index.html'), {
+  new NavigationRoute(createHandlerBoundToURL(APP_SHELL_URL), {
     // Exclude API and internal worker routes from navigation handling
     denylist: [/^\/api\//, /^\/_worker\//],
   }),

@@ -126,6 +126,39 @@ describe('Bookmark Routes', () => {
       expect(body.data.id).toBeDefined();
     });
 
+    it('accepts the reader\u2019s position-only locator', async () => {
+      mockRequireAuth.mockResolvedValue(authCtx);
+      mockQueryFirst.mockResolvedValueOnce({
+        id: 'bookmark-id',
+        book_id: 'book-1',
+        user_email: 'user@example.com',
+        locator_json: JSON.stringify({
+          cfi: 'epubcfi(/6/4!/4/2/1:0)',
+          chapterRef: 'chapter2.xhtml',
+        }),
+        label: 'Try annotations',
+        created_at: '2026-11-01T00:00:00.000Z',
+      });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/books/book-1/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer valid' },
+          body: JSON.stringify({
+            locator: { cfi: 'epubcfi(/6/4!/4/2/1:0)', chapterRef: 'chapter2.xhtml' },
+            label: 'Try annotations',
+          }),
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(201);
+      const body: { data: { locator: { cfi: string }; label: string } } = await res.json();
+      expect(body.data.locator.cfi).toBe('epubcfi(/6/4!/4/2/1:0)');
+      expect(body.data.label).toBe('Try annotations');
+    });
+
     it('returns 403 when canBookmark is false', async () => {
       mockRequireAuth.mockResolvedValue({
         ...authCtx,

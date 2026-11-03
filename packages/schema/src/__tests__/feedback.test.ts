@@ -71,8 +71,16 @@ describe('FeedbackAnchorSchema', () => {
     expect(FeedbackAnchorSchema.safeParse({ selectedText: 'a'.repeat(5001) }).success).toBe(false);
   });
 
-  it('validates bookFileId as uuid', () => {
-    expect(FeedbackAnchorSchema.safeParse({ selectedText: 'x', bookFileId: 'nope' }).success).toBe(
+  it('accepts the seeded book-file id format and rejects an empty one', () => {
+    // `book_files.id` is TEXT; the demo seed uses a deterministic
+    // `demo-sample-<bookId>-<sha256>` id, which must be anchorable.
+    expect(
+      FeedbackAnchorSchema.safeParse({
+        selectedText: 'x',
+        bookFileId: 'demo-sample-e31148c4-8c48-42f5-8e75-3722a254123f-467949f8766b',
+      }).success,
+    ).toBe(true);
+    expect(FeedbackAnchorSchema.safeParse({ selectedText: 'x', bookFileId: '' }).success).toBe(
       false,
     );
   });

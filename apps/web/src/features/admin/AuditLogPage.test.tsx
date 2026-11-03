@@ -275,5 +275,13 @@ describe('AdminAuditPage', () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
     });
     expect(screen.getByText('admin.audit.pageOf')).toBeInTheDocument();
+
+    // Next must actually advance the window, not just re-render page 1.
+    const urls = vi
+      .mocked(apiRequest)
+      .mock.calls.map(([endpoint]) => String(endpoint))
+      .filter((endpoint) => endpoint.startsWith('/api/admin/audit'));
+    expect(urls.some((endpoint) => endpoint.includes('offset=50'))).toBe(true);
+    expect(urls.every((endpoint) => endpoint.includes('offset=0'))).toBe(false);
   });
 });

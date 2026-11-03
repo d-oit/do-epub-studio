@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Route, Navigate } from 'react-router-dom';
+import { Route, Navigate, useLocation } from 'react-router-dom';
 import { ViewTransitionRoutes } from './components/ViewTransitionRoutes';
 import { useAuthStore } from './stores/auth';
 import { useThemeSync } from './hooks/useThemeSync';
@@ -77,10 +77,17 @@ const FeedbackWorkspacePage = React.lazy(() =>
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const sessionExpired = useAuthStore((state) => state.sessionExpired);
+  const { pathname } = useLocation();
 
   if (!isAuthenticated) {
-    const target = sessionExpired ? '/login?error=session_expired' : '/login';
-    return <Navigate to={target} replace />;
+    // Keep the book the visitor asked for: without it the login form has no
+    // book context and disables sign-in (a direct /read/<slug> link dead-ended).
+    const requestedBook = /^\/read\/([^/]+)/.exec(pathname)?.[1];
+    const params = new URLSearchParams();
+    if (requestedBook) params.set('book', decodeURIComponent(requestedBook));
+    if (sessionExpired) params.set('error', 'session_expired');
+    const query = params.toString();
+    return <Navigate to={query ? `/login?${query}` : '/login'} replace />;
   }
 
   return <>{children}</>;

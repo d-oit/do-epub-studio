@@ -17,6 +17,21 @@ export function isStepUpRequired(err: unknown): boolean {
 }
 
 /**
+ * Turns a raw `fetch` 428 response into the ApiError shape `useAdminStepUp`
+ * recognises, so guarded non-JSON uploads can reuse the same retry path as
+ * `apiRequest` calls.
+ */
+export async function stepUpErrorFromResponse(response: Response): Promise<ApiError> {
+  const body = (await response.json().catch(() => null)) as {
+    error?: { code?: string; message?: string };
+  } | null;
+  const error = new Error(body?.error?.message ?? 'Step-up authentication required') as ApiError;
+  error.code = body?.error?.code ?? 'STEP_UP_REQUIRED';
+  error.status = response.status;
+  return error;
+}
+
+/**
  * Calls POST /api/admin/account/step-up with the current password and REPLACES
  * the stored session token with the rotated (step-up) bearer token so that
  * subsequent guarded mutations use it. Returns the new token.

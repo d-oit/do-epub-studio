@@ -22,6 +22,7 @@ import {
   useBookFileUrl,
 } from './hooks';
 import { useFeedbackComposer } from './hooks/useFeedbackComposer';
+import { useFlushInsightsOnExit, useOpenInfoPanel } from './hooks/useInsightFlushes';
 import {
   ReaderToolbar,
   ReaderSettingsPanel,
@@ -308,13 +309,8 @@ export function ReaderPage() {
     }
   }, [revokedBooks, bookId, setError, setPermissionStatus, t]);
 
-  useEffect(
-    () => () => {
-      void flushInsights().catch(() => {});
-      void syncInsightsToServer().catch(() => {});
-    },
-    [flushInsights, syncInsightsToServer],
-  );
+  useFlushInsightsOnExit(flushInsights, syncInsightsToServer);
+  const openInfoPanel = useOpenInfoPanel(flushInsights, togglePanel);
 
   const handleLogout = useReaderLogout();
 
@@ -344,7 +340,7 @@ export function ReaderPage() {
         onToggleComments={() => togglePanel('comments')}
         onToggleBookmarks={() => togglePanel('bookmarks')}
         onToggleSettings={() => togglePanel('settings')}
-        onToggleInfo={() => togglePanel('info')}
+        onToggleInfo={openInfoPanel}
         onToggleNotifications={() => togglePanel('notifications')}
         onExportNotes={() => handleExportNotes(bookTitle)}
         onLogout={() => void handleLogout()}

@@ -13,7 +13,7 @@ import { adminAuth } from '../../middleware/auth';
 import { requireStepUp } from '../../middleware/step-up';
 import { bumpCacheVersion } from '../../lib/edge-cache';
 import { clearBookSearchIndex, replaceBookSearchIndex } from '../../lib/book-search-index';
-import { NotFoundError, AppError } from '../../lib/http-errors';
+import { NotFoundError, AppError, ConflictError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 import { handleBookFileUpload } from './books-upload';
 import { handleGetBookRevisions, handleMigrateBookRevision } from './books-revisions';
@@ -80,6 +80,18 @@ booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c)
   const adminUser = c.get('adminUser');
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
+  const slug = body.slug.toLowerCase();
+
+  // A duplicate slug is a client conflict, not an internal error: the raw
+  // UNIQUE violation surfaced as a generic 500 with no actionable message.
+  const existing = await queryFirst<{ id: string }>(
+    c.env,
+    `SELECT id FROM books WHERE slug = ? LIMIT 1`,
+    [slug],
+  );
+  if (existing) {
+    throw new ConflictError(`A book with slug "${slug}" already exists`);
+  }
 
   await execute(
     c.env,
@@ -87,7 +99,7 @@ booksRouter.post('/', adminAuth, zValidator('json', CreateBookSchema), async (c)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
-      body.slug.toLowerCase(),
+      slug,
       body.title,
       body.authorName ?? null,
       body.description ?? null,

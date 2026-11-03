@@ -121,14 +121,16 @@ describe('BookmarkCreateSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects bookmark with incomplete locator (missing chapterRef)', () => {
+  it('accepts a bookmark locator without chapterRef', () => {
+    // A bookmark is a saved position: the CFI is the anchor and the chapter is
+    // only a hint. Requiring it rejected the reader's own payload.
     const result = BookmarkCreateSchema.safeParse({
       locator: {
         cfi: 'epubcfi(/6/4)',
         selectedText: 'text',
       },
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects bookmark without locator', () => {

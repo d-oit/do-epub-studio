@@ -57,6 +57,26 @@ describe('BookmarkCreateSchema', () => {
     });
     expect(result.label).toBe('My bookmark');
   });
+
+  it('accepts a position-only locator, because the reader has no selection', () => {
+    const result = BookmarkCreateSchema.parse({ locator: { cfi: 'epubcfi(/6/4!/4/2/1:0)' } });
+    expect(result.locator).toEqual({ cfi: 'epubcfi(/6/4!/4/2/1:0)' });
+  });
+
+  it('accepts a chapter hint without selected text', () => {
+    const result = BookmarkCreateSchema.parse({
+      locator: { cfi: 'epubcfi(/6/4)', chapterRef: 'chapter1.xhtml' },
+    });
+    expect(result.locator.chapterRef).toBe('chapter1.xhtml');
+    expect(result.locator.selectedText).toBeUndefined();
+  });
+
+  it('rejects an empty cfi and unknown locator keys', () => {
+    expect(() => BookmarkCreateSchema.parse({ locator: { cfi: '' } })).toThrow();
+    expect(() =>
+      BookmarkCreateSchema.parse({ locator: { cfi: 'cfi', elementIndex: 3 } }),
+    ).toThrow();
+  });
 });
 
 describe('HighlightCreateSchema', () => {

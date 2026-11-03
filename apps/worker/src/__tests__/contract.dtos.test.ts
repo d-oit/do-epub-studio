@@ -133,15 +133,17 @@ describe('Shared DTO schema round-trips', () => {
     ).toBe(false);
   });
 
-  it('BookmarkCreateSchema — accepts valid, rejects locator missing chapterRef', () => {
+  it('BookmarkCreateSchema — accepts a position-only locator, rejects an empty CFI', () => {
     const bm = createBookmarkBuilder().withLabel('x').build();
     expect(BookmarkCreateSchema.safeParse({ locator: msLocator, label: bm.label }).success).toBe(
       true,
     );
+    // A bookmark marks a position: text and chapter are hints, the CFI anchors it.
     expect(
       BookmarkCreateSchema.safeParse({ locator: { cfi: 'epubcfi(/1)', selectedText: 'hi' } })
         .success,
-    ).toBe(false);
+    ).toBe(true);
+    expect(BookmarkCreateSchema.safeParse({ locator: { cfi: '' } }).success).toBe(false);
   });
 
   it('HighlightCreateSchema — accepts builder color, rejects non-hex color', () => {

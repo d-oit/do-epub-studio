@@ -14,6 +14,7 @@ import { resolveHelpUrl, DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD } from '../../con
 import { AdminLoginHero, AdminMobileInfo } from './AdminLoginHero';
 import { MfaFactorChooser, AdminRecoveryForm } from './AdminMfaForms';
 import { AdminDemoBlock } from './AdminDemoBlock';
+import { shouldUseDemoCredentialFallback } from '../auth/demo-login-fallback';
 
 interface AdminUser {
   id: string;
@@ -51,14 +52,19 @@ function useAdminDemoLogin() {
       setAdminAuth({ sessionToken: data.token, email: data.user.email });
       void navigate('/admin/books');
     } catch (primaryErr) {
-      // GOAP-309 D1: a structured DEMO_DISABLED means the server fail-closed
-      // the demo on this deployment — show an honest state instead of
-      // spamming the standard-login fallback with guaranteed failures.
-      if ((primaryErr as { code?: string }).code === 'DEMO_DISABLED') {
+      const primaryError = primaryErr as { code?: string; message?: string };
+
+      if (primaryError.code === 'DEMO_DISABLED') {
         setError(t('login.demoUnavailable'));
         return;
       }
-      // Fallback: If dedicated admin demo endpoint is disabled on the server, attempt standard admin login with demo credentials
+      if (!shouldUseDemoCredentialFallback(primaryErr)) {
+        setError(primaryError.message || t('admin.login.invalidCredentials'));
+        return;
+      }
+
+      // Fall back only when the dedicated endpoint is unreachable or returns
+      // an SPA document; structured HTTP/API refusals must stay refusals.
       try {
         const data = await apiRequest<AdminLoginResponse>('/api/admin/login', {
           method: 'POST',
@@ -73,9 +79,9 @@ function useAdminDemoLogin() {
           return;
         }
       } catch {
-        // preserve primary error
+        // Preserve the primary error.
       }
-      setError((primaryErr as Error).message || t('admin.login.invalidCredentials'));
+      setError(primaryError.message || t('admin.login.invalidCredentials'));
     } finally {
       setLoading(false);
     }

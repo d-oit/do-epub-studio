@@ -8,7 +8,12 @@ describe('Service Worker Configuration', () => {
 
   it('serves navigation requests from precached app shell via createHandlerBoundToURL', () => {
     expect(swContent).toContain('NavigationRoute');
-    expect(swContent).toContain("createHandlerBoundToURL('/index.html')");
+    // The shell is keyed by the URL Pages actually serves: `/index.html`
+    // answers with a 308 whose redirect `upgrade-insecure-requests` breaks on
+    // an http origin, which aborted the whole install.
+    expect(swContent).toContain("const APP_SHELL_URL = '/';");
+    expect(swContent).toContain('createHandlerBoundToURL(APP_SHELL_URL)');
+    expect(swContent).toContain("entry.url === 'index.html'");
   });
 
   it('implements NetworkOnly strategy for sensitive API routes', () => {
