@@ -39,5 +39,5 @@ The two code fixes are independent; all verification follows them. Do not weaken
 - Targeted PWA suite: `PLAYWRIGHT_MODE=preview pnpm exec playwright test --project=pwa-chromium apps/tests/offline-reader.spec.ts` — 5 passed.
 - `./scripts/quality_gate.sh` — passed with Node 22 and the CI-pinned `do-harness` v0.2.1.
 - Codacy CLI on HEAD `e0cc3bc81ffb4b72bb639902c595de45f556bb3a`: analysis complete, `isUpToStandards: true`, `newIssues: 0`.
-- `gh pr checks 1422` on the same head: 38 passed, 0 failed; conditional jobs were skipped by workflow rules.
+- `gh pr checks 1422` on the same head: 30 passed, 8 skipped by workflow conditions, 0 failed.
 - No PR blockers remain. GitHub reported three Dependabot vulnerabilities on the default branch (two moderate, one low); they are unrelated to this PR's checks.

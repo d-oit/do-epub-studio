@@ -215,7 +215,7 @@
 | 1011 | Model repository imports in Madge's circular-dependency graph (GOAP) | `plans/1011-goap-madge-circular-graph-resolution.md` | DONE (PR #1377: 4/4 behavior tests and full local/CI quality gates passed; see accepted ADR-1011) |
 | 1012 | Repair PR #1377 CI evidence (GOAP) | `plans/1012-goap-pr1377-ci-evidence.md` | DONE (benchmark workload parity, pinned harness prerequisite, and offline-comment sequencing repaired; full local benchmark comparison and 16/16 PWA smoke passed; final CI remains the PR merge prerequisite) |
 | 1013 | Optional coverage outputs on bare unit runs (GOAP) | `plans/1013-goap-optional-unit-coverage-outputs.md` | RESOLVED (PR #1383 cuts over to a dedicated test:coverage task; cold and cached coverage runs restore every report and bare unit runs print 0 diagnostics) |
-| 1019 | PR #1422 CI and Codacy repair (GOAP-1019) | `plans/1019-goap-pr1422-ci-codacy.md` | DONE (2026-11-03: all 38 PR checks passed with no failures; Codacy reported 0 new issues; targeted PWA suite and full quality gate passed) |
+| 1019 | PR #1422 CI and Codacy repair (GOAP-1019) | `plans/1019-goap-pr1422-ci-codacy.md` | DONE (2026-11-03: 30 PR checks passed, 8 conditionally skipped, 0 failed; Codacy reported 0 new issues; targeted PWA suite and full quality gate passed) |
 
 ## Pending
 
