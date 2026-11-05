@@ -114,3 +114,4 @@ packages/reader-core/src/__fixtures__/corpus/
 .session/
 .do-harness/
 .agents/events/
+.vercel

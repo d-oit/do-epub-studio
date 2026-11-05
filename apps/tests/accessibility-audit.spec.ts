@@ -45,7 +45,7 @@ test.describe('Accessibility audit (axe-core)', () => {
   });
 
   test('@mobile reader page has no critical accessibility violations', async ({ page }) => {
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
     await loginAsReader(page);
 
     // The exclusion below keeps the scripts-disabled sandbox out of axe's
@@ -76,7 +76,7 @@ test.describe('Accessibility audit (axe-core)', () => {
 
   test('@mobile reader settings panel has no accessibility violations', async ({ page }) => {
     suppressWorkboxErrors(page);
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
     await loginAsReader(page);
 
     await clickToolbarButton(page, /Settings/i);
@@ -91,7 +91,7 @@ test.describe('Accessibility audit (axe-core)', () => {
   });
 
   test('@mobile reader TOC panel has no accessibility violations', async ({ page }) => {
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
     await loginAsReader(page);
 
     await page.getByLabel('Contents').click();
@@ -109,12 +109,25 @@ test.describe('Accessibility audit (axe-core)', () => {
     page,
   }) => {
     suppressWorkboxErrors(page);
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
     await loginAsReader(page);
 
-    const settingsTrigger = page.getByRole('button', { name: /Settings/i });
+    const settingsButton = page.getByRole('button', { name: /Settings/i });
+    const usesOverflow = !(await settingsButton.isVisible());
+    const settingsTrigger = usesOverflow
+      ? page.getByRole('button', { name: 'More options' })
+      : settingsButton;
     await settingsTrigger.focus();
     await page.keyboard.press('Enter');
+    if (usesOverflow) {
+      const searchItem = page.getByRole('menuitem', { name: 'Search', exact: true });
+      await expect(searchItem).toBeFocused();
+      // Settings precedes Sign Out; navigate from the end without clicking a hidden control.
+      await page.keyboard.press('End');
+      await page.keyboard.press('ArrowUp');
+      await expect(page.getByRole('menuitem', { name: /Settings/i })).toBeFocused();
+      await page.keyboard.press('Enter');
+    }
     const settingsDialog = page.getByRole('dialog');
     await expect(settingsDialog).toBeVisible();
     await page.keyboard.press('Tab');
@@ -276,7 +289,9 @@ test.describe('Accessibility audit (axe-core)', () => {
     await mockAdminApi(page);
     await loginAsAdmin(page);
     await page.goto('/admin/grants');
-    await page.waitForLoadState('networkidle');
+    await expect(
+      page.getByRole('heading', { level: 1, name: /manage book access/i }),
+    ).toBeVisible();
     await page.evaluate(() => {
       document.documentElement.setAttribute('data-theme', 'light');
       document.documentElement.classList.remove('dark');

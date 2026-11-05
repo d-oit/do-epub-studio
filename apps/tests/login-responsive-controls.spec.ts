@@ -18,7 +18,7 @@ import { I18N_E2E_STRINGS } from './i18n-e2e-helpers';
 test.describe('Responsive Login Controls & Layout Matrix', () => {
   test.beforeEach(async ({ page }) => {
     suppressWorkboxErrors(page);
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
   });
 
   for (const viewport of VIEWPORT_MATRIX) {

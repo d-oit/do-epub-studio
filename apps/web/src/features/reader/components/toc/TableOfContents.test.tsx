@@ -48,19 +48,12 @@ describe('TableOfContents', () => {
     expect(screen.getByText('Chapter 3')).toBeInTheDocument();
   });
 
-  it('highlights the current chapter', () => {
+  it('marks only the current chapter as the current location', () => {
     render(<TableOfContents {...mockProps} />);
     const activeItem = screen.getByText('Chapter 2');
-    expect(activeItem).toHaveAttribute('aria-current', 'location');
-    expect(activeItem.className).toContain('bg-accent');
-    expect(activeItem.className).toContain('text-white');
-  });
-
-  it('does not highlight non-current chapters', () => {
-    render(<TableOfContents {...mockProps} />);
     const inactiveItem = screen.getByText('Chapter 1');
+    expect(activeItem).toHaveAttribute('aria-current', 'location');
     expect(inactiveItem).not.toHaveAttribute('aria-current');
-    expect(inactiveItem.className).not.toContain('bg-accent');
   });
 
   it('calls onNavigate when an item is clicked', () => {

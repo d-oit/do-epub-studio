@@ -46,7 +46,7 @@ test.describe('Login and book load (desktop)', () => {
     page.on('pageerror', (err) => {
       console.log(`PAGE UNCAUGHT ERROR: ${err.message}`);
     });
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
   });
 
   test('@mobile @smoke renders the login page with all form fields', async ({ page }) => {
@@ -224,7 +224,7 @@ test.describe('Login and book load (mobile)', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
   });
 
   test('@mobile login form is usable on small screens', async ({ page }) => {
@@ -270,7 +270,7 @@ test.describe('Login and book load (mobile)', () => {
 
 test.describe('Error handling', () => {
   test.beforeEach(async ({ page }) => {
-    await mockReaderApi(page, { includeBookmarks: false });
+    await mockReaderApi(page);
   });
 
   test('@mobile shows error message when login fails', async ({ page }) => {
