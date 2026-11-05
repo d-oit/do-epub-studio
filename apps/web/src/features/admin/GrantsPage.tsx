@@ -23,6 +23,8 @@ import type { Grant, GrantFormData } from './components';
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
 const GRANT_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
 
+const EMPTY_GRANTS_PROMISE: Promise<GrantResponse[]> = Promise.resolve([]);
+
 interface LocationState {
   bookTitle?: string;
 }
@@ -50,7 +52,7 @@ interface GrantsBodyData {
 
 function GrantsBody({ bookId, token, onMutated }: GrantsBodyProps) {
   const books = use(fetchAdminBooks(token));
-  const grants = use(bookId ? fetchGrantsForBook(bookId, token) : Promise.resolve([]));
+  const grants = use(bookId ? fetchGrantsForBook(bookId, token) : EMPTY_GRANTS_PROMISE);
   const data: GrantsBodyData = { books, grants };
   return <GrantsView data={data} bookId={bookId} token={token} onMutated={onMutated} />;
 }

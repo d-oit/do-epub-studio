@@ -205,10 +205,10 @@ export const LOGIN_RESPONSE = {
 export const PROGRESS_RESPONSE = {
   ok: true,
   data: {
-    locator: { cfi: 'epubcfi(/6/4)' },
-    progressPercent: 0.1,
-    updatedAt: '2025-01-01T00:00:00Z',
-    revision: 1,
+    locator: null,
+    progressPercent: 0,
+    updatedAt: null,
+    revision: 0,
   },
 };
 
@@ -278,7 +278,6 @@ export interface MockRouteOptions {
   epubBuffer?: Buffer;
   loginResponse?: typeof LOGIN_RESPONSE;
   demoLoginResponse?: typeof DEMO_READER_RESPONSE;
-  includeBookmarks?: boolean;
   includeFeedback?: boolean;
   includeLogout?: boolean;
   includeInsights?: boolean;
@@ -371,45 +370,43 @@ export async function mockReaderApi(
 
   const bookmarks: Array<{ id: string; locator: unknown; label?: string; createdAt: string }> = [];
 
-  if (opts.includeBookmarks !== false) {
-    await pageOrContext.route('**/api/books/*/bookmarks**', async (route: Route) => {
-      const method = route.request().method();
-      if (method === 'POST') {
-        const body = (route.request().postDataJSON() || {}) as {
-          locator?: unknown;
-          label?: string;
-        };
-        const newBookmark = {
-          id: `bookmark-${Date.now()}`,
-          locator: body?.locator ?? { cfi: 'epubcfi(/6/4)' },
-          label: body?.label || 'Chapter 1',
-          createdAt: new Date().toISOString(),
-        };
-        bookmarks.push(newBookmark);
-        await route.fulfill({
-          status: 201,
-          contentType: 'application/json',
-          body: JSON.stringify({ ok: true, data: newBookmark }),
-        });
-      } else if (method === 'DELETE') {
-        const url = route.request().url();
-        const id = url.split('/bookmarks/')[1];
-        const idx = bookmarks.findIndex((b) => b.id === id);
-        if (idx !== -1) bookmarks.splice(idx, 1);
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ ok: true }),
-        });
-      } else {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ ok: true, data: bookmarks.map((b) => ({ ...b })) }),
-        });
-      }
-    });
-  }
+  await pageOrContext.route('**/api/books/*/bookmarks**', async (route: Route) => {
+    const method = route.request().method();
+    if (method === 'POST') {
+      const body = (route.request().postDataJSON() || {}) as {
+        locator?: unknown;
+        label?: string;
+      };
+      const newBookmark = {
+        id: `bookmark-${Date.now()}`,
+        locator: body?.locator ?? { cfi: 'epubcfi(/6/4)' },
+        label: body?.label || 'Chapter 1',
+        createdAt: new Date().toISOString(),
+      };
+      bookmarks.push(newBookmark);
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: newBookmark }),
+      });
+    } else if (method === 'DELETE') {
+      const url = route.request().url();
+      const id = url.split('/bookmarks/')[1];
+      const idx = bookmarks.findIndex((b) => b.id === id);
+      if (idx !== -1) bookmarks.splice(idx, 1);
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      });
+    } else {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: bookmarks.map((b) => ({ ...b })) }),
+      });
+    }
+  });
 
   await pageOrContext.route('**/api/notifications**', async (route: Route) => {
     const origin = route.request().headers()['origin'] || '*';
@@ -716,11 +713,9 @@ export async function loginAsReader(page: Page, bookSlug?: string) {
   await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/read/${slug}$`), { timeout: 15000 });
-  // The reader is mounted once the toolbar renders. `networkidle` is
-  // unreliable here: unmocked background fetches (e.g. bookmarks when the
-  // test passes includeBookmarks: false) hit the absent Worker at
-  // localhost:8787, and under parallel load the network never settles within
-  // the timeout — the root cause of nightly scheduled E2E flakiness (#957).
+  // The reader toolbar marks readiness; `networkidle` is unreliable because
+  // background requests not covered by route mocks can remain pending against
+  // the absent Worker, especially under parallel load (root cause of #957).
   await expect(page.locator('[data-container-name="reader-toolbar"]')).toBeVisible({
     timeout: 20000,
   });

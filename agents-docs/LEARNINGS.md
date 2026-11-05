@@ -386,6 +386,7 @@
 - **Stale node_modules after branch hops fakes lint cascades**: switching branches in one checkout without reinstalling yields bogus type-aware errors (`Unsafe call of a type that could not be resolved` on e.g. simplewebauthn). Always `pnpm install --frozen-lockfile` after hopping before trusting local lint/typecheck.
 - **Rolldown defeats naive web code-splitting two ways**: single-use `manualChunks` get inlined into the importer, and dynamic `import()` of a module statically re-exported by an in-chunk barrel warns `INEFFECTIVE_DYNAMIC_IMPORT` and stays put. Splitting a heavy dep (jszip) out of a route chunk required removing it from the shared barrel + deep-path imports.
 - **Dependabot lockfile rebase conflicts**: resolve with `git checkout --theirs -- <pkg.json + lockfile>` then `pnpm install --lockfile-only`, and verify `git diff` shows version bumps only (no source files) before continuing the rebase.
+- **Vercel can fall back to npm after a malformed pnpm lockfile**: the fallback may surface a downstream `npm ERESOLVE` peer conflict instead of the originating `ERR_PNPM_BROKEN_LOCKFILE`. Pin `installCommand` in `vercel.json` to `pnpm install --frozen-lockfile`; regenerate conflicted Dependabot lockfiles with pinned pnpm before CI.
 - **Dead CI logs**: `gh run view --job <id> --log` returns empty for aged/superseded runs; fetch via `gh api repos/<o>/<r>/actions/jobs/<id>/logs` instead (grep for the failing assertion).
 
 ### GOAP-267 — main dep-scan fix (2026-09-09)
@@ -959,3 +960,18 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 - **`book_files.id` is a TEXT primary key, not a UUID**: the reader sends the file id it receives from `/api/books/:id/file-url`, and the demo seed mints `demo-sample-<bookId>-<sha256>`. `FeedbackAnchorSchema` required `.uuid()`, so every anchored feedback returned `400 ZodError` even though the route only checks that the id belongs to the book. Validate membership server-side and keep the wire type a bounded string; a format rule the storage model does not enforce is a false contract (same class as the bookmark locator).
 - **`ReadingTimer` only persists on `flush()`** (unmount, tab blur, or the explicit call before sign-out): pages counted during a session live in memory. Opening "About This Book" without flushing made the panel claim "No local reading activity recorded on this device yet" and disabled the insights export. Flush before toggling the panel; the export then includes the pages just read.
 - **Prefer the panel's own DOM over translated placeholders in probes**: the feedback reply input's placeholder is shared with the creator workspace, so a placeholder locator can miss while `aside input` finds the field. Scope to the panel and its buttons when the copy is reused.
+
+### CI event provenance and responsive keyboard coverage
+
+- **`github.actor` identifies the event initiator, not the PR-title author.** A human merge into a Dependabot branch emits `synchronize` without changing its generated title. Check `pull_request.user.login` and `changes.title` before applying the machine-title exemption in `.github/workflows/validate-commit-title.yml`.
+- **Mobile reader keyboard tests must open the visible overflow menu.** Settings becomes a `menuitem` while its desktop button is hidden; use keyboard navigation and assert focus returns to More options, not the unmounted menu item. Never replace this with hidden-control event dispatch from `clickToolbarButton`.
+
+### Reader E2E fixture contracts
+
+- **Use a valid EPUB for reader tests.** `mockReaderApi` intercepts its default URL with `MOCK_EPUB`; a custom `epubUrl` without `epubBuffer` opts out of that route, so a local path can return the Vite fallback HTML instead of an EPUB archive.
+- **Keep bookmark API requests mocked.** Reader startup fetches bookmarks even when the scenario does not exercise them; omitting that route sends background requests to the unavailable Worker.
+- **Fresh-book progress uses `locator: null`.** A fabricated CFI can produce reader parse errors and fallback behavior when it does not match the served EPUB.
+
+### Vercel dependency installation
+
+- **Pin the package-manager install command and freeze the lockfile.** If Vercel cannot parse `pnpm-lock.yaml`, auto-detection may fall back to npm and fail on a peer dependency conflict; use `pnpm install --frozen-lockfile` and repair the lockfile instead of forcing npm's resolver.

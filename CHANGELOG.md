@@ -36,6 +36,8 @@
 - feat(offline): create ordinary highlights and shared comments offline with encrypted local records, idempotent replay, and durable failed-sync state.
 - fix(reader): keep progress CFI changes from rebuilding the active EPUB rendition during reading and reconnect.
 - fix(knip): remove unused EPUB fixture exports instead of masking them with a Knip entry.
+- fix(reader): use semantic background tokens for active table-of-contents items and memoize the empty grants promise in admin book access.
+- fix(e2e): mock reader bookmark endpoints by default to prevent unmocked background requests, and handle responsive overflow menus in keyboard navigation tests.
 
 <!-- Previous release history (v0.1.1, v0.2.0) archived — intentional version reset to 0.1.0 per Wave 6. -->
 
