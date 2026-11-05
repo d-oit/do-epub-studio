@@ -23,6 +23,8 @@
   "pr": {
     "description": "PR-gating checks (ci.yml + auxiliary workflows + external apps). Names are the exact `name:` values GitHub reports as check contexts, or the check name published by an external app (Codacy).",
     "checks": [
+      "pr-title",
+      "commit-range",
       "PR Gate (all paths)",
       "Full Quality Gate",
       "Pre-commit Hooks",
