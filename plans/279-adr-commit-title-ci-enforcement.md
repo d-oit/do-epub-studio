@@ -152,20 +152,23 @@ which does enforce bodies — is what CI runs.
 
 ### 6. Dependabot: exempt by machine authorship, validated on human edit
 
-- **`pr-title`** skips with an explicit log line when
-  `github.actor == 'dependabot[bot]'` (covers `opened`/`synchronize`
-  re-titles). When a **human** edits a Dependabot title, the actor is human,
-  so the edit is validated like any other PR title — no permanent hole.
+- **`pr-title`** exempts a Dependabot-generated title only while it remains
+  machine-authored. A human title change validates immediately; on later
+  body, reopen, or synchronize events, the job reads issue-event rename history
+  to preserve the current title's author. It skips an initial bot title with
+  no rename event, or a latest bot rename matching the current title. A latest
+  human rename, unknown actor, or mismatched history validates fail-closed.
+  Non-Dependabot PRs always use the hook.
 - **`commit-range`** skips commits whose author email is exactly
   `49699333+dependabot[bot]@users.noreply.github.com`.
 - Why exempt: Dependabot subjects are machine-generated from package/group
   names and can exceed 72 chars (79-char example above); blocking them stalls
   `dependabot-auto-merge.yml` with no human in the loop to retitle; and under
   squash-merge the subject that reaches `main` from a Dependabot PR is its PR
-  title, which is validated on any human edit. Their format is already kept
-  conventional by `dependabot.yml` `commit-message.prefix` (Dependabot commit
-  bodies are real bodies — verified on PR #1178's branch commit — but the
-  length cap is the unfixable part).
+  title, which remains validated while human-authored. Their format is already
+  kept conventional by `dependabot.yml` `commit-message.prefix` (Dependabot
+  commit bodies are real bodies — verified on PR #1178's branch commit — but
+  the length cap is the unfixable part).
 
 **Rejected alternatives:**
 
@@ -190,8 +193,9 @@ which does enforce bodies — is what CI runs.
 - **No third-party actions:** only `actions/checkout@3d3c42e…` (already in
   `scripts/validate-shas.sh`), so the allowlist needs no append. The enforcer
   is the repo's own hook script — zero duplication, zero drift, zizmor-clean
-  (title and SHAs pass through `env:`, explicit `permissions: contents: read`,
-  `persist-credentials: false`).
+  (title and SHAs pass through `env:`, explicit read-only `contents: read` and
+  `issues: read` permissions, `persist-credentials: false`). Issue-event reads
+  recover title authorship on non-title events.
 - Both jobs always run and skip **inside steps with a visible message**
   (ADR-277: a `skipped` gating job is a defect; step-level skips report
   success and keep the check reported).
@@ -200,13 +204,12 @@ which does enforce bodies — is what CI runs.
   hook's own `Merge|Revert|WIP|fixup!|squash!` skips absorb "Update branch"
   merge commits inside the range.
 
-### 8. Enforcement wiring (partially pending — see Follow-ups)
+### 8. Enforcement wiring
 
-New required status checks to register in branch protection once this merges:
-**`pr-title`** and **`commit-range`** (job ids = check names; verify the
-exact context string in the PR checks UI or branch-protection API before
-saving). Registering them without the workflow merged would block every PR,
-so it happens in the same maintenance window as the merge.
+The `pr-title` and `commit-range` job contexts are registered as required checks
+on `main` (confirmed through GitHub branch protection; see
+[GOAP-286](286-goap-required-status-checks.md)). The PR gate manifest lists both
+contexts, and its parity validator checks named jobs across all workflow files.
 
 ## Consequences
 
@@ -229,20 +232,12 @@ production-dependencies group across 1 directory with 4 updates`, #1167) is
 - The `security`/`a11y`/`plans` types are now locally committable again; no
   existing commit changes meaning.
 
-## Follow-ups (deliberately left open)
+## Residual risk
 
-1. **Branch protection:** register `pr-title` and `commit-range` as required
-   status checks (maintainer-only API/UI change; this token got HTTP 403
-   reading branch protection).
-2. **Gate wiring:** `scripts/quality_gate.sh` and `scripts/gate-manifest.json`
-   were not touched by this change (concurrent edit by another work item);
-   adding the local/policy wiring for the new check is pending and tracked by
-   the GOAP-276 orchestrator. `validate-gate-parity.sh` fuzzy-matches manifest
-   entries against `ci.yml` only, so entries for these jobs will report the
-   non-blocking "auxiliary workflow" notice until then.
-3. **Dependabot authorship exemption** is keyed to the exact bot email; if
-   GitHub ever rotates it, `commit-range` starts validating Dependabot
-   commits again (fail-visible, not silent).
+- **Dependabot title authorship** uses the exact `dependabot[bot]` login in PR
+  metadata and rename events. A changed login or malformed matching rename
+  record validates rather than skips; API request/parse failures fail the job.
+  `commit-range` email rotation likewise validates bot commits and fails visibly.
 
 ## Alternatives rejected
 
