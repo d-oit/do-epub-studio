@@ -78,7 +78,7 @@ export function TableOfContents({
             isRtlLocal ? 'text-right justify-end' : 'text-left justify-start'
           } ${
             isActive
-              ? 'bg-accent text-white font-medium shadow-sm'
+              ? 'bg-background-secondary text-foreground font-medium shadow-sm'
               : 'text-foreground hover:bg-background-secondary'
           }`}
           data-toc-index={index}

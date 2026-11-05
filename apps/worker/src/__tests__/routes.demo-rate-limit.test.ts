@@ -14,6 +14,8 @@ describe('Pages demo login rate limits without Durable Objects', () => {
   let env: Env;
 
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T12:00:00Z'));
     vi.clearAllMocks();
     mockQueryFirst.mockResolvedValue(null);
     database = new DatabaseSync(':memory:');
@@ -45,7 +47,10 @@ describe('Pages demo login rate limits without Durable Objects', () => {
     } as unknown as Env;
   });
 
-  afterEach(() => database.close());
+  afterEach(() => {
+    vi.useRealTimers();
+    database.close();
+  });
 
   it.each(['reader-login', 'admin-login'])(
     'limits %s using real D1-compatible SQL',
