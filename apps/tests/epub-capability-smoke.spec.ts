@@ -1,4 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { expect, test } from '@playwright/test';
+import { loginAsReader, mockReaderApi } from './fixtures';
+
+const CORPUS_DIR = resolve(
+  import.meta.dirname,
+  '../../packages/reader-core/src/__tests__/fixtures/capability-corpus',
+);
+
+function loadCorpusEpub(id: string): Buffer {
+  return readFileSync(resolve(CORPUS_DIR, `${id}.epub`));
+}
 
 const SMOKE_CONTENT = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Capability smoke</title>
@@ -47,5 +59,218 @@ test.describe('synthetic EPUB content browser rendering smoke', () => {
     expect(layout.rubyText).toBe('やま');
     expect(layout.mathText).toContain('x+1');
     expect(layout.pageWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  });
+
+  test('renders EPUB 2 reflowable and NCX navigation through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('epub2-reflow') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A Small Atlas' })).toBeVisible({
+      timeout: 15000,
+    });
+    await page.getByRole('button', { name: 'Contents' }).click();
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
+  });
+
+  test('renders EPUB 3 navigation document and TOC through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('epub3-0-reflow-nav') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A Small Atlas' })).toBeVisible({
+      timeout: 15000,
+    });
+    await page.getByRole('button', { name: 'Contents' }).click();
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'epub3-0-reflow-nav' })).toBeVisible();
+  });
+
+  test('handles malformed navigation gracefully through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('malformed-navigation') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'Broken map' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByText('Navigation target does not exist.')).toBeVisible();
+    await page.getByRole('button', { name: 'Contents' }).click();
+    await expect(page.getByRole('heading', { name: 'Contents' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible();
+  });
+
+  test('renders complex tables and inline SVG with accessible names through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('complex-table') });
+    await loginAsReader(page);
+    const tableFrame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(tableFrame.getByRole('heading', { level: 1, name: 'Rain log' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(tableFrame.getByRole('table', { name: 'Rain by season' })).toBeVisible();
+    await expect(tableFrame.getByRole('cell', { name: '12' })).toBeVisible();
+  });
+
+  test('renders ruby annotations through reader engine', async ({ page, browserName }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('ruby-annotation') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'Reading' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.locator('rt')).toHaveText('やま');
+  });
+
+  test('renders inline SVG with accessible name through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('svg-vector') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A blue circle' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByRole('img', { name: 'A blue circle' })).toBeVisible();
+  });
+
+  test('renders image with alternative text through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('image-alternative') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A Seed' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByRole('img', { name: 'A round seed with two leaves' })).toBeVisible();
+  });
+
+  test('renders document language and language tagged content through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('headings-landmarks-language') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A Small Atlas' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByRole('heading', { level: 2, name: 'North' })).toBeVisible();
+    await expect(frame.locator('[lang="fr"]')).toHaveText('Bonjour.');
+  });
+
+  test('renders RTL direction and Arabic text through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('rtl-direction') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'يمين' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.locator('[dir="rtl"]')).toHaveText('نص تجريبي');
+    const rtlDir = await frame
+      .locator('[dir="rtl"]')
+      .evaluate((el) => getComputedStyle(el).direction);
+    expect(rtlDir).toBe('rtl');
+  });
+
+  test('renders fixed-layout publication through reader engine', async ({ page, browserName }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('fixed-layout') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'Panel' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByText('Fixed page text.')).toBeVisible();
+  });
+
+  test('loads primary rendition for multiple-renditions publication through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('multiple-renditions') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'Two views' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByText('One shared original sentence.')).toBeVisible();
+  });
+
+  test('enforces security boundaries against scripts and remote resources through reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+
+    // Scripted content: sanitizer strips inline executable handlers (onclick)
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('scripted-content') });
+    await loginAsReader(page);
+    const scriptFrame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(scriptFrame.getByRole('heading', { level: 1, name: 'No script' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(scriptFrame.locator('[onclick]')).toHaveCount(0);
   });
 });
