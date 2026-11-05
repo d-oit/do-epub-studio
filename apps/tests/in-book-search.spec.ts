@@ -28,9 +28,7 @@ test.describe('In-book search', () => {
   test.beforeEach(async ({ page }) => {
     await mockReaderApi(page, {
       bookSlug: SEARCH_BOOK_USER.bookSlug,
-      epubUrl: '/alice.epub',
       loginResponse: SEARCH_LOGIN_RESPONSE,
-      includeBookmarks: false,
       includeLogout: false,
     });
   });
