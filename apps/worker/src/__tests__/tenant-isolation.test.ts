@@ -82,9 +82,10 @@ describe('Tenant Isolation', () => {
     });
 
     it('returns null and logs audit for schema failure', async () => {
-      const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/4)' }); // missing selectedText and chapterRef
+      // Highlights keep the multi-signal contract: a CFI alone is corrupt.
+      const locatorJson = JSON.stringify({ cfi: 'epubcfi(/6/4)' });
       const result = await parseLocatorRow(env, locatorJson, {
-        entityType: 'bookmark',
+        entityType: 'highlight',
         entityId: 'b1',
         bookId: 'book-1',
       });

@@ -5,6 +5,7 @@ import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import { Button } from '../../components/ui';
 import { DEMO_BOOK_SLUG, DEMO_READER_EMAIL, DEMO_READER_PASSWORD } from '../../config/demo-config';
+import { shouldUseDemoCredentialFallback } from './demo-login-fallback';
 
 export interface SessionCapabilities {
   canRead: boolean;
@@ -52,28 +53,32 @@ export function useDemoLogin() {
       setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
       void navigate(`/read/${data.book.slug}`);
     } catch (primaryErr) {
-      // GOAP-309 D1: a structured DEMO_DISABLED means the server fail-closed
-      // the demo on this deployment — show an honest state instead of
-      // spamming the access-request fallback (which 500s against the same
-      // gates). The fallback only covers transport-level failures (HTML SPA
-      // fallback, unreachable function), never a policy refusal.
-      if ((primaryErr as { code?: string }).code === 'DEMO_DISABLED') {
+      const primaryError = primaryErr as { code?: string; message?: string };
+
+      // Only transport failures and an unparseable successful SPA response
+      // qualify for credential fallback. HTTP/API refusals stay on this route.
+      if (primaryError.code === 'DEMO_DISABLED') {
         setError(t('login.demoUnavailable'));
-      } else {
-        try {
-          const data = await apiRequest<SessionResponse>('/api/access/request', {
-            method: 'POST',
-            body: JSON.stringify({
-              email: DEMO_READER_EMAIL,
-              password: DEMO_READER_PASSWORD,
-              bookSlug: DEMO_BOOK_SLUG,
-            }),
-          });
-          setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
-          void navigate(`/read/${data.book.slug}`);
-        } catch {
-          setError((primaryErr as Error).message);
-        }
+        return;
+      }
+      if (!shouldUseDemoCredentialFallback(primaryErr)) {
+        setError(primaryError.message || t('login.demoUnavailable'));
+        return;
+      }
+
+      try {
+        const data = await apiRequest<SessionResponse>('/api/access/request', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: DEMO_READER_EMAIL,
+            password: DEMO_READER_PASSWORD,
+            bookSlug: DEMO_BOOK_SLUG,
+          }),
+        });
+        setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
+        void navigate(`/read/${data.book.slug}`);
+      } catch {
+        setError(primaryError.message || t('login.demoUnavailable'));
       }
     } finally {
       setLoading(false);

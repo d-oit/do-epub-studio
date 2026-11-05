@@ -147,6 +147,38 @@ describe('Editorial Feedback Routes (reader)', () => {
     expect(res.status).toBe(403);
   });
 
+  it('accepts a TEXT book-file id (the seeded demo format)', async () => {
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    mockQueryFirst.mockResolvedValueOnce(null); // no existing mutation
+    mockQueryFirst.mockResolvedValueOnce({ book_id: 'book-1', sha256: 'abc' }); // same-book file
+    mockQueryFirst.mockResolvedValueOnce({
+      // re-read after insert
+      id: 'fb-file',
+      book_id: 'book-1',
+      kind: 'comment',
+      category: 'general',
+      body: 'anchored',
+      proposed_text: null,
+      book_file_id: 'demo-sample-book-1-467949f8766b05033e22c034',
+      source_sha256: 'abc',
+      chapter_ref: 'next.xhtml',
+      cfi: null,
+      selected_text: 'x',
+      prefix: null,
+      suffix: null,
+      submitter_email: 'user@example.com',
+      status: 'open',
+      created_at: 'now',
+      updated_at: 'now',
+    });
+
+    const res = await postFeedback({
+      anchor: { selectedText: 'x', bookFileId: 'demo-sample-book-1-467949f8766b05033e22c034' },
+    });
+
+    expect(res.status).toBe(201);
+  });
+
   it('rejects an anchor file from another book (400)', async () => {
     mockRequireAuth.mockResolvedValue(makeAuthContext());
     mockQueryFirst.mockResolvedValueOnce(null); // no existing mutation

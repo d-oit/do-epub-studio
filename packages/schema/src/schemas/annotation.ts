@@ -19,9 +19,26 @@ export const ProgressUpdateSchema = z.object({
 
 export type ProgressUpdate = z.infer<typeof ProgressUpdateSchema>;
 
+/**
+ * Bookmarks mark a reading position rather than a text range: the CFI is the
+ * anchor and the chapter/text hints are optional. The reader has no selection
+ * when the user taps "Add bookmark", so requiring `selectedText` made every
+ * create and every stored row unparseable. Highlights and comments keep the
+ * full multi-signal contract.
+ */
+export const BookmarkLocatorSchema = z
+  .object({
+    cfi: z.string().min(1).max(2048),
+    chapterRef: z.string().min(1).max(1024).optional(),
+    selectedText: z.string().min(1).max(10000).optional(),
+  })
+  .strict();
+
+export type BookmarkLocator = z.infer<typeof BookmarkLocatorSchema>;
+
 export const BookmarkCreateSchema = z.object({
   mutationId: z.string().uuid().optional(),
-  locator: MultiSignalLocatorSchema,
+  locator: BookmarkLocatorSchema,
   label: z.string().max(255).optional(),
 });
 

@@ -1,13 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Button } from '../../components/ui';
+import { signOutAdmin } from './admin-sign-out';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { Breadcrumb } from '../../components/navigation';
 
 /** Admin route paths (constants avoid i18next/no-literal-string in JSX). */
 const ADMIN_ROUTES = { admin: '/admin', books: '/admin/books' } as const;
 /** Destinations the header itself navigates to. */
-const HEADER_ROUTES = { audit: '/admin/audit', login: '/login' } as const;
+const HEADER_ROUTES = {
+  audit: '/admin/audit',
+  login: '/login',
+  adminLogin: '/admin/login',
+} as const;
 
 interface BooksPageHeaderProps {
   onCreateClick: () => void;
@@ -48,6 +53,14 @@ export function BooksPageHeader({ onCreateClick }: BooksPageHeaderProps) {
             className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
           >
             {t('admin.books.viewAuditLogs')}
+          </button>
+          <button
+            onClick={() => {
+              void signOutAdmin().then(() => navigate(HEADER_ROUTES.adminLogin));
+            }}
+            className="px-4 py-2 bg-background border border-border rounded-md text-sm font-medium text-foreground-muted hover:bg-background-secondary"
+          >
+            {t('admin.signOut')}
           </button>
           <LocaleSwitcher />
         </div>

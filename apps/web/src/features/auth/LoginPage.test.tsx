@@ -579,6 +579,62 @@ describe('LoginPage', () => {
       expect(vi.mocked(apiRequest).mock.calls).toHaveLength(1);
       expect(vi.mocked(apiRequest).mock.calls[0]?.[0]).toBe('/api/demo/reader-login');
     });
+    it('does not route a structured rate limit to credential login', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      const rateLimited = Object.assign(new Error('Too many attempts'), {
+        code: 'TOO_MANY_REQUESTS',
+        status: 429,
+      });
+      vi.mocked(apiRequest).mockRejectedValueOnce(rateLimited);
+
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      fireEvent.click(screen.getByText('login.demoTry'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Too many attempts')).toBeInTheDocument();
+      });
+      expect(vi.mocked(apiRequest)).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(apiRequest)).toHaveBeenCalledWith('/api/demo/reader-login', {
+        method: 'POST',
+      });
+      expect(useAuthStore.getState().sessionToken).toBeNull();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('uses credential fallback after a transport failure', async () => {
+      mockIsDemoLoginEnabled.mockReturnValue(true);
+      vi.mocked(apiRequest)
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockResolvedValueOnce({
+          sessionToken: 'fallback-session',
+          book: {
+            id: 'book-demo',
+            slug: 'demo',
+            title: 'Demo Book',
+            authorName: 'Demo Author',
+          },
+          capabilities: null,
+        });
+
+      render(
+        <MemoryRouter>
+          <LoginPage />
+        </MemoryRouter>,
+      );
+      fireEvent.click(screen.getByText('login.demoTry'));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/read/demo');
+      });
+      expect(vi.mocked(apiRequest).mock.calls.map(([endpoint]) => endpoint)).toEqual([
+        '/api/demo/reader-login',
+        '/api/access/request',
+      ]);
+    });
   });
 
   describe('hero and app info', () => {

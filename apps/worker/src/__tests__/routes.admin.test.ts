@@ -145,6 +145,30 @@ describe('Admin Routes', () => {
         await res.json();
       expect(body.ok).toBe(true);
     });
+
+    it('rejects a duplicate slug with 409 instead of an internal error', async () => {
+      mockAdminAuth();
+      mockQueryFirst.mockResolvedValueOnce({ id: 'existing-book' });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/admin/books', {
+          method: 'POST',
+          body: JSON.stringify({ title: 'New Book', slug: 'new-book' }),
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer admin-token',
+          },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(409);
+      const body: { error: { code: string; message: string } } = await res.json();
+      expect(body.error.code).toBe('CONFLICT');
+      expect(body.error.message).toContain('new-book');
+      expect(mockExecute).not.toHaveBeenCalled();
+    });
   });
 
   describe('GET /api/admin/books', () => {

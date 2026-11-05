@@ -25,6 +25,7 @@ const mocks = vi.hoisted(() => {
     themes: { registerRules: vi.fn(), select: vi.fn() },
     hooks: { content: { register: vi.fn() }, render: { register: vi.fn() } },
     display: vi.fn().mockResolvedValue(undefined),
+    getContents: vi.fn(() => []),
     on: vi.fn(),
     off: vi.fn(),
     next: vi.fn(),
@@ -39,6 +40,7 @@ const mocks = vi.hoisted(() => {
       metadata: Promise.resolve(new Map<string, string>()),
     },
     packaging: { direction: 'default', metadata: new Map<string, string>() },
+    locations: { size: 0, generate: vi.fn().mockResolvedValue(undefined) },
     renderTo: vi.fn(() => rendition),
   };
   const loader = {

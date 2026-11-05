@@ -8,6 +8,7 @@ import { queryFirst } from '../../db/client';
 import { validateEpub, type ValidationResult } from '@do-epub-studio/shared/src/epub-validator';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
+import { logAppError } from '../../lib/observability';
 
 type AdminBooksContext = Context<
   {
@@ -62,7 +63,7 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
   };
 
   try {
-    let uploadStream: ReadableStream<Uint8Array>;
+    let uploadStream: ReadableStream<Uint8Array> | Uint8Array | Blob;
     let validationArrayBuffer: ArrayBuffer | null = null;
     let validationSkipped = false;
     let declaredSize: number | null = null;
@@ -85,7 +86,8 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
         );
       }
       declaredSize = fileEntry.size;
-      uploadStream = fileEntry.stream();
+      // `File` is a Blob: R2 accepts it directly with its known size.
+      uploadStream = fileEntry;
       if (fileEntry.size <= VALIDATION_THRESHOLD && fileEntry.size > 0) {
         validationArrayBuffer = await fileEntry.arrayBuffer();
       } else if (fileEntry.size > VALIDATION_THRESHOLD) {
@@ -98,13 +100,11 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
       const { stream } = withByteCap(c.req.raw.body, DEFAULT_MAX_BODY_BYTES);
       declaredSize = contentLength;
       if (contentLength <= VALIDATION_THRESHOLD) {
-        // Tee the body: one branch goes to R2, the other is read by the
-        // validator. The validator must be drained in parallel with the
-        // R2 upload or R2 will block.
-        const [r2Branch, validatorBranch] = stream.tee();
-        uploadStream = r2Branch;
+        // Buffer the bounded body once: the same bytes validate and upload.
+        // R2 rejects streams whose length it cannot know (a tee'd branch
+        // reports none), so the small path hands R2 the exact bytes.
         const chunks: Uint8Array[] = [];
-        const reader = validatorBranch.getReader();
+        const reader = stream.getReader();
         try {
           let done = false;
           while (!done) {
@@ -135,15 +135,18 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
         if (merged.byteLength === 0) {
           throw new ValidationError('Request body is empty');
         }
+        uploadStream = merged;
         validationArrayBuffer = merged.buffer.slice(
           merged.byteOffset,
           merged.byteOffset + merged.byteLength,
         );
       } else {
-        // Best-effort path for large uploads: skip validation to keep
-        // memory bounded.
+        // Best-effort path for large uploads: skip validation to keep memory
+        // bounded. R2 needs a body with a known length, so stream the request
+        // body itself; a `withByteCap`/`tee` wrapper reports no length and R2
+        // rejects it. The declared Content-Length cap is enforced above.
         validationSkipped = true;
-        uploadStream = stream;
+        uploadStream = c.req.raw.body;
       }
     }
 
@@ -192,6 +195,16 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
         413,
       );
     }
-    throw new AppError('Failed to upload file to storage', 'UPLOAD_FAILED', 500);
+    // Keep the cause diagnosable: this used to surface as a bare
+    // `UPLOAD_FAILED` 500 with nothing in the logs (audit A3).
+    logAppError('admin.book.upload_failed', err, {
+      bookId,
+      contentType,
+      isMultipart,
+      contentLength,
+    });
+    const failure = new AppError('Failed to upload file to storage', 'UPLOAD_FAILED', 500);
+    failure.cause = err;
+    throw failure;
   }
 }

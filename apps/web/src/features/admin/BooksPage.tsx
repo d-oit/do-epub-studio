@@ -101,7 +101,6 @@ export function AdminBookResponsesPage() {
     setRevisionValidation,
     handleUploadRevision,
   } = useAdminBookMutations({
-    sessionToken,
     executeWithStepUp,
     onSuccess: (msg) => {
       setSuccessMessage(msg);
