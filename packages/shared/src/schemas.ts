@@ -50,6 +50,11 @@ export {
   EpubFindingSchema,
   EpubRunnerResultSchema,
   AccessibilityRemediationSchema,
+  ChapterDraftSchema,
+  AuthorPublicationSchema,
+  SaveManuscriptDraftSchema,
+  ManuscriptDraftResponseSchema,
+  PublishManuscriptResponseSchema,
 } from '@do-epub-studio/schema';
 
 export type {
@@ -71,6 +76,11 @@ export type {
   AuditQuery,
   AnnotationLocator,
   ProgressLocator,
+  ChapterDraft,
+  AuthorPublication,
+  SaveManuscriptDraft,
+  ManuscriptDraftResponse,
+  PublishManuscriptResponse,
   Login,
   ValidateQuery,
   SignedUrl,

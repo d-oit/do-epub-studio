@@ -231,6 +231,11 @@ export default defineConfig({
             }
           }
           // Route-aware chunking: isolate reader-core from admin/editor
+          // Author-only sanitization stays out of the shared reader-core chunk.
+          if (id.includes('packages/reader-core/src/author-content')) {
+            return 'author-content';
+          }
+
           if (id.includes('packages/reader-core')) {
             return 'reader-core';
           }

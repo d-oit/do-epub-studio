@@ -256,6 +256,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@do-epub-studio/reader-core':
+        specifier: workspace:*
+        version: link:../../packages/reader-core
       '@do-epub-studio/schema':
         specifier: workspace:*
         version: link:../../packages/schema
@@ -332,6 +335,9 @@ importers:
       fflate:
         specifier: ^0.8.3
         version: 0.8.3
+      parse5:
+        specifier: 8.0.1
+        version: 8.0.1
     devDependencies:
       '@types/jsdom':
         specifier: ^30.0.0

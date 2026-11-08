@@ -33,3 +33,22 @@ export const adminAuth: MiddlewareHandler<{
   });
   await next();
 };
+
+export const authorAuth: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: { authorUser: { email: string; id: string; role: string } };
+}> = async (c, next) => {
+  const adminResult = await requireAdminAuth(c.env, c.req.raw);
+  if (
+    adminResult.ok &&
+    (adminResult.context.globalRole === 'admin' || adminResult.context.globalRole === 'editor')
+  ) {
+    c.set('authorUser', {
+      id: adminResult.context.userId,
+      email: adminResult.context.email,
+      role: adminResult.context.globalRole,
+    });
+    return next();
+  }
+  return apiError(c, 401, 'UNAUTHORIZED', 'Authoring authentication required');
+};
