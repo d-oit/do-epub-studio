@@ -68,6 +68,11 @@ const FeedbackWorkspacePage = React.lazy(() =>
     default: m.FeedbackWorkspacePage,
   })),
 );
+const AuthorWorkspacePage = React.lazy(() =>
+  import('./features/author/AuthorWorkspacePage').then((m) => ({
+    default: m.AuthorWorkspacePage,
+  })),
+);
 
 // Premium glassmorphism loading fallback spinner
 // GOAP-224 B12: `LoadingFallback` was unreachable — every lazy route is wrapped
@@ -289,6 +294,16 @@ export function App() {
             <AdminRoute>
               <Suspense fallback={<AdminSkeleton />}>
                 <AdminBookResponsesPage />
+              </Suspense>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/books/:bookId/author"
+          element={
+            <AdminRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AuthorWorkspacePage />
               </Suspense>
             </AdminRoute>
           }

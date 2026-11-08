@@ -85,6 +85,10 @@ export function AdminBookResponsesPage() {
     setEpubFile,
     visibility,
     setVisibility,
+    createMode,
+    setCreateMode,
+    authorTemplate,
+    setAuthorTemplate,
     isSubmitting,
     createError,
     validationResult,
@@ -215,6 +219,9 @@ export function AdminBookResponsesPage() {
               }}
               onArchive={setArchiveConfirmBook}
               onManageAccess={handleViewGrants}
+              onAuthor={(b) => {
+                void navigate(`/admin/books/${b.id}/author`);
+              }}
               isArchiving={archivingBookId === book.id}
               t={t}
             />
@@ -245,6 +252,10 @@ export function AdminBookResponsesPage() {
         isSubmitting={isSubmitting}
         createError={createError}
         validationResult={validationResult}
+        createMode={createMode}
+        setCreateMode={setCreateMode}
+        authorTemplate={authorTemplate}
+        setAuthorTemplate={setAuthorTemplate}
       />
       {revisionBook && (
         <BookRevisionModal

@@ -40,6 +40,7 @@
 - fix(e2e): mock reader bookmark endpoints by default to prevent unmocked background requests, and handle responsive overflow menus in keyboard navigation tests.
 - test(worker): freeze system time during rate limit window tests to prevent cross-minute rollover flakes.
 - test(e2e): exercise synthetic EPUB capability corpus through production reader engine and link capability matrix to browser evidence (#1434).
+- feat(authoring): build structured EPUB authoring workspace and deterministic EPUB 3 export pipeline with reader preview and optimistic draft locking (#1431).
 
 <!-- Previous release history (v0.1.1, v0.2.0) archived — intentional version reset to 0.1.0 per Wave 6. -->
 

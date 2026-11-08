@@ -25,6 +25,7 @@ import {
   searchRouter,
   exportRouter,
   demoRouter,
+  authorRouter,
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
 
@@ -93,6 +94,7 @@ app.route('/api', notificationsRouter);
 app.route('/api', searchRouter);
 app.route('/api/demo', demoRouter);
 app.route('/api', exportRouter);
+app.route('/api/author', authorRouter);
 
 app.onError((err, c) => {
   const ctx = c.get('requestContext');

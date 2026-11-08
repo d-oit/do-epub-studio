@@ -1,5 +1,6 @@
 import type { BookResponse } from '@do-epub-studio/shared';
 import type { TFunction } from '../../../hooks/useTranslation';
+const AUTHOR_ACTION_LABEL = 'Author';
 
 interface AdminBookCardProps {
   book: BookResponse;
@@ -7,6 +8,7 @@ interface AdminBookCardProps {
   onUploadRevision: (book: BookResponse) => void;
   onArchive: (book: BookResponse) => void;
   onManageAccess: (book: BookResponse) => void;
+  onAuthor?: (book: BookResponse) => void;
   isArchiving: boolean;
   t: TFunction;
 }
@@ -17,6 +19,7 @@ export function AdminBookCard({
   onUploadRevision,
   onArchive,
   onManageAccess,
+  onAuthor,
   isArchiving,
   t,
 }: AdminBookCardProps) {
@@ -39,6 +42,15 @@ export function AdminBookCard({
           >
             {t('admin.books.edit')}
           </button>
+          {onAuthor && (
+            <button
+              type="button"
+              onClick={() => onAuthor(book)}
+              className="touch-target inline-flex items-center text-xs font-medium text-accent hover:underline"
+            >
+              {AUTHOR_ACTION_LABEL}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onUploadRevision(book)}

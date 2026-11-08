@@ -256,6 +256,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@do-epub-studio/reader-core':
+        specifier: workspace:*
+        version: link:../../packages/reader-core
       '@do-epub-studio/schema':
         specifier: workspace:*
         version: link:../../packages/schema
