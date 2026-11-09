@@ -116,7 +116,11 @@ async function mockAdminBooks(page: Page, onPost?: (attempt: number) => PostAnsw
  * Mocks the accept-invite call. `state` drives the response, and the returned
  * `calls` counter lets a test assert the API was never called at all.
  */
-async function mockAcceptInvite(page: Page, state: 'ok' | 'error' = 'ok') {
+async function mockAcceptInvite(
+  page: Page,
+  state: 'ok' | 'error' = 'ok',
+  role: 'reader' | 'author' = 'reader',
+) {
   const counter = { calls: 0 };
   await page.route('**/api/access/accept-invite', async (route: Route) => {
     counter.calls += 1;
@@ -134,9 +138,14 @@ async function mockAcceptInvite(page: Page, state: 'ok' | 'error' = 'ok') {
           sessionToken: 'accepted-session-token',
           expiresAt: '2099-01-01T00:00:00.000Z',
           email: READER_EMAIL,
-          role: 'reader',
+          role,
           book: { id: BOOK_ID, slug: BOOK_SLUG, title: 'Invitation Test Book' },
-          capabilities: { canRead: true, canComment: false, canAnnotate: false },
+          capabilities: {
+            canRead: true,
+            canComment: false,
+            canAnnotate: false,
+            canAuthor: role === 'author',
+          },
         },
       },
     });
@@ -221,6 +230,20 @@ test.describe('book invitation flow (browser)', () => {
     expect(created[0]).toMatchObject({ bookId: BOOK_ID, email: READER_EMAIL, role: 'reader' });
   });
 
+  test('an administrator creates a book-scoped author invitation', async ({ page }) => {
+    const { created } = await mockAdminBooks(page);
+    await openBookAdmin(page);
+
+    await page.getByRole('button', { name: 'Invite person' }).click();
+    await page.getByLabel('Invitation role').selectOption('author');
+    await page.getByLabel('Email address').fill(READER_EMAIL);
+    await page.getByRole('button', { name: 'Send invitation' }).click();
+
+    await expect(page.getByText(READER_EMAIL)).toBeVisible({ timeout: 15000 });
+    expect(created).toHaveLength(1);
+    expect(created[0]).toMatchObject({ bookId: BOOK_ID, email: READER_EMAIL, role: 'author' });
+  });
+
   test('a 428 opens the step-up prompt instead of failing the create', async ({ page }) => {
     // A guarded mutation that answers 428 must surface the step-up modal, then
     // retry once with the rotated token (useAdminStepUp). Asserting an inline
@@ -259,6 +282,52 @@ test.describe('book invitation flow (browser)', () => {
 
     // Success navigates away from the acceptance form.
     await expect(page).not.toHaveURL(/#token=/, { timeout: 15000 });
+  });
+
+  test('an accepted author invitation opens its assigned manuscript workspace', async ({
+    page,
+  }) => {
+    await page.route(`**/api/author/books/${BOOK_ID}/manuscript`, async (route: Route) => {
+      await route.fulfill({
+        json: {
+          ok: true,
+          data: {
+            bookId: BOOK_ID,
+            bookSlug: BOOK_SLUG,
+            publication: {
+              title: 'Invitation Test Book',
+              creators: ['Test Author'],
+              language: 'en',
+              identifier: 'urn:uuid:invitation-test',
+              description: '',
+              publisher: '',
+              rights: '',
+              coverImageAssetId: null,
+              stylesheetAssetIds: [],
+              chapters: [
+                {
+                  id: 'chapter-1',
+                  title: 'Chapter 1',
+                  order: 0,
+                  contentHtml: '<p>Author workspace granted.</p>',
+                },
+              ],
+            },
+            draftVersion: 1,
+            updatedAt: '2026-01-01T00:00:00.000Z',
+          },
+        },
+      });
+    });
+    await page.route(`**/api/author/books/${BOOK_ID}/assets`, async (route: Route) => {
+      await route.fulfill({ json: { ok: true, data: { assets: [] } } });
+    });
+    await mockAcceptInvite(page, 'ok', 'author');
+    await fillAcceptanceForm(page);
+
+    await expect(page).toHaveURL(new RegExp(`/author/books/${BOOK_ID}`), { timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Invitation Test Book' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Assets' })).toBeVisible();
   });
 
   test('the acceptance form refuses mismatched passwords before calling the API', async ({

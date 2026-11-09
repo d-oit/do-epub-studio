@@ -1,7 +1,8 @@
-import type { TranslationKeys, TranslationValue } from './en';
+import { en, type TranslationKeys, type TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
 export const pt: Record<TranslationKeys, TranslationValue> = {
+  ...en,
   'app.title': APP_NAME,
   'app.versionLabel': 'Versão',
   'ui.showPassword': 'Mostrar senha',

@@ -50,7 +50,7 @@ export interface AccessResponse {
   capabilities: ReaderCapabilities;
 }
 
-/** Capabilities granted to the current reader for a specific book. */
+/** Capabilities granted to the current user for a specific book. */
 export interface ReaderCapabilities {
   canRead: boolean;
   canComment: boolean;
@@ -59,6 +59,7 @@ export interface ReaderCapabilities {
   canDownloadOffline: boolean;
   canExportNotes: boolean;
   canManageAccess: boolean;
+  canAuthor: boolean;
 }
 
 /** Signed URL for downloading an EPUB file, with expiry metadata. */
@@ -126,6 +127,7 @@ export interface GrantResponse {
   mode: string;
   commentsAllowed: boolean;
   offlineAllowed: boolean;
+  authoringAllowed: boolean;
   expiresAt: string | null;
   createdAt: string;
   revokedAt: string | null;

@@ -25,6 +25,7 @@ const auth: AuthContext = {
     canDownloadOffline: false,
     canExportNotes: false,
     canManageAccess: false,
+    canAuthor: false,
   },
 };
 const document = {

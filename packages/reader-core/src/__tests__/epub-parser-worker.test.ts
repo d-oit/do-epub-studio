@@ -12,7 +12,7 @@ vi.stubGlobal(
   }),
 );
 
-vi.mock('../archive-validator', () => ({
+vi.mock('@do-epub-studio/shared/src/archive-validator', () => ({
   validateArchive: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -236,8 +236,12 @@ describe('worker LOAD failure (GOAP-226 — issue #957)', () => {
     // where the worker chunk is mis-served). onerror must NOT reject; every
     // pending parse resolves through fallbackParse (fetch + validateArchive,
     // both mocked above).
-    const result1 = expect(p1).resolves.toMatchObject({ valid: true });
-    const result2 = expect(p2).resolves.toMatchObject({ valid: true });
+    const assertFallbackSucceeded = (promise: Promise<EpubParseResult>) =>
+      promise.then((result) => {
+        if (!result.valid) throw new Error(`Fallback parse failed: ${result.error}`);
+      });
+    const result1 = assertFallbackSucceeded(p1);
+    const result2 = assertFallbackSucceeded(p2);
     worker.onerror?.({ message: 'Worker initialization failed' });
     await result1;
     await result2;

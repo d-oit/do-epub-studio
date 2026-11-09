@@ -16,6 +16,7 @@
     "test:coverage": "pnpm test:unit --coverage"
   },
   "dependencies": {
+    "@do-epub-studio/reader-core": "workspace:*",
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
     "@hono/zod-validator": "^0.9.1",

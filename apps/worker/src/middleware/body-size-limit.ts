@@ -2,6 +2,7 @@ import type { MiddlewareHandler } from 'hono';
 import { apiError } from '../lib/api-error';
 
 const UPLOAD_PATH_RE = /^\/api\/admin\/books\/[^/]+\/upload(?:\/|$)/;
+const AUTHOR_ASSET_UPLOAD_PATH_RE = /^\/api\/author\/books\/[^/]+\/assets\/[^/]+$/;
 
 /**
  * Rejects requests whose body exceeds `maxBytes` with HTTP 413.
@@ -17,8 +18,11 @@ const UPLOAD_PATH_RE = /^\/api\/admin\/books\/[^/]+\/upload(?:\/|$)/;
  */
 export function bodySizeLimit(maxBytes = 1_048_576): MiddlewareHandler {
   return async function bodySizeLimitMiddleware(c, next) {
-    // Exempt the EPUB upload route — it streams, never buffers.
-    if (UPLOAD_PATH_RE.test(c.req.path)) {
+    // Upload routes enforce their own streaming byte caps.
+    if (
+      UPLOAD_PATH_RE.test(c.req.path) ||
+      (c.req.method === 'PUT' && AUTHOR_ASSET_UPLOAD_PATH_RE.test(c.req.path))
+    ) {
       return next();
     }
 

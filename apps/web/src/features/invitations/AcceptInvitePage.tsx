@@ -72,7 +72,13 @@ export function AcceptInvitePage(): React.JSX.Element {
         email: data.email,
         capabilities: data.capabilities,
       });
-      void navigate(data.role === 'creator' ? '/creator' : `/read/${data.book.slug}`);
+      void navigate(
+        data.role === 'creator'
+          ? '/creator'
+          : data.role === 'author'
+            ? `/author/books/${data.book.id}`
+            : `/read/${data.book.slug}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : t('invitations.acceptError'));
     } finally {

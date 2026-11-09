@@ -98,6 +98,7 @@ function GrantsView({
       const mode = getString('mode', 'private');
       const commentsAllowed = fd.get('commentsAllowed') === 'on';
       const offlineAllowed = fd.get('offlineAllowed') === 'on';
+      const authoringAllowed = fd.get('authoringAllowed') === 'on';
       const expiresAt = getString('expiresAt', '');
 
       if (!email) errors.email = t('grants.form.error.emailRequired');
@@ -126,6 +127,7 @@ function GrantsView({
                   mode,
                   commentsAllowed,
                   offlineAllowed,
+                  authoringAllowed,
                   expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
                 }),
               }),
@@ -145,6 +147,7 @@ function GrantsView({
                   mode,
                   commentsAllowed,
                   offlineAllowed,
+                  authoringAllowed,
                   expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
                 }),
               }),
@@ -188,6 +191,7 @@ function GrantsView({
       mode: grant.mode,
       commentsAllowed: grant.commentsAllowed,
       offlineAllowed: grant.offlineAllowed,
+      authoringAllowed: grant.authoringAllowed,
       expiresAt: grant.expiresAt ? (grant.expiresAt.split('T')[0] ?? '') : '',
     });
     setIsModalOpen(true);

@@ -22,6 +22,7 @@ export interface Grant {
   mode: string;
   commentsAllowed: boolean;
   offlineAllowed: boolean;
+  authoringAllowed: boolean;
   expiresAt: string | null;
   createdAt: string;
   revokedAt: string | null;
@@ -34,6 +35,7 @@ export interface GrantFormData {
   mode: string;
   commentsAllowed: boolean;
   offlineAllowed: boolean;
+  authoringAllowed: boolean;
   expiresAt: string;
 }
 
@@ -45,6 +47,7 @@ export function emptyFormData(): GrantFormData {
     mode: 'private',
     commentsAllowed: false,
     offlineAllowed: false,
+    authoringAllowed: false,
     expiresAt: defaultExpiryDate(),
   };
 }

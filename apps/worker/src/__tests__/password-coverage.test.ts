@@ -108,15 +108,17 @@ describe('auth/password.ts coverage', () => {
     expect(db.execute).toHaveBeenCalled();
   });
 
-  it('computeCapabilities maps fields', () => {
-    const caps = computeCapabilities({
+  it('computes book authoring independently of reader capabilities', () => {
+    const author = computeCapabilities({
       allowed: 1,
-      comments_allowed: 1,
-      offline_allowed: 1,
+      comments_allowed: 0,
+      offline_allowed: 0,
+      authoring_allowed: 1,
     } as unknown as Parameters<typeof computeCapabilities>[0]);
-    expect(caps.canRead).toBe(true);
-    expect(caps.canComment).toBe(true);
-    expect(caps.canDownloadOffline).toBe(true);
+    expect(author.canRead).toBe(true);
+    expect(author.canComment).toBe(false);
+    expect(author.canDownloadOffline).toBe(false);
+    expect(author.canAuthor).toBe(true);
   });
 
   it('getGrantByBookAndSession queries DB', async () => {

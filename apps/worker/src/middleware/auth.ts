@@ -33,3 +33,43 @@ export const adminAuth: MiddlewareHandler<{
   });
   await next();
 };
+
+export const authorAuth: MiddlewareHandler<{
+  Bindings: Env;
+  Variables: { authorUser: { email: string; id: string; role: string } };
+}> = async (c, next) => {
+  const adminResult = await requireAdminAuth(c.env, c.req.raw);
+  if (
+    adminResult.ok &&
+    (adminResult.context.globalRole === 'admin' || adminResult.context.globalRole === 'editor')
+  ) {
+    c.set('authorUser', {
+      id: adminResult.context.userId,
+      email: adminResult.context.email,
+      role: adminResult.context.globalRole,
+    });
+    return next();
+  }
+
+  const bookId = c.req.param('id');
+  if (!bookId) {
+    const status = adminResult.ok ? 403 : adminResult.status;
+    return apiError(
+      c,
+      status as ContentfulStatusCode,
+      status === 403 ? 'FORBIDDEN' : 'UNAUTHORIZED',
+      'Book-scoped authoring access required',
+    );
+  }
+
+  const auth = await requireAuth(c.env, c.req.raw);
+  if (!auth) {
+    return apiError(c, 401, 'UNAUTHORIZED', 'Authoring authentication required');
+  }
+  if (auth.bookId !== bookId || !auth.capabilities.canAuthor) {
+    return apiError(c, 403, 'FORBIDDEN', 'Book-scoped authoring access required');
+  }
+
+  c.set('authorUser', { id: auth.sessionId, email: auth.email, role: 'author' });
+  return next();
+};

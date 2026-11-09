@@ -19,6 +19,7 @@ describe('GrantForm', () => {
       mode: 'private',
       commentsAllowed: false,
       offlineAllowed: false,
+      authoringAllowed: false,
       expiresAt: '',
     },
     formErrors: {},
@@ -44,6 +45,7 @@ describe('GrantForm', () => {
       mode: 'private',
       commentsAllowed: false,
       offlineAllowed: false,
+      authoringAllowed: false,
       expiresAt: null,
     };
     render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);
@@ -64,6 +66,7 @@ describe('GrantForm', () => {
       commentsAllowed: false,
       offlineAllowed: false,
       expiresAt: null,
+      authoringAllowed: false,
     };
     render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);
     expect(screen.queryByText('grants.form.password')).not.toBeInTheDocument();
@@ -78,6 +81,7 @@ describe('GrantForm', () => {
     render(<GrantForm {...defaultProps} />);
     expect(screen.getByText('grants.capabilities.comments')).toBeInTheDocument();
     expect(screen.getByText('grants.capabilities.offline')).toBeInTheDocument();
+    expect(screen.getByText('grants.form.authoring')).toBeInTheDocument();
   });
 
   it('shows expiry date field', () => {
@@ -120,6 +124,19 @@ describe('GrantForm', () => {
     const checkboxes = screen.getAllByRole('checkbox');
     fireEvent.click(defined(checkboxes[1]));
     expect(defaultProps.onChange).toHaveBeenCalled();
+  });
+
+  it('sets authoring capability on the changed grant form value', () => {
+    render(<GrantForm {...defaultProps} />);
+    const checkboxes = screen.getAllByRole('checkbox');
+    fireEvent.click(defined(checkboxes[2]));
+    expect(defaultProps.onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authoringAllowed: true,
+        commentsAllowed: false,
+        offlineAllowed: false,
+      }),
+    );
   });
 
   it('calls onChange when expiry date changes', () => {
@@ -170,6 +187,7 @@ describe('GrantForm', () => {
       mode: 'private',
       commentsAllowed: false,
       offlineAllowed: false,
+      authoringAllowed: false,
       expiresAt: null,
     };
     render(<GrantForm {...defaultProps} editingGrant={editingGrant as unknown as Grant} />);

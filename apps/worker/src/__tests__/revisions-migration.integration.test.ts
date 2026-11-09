@@ -28,6 +28,7 @@ vi.mock('../auth/middleware', () => ({
         canDownloadOffline: true,
         canExportNotes: true,
         canManageAccess: true,
+        canAuthor: false,
       },
     }),
   ),
@@ -137,6 +138,7 @@ function createTestApp() {
         canDownloadOffline: true,
         canExportNotes: true,
         canManageAccess: true,
+        canAuthor: false,
       },
     });
     await next();

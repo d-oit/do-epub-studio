@@ -32,6 +32,7 @@ interface ApiResponse<T> {
 export interface ApiRequestOptions extends RequestInit {
   token?: string;
   timeoutMs?: number;
+  responseType?: 'json' | 'arrayBuffer';
 }
 
 /**
@@ -126,7 +127,7 @@ function handleUnauthorized(rejectedToken: string | null) {
 
 /** Core API request: observability, timeout, retry w/ backoff, error handling. */
 export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { token, timeoutMs, ...requestInit } = options;
+  const { token, timeoutMs, responseType = 'json', ...requestInit } = options;
   const traceId = createTraceId();
   const spanId = createSpanId();
 
@@ -191,6 +192,17 @@ export async function apiRequest<T>(endpoint: string, options: ApiRequestOptions
           metadata: { endpoint, status: response.status, attempt: attempt + 1 },
         });
         continue;
+      }
+      if (responseType === 'arrayBuffer' && response.ok) {
+        const data = await response.arrayBuffer();
+        logClientEvent({
+          level: 'info',
+          event: 'api.success',
+          traceId,
+          spanId,
+          metadata: { endpoint, status: response.status },
+        });
+        return data as T;
       }
       let data: ApiResponse<T> | undefined;
       try {
