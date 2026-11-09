@@ -55,6 +55,11 @@ export {
   SaveManuscriptDraftSchema,
   ManuscriptDraftResponseSchema,
   PublishManuscriptResponseSchema,
+  AuthorAssetMetadataSchema,
+  MAX_AUTHOR_IMAGE_BYTES,
+  MAX_AUTHOR_STYLESHEET_BYTES,
+  MAX_AUTHOR_ASSETS_TOTAL_BYTES,
+  MAX_AUTHOR_ASSET_COUNT,
 } from '@do-epub-studio/schema';
 
 export type {
@@ -81,7 +86,7 @@ export type {
   SaveManuscriptDraft,
   ManuscriptDraftResponse,
   PublishManuscriptResponse,
-  Login,
+  AuthorAssetMetadata,
   ValidateQuery,
   SignedUrl,
   UploadComplete,

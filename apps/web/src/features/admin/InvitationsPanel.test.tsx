@@ -126,6 +126,26 @@ describe('InvitationsPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('creates an author invitation with book-scoped author role', async () => {
+    render(<InvitationsPanel bookId={bookId} executeWithStepUp={mockExecuteWithStepUp} />);
+    fireEvent.click(screen.getByRole('button', { name: 'invitations.invitePerson' }));
+    fireEvent.change(screen.getByLabelText('invitations.roleLabel'), {
+      target: { value: 'author' },
+    });
+    fireEvent.change(screen.getByLabelText('invitations.emailLabel'), {
+      target: { value: 'author@example.com' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'invitations.sendInvite' }));
+
+    await waitFor(() =>
+      expect(createBookInvitation).toHaveBeenCalledWith(
+        bookId,
+        expect.objectContaining({ email: 'author@example.com', role: 'author' }),
+        'step-up-token',
+      ),
+    );
+  });
+
   it('resends and revokes a pending invitation through step-up', async () => {
     vi.mocked(fetchBookInvitations).mockResolvedValue([invitation()]);
     render(<InvitationsPanel bookId={bookId} executeWithStepUp={mockExecuteWithStepUp} />);

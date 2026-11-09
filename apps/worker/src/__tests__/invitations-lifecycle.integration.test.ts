@@ -17,6 +17,7 @@ import {
   revokeBookInvitation,
 } from '../auth/invitations';
 import { createSession } from '../auth/session';
+import { computeCapabilities, getGrantByBookAndSession } from '../auth/password';
 import type { Env } from '../lib/env';
 
 vi.mock('argon2-wasm-edge', () => ({
@@ -247,5 +248,80 @@ describe('book invitation lifecycle with real SQLite', () => {
       ),
     ).toHaveLength(0);
     expect(queryRows('SELECT * FROM users WHERE id = ?', accepted.userId)).toHaveLength(1);
+  });
+  it('grants authoring only for the author invitation and clears it on reader regrant', async () => {
+    const authorEmail = 'author-onboarding@example.com';
+    const authorInvitation = await createBookInvitation(
+      env,
+      {
+        bookId,
+        email: authorEmail,
+        role: 'author',
+        mode: 'private',
+        commentsAllowed: false,
+        offlineAllowed: false,
+      },
+      adminId,
+    );
+    const authorAccepted = await acceptBookInvitation(env, {
+      token: authorInvitation.rawToken,
+      newPassword: ACCEPTED_PASSWORD,
+      newPasswordConfirm: ACCEPTED_PASSWORD,
+    });
+    expect(authorAccepted.role).toBe('author');
+    expect(
+      queryRow(
+        'SELECT authoring_allowed, allowed FROM book_access_grants WHERE id = ?',
+        authorAccepted.grantId,
+      ),
+    ).toMatchObject({ authoring_allowed: 1, allowed: 1 });
+    expect(
+      queryRows(
+        'SELECT * FROM book_creators WHERE book_id = ? AND user_id = ?',
+        bookId,
+        authorAccepted.userId,
+      ),
+    ).toHaveLength(0);
+
+    const authorGrant = await getGrantByBookAndSession(env, bookId, authorEmail);
+    if (!authorGrant) throw new Error('Expected author grant after invitation acceptance');
+    expect(computeCapabilities(authorGrant).canAuthor).toBe(true);
+    await createSession(env, bookId, authorEmail);
+    await revokeBookInvitation(env, bookId, authorInvitation.invitation.id);
+    expect(
+      queryRow(
+        'SELECT authoring_allowed, allowed FROM book_access_grants WHERE id = ?',
+        authorAccepted.grantId,
+      ),
+    ).toMatchObject({ authoring_allowed: 1, allowed: 0 });
+    expect(
+      queryRow(
+        'SELECT revoked_at FROM reader_sessions WHERE email = ? AND book_id = ?',
+        authorEmail,
+        bookId,
+      ),
+    ).toMatchObject({ revoked_at: expect.any(String) });
+
+    const readerInvitation = await createBookInvitation(
+      env,
+      {
+        bookId,
+        email: authorEmail,
+        role: 'reader',
+        mode: 'private',
+        commentsAllowed: false,
+        offlineAllowed: false,
+      },
+      adminId,
+    );
+    await acceptBookInvitation(env, {
+      token: readerInvitation.rawToken,
+      newPassword: ACCEPTED_PASSWORD,
+      newPasswordConfirm: ACCEPTED_PASSWORD,
+    });
+    const readerGrant = await getGrantByBookAndSession(env, bookId, authorEmail);
+    if (!readerGrant) throw new Error('Expected reader grant after invitation acceptance');
+    expect(readerGrant.authoring_allowed).toBe(0);
+    expect(computeCapabilities(readerGrant).canAuthor).toBe(false);
   });
 });

@@ -246,6 +246,7 @@ export function makeAuthContext(overrides: Partial<AuthContext> = {}): AuthConte
       canDownloadOffline: true,
       canExportNotes: true,
       canManageAccess: false,
+      canAuthor: false,
     },
     ...overrides,
   };

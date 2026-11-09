@@ -1,14 +1,5 @@
 import { useTranslation } from '../../../hooks/useTranslation';
 import { Modal, Button } from '../../../components/ui';
-const CREATE_MODAL_TEXT = {
-  uploadMode: 'Upload Prebuilt EPUB',
-  authorMode: 'Author from Scratch',
-  templateLabel: 'Manuscript Template',
-  templateBlank: 'Blank Manuscript (1 Chapter)',
-  templateNovel: 'Novel Structure (Prologue + Chapter 1)',
-  templateGuide: 'Guide / Handbook (Overview + Getting Started)',
-  submitAuthor: 'Create Manuscript',
-} as const;
 
 interface BookCreateModalProps {
   isOpen: boolean;
@@ -61,28 +52,34 @@ export function BookCreateModal({
         className="space-y-4"
       >
         {setCreateMode && (
-          <div className="flex rounded-lg border border-border p-1 bg-background-tertiary">
+          <div
+            role="group"
+            aria-label={t('admin.createBookModal.modeLabel')}
+            className="flex flex-wrap rounded-sm border border-border bg-background-tertiary p-1"
+          >
             <button
               type="button"
               onClick={() => setCreateMode('upload')}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded transition-colors ${
+              aria-pressed={createMode === 'upload'}
+              className={`touch-target min-h-11 flex-1 rounded-sm px-3 text-sm font-semibold transition-colors ${
                 createMode === 'upload'
                   ? 'bg-surface text-foreground shadow-sm'
                   : 'text-foreground-muted hover:text-foreground'
               }`}
             >
-              {CREATE_MODAL_TEXT.uploadMode}
+              {t('admin.createBookModal.uploadMode')}
             </button>
             <button
               type="button"
               onClick={() => setCreateMode('author')}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded transition-colors ${
+              aria-pressed={createMode === 'author'}
+              className={`touch-target min-h-11 flex-1 rounded-sm px-3 text-sm font-semibold transition-colors ${
                 createMode === 'author'
                   ? 'bg-surface text-foreground shadow-sm'
                   : 'text-foreground-muted hover:text-foreground'
               }`}
             >
-              {CREATE_MODAL_TEXT.authorMode}
+              {t('admin.createBookModal.authorMode')}
             </button>
           </div>
         )}
@@ -130,7 +127,7 @@ export function BookCreateModal({
               htmlFor="book-template"
               className="block text-sm font-medium text-foreground-muted mb-1"
             >
-              {CREATE_MODAL_TEXT.templateLabel}
+              {t('admin.createBookModal.templateLabel')}
             </label>
             <select
               id="book-template"
@@ -141,11 +138,11 @@ export function BookCreateModal({
               className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
             >
               {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
-              <option value="blank">{CREATE_MODAL_TEXT.templateBlank}</option>
+              <option value="blank">{t('admin.createBookModal.templateBlank')}</option>
               {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
-              <option value="novel">{CREATE_MODAL_TEXT.templateNovel}</option>
+              <option value="novel">{t('admin.createBookModal.templateNovel')}</option>
               {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
-              <option value="guide">{CREATE_MODAL_TEXT.templateGuide}</option>
+              <option value="guide">{t('admin.createBookModal.templateGuide')}</option>
             </select>
           </div>
         ) : (
@@ -226,7 +223,7 @@ export function BookCreateModal({
             {isSubmitting
               ? t('admin.createBookModal.submitting')
               : createMode === 'author'
-                ? CREATE_MODAL_TEXT.submitAuthor
+                ? t('admin.createBookModal.submitAuthor')
                 : t('admin.createBookModal.submit')}
           </Button>
         </div>

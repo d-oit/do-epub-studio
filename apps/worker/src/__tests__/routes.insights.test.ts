@@ -30,6 +30,7 @@ const mockAuthContext: AuthContext = {
     canDownloadOffline: true,
     canExportNotes: true,
     canManageAccess: false,
+    canAuthor: false,
   },
 };
 

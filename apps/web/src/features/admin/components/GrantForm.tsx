@@ -151,6 +151,21 @@ export function GrantForm({
               {t('grants.capabilities.offline')}
             </span>
           </label>
+          <label className="flex min-h-11 items-center gap-2">
+            <input
+              type="checkbox"
+              name="authoringAllowed"
+              checked={formData.authoringAllowed}
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                onChange({ ...formData, authoringAllowed: event.target.checked })
+              }
+              className="h-5 w-5 rounded border-border text-accent focus:ring-accent"
+            />
+            <span className="text-sm text-foreground-muted">
+              {t('grants.form.authoring')}
+              <span className="mt-1 block text-xs">{t('grants.form.authoringHint')}</span>
+            </span>
+          </label>
         </div>
 
         <div>

@@ -112,16 +112,29 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+function AuthorRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isAdmin, capabilities, bookSlug, sessionExpired } = useAuthStore();
+  if (!isAuthenticated) {
+    return <Navigate to={sessionExpired ? '/login?error=session_expired' : '/login'} replace />;
+  }
+  if (!isAdmin && !capabilities?.canAuthor) {
+    return <Navigate to={bookSlug ? `/read/${bookSlug}` : '/library'} replace />;
+  }
+  return <>{children}</>;
+}
 
 // GOAP-268 UX-01: root session routing is immediate (no timer) and separate
 // from the persistent layout. Preserves the pre-shell destinations exactly:
 // admin → /admin, book session → /read/:slug, everything else → /login.
 function RootIndexRoute() {
-  const { isAuthenticated, isAdmin, bookSlug } = useAuthStore();
+  const { isAuthenticated, isAdmin, bookSlug, bookId, capabilities } = useAuthStore();
 
   if (isAuthenticated) {
     if (isAdmin) {
       return <Navigate to="/admin" replace />;
+    }
+    if (capabilities?.canAuthor && bookId) {
+      return <Navigate to={`/author/books/${bookId}`} replace />;
     }
     if (bookSlug) {
       return <Navigate to={`/read/${bookSlug}`} replace />;
@@ -306,6 +319,16 @@ export function App() {
                 <AuthorWorkspacePage />
               </Suspense>
             </AdminRoute>
+          }
+        />
+        <Route
+          path="/author/books/:bookId"
+          element={
+            <AuthorRoute>
+              <Suspense fallback={<AdminSkeleton />}>
+                <AuthorWorkspacePage />
+              </Suspense>
+            </AuthorRoute>
           }
         />
         <Route

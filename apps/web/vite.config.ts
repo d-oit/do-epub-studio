@@ -230,10 +230,21 @@ export default defineConfig({
               return 'i18n';
             }
           }
-          // Route-aware chunking: isolate reader-core from admin/editor
-          // Author-only sanitization stays out of the shared reader-core chunk.
+          // Route-aware chunking: keep reader-core shared by read routes while
+          // author-only parsing and packaging stay in feature-loaded chunks.
+          if (
+            id.includes('packages/reader-core/src/packager') ||
+            id.includes('packages/reader-core/src/author-styles')
+          ) {
+            return 'author-packager';
+          }
           if (id.includes('packages/reader-core/src/author-content')) {
             return 'author-content';
+          }
+          // The main-thread fallback loads archive validation only when the
+          // parser worker is unavailable; keep it out of reader-core.
+          if (id.includes('packages/reader-core/src/archive-validator')) {
+            return 'archive-validation';
           }
 
           if (id.includes('packages/reader-core')) {

@@ -539,6 +539,15 @@ describe('sanitizeEpubDocument', () => {
     expect(doc.querySelector('a')?.getAttribute('href')).toBeNull();
   });
 
+  it('preserves epub.js blob-backed image resources', () => {
+    const blobUrl = 'blob:https://reader.example.test/asset-id';
+    const doc = createDoc(`<html><body><img src="${blobUrl}" alt="Book image"></body></html>`);
+
+    sanitizeEpubDocument(doc);
+
+    expect(doc.querySelector('img')?.getAttribute('src')).toBe(blobUrl);
+  });
+
   it('removes form elements (prevents phishing)', () => {
     const html =
       '<html><body><form action="http://evil.com"><input type="text" name="user"/><button type="submit">Login</button></form></body></html>';

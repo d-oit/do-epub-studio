@@ -1,4 +1,3 @@
-import { validateArchive } from './archive-validator';
 import { createTraceId } from '@do-epub-studio/shared';
 
 export interface EpubParseResult {
@@ -169,6 +168,8 @@ class EpubParserWorkerPool {
         data = source;
       }
 
+      // A static import would pull fallback-only validation into the reader route.
+      const { validateArchive } = await import('./archive-validator');
       await validateArchive(data, { timeoutMs: 10_000, traceId: createTraceId() });
 
       return { valid: true, data: data.buffer as ArrayBuffer };

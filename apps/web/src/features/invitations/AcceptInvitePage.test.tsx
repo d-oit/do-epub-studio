@@ -78,7 +78,7 @@ vi.mock('@do-epub-studio/ui', () => ({
   Spinner: ({ label }: { label?: string }) => <div role="status" aria-label={label} />,
 }));
 
-function response(role: 'reader' | 'creator' = 'reader') {
+function response(role: 'reader' | 'creator' | 'author' = 'reader') {
   return {
     sessionToken: 'session-token',
     expiresAt: '2099-01-01T00:00:00.000Z',
@@ -100,6 +100,7 @@ function response(role: 'reader' | 'creator' = 'reader') {
       canDownloadOffline: true,
       canExportNotes: true,
       canManageAccess: false,
+      canAuthor: role === 'author',
     },
   };
 }
@@ -170,5 +171,26 @@ describe('AcceptInvitePage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'invitations.accept' }));
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/creator'));
+  });
+
+  it('routes an accepted author to the assigned book workspace', async () => {
+    window.location.hash = `#token=${TOKEN}`;
+    vi.mocked(acceptBookInvitation).mockResolvedValue(response('author'));
+    render(
+      <MemoryRouter>
+        <AcceptInvitePage />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('invitations.passwordLabel')).toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByLabelText('invitations.passwordLabel'), {
+      target: { value: PASSWORD },
+    });
+    fireEvent.change(screen.getByLabelText('invitations.passwordConfirmLabel'), {
+      target: { value: PASSWORD },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'invitations.accept' }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/author/books/book-1'));
   });
 });

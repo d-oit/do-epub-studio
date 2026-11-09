@@ -5,14 +5,15 @@ import {
   AuthorPublicationSchema,
   SaveManuscriptDraftSchema,
   CreateBookSchema,
+  MAX_AUTHOR_ASSET_COUNT,
 } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
 import { execute, queryFirst } from '../db/client';
 import { authorAuth } from '../middleware/auth';
-import { NotFoundError, ConflictError } from '../lib/http-errors';
+import { NotFoundError, ConflictError, ValidationError } from '../lib/http-errors';
 import { logAudit } from '../audit';
 import { handlePublishManuscript } from './author-publish';
-
+import { parseAuthorContent } from '@do-epub-studio/reader-core/author-content';
 export const authorRouter = new Hono<{
   Bindings: Env;
   Variables: { authorUser: { email: string; id: string; role: string } };
@@ -21,6 +22,41 @@ export const authorRouter = new Hono<{
 const CreateAuthorBookSchema = CreateBookSchema.extend({
   template: z.enum(['blank', 'novel', 'guide']).default('blank'),
 });
+
+type AssetKind = 'image' | 'stylesheet';
+
+function publicationAssetRequirements(
+  publication: z.infer<typeof AuthorPublicationSchema>,
+): { id: string; kind: AssetKind }[] {
+  const requirements = new Map<string, AssetKind>();
+  const requireAsset = (id: string, kind: AssetKind) => {
+    const previousKind = requirements.get(id);
+    if (previousKind && previousKind !== kind) {
+      throw new ValidationError('An author asset cannot be both an image and a stylesheet');
+    }
+    requirements.set(id, kind);
+  };
+  if (publication.coverImageAssetId) requireAsset(publication.coverImageAssetId, 'image');
+  for (const id of publication.stylesheetAssetIds) requireAsset(id, 'stylesheet');
+  const pending = publication.chapters.flatMap((chapter) =>
+    parseAuthorContent(chapter.contentHtml),
+  );
+  while (pending.length > 0) {
+    const node = pending.pop();
+    if (!node || node.type !== 'element') continue;
+    if (node.tag === 'img') {
+      const source = node.attributes.find((attribute) => attribute.name === 'src')?.value;
+      if (source?.startsWith('asset:')) requireAsset(source.slice('asset:'.length), 'image');
+    }
+    pending.push(...node.children);
+  }
+  if (requirements.size > MAX_AUTHOR_ASSET_COUNT) {
+    throw new ValidationError(
+      `A manuscript may reference at most ${MAX_AUTHOR_ASSET_COUNT} assets`,
+    );
+  }
+  return [...requirements].map(([id, kind]) => ({ id, kind }));
+}
 
 /**
  * POST /api/author/books
@@ -99,13 +135,13 @@ authorRouter.post('/books', authorAuth, zValidator('json', CreateAuthorBookSchem
     ];
   }
 
-  const publication = {
+  const publication = AuthorPublicationSchema.parse({
     title: body.title,
-    authorName: body.authorName || 'Anonymous',
+    creators: [body.authorName || 'Anonymous'],
     language: body.language || 'en',
     description: body.description || undefined,
     chapters: initialChapters,
-  };
+  });
 
   await execute(
     c.env,
@@ -167,7 +203,7 @@ authorRouter.get('/books/:id/manuscript', authorAuth, async (c) => {
     throw new NotFoundError('Book');
   }
 
-  const draftRow = await queryFirst<{
+  let draftRow = await queryFirst<{
     publication_json: string;
     draft_version: number;
     updated_at: string;
@@ -177,50 +213,46 @@ authorRouter.get('/books/:id/manuscript', authorAuth, async (c) => {
     [bookId],
   );
 
-  if (draftRow) {
-    const publication = AuthorPublicationSchema.parse(JSON.parse(draftRow.publication_json));
-    return c.json({
-      ok: true,
-      data: {
-        bookId,
-        publication,
-        draftVersion: draftRow.draft_version,
-        updatedAt: draftRow.updated_at,
-      },
+  if (!draftRow) {
+    const defaultPublication = AuthorPublicationSchema.parse({
+      title: book.title,
+      creators: [book.author_name || 'Anonymous'],
+      language: book.language || 'en',
+      description: book.description || undefined,
+      chapters: [
+        {
+          id: 'chapter-1',
+          title: 'Chapter 1',
+          order: 0,
+          contentHtml: '<p>Start writing your manuscript here.</p>',
+        },
+      ],
     });
+    const now = new Date().toISOString();
+    await execute(
+      c.env,
+      `INSERT OR IGNORE INTO book_manuscript_drafts
+        (book_id, publication_json, draft_version, created_at, updated_at)
+       VALUES (?, ?, 1, ?, ?)`,
+      [bookId, JSON.stringify(defaultPublication), now, now],
+    );
+    draftRow = await queryFirst(
+      c.env,
+      'SELECT publication_json, draft_version, updated_at FROM book_manuscript_drafts WHERE book_id = ? LIMIT 1',
+      [bookId],
+    );
   }
 
-  // Initialize a default draft if none exists yet for an existing book
-  const defaultPublication = {
-    title: book.title,
-    authorName: book.author_name || 'Anonymous',
-    language: book.language || 'en',
-    description: book.description || undefined,
-    chapters: [
-      {
-        id: 'chapter-1',
-        title: 'Chapter 1',
-        order: 0,
-        contentHtml: '<p>Start writing your manuscript here.</p>',
-      },
-    ],
-  };
-
-  const now = new Date().toISOString();
-  await execute(
-    c.env,
-    `INSERT INTO book_manuscript_drafts (book_id, publication_json, draft_version, created_at, updated_at)
-     VALUES (?, ?, 1, ?, ?)`,
-    [bookId, JSON.stringify(defaultPublication), now, now],
-  );
-
+  if (!draftRow) throw new Error('Manuscript draft initialization failed');
+  const publication = AuthorPublicationSchema.parse(JSON.parse(draftRow.publication_json));
   return c.json({
     ok: true,
     data: {
       bookId,
-      publication: defaultPublication,
-      draftVersion: 1,
-      updatedAt: now,
+      bookSlug: book.slug,
+      publication,
+      draftVersion: draftRow.draft_version,
+      updatedAt: draftRow.updated_at,
     },
   });
 });
@@ -240,9 +272,9 @@ authorRouter.put(
     }
     const { publication, expectedVersion } = c.req.valid('json');
 
-    const book = await queryFirst<{ id: string }>(
+    const book = await queryFirst<{ id: string; slug: string }>(
       c.env,
-      'SELECT id FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1',
+      'SELECT id, slug FROM books WHERE id = ? AND archived_at IS NULL LIMIT 1',
       [bookId],
     );
 
@@ -250,50 +282,62 @@ authorRouter.put(
       throw new NotFoundError('Book');
     }
 
-    const currentDraft = await queryFirst<{
-      publication_json: string;
-      draft_version: number;
-    }>(
+    const requirements = publicationAssetRequirements(publication);
+    const assetChecks = requirements
+      .map(({ kind }) => {
+        const mediaTypes =
+          kind === 'image' ? ['image/jpeg', 'image/png', 'image/gif'] : ['text/css'];
+        return `AND EXISTS (
+          SELECT 1 FROM author_assets
+          WHERE book_id = ? AND id = ? AND media_type IN (${mediaTypes.map(() => '?').join(', ')})
+        )`;
+      })
+      .join('\n');
+    const assetArgs = requirements.flatMap(({ id, kind }) => [
+      bookId,
+      id,
+      ...(kind === 'image' ? ['image/jpeg', 'image/png', 'image/gif'] : ['text/css']),
+    ]);
+    const serializedPublication = JSON.stringify(publication);
+    const now = new Date().toISOString();
+    const newVersion = expectedVersion + 1;
+    const updatedDraft = await queryFirst<{ draft_version: number; updated_at: string }>(
       c.env,
-      'SELECT publication_json, draft_version FROM book_manuscript_drafts WHERE book_id = ? LIMIT 1',
-      [bookId],
+      `UPDATE book_manuscript_drafts
+       SET publication_json = ?, draft_version = ?, updated_at = ?
+       WHERE book_id = ? AND draft_version = ? ${assetChecks}
+       RETURNING draft_version, updated_at`,
+      [serializedPublication, newVersion, now, bookId, expectedVersion, ...assetArgs],
     );
 
-    if (
-      currentDraft &&
-      expectedVersion !== undefined &&
-      currentDraft.draft_version !== expectedVersion
-    ) {
-      return c.json(
-        {
-          ok: false,
-          error: {
-            code: 'CONCURRENCY_CONFLICT',
-            message:
-              'The manuscript was updated by another session. Please reload to review the latest changes.',
-            currentVersion: currentDraft.draft_version,
-            currentDraft: JSON.parse(currentDraft.publication_json) as unknown,
-          },
-        },
-        409,
+    if (!updatedDraft) {
+      const currentDraft = await queryFirst<{
+        publication_json: string;
+        draft_version: number;
+      }>(
+        c.env,
+        'SELECT publication_json, draft_version FROM book_manuscript_drafts WHERE book_id = ? LIMIT 1',
+        [bookId],
       );
+      if (!currentDraft) throw new NotFoundError('Manuscript draft');
+      if (currentDraft.draft_version !== expectedVersion) {
+        return c.json(
+          {
+            ok: false,
+            error: {
+              code: 'CONCURRENCY_CONFLICT',
+              message:
+                'The manuscript was updated by another session. Please reload to review the latest changes.',
+              currentVersion: currentDraft.draft_version,
+              currentDraft: JSON.parse(currentDraft.publication_json) as unknown,
+            },
+          },
+          409,
+        );
+      }
+      throw new ValidationError('A referenced author asset is missing or has the wrong media type');
     }
 
-    const newVersion = (currentDraft?.draft_version ?? 0) + 1;
-    const now = new Date().toISOString();
-
-    await execute(
-      c.env,
-      `INSERT INTO book_manuscript_drafts (book_id, publication_json, draft_version, updated_at)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT(book_id) DO UPDATE SET
-         publication_json = excluded.publication_json,
-         draft_version = excluded.draft_version,
-         updated_at = excluded.updated_at`,
-      [bookId, JSON.stringify(publication), newVersion, now],
-    );
-
-    // Keep book table metadata in sync with the manuscript header
     await execute(
       c.env,
       `UPDATE books
@@ -301,7 +345,7 @@ authorRouter.put(
        WHERE id = ?`,
       [
         publication.title,
-        publication.authorName ?? null,
+        publication.creators[0] ?? 'Anonymous',
         publication.description ?? null,
         publication.language || 'en',
         now,
@@ -313,9 +357,10 @@ authorRouter.put(
       ok: true,
       data: {
         bookId,
+        bookSlug: book.slug,
         publication,
-        draftVersion: newVersion,
-        updatedAt: now,
+        draftVersion: updatedDraft.draft_version,
+        updatedAt: updatedDraft.updated_at,
       },
     });
   },

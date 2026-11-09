@@ -15,6 +15,7 @@ export interface AuthContext {
     canDownloadOffline: boolean;
     canExportNotes: boolean;
     canManageAccess: boolean;
+    canAuthor: boolean;
   };
 }
 
@@ -26,6 +27,7 @@ interface GrantRow {
   allowed: number;
   comments_allowed: number;
   offline_allowed: number;
+  authoring_allowed: number;
   expires_at: string | null;
 }
 
@@ -45,7 +47,8 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
 
   const grant = (await queryFirst(
     env,
-    `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at
+    `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed,
+            authoring_allowed, expires_at
      FROM book_access_grants
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL`,
     [result.bookId ?? null, result.session.email],
@@ -74,6 +77,7 @@ export async function requireAuth(env: Env, request: Request): Promise<AuthConte
       canDownloadOffline: grant.offline_allowed === 1,
       canExportNotes: grant.comments_allowed === 1,
       canManageAccess: false,
+      canAuthor: grant.authoring_allowed === 1,
     },
   };
 }

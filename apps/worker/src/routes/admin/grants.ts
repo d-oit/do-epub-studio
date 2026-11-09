@@ -22,6 +22,7 @@ interface GrantRow extends JsonRow {
   allowed: number;
   comments_allowed: number;
   offline_allowed: number;
+  authoring_allowed: number;
   expires_at: string | null;
   created_at: string;
   revoked_at: string | null;
@@ -43,6 +44,7 @@ grantsRouter.post(
       mode: body.mode,
       commentsAllowed: body.commentsAllowed,
       offlineAllowed: body.offlineAllowed,
+      authoringAllowed: body.authoringAllowed,
       expiresAt: body.expiresAt,
     });
 
@@ -71,7 +73,9 @@ grantsRouter.get(
     const { limit, offset } = c.req.valid('query');
     const grants = await queryAll<GrantRow>(
       c.env,
-      `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed, expires_at, created_at, revoked_at FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      `SELECT id, book_id, email, mode, allowed, comments_allowed, offline_allowed,
+              authoring_allowed, expires_at, created_at, revoked_at
+       FROM book_access_grants WHERE book_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [bookId, limit, offset],
     );
 
@@ -83,6 +87,7 @@ grantsRouter.get(
         mode: g.mode,
         commentsAllowed: g.comments_allowed === 1,
         offlineAllowed: g.offline_allowed === 1,
+        authoringAllowed: g.authoring_allowed === 1,
         expiresAt: g.expires_at,
         createdAt: g.created_at,
         revokedAt: g.revoked_at,
@@ -121,6 +126,10 @@ grantsRouter.patch(
     if (body.expiresAt !== undefined) {
       updates.push('expires_at = ?');
       args.push(body.expiresAt);
+    }
+    if (body.authoringAllowed !== undefined) {
+      updates.push('authoring_allowed = ?');
+      args.push(body.authoringAllowed ? 1 : 0);
     }
 
     args.push(grantId);

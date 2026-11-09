@@ -55,27 +55,45 @@ export function escapeXml(value: string): string {
   return escaped.join('');
 }
 
-function serializeAuthorNode(node: AuthorContentNode): string {
+function serializeAuthorNode(
+  node: AuthorContentNode,
+  assetPaths: ReadonlyMap<string, string>,
+): string {
   if (node.type === 'text') return escapeXml(node.value);
 
   let attributes = '';
   for (const attribute of node.attributes) {
-    attributes += ` ${attribute.name}="${escapeXml(attribute.value)}"`;
+    let value = attribute.value;
+    if (node.tag === 'img' && attribute.name === 'src') {
+      const assetId = value.slice('asset:'.length);
+      const assetName = assetPaths.get(assetId);
+      if (!assetName) throw new TypeError(`Missing author image asset: ${assetId}`);
+      value = `../assets/${assetName}`;
+    }
+    attributes += ` ${attribute.name}="${escapeXml(value)}"`;
   }
 
   if (Object.hasOwn(XML_VOID_TAGS, node.tag)) return `<${node.tag}${attributes} />`;
 
-  return `<${node.tag}${attributes}>${serializeAuthorNodes(node.children)}</${node.tag}>`;
+  return `<${node.tag}${attributes}>${serializeAuthorNodes(node.children, assetPaths)}</${node.tag}>`;
 }
 
-function serializeAuthorNodes(nodes: readonly AuthorContentNode[]): string {
+function serializeAuthorNodes(
+  nodes: readonly AuthorContentNode[],
+  assetPaths: ReadonlyMap<string, string>,
+): string {
   const serialized: string[] = [];
-  for (const node of nodes) serialized.push(serializeAuthorNode(node));
+  for (const node of nodes) serialized.push(serializeAuthorNode(node, assetPaths));
   return serialized.join('');
 }
 
+const EMPTY_ASSET_PATHS: ReadonlyMap<string, string> = new Map();
+
 /** Converts untrusted author HTML to well-formed, allowlisted XHTML body markup. */
-export function sanitizeChapterXhtml(rawContent: string): string {
+export function sanitizeChapterXhtml(
+  rawContent: string,
+  assetPaths: ReadonlyMap<string, string> = EMPTY_ASSET_PATHS,
+): string {
   if (!rawContent || !rawContent.trim()) return '<p></p>';
-  return serializeAuthorNodes(parseAuthorContent(rawContent)) || '<p></p>';
+  return serializeAuthorNodes(parseAuthorContent(rawContent), assetPaths) || '<p></p>';
 }

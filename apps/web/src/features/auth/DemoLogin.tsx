@@ -15,6 +15,7 @@ export interface SessionCapabilities {
   canDownloadOffline: boolean;
   canExportNotes: boolean;
   canManageAccess: boolean;
+  canAuthor?: boolean;
 }
 
 export interface SessionResponse {
@@ -51,7 +52,9 @@ export function useDemoLogin() {
         method: 'POST',
       });
       setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
-      void navigate(`/read/${data.book.slug}`);
+      void navigate(
+        data.capabilities?.canAuthor ? `/author/books/${data.book.id}` : `/read/${data.book.slug}`,
+      );
     } catch (primaryErr) {
       const primaryError = primaryErr as { code?: string; message?: string };
 
@@ -76,7 +79,11 @@ export function useDemoLogin() {
           }),
         });
         setAuth(toAuthStorePayload(data, DEMO_READER_EMAIL));
-        void navigate(`/read/${data.book.slug}`);
+        void navigate(
+          data.capabilities?.canAuthor
+            ? `/author/books/${data.book.id}`
+            : `/read/${data.book.slug}`,
+        );
       } catch {
         setError(primaryError.message || t('login.demoUnavailable'));
       }

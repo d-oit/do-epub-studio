@@ -186,7 +186,7 @@ describe('Author API routes (/api/author/*)', () => {
         .mockResolvedValueOnce({
           publication_json: JSON.stringify({
             title: 'Book One Edited',
-            authorName: 'Ada',
+            creators: ['Ada'],
             language: 'en',
             chapters: [
               {
@@ -214,44 +214,91 @@ describe('Author API routes (/api/author/*)', () => {
         ok: boolean;
         data: {
           bookId: string;
+          bookSlug: string;
           draftVersion: number;
           publication: { title: string; chapters: Array<{ title: string }> };
         };
       }>();
-      expect(json.ok).toBe(true);
       expect(json.data.bookId).toBe('book-1');
+      expect(json.data.bookSlug).toBe('book-1-slug');
       expect(json.data.draftVersion).toBe(5);
       expect(json.data.publication.title).toBe('Book One Edited');
+    });
+    it('initializes a missing draft with insert-if-absent and returns the resolved book slug', async () => {
+      mockQueryFirst
+        .mockResolvedValueOnce({
+          id: 'book-1',
+          slug: 'book-1-slug',
+          title: 'Book One',
+          author_name: 'Ada',
+          description: null,
+          language: 'en',
+        })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          publication_json: JSON.stringify({
+            title: 'Book One',
+            creators: ['Ada'],
+            language: 'en',
+            chapters: [
+              { id: 'chapter-1', title: 'Chapter 1', order: 0, contentHtml: '<p>Start.</p>' },
+            ],
+          }),
+          draft_version: 1,
+          updated_at: '2026-11-08T10:00:00Z',
+        });
+      mockExecute.mockResolvedValue({ rows: [] });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          headers: authHeaders,
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+      const json = await res.json<{
+        data: { bookSlug: string; draftVersion: number; publication: { creators: string[] } };
+      }>();
+      expect(json.data).toMatchObject({
+        bookSlug: 'book-1-slug',
+        draftVersion: 1,
+        publication: { creators: ['Ada'] },
+      });
+      expect(mockExecute.mock.calls[0]?.[1]).toContain('INSERT OR IGNORE');
     });
   });
 
   describe('PUT /api/author/books/:id/manuscript', () => {
     it('detects concurrent draft conflicts and returns 409 Conflict', async () => {
-      mockQueryFirst.mockResolvedValueOnce({ id: 'book-1' }).mockResolvedValueOnce({
-        draft_version: 3,
-        publication_json: JSON.stringify({
-          title: 'Server Version',
-          authorName: 'Server Author',
-          language: 'en',
-          chapters: [{ id: 'ch-1', title: 'Ch 1', order: 0, contentHtml: '<p>Old</p>' }],
-        }),
-      });
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          draft_version: 3,
+          publication_json: JSON.stringify({
+            title: 'Server Version',
+            creators: ['Server Author'],
+            language: 'en',
+            chapters: [{ id: 'ch-1', title: 'Ch 1', order: 0, contentHtml: '<p>Old</p>' }],
+          }),
+        });
 
       const res = await app.fetch(
         new Request('http://localhost/api/author/books/book-1/manuscript', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', ...authHeaders },
           body: JSON.stringify({
-            expectedVersion: 2, // Out of date! Current is 3
+            expectedVersion: 2,
             publication: {
               title: 'Client Version',
-              authorName: 'Client Author',
+              creators: ['Client Author'],
               language: 'en',
               chapters: [{ id: 'ch-1', title: 'Ch 1', order: 0, contentHtml: '<p>New</p>' }],
             },
           }),
         }),
-        env,
         makePassThroughContext(),
       );
 
@@ -266,11 +313,9 @@ describe('Author API routes (/api/author/*)', () => {
     });
 
     it('saves draft and increments version when expectedVersion matches', async () => {
-      mockQueryFirst.mockResolvedValueOnce({ id: 'book-1' }).mockResolvedValueOnce({
-        draft_version: 3,
-        publication_json: '{}',
-      });
-      mockExecute.mockResolvedValue({ rows: [] });
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
+        .mockResolvedValueOnce({ draft_version: 4, updated_at: '2026-11-08T10:00:00Z' });
 
       const res = await app.fetch(
         new Request('http://localhost/api/author/books/book-1/manuscript', {
@@ -280,7 +325,7 @@ describe('Author API routes (/api/author/*)', () => {
             expectedVersion: 3,
             publication: {
               title: 'Updated Title',
-              authorName: 'Ada',
+              creators: ['Ada'],
               language: 'en',
               chapters: [{ id: 'ch-1', title: 'Ch 1', order: 0, contentHtml: '<p>Updated</p>' }],
             },
@@ -293,12 +338,80 @@ describe('Author API routes (/api/author/*)', () => {
       expect(res.status).toBe(200);
       const json = await res.json<{
         ok: boolean;
-        data: { draftVersion: number; publication: { title: string } };
+        data: {
+          bookSlug: string;
+          draftVersion: number;
+          publication: { title: string };
+        };
       }>();
       expect(json.ok).toBe(true);
+      expect(json.data.bookSlug).toBe('book-1-slug');
       expect(json.data.draftVersion).toBe(4);
       expect(json.data.publication.title).toBe('Updated Title');
-      expect(mockExecute).toHaveBeenCalledTimes(2); // drafts upsert + books metadata update
+      expect(mockExecute).toHaveBeenCalledTimes(1);
+      expect(mockQueryFirst.mock.calls[1]?.[1]).toContain('draft_version = ?');
+    });
+    it('rejects a save without an expected draft version', async () => {
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            publication: {
+              title: 'No version',
+              creators: ['Ada'],
+              language: 'en',
+              chapters: [{ id: 'ch-1', title: 'Chapter 1', order: 0, contentHtml: '<p>Text.</p>' }],
+            },
+          }),
+        }),
+        env,
+        makePassThroughContext(),
+      );
+      expect(res.status).toBe(400);
+      expect(mockQueryFirst).not.toHaveBeenCalled();
+    });
+
+    it('rejects an update that references an asset not owned by the book', async () => {
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          draft_version: 3,
+          publication_json: JSON.stringify({
+            title: 'Current',
+            creators: ['Ada'],
+            language: 'en',
+            chapters: [{ id: 'ch-1', title: 'Chapter 1', order: 0, contentHtml: '<p>Text.</p>' }],
+          }),
+        });
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({
+            expectedVersion: 3,
+            publication: {
+              title: 'Missing asset',
+              creators: ['Ada'],
+              language: 'en',
+              chapters: [
+                {
+                  id: 'ch-1',
+                  title: 'Chapter 1',
+                  order: 0,
+                  contentHtml:
+                    '<img src="asset:550e8400-e29b-41d4-a716-446655440000" alt="Diagram">',
+                },
+              ],
+            },
+          }),
+        }),
+        env,
+        makePassThroughContext(),
+      );
+      expect(res.status).toBe(400);
+      expect(mockExecute).not.toHaveBeenCalled();
     });
   });
 
@@ -312,9 +425,10 @@ describe('Author API routes (/api/author/*)', () => {
         })
         .mockResolvedValueOnce({
           draft_version: 2,
+          updated_at: '2026-11-08T10:00:00Z',
           publication_json: JSON.stringify({
             title: 'My Published Book',
-            authorName: 'Author Name',
+            creators: ['Author Name'],
             language: 'en',
             chapters: [
               {
@@ -326,7 +440,10 @@ describe('Author API routes (/api/author/*)', () => {
             ],
           }),
         })
-        .mockResolvedValueOnce({ count: 1 });
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'revision-uuid' })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ count: 2 });
 
       mockExecute.mockResolvedValue({ rows: [] });
       const putSpy = vi.fn().mockResolvedValue(null);
@@ -362,7 +479,7 @@ describe('Author API routes (/api/author/*)', () => {
 
       // Verify file was put into R2 BOOKS_BUCKET
       expect(putSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/^books\/book-1\/.*\.epub$/),
+        expect.stringMatching(/^books\/book-1\/author-revisions\/[a-f0-9]{64}\.epub$/),
         expect.any(Uint8Array),
         expect.objectContaining({
           httpMetadata: expect.objectContaining({

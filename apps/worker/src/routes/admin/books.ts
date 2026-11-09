@@ -12,12 +12,12 @@ import {
 import { adminAuth } from '../../middleware/auth';
 import { requireStepUp } from '../../middleware/step-up';
 import { bumpCacheVersion } from '../../lib/edge-cache';
-import { clearBookSearchIndex, replaceBookSearchIndex } from '../../lib/book-search-index';
+import { replaceBookSearchIndex } from '../../lib/book-search-index';
 import { NotFoundError, AppError, ConflictError } from '../../lib/http-errors';
 import { createRequestContext, logRequestError } from '../../lib/observability';
 import { handleBookFileUpload } from './books-upload';
 import { handleGetBookRevisions, handleMigrateBookRevision } from './books-revisions';
-import { enqueueEpubValidation } from '../../lib/epub-validation-queue';
+import { finalizeBookEpubRevision } from '../../lib/epub-revisions';
 import {
   handleDownloadRevisionReport,
   handleGetRevisionReport,
@@ -158,40 +158,20 @@ booksRouter.post(
     const fileId = crypto.randomUUID();
     const now = new Date().toISOString();
 
-    await execute(
-      c.env,
-      `INSERT INTO book_files (id, book_id, storage_provider, storage_key, original_filename, mime_type, file_size_bytes, sha256, epub_version, validation_results_json, created_at)
-       VALUES (?, ?, 'r2', ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        fileId,
-        bookId,
-        body.storageKey,
-        body.originalFilename,
-        body.mimeType ?? 'application/epub+zip',
-        fileSizeBytes,
-        body.sha256 ?? null,
-        body.epubVersion ?? null,
-        body.validationResults ? JSON.stringify(body.validationResults) : null,
-        now,
-      ],
-    );
-    await execute(
-      c.env,
-      `INSERT INTO epub_validation_reports (id, book_id, revision_id, validator_version, status, safety_status, created_at, updated_at)
-       VALUES (?, ?, ?, '5.4.0', 'pending', 'pending', ?, ?)`,
-      [crypto.randomUUID(), bookId, fileId, now, now],
-    );
-    await enqueueEpubValidation(c.env, { bookId, revisionId: fileId });
-    // A replacement upload invalidates the old index; chapters in the same payload rebuild it.
-    if (body.chapters && body.chapters.length > 0) {
-      await replaceBookSearchIndex(c.env, bookId, body.chapters);
-    } else {
-      await clearBookSearchIndex(c.env, bookId);
-    }
-
-    // Invalidate edge cache so readers get the fresh EPUB content
+    await finalizeBookEpubRevision(c.env, {
+      bookId,
+      fileId,
+      storageKey: body.storageKey,
+      originalFilename: body.originalFilename,
+      mimeType: body.mimeType ?? 'application/epub+zip',
+      fileSizeBytes,
+      sha256: body.sha256 ?? null,
+      epubVersion: body.epubVersion ?? null,
+      validationResults: body.validationResults,
+      chapters: body.chapters,
+      createdAt: now,
+    });
     await bumpCacheVersion(c.env);
-
     await logAudit(
       c.env,
       {

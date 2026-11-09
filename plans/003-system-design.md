@@ -39,53 +39,37 @@ Implemented and locally proved. `analysis/triz-core-2026-10-20.md` records the t
 
 ## GOAP-1020 — Structured EPUB Authoring Workspace and EPUB 3 Export Pipeline
 
-### Resolved architecture
+### Architecture contract (acceptance-gap follow-up, 2026-11-08)
 
-- **Structured manuscript representation:** The authoring workspace stores publications as structured JSON documents (`AuthorPublication`: title, creators, language, identifier, description, rights, chapters: `{ id, title, order, contentHtml }`, and local asset references). Content HTML is restricted to semantic markup (`h1`-`h6`, `p`, `blockquote`, `ul`, `ol`, `li`, `a`, `img`, `table`, `code`, `em`, `strong`); all scripts, inline event handlers, and external URLs are forbidden by schema and sanitized with `DOMPurify` before storage and packaging.
-- **Draft lifecycle & versioning:** Draft manuscripts live in a dedicated D1 table (`book_manuscript_drafts`) keyed by `book_id`, with an integer `draft_version` for optimistic concurrency locking. Autosave sends the expected `draft_version` and returns `409 Conflict` if another session incremented the version.
-- **EPUB 3 packager pipeline (`packages/reader-core/src/packager/`):** A deterministic, streaming EPUB 3 packager builds conforming packages conforming to W3C EPUB 3.3. It writes uncompressed `mimetype` (`application/epub+zip`, store method 0), XML `META-INF/container.xml`, `OEBPS/content.opf` (metadata, manifest, spine), `OEBPS/nav.xhtml` (XHTML navigation document), XHTML chapter documents (`OEBPS/chapters/chX.xhtml`), and local asset files into a standard ZIP archive.
-- **Publishing & revision creation:** Publishing a draft compiles the manuscript to an EPUB 3 package, executes synchronous archive-safety validation, uploads the bytes to R2 under a content-addressed SHA-256 key, creates an immutable `book_files` revision row via the existing upload-complete flow, and enqueues EPUBCheck validation. Previous revisions and their R2 files are never overwritten.
-- **Reader preview:** The authoring workspace renders draft chapters in a preview tab using the production `ReaderViewer` container and sanitizer, giving 100% engine parity without re-packaging a full ZIP on every keystroke.
-- **Authorization:** Authoring routes (`/api/author/*`) require authentication with either `admin` role or an explicit book-level grant carrying `author` permission (`permissions: ['read', 'author']`). Readers with standard read-only grants cannot access authoring endpoints.
+The original feature section recorded intended behavior, not verified implementation. This contract resolves the gaps in `analysis/triz-core-2026-11-08.md`; the design resolutions are detailed in `analysis/triz-resolution-2026-11-08.md`. Implementation status remains pending until the acceptance checks below pass.
 
-### TRIZ resolution
+### Component contracts
 
-1. **Resolved: Contradiction 1 (Authoring expressiveness vs EPUB 3 conformance & script security)**
-   - **Problem:** Authors need rich formatting; arbitrary HTML risks XSS and malformed EPUB XML.
-   - **IFR:** The authoring workspace provides full semantic chapter editing without admitting active content or malformed XML.
-   - **Separation:** System-level separation & condition separation.
-   - **Solution:** The workspace uses a constrained semantic schema for chapter content, sanitizes all content through `DOMPurify` using the EPUB content vocabulary, and serializes clean XML Content Documents with XML-escaped entities for packaging.
-   - **Why Better:** Authors get an intuitive rich-text editing experience while the packager always produces strictly conformant XHTML.
-   - **New Contradictions:** NONE.
+- **Manuscript schema:** `AuthorPublication` stores title, ordered creators, language, stable identifier, description, publisher/rights, optional cover asset ID, ordered stylesheet asset IDs, and structured chapters. Chapter content remains an allowlisted semantic HTML fragment. `expectedVersion` is required on every draft write.
+- **Draft lifecycle:** D1 `book_manuscript_drafts` remains the mutable draft store. A conditional versioned `UPDATE ... RETURNING` is the only save boundary; a stale version returns the latest draft with HTTP 409. The persisted `updated_at` is passed to packaging.
+- **Authorization:** An independent `authoring_allowed` capability is stored on a book access grant and an explicit `author` invitation role sets only that capability. Reader/comment/offline rights and creator membership do not imply authoring. Each author request checks the active capability against the exact route `book_id`; global admins retain access. Book creation remains admin-only.
+- **Assets:** A book-scoped D1 metadata row points to immutable R2 bytes under a generated asset ID. Raw uploads are bounded and MIME/signature-checked; accepted raster formats exclude SVG. CSS parsing rejects imports, at-rules, URLs, and unsafe declarations. Draft references use `asset:<uuid>` and can resolve only to assets owned by that same book. Cover and stylesheet selections are explicit metadata.
+- **Packager:** `packageEpub3` is a pure browser/Worker/Node-safe function of publication, validated asset bytes, stable identifier, and persisted `modifiedAt`. It has no clock-derived fallback. ZIP output uses a fixed entry timestamp, an uncompressed first `mimetype`, a complete EPUB 3 manifest/spine/nav, cover-image metadata, stylesheet references, and generated local asset paths.
+- **Publish:** Capture one saved draft version and its referenced asset bytes; package and synchronously run archive-safety validation; SHA-256 the exact bytes; store the immutable object at a digest-addressed R2 key; create a deterministic book-scoped revision ID; enqueue EPUBCheck asynchronously only for a new revision. Old revisions never depend on mutable draft assets.
+- **Preview:** The safe AST renderer remains the immediate chapter-edit preview. An explicit “Preview book” action flushes pending autosave, dynamically loads the packager, builds an in-memory EPUB, and loads it through `createEpubLoader` with production sanitization and blocked external resource policy. The rendition exists only while the preview is mounted; no packaging occurs on keystrokes.
+- **Web interface:** Admins and explicit book authors use the same workspace. Metadata fields, asset management, chapter actions, preview frames, and errors have accessible names/states. New user-facing controls use the app's translation catalogs. Asset object URLs are revoked on replacement/unmount.
 
-2. **Resolved: Contradiction 2 (Continuous draft autosave vs revision immutability & concurrency)**
-   - **Problem:** Active manuscripts mutate continuously; published book revisions must be immutable.
-   - **IFR:** Manuscripts autosave safely with concurrency protection without mutating published revisions.
-   - **Separation:** Time separation & condition separation.
-   - **Solution:** Drafts are stored in mutable `book_manuscript_drafts` with optimistic version locking (`draft_version`). Publishing explicitly packages and commits a new, immutable `book_files` revision in R2.
-   - **Why Better:** Readers always read immutable, hashed revisions; authors can save, revise, and discard drafts without affecting live distribution.
-   - **New Contradictions:** NONE.
+### Interfaces and trust boundaries
 
-3. **Resolved: Contradiction 3 (Worker memory/compute limits vs EPUB 3 ZIP packaging)**
-   - **Problem:** Building EPUB archives in Workers risks memory exhaustion.
-   - **IFR:** Valid EPUB 3 archives are packaged deterministically within strict Worker resource budgets.
-   - **Separation:** Segmentation & partial action.
-   - **Solution:** `packages/reader-core` exports a lightweight, deterministic zip and package generator that formats individual XML strings and compresses entries sequentially with streaming CRC-32/deflate calculations. Unbounded manuscript sizes are capped by schema limits.
-   - **Why Better:** Packager runs identically in Node, browser, and Cloudflare Workers with zero Java dependencies.
-   - **New Contradictions:** NONE.
+1. `AuthorPublicationSchema` validates the draft shape; the Worker additionally verifies that cover, stylesheet, and `asset:<uuid>` references belong to the current book before save/publish.
+2. The author asset API accepts bounded raw bytes and returns metadata. Browser retrieval uses the authenticated, book-scoped endpoint; R2 keys are never accepted from the client.
+3. The packager receives validated `{ id, mediaType, data }` assets and required `{ identifier, modifiedAt }` options. It resolves asset IDs to generated archive paths; author strings cannot choose ZIP entry names.
+4. Publish snapshots the package bytes before archive validation/storage. The revision digest, R2 object key, DB identity, and async validator job all refer to those exact bytes.
+5. Admin grant/invitation changes revoke existing sessions; author middleware still rechecks the active grant on each operation.
 
-4. **Resolved: Contradiction 4 (Reader preview fidelity vs keystroke latency)**
-   - **Problem:** Re-bundling and re-mounting EPUBs on keystrokes causes lag; separate preview causes engine drift.
-   - **IFR:** The author sees exact reader rendering with zero keystroke delay.
-   - **Separation:** Time separation.
-   - **Solution:** Keystrokes update the local draft state immediately; the live editor displays the sanitized chapter content within the reader typography frame. Switching to "Preview Book" renders the full compiled book in the actual reader engine.
-   - **Why Better:** Fast typing responsiveness during writing, with exact full-book fidelity when previewing.
-   - **New Contradictions:** NONE.
+### Required verification
 
-5. **Resolved: Contradiction 5 (Authoring authorization vs broad administrative privilege)**
-   - **Problem:** Non-admin authors need to manage manuscripts without gaining full tenant admin privileges.
-   - **IFR:** Authors can create and edit their assigned publications without administrative access to other books or users.
-   - **Separation:** Condition separation (role- and grant-based authorization).
-   - **Solution:** Dedicated `/api/author/*` routes check `verifyAuthorAccess`, which permits admins or tokens with `author` permission on that specific `book_id`.
-   - **Why Better:** Follows least-privilege principles and prevents privilege escalation.
-   - **New Contradictions:** NONE.
+- Schema and package tests cover required versioning, metadata boundaries, asset reference/path resolution, hostile HTML/CSS rejection, deterministic ZIP bytes, stored first `mimetype`, and package metadata.
+- Worker tests cover atomic save races/stale conflicts, admin/author/read-only/creator/cross-book access, grant revocation, MIME/signature/size failures, and content-addressed immutable publish with async validation queue behavior.
+- Reader-core integration loads the generated EPUB with `createEpubLoader` and asserts metadata, ordered TOC/spine, and local image/stylesheet entries.
+- Chromium and WebKit E2E exercise metadata, asset, chapter, full-reader-preview, conflict, and publish flows; axe plus keyboard checks cover the author surface.
+- Full monorepo quality gate runs after implementation; no PR merge is performed without human approval.
+
+### Status
+
+Architecture resolved; follow-up implementation and verification pending. Full IFR/separation rationale and secondary-contradiction check: `analysis/triz-resolution-2026-11-08.md`.

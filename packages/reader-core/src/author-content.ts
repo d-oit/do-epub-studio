@@ -1,6 +1,7 @@
 import { html, parseFragment, type DefaultTreeAdapterMap } from 'parse5';
 
 const AUTHOR_CONTENT_BASE = 'https://author-content.invalid/';
+const SAFE_URL_ORIGIN = new URL(AUTHOR_CONTENT_BASE).origin;
 
 const ALLOWED_TAGS = {
   p: true,
@@ -65,7 +66,8 @@ const DROP_CONTENT_TAGS = {
 
 const COMMON_ATTRIBUTES = { class: true, dir: true, id: true, lang: true, title: true } as const;
 const TABLE_CELL_ATTRIBUTES = { colspan: true, headers: true, rowspan: true } as const;
-const SAFE_URL_ORIGIN = 'https://author-content.invalid';
+const AUTHOR_ASSET_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const MAX_NESTED_AUTHOR_TAGS = 64;
 
@@ -119,10 +121,16 @@ function isAuthorContentTag(tag: string): tag is AuthorContentTag {
 function isSafeContentUrl(value: string, attribute: 'href' | 'src'): boolean {
   const candidate = value.trim();
   if (candidate.length === 0) return false;
+  if (attribute === 'src') {
+    return (
+      candidate.startsWith('asset:') &&
+      AUTHOR_ASSET_ID_PATTERN.test(candidate.slice('asset:'.length))
+    );
+  }
 
   try {
     const absolute = new URL(candidate);
-    return attribute === 'href' && absolute.protocol === 'mailto:';
+    return absolute.protocol === 'mailto:';
   } catch {
     if (candidate.startsWith('//') || candidate.startsWith('\\')) return false;
 

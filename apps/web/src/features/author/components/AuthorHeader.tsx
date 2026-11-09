@@ -1,4 +1,5 @@
 import { Button } from '../../../components/ui';
+import { useTranslation } from '../../../hooks/useTranslation';
 
 interface AuthorHeaderProps {
   title: string;
@@ -8,20 +9,8 @@ interface AuthorHeaderProps {
   onOpenMetadata: () => void;
   onOpenPublish: () => void;
   onBack: () => void;
+  backLabel?: string;
 }
-
-const HEADER_TEXT = {
-  backToBooks: '← Back to Books',
-  metadata: 'Metadata',
-  statusSaved: 'Saved',
-  statusSaving: 'Saving...',
-  statusConflict: 'Conflict!',
-  statusUnsaved: 'Unsaved',
-  statusError: 'Save Error',
-  editor: 'Editor',
-  preview: 'Preview',
-  publishButton: 'Publish as EPUB 3',
-} as const;
 
 export function AuthorHeader({
   title,
@@ -31,76 +20,82 @@ export function AuthorHeader({
   onOpenMetadata,
   onOpenPublish,
   onBack,
+  backLabel,
 }: AuthorHeaderProps) {
+  const { t } = useTranslation();
+
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-4">
-      <div className="flex items-center gap-3">
+    <header className="flex min-h-14 shrink-0 flex-col gap-2 border-b border-border bg-surface px-3 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
         <button
           type="button"
           onClick={onBack}
-          className="text-sm font-medium text-foreground-muted hover:text-foreground"
+          className="touch-target inline-flex min-h-11 items-center rounded-sm px-2 text-sm font-medium text-foreground-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
         >
-          {HEADER_TEXT.backToBooks}
+          {backLabel ?? t('author.backToBooks')}
         </button>
-        <span className="text-border">|</span>
-        <h1 className="font-display text-base font-semibold leading-none truncate max-w-sm">
+        <h1 className="min-w-0 max-w-full truncate font-display text-base font-semibold leading-tight sm:max-w-sm">
           {title}
         </h1>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={onOpenMetadata}
-          className="rounded border border-border px-2 py-1 text-xs text-foreground-muted hover:text-foreground"
+          className="min-h-11"
         >
-          {HEADER_TEXT.metadata}
-        </button>
+          {t('author.metadata')}
+        </Button>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <span
-          className={`text-xs font-medium px-2 py-0.5 rounded ${
+          role="status"
+          aria-live="polite"
+          className={`rounded-sm px-2 py-1 text-xs font-medium ${
             saveStatus === 'saved'
               ? 'bg-background-tertiary text-foreground-muted'
               : saveStatus === 'saving'
-                ? 'bg-accent/20 text-accent animate-pulse'
-                : saveStatus === 'conflict'
+                ? 'bg-accent/20 text-accent'
+                : saveStatus === 'conflict' || saveStatus === 'error'
                   ? 'bg-semantic-error/20 text-semantic-error'
                   : 'bg-background-secondary text-foreground'
           }`}
         >
-          {saveStatus === 'saved' && HEADER_TEXT.statusSaved}
-          {saveStatus === 'saving' && HEADER_TEXT.statusSaving}
-          {saveStatus === 'conflict' && HEADER_TEXT.statusConflict}
-          {saveStatus === 'unsaved' && HEADER_TEXT.statusUnsaved}
-          {saveStatus === 'error' && HEADER_TEXT.statusError}
+          {t(`author.status.${saveStatus}`)}
         </span>
 
-        <div className="flex rounded-md border border-border bg-background p-0.5 text-xs">
+        <div
+          role="group"
+          aria-label={t('author.tabs.label')}
+          className="flex rounded-sm border border-border bg-background p-0.5"
+        >
           <button
             type="button"
+            aria-pressed={activeTab === 'editor'}
             onClick={() => setActiveTab('editor')}
-            className={`rounded px-3 py-1 font-medium ${
-              activeTab === 'editor'
-                ? 'bg-surface text-foreground shadow-sm'
-                : 'text-foreground-muted hover:text-foreground'
-            }`}
+            className="touch-target min-h-11 rounded-sm px-3 text-sm font-medium aria-pressed:bg-surface aria-pressed:text-foreground aria-pressed:shadow-sm"
           >
-            {HEADER_TEXT.editor}
+            {t('author.tabs.editor')}
           </button>
           <button
             type="button"
+            aria-pressed={activeTab === 'preview'}
             onClick={() => setActiveTab('preview')}
-            className={`rounded px-3 py-1 font-medium ${
-              activeTab === 'preview'
-                ? 'bg-surface text-foreground shadow-sm'
-                : 'text-foreground-muted hover:text-foreground'
-            }`}
+            className="touch-target min-h-11 rounded-sm px-3 text-sm font-medium aria-pressed:bg-surface aria-pressed:text-foreground aria-pressed:shadow-sm"
           >
-            {HEADER_TEXT.preview}
+            {t('author.tabs.preview')}
           </button>
         </div>
 
-        <Button variant="primary" size="sm" onClick={onOpenPublish}>
-          {HEADER_TEXT.publishButton}
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          onClick={onOpenPublish}
+          className="min-h-11"
+        >
+          {t('author.publish')}
         </Button>
       </div>
     </header>

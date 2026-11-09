@@ -129,6 +129,11 @@ export function GrantList({
                           {t('grants.capabilities.offline')}
                         </span>
                       )}
+                      {grant.authoringAllowed && (
+                        <span className="inline-flex items-center rounded-full bg-accent-secondary/20 px-2 py-0.5 text-xs font-medium text-accent-secondary">
+                          {t('grants.capabilities.authoring')}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm">

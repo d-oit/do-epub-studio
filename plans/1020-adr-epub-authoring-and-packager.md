@@ -25,8 +25,8 @@ Users need to compose publications directly within the application: create and r
    - `OEBPS/assets/*`: Bundled local images/stylesheets under strict size and MIME boundaries.
      The packaging implementation produces identical output across Node.js, Web Browsers, and Cloudflare Workers using standard streaming ZIP structures and Node/Web buffer interfaces.
 4. **Publishing as immutable book revisions:** Publishing is an explicit, one-way action that compiles the current draft, runs synchronous archive-safety checks, writes the content-addressed bytes to R2 under its SHA-256 digest, creates a new row in `book_files` linked to the book, and enqueues asynchronous EPUBCheck validation via `epub-validation-queue.ts`. Existing published revisions are permanently immutable and are never overwritten.
-5. **Production reader preview:** The authoring workspace integrates the production `ReaderViewer` and typography settings frame to render active chapter drafts. Authors see exact font, line-height, and theme rendering without requiring a full ZIP compile and iframe re-mount on every keystroke. Full-book preview compiles and loads the packaged EPUB through `createEpubLoader`.
-6. **Authoring authorization boundary:** Book authoring is gated by an explicit `author` role and book-level `author` permission (`/api/author/*`). Global administrators and users with an active `author` permission grant for the specified `book_id` may create, update, and publish manuscripts. Standard reader grants (`permissions: ['read']`) and creator feedback tokens cannot access authoring endpoints.
+5. **Production reader preview:** Full-book preview packages the current draft only when the Preview tab is active, then loads the resulting EPUB through `createEpubLoader` and the production reader/sanitizer. The editor does not run packaging for each keystroke.
+6. **Authoring authorization boundary:** Authoring uses an explicit book-scoped `authoringAllowed` grant (`/api/author/*`). Global administrators and users with an active authoring grant for the specified `book_id` may create, update, and publish manuscripts. Read-only reader grants and creator feedback tokens cannot access authoring endpoints.
 
 ## Alternatives considered
 
@@ -38,7 +38,7 @@ Users need to compose publications directly within the application: create and r
 ## Consequences
 
 - Introduces a new D1 schema migration for `book_manuscript_drafts`.
-- Expands `packages/reader-core` to export `packageEpub3(publication, assets)` alongside existing reader and sanitizer modules.
+- Expands `packages/reader-core` to export `packageEpub3(publication, assets, { identifier, modifiedAt })` alongside existing reader and sanitizer modules.
 - Adds dedicated `/api/author/books/:id/manuscript` and `/api/author/books/:id/publish` endpoints with explicit role-based access control.
 - Enables end-to-end authoring and EPUB 3 publication from templates or blank manuscripts directly within the web application.
 

@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./author-content": "./src/author-content.ts",
+    "./author-styles": "./src/author-styles.ts",
     "./packager": "./src/packager/index.ts"
   },
   "scripts": {
@@ -24,7 +25,8 @@
     "@intity/epub-js": "0.3.96",
     "dompurify": "^3.4.17",
     "fflate": "^0.8.3",
-    "parse5": "8.0.1"
+    "parse5": "8.0.1",
+    "postcss": "8.5.30"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

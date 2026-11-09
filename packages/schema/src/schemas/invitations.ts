@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { GrantModeSchema } from './common';
 import { PasswordSchema } from './password';
 
-export const InvitationRoleSchema = z.enum(['reader', 'creator']);
+export const InvitationRoleSchema = z.enum(['reader', 'creator', 'author']);
 export type InvitationRole = z.infer<typeof InvitationRoleSchema>;
 
 export const InvitationStatusSchema = z.enum([

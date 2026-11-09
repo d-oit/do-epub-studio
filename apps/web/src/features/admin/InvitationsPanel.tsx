@@ -28,6 +28,7 @@ const MODES = [
 ] as const;
 const READER_ROLE = 'reader';
 const CREATOR_ROLE = 'creator';
+const AUTHOR_ROLE = 'author';
 type InvitationMode = (typeof MODES)[number];
 const MODE_LABEL_KEYS: Record<InvitationMode, TranslationKeys> = {
   private: 'invitations.mode.private',
@@ -229,6 +230,7 @@ export function InvitationsPanel({
               >
                 <option value={READER_ROLE}>{t('invitations.roleReader')}</option>
                 <option value={CREATOR_ROLE}>{t('invitations.roleCreator')}</option>
+                <option value={AUTHOR_ROLE}>{t('invitations.roleAuthor')}</option>
               </select>
             </label>
             <label className="block text-sm">
@@ -319,9 +321,11 @@ export function InvitationsPanel({
                   <p className="truncate text-sm font-medium">{invitation.email}</p>
                   <p className="mt-1 text-xs text-foreground-muted">
                     {t(
-                      invitation.role === 'creator'
-                        ? 'invitations.roleCreator'
-                        : 'invitations.roleReader',
+                      invitation.role === 'author'
+                        ? 'invitations.roleAuthor'
+                        : invitation.role === 'creator'
+                          ? 'invitations.roleCreator'
+                          : 'invitations.roleReader',
                     )}
                     {' · '}
                     {t(statusKey(invitation))} · {t(deliveryKey(invitation))}

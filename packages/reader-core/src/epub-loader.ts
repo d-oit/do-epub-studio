@@ -23,7 +23,6 @@ import {
 } from './sanitizer';
 
 type EventCallback = (data: unknown) => void;
-
 export interface EpubRenditionHandle {
   display(target?: string): Promise<void>;
   prev(): Promise<void>;
@@ -58,7 +57,7 @@ interface EpubLoaderOptions {
   loadTimeoutMs?: number;
   /**
    * External (absolute `http(s)`) URL policy for EPUB content. Defaults to
-   * `block-all`: content cannot trigger any network egress. Pass an allowlist
+    rendition: null as { destroy: () => void } | null,
    * to permit specific trusted hosts (see `ExternalUrlPolicy`).
    */
   externalUrlPolicy?: ExternalUrlPolicy;
@@ -74,6 +73,9 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   let currentProgress: ProgressPosition | null = null;
   const eventListeners = new Map<string, Set<EventCallback>>();
   let destroyed = false;
+  let previousPageHideHandler: Window['onpagehide'] = null;
+  let renditionPageHideHandler: Window['onpagehide'] = null;
+  let pageHideCaptureComplete = false;
   // Raw nav/meta/spine captured during load; parsed lazily on first getter use
   // so the production path (which only calls getBook) skips the duplicate work.
   let rawNav: { toc?: unknown } | null = null;
@@ -281,7 +283,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       spread: 'auto',
       sandbox: ['allow-same-origin'],
       flow: options?.flow,
-      manager: options?.manager,
+      manager: options?.manager ?? 'default',
     });
 
     // Security: ADR-035 Mandatory sanitization + external-URL hardening.
@@ -323,7 +325,19 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         if (!rendition) {
           throw new Error('Rendition not initialized');
         }
-        await rendition.display(target);
+        const pageHideBeforeDisplay = typeof window === 'undefined' ? null : window.onpagehide;
+        try {
+          await rendition.display(target);
+        } finally {
+          if (!pageHideCaptureComplete && typeof window !== 'undefined') {
+            const pageHideHandler = window.onpagehide;
+            if (pageHideHandler && pageHideHandler !== pageHideBeforeDisplay) {
+              previousPageHideHandler = pageHideBeforeDisplay;
+              renditionPageHideHandler = pageHideHandler;
+              pageHideCaptureComplete = true;
+            }
+          }
+        }
       },
       async prev(): Promise<void> {
         if (!rendition) {
@@ -372,12 +386,19 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     load,
     createRendition: createRenditionHandle,
     destroy(): void {
+      if (destroyed) return;
       destroyed = true;
-      try {
-        rendition?.destroy();
-      } catch {
-        // Best-effort cleanup; rendition may already be destroyed
+      // EPUB.js stores the manager destroy method on window.onpagehide but
+      // never removes it. Restore our previous handler before book cleanup.
+      if (
+        renditionPageHideHandler &&
+        typeof window !== 'undefined' &&
+        window.onpagehide === renditionPageHideHandler
+      ) {
+        window.onpagehide = previousPageHideHandler;
       }
+      renditionPageHideHandler = null;
+      previousPageHideHandler = null;
       try {
         book?.destroy();
       } catch {
