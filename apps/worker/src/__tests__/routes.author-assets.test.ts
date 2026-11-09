@@ -204,6 +204,29 @@ describe('author asset API', () => {
     expect(insertSql).toContain('SUM(size_bytes)');
   });
 
+  it('rejects image bytes that do not match the declared type before storing them', async () => {
+    const put = vi.fn().mockResolvedValue(null);
+    env.BOOKS_BUCKET.put = put;
+
+    const res = await app.fetch(
+      new Request(`http://localhost/api/author/books/book-1/assets/${ASSET_ID}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: 'Bearer admin-token',
+          'Content-Type': 'image/png',
+          'X-Asset-Name': encodeURIComponent('diagram.png'),
+        },
+        body: new Uint8Array([0xff, 0xd8, 0xff]),
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(400);
+    expect(put).not.toHaveBeenCalled();
+    expect(mockQueryFirst).not.toHaveBeenCalled();
+  });
+
   it('rejects active CSS and oversized images before storing them', async () => {
     const put = vi.fn().mockResolvedValue(null);
     env.BOOKS_BUCKET.put = put;

@@ -27,28 +27,37 @@ interface AssetRow extends JsonRow {
 
 const ASSET_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const IMAGE_SIGNATURES: Record<string, (bytes: Uint8Array) => boolean> = {
-  'image/jpeg': (bytes) =>
-    bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff,
-  'image/png': (bytes) =>
-    bytes.length >= 8 &&
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a,
-  'image/gif': (bytes) =>
-    bytes.length >= 6 &&
-    bytes[0] === 0x47 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x38 &&
-    (bytes[4] === 0x37 || bytes[4] === 0x39) &&
-    bytes[5] === 0x61,
-};
+
+function matchesImageSignature(type: AssetRow['media_type'], bytes: Uint8Array): boolean {
+  switch (type) {
+    case 'image/jpeg':
+      return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    case 'image/png':
+      return (
+        bytes.length >= 8 &&
+        bytes[0] === 0x89 &&
+        bytes[1] === 0x50 &&
+        bytes[2] === 0x4e &&
+        bytes[3] === 0x47 &&
+        bytes[4] === 0x0d &&
+        bytes[5] === 0x0a &&
+        bytes[6] === 0x1a &&
+        bytes[7] === 0x0a
+      );
+    case 'image/gif':
+      return (
+        bytes.length >= 6 &&
+        bytes[0] === 0x47 &&
+        bytes[1] === 0x49 &&
+        bytes[2] === 0x46 &&
+        bytes[3] === 0x38 &&
+        (bytes[4] === 0x37 || bytes[4] === 0x39) &&
+        bytes[5] === 0x61
+      );
+    default:
+      return false;
+  }
+}
 
 export const authorAssetsRouter = new Hono<{
   Bindings: Env;
@@ -146,7 +155,7 @@ function validateAssetBytes(type: AssetRow['media_type'], bytes: Uint8Array): vo
     }
     return;
   }
-  if (!IMAGE_SIGNATURES[type]?.(bytes)) {
+  if (!matchesImageSignature(type, bytes)) {
     throw new ValidationError('Image bytes do not match the declared media type');
   }
 }
