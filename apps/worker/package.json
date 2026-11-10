@@ -21,7 +21,7 @@
     "@do-epub-studio/shared": "workspace:*",
     "@hono/zod-validator": "^0.9.1",
     "@libsql/client": "^0.18.0",
-    "@sentry/cloudflare": "^11.10.0",
+    "@sentry/cloudflare": "^11.11.0",
     "@simplewebauthn/server": "^14.1.0",
     "argon2-wasm-edge": "^1.0.23",
     "hono": "^4.13.17",
