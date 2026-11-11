@@ -137,6 +137,17 @@ ALLOWED_SHAS=(
     "actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad"
 # Appended 2026-11-02 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
     "chromaui/action@f305ef908327aee3b80b0e6b3bbb60a742eaa049"
+# Appended 2026-11-09 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78"
+    "github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532"
+    "softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3"
+    "github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066"
+    "chromaui/action@6ac4c49524e1b1358b8c593c5eea877604228268"
 )
 
 # Function to check if an action@sha is allowed
