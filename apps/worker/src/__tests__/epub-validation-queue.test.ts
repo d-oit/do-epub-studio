@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { getValidatedRunnerUrl } from '../lib/epub-validation-queue';
-
+import { describe, expect, it, vi } from 'vitest';
+import { makeEnv, mockQueryFirst, mockExecute } from './fixtures';
+import {
+  getValidatedRunnerUrl,
+  processEpubValidationQueue,
+  type EpubValidationMessage,
+} from '../lib/epub-validation-queue';
+import { EPUBCHECK_VERSION } from '@do-epub-studio/schema';
 describe('getValidatedRunnerUrl', () => {
   it('restricts the request to the configured HTTP origin and validation path', () => {
     const endpoint = getValidatedRunnerUrl(
@@ -36,5 +41,83 @@ describe('getValidatedRunnerUrl', () => {
     'not-a-valid-url',
   ])('rejects non-allowlisted or insecure URLs: %s', (url) => {
     expect(() => getValidatedRunnerUrl(url)).toThrow('invalid_runner_url');
+  });
+});
+describe('processEpubValidationQueue', () => {
+  it('processes validation message and persists real epub version and metadata', async () => {
+    const env = makeEnv();
+    env.EPUBCHECK_RUNNER_URL = 'https://runner.example';
+    env.EPUBCHECK_RUNNER_TOKEN = 'secret-token';
+
+    mockQueryFirst.mockResolvedValueOnce({
+      id: 'rep-1',
+      storage_key: 'books/b1/rev1.epub',
+      file_size_bytes: 100,
+      bytes_sha256: null,
+      status: 'pending',
+      validator_version: EPUBCHECK_VERSION,
+    });
+
+    const mockGet = vi.fn().mockResolvedValue({
+      size: 100,
+      body: new ReadableStream(),
+    });
+    env.BOOKS_BUCKET.get = mockGet;
+
+    const mockResult = {
+      validatorVersion: EPUBCHECK_VERSION,
+      sha256: 'a'.repeat(64),
+      epubVersion: '3.0',
+      findings: [],
+      accessibility: {
+        metadata: [
+          { key: 'dc:language', value: 'en', provenance: 'opf' },
+          { key: 'schema:accessMode', value: 'textual', provenance: 'opf' },
+        ],
+        advisories: [],
+        manualReviewRequired: true,
+        certification: 'not-certified',
+      },
+      safetyStatus: 'accepted',
+      conformanceStatus: 'completed',
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve(JSON.stringify(mockResult)),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const message = {
+      id: 'msg-1',
+      timestamp: new Date(),
+      attempts: 1,
+      body: { bookId: 'b1', revisionId: 'rev1' },
+      ack: vi.fn(),
+      retry: vi.fn(),
+    };
+
+    const batch = {
+      queue: 'validation-queue',
+      messages: [message],
+      ackAll: vi.fn(),
+      retryAll: vi.fn(),
+    } as unknown as MessageBatch<EpubValidationMessage>;
+
+    await processEpubValidationQueue(batch, env);
+
+    expect(message.ack).toHaveBeenCalled();
+    expect(mockExecute).toHaveBeenCalledWith(
+      env,
+      expect.stringContaining('UPDATE epub_validation_reports SET bytes_sha256 = ?'),
+      expect.arrayContaining(['3.0']),
+    );
+    expect(mockExecute).toHaveBeenCalledWith(
+      env,
+      'UPDATE book_files SET sha256 = ?, epub_version = ? WHERE id = ?',
+      ['a'.repeat(64), '3.0', 'rev1'],
+    );
+
+    vi.unstubAllGlobals();
   });
 });

@@ -40,7 +40,14 @@ describe('epub-validation schemas', () => {
         },
       ],
       accessibility: {
-        metadata: [{ key: 'dc:language', present: true as const, provenance: 'opf' as const }],
+        metadata: [
+          {
+            key: 'dc:language',
+            value: 'en',
+            present: true as const,
+            provenance: 'opf' as const,
+          },
+        ],
         advisories: [
           {
             category: 'language' as const,

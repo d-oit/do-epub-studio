@@ -1,6 +1,19 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFindings, metadataFromOpf } from '../src/server.js';
+import { zipSync, strToU8 } from 'fflate';
+import {
+  parseFindings,
+  metadataFromOpf,
+  validateRootfilePath,
+  extractRootfilePath,
+  extractOpfFromZip,
+  extractEpubVersion,
+  EpubExtractionError,
+} from '../src/server.js';
+import {
+  EpubRunnerResultSchema,
+  EPUBCHECK_VERSION,
+} from '../../../packages/schema/src/schemas/epub-validation.js';
 
 describe('epubcheck runner helper functions', () => {
   it('parses findings from EPUBCheck text output', () => {
@@ -45,5 +58,226 @@ describe('epubcheck runner helper functions', () => {
       value: 'This is a synthetic accessible book.',
       provenance: 'opf',
     });
+  });
+
+  it('extracts full accessibility metadata and conformance from EPUB 3 meta tags', () => {
+    const opf = `
+      <package version="3.0" xmlns="http://www.idpf.org/2007/opf">
+        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+          <dc:language>en-US</dc:language>
+          <meta property="schema:accessMode">textual</meta>
+          <meta property="schema:accessMode">visual</meta>
+          <meta property="schema:accessModeSufficient">textual</meta>
+          <meta property="schema:accessibilityFeature">structuralNavigation</meta>
+          <meta property="schema:accessibilityFeature">alternativeText</meta>
+          <meta property="schema:accessibilityHazard">none</meta>
+          <meta property="schema:accessibilitySummary">Full accessible manual.</meta>
+          <meta property="schema:accessibilityControl">fullKeyboardControl</meta>
+          <meta property="schema:accessibilityAPI">ARIA</meta>
+          <meta property="dcterms:conformsTo">EPUB Accessibility 1.1 - WCAG 2.2 Level AA</meta>
+          <meta property="a11y:certifiedBy">Auditor Name</meta>
+          <meta property="a11y:certifierCredential">Trusted Credentials</meta>
+          <meta name="schema:accessibilityFeature" content="tableOfContents"/>
+        </metadata>
+      </package>
+    `;
+
+    const metadata = metadataFromOpf(opf);
+    const keys = metadata.map((item) => item.key);
+    assert.ok(keys.includes('dc:language'));
+    assert.ok(keys.includes('schema:accessMode'));
+    assert.ok(keys.includes('schema:accessModeSufficient'));
+    assert.ok(keys.includes('schema:accessibilityFeature'));
+    assert.ok(keys.includes('schema:accessibilityHazard'));
+    assert.ok(keys.includes('schema:accessibilitySummary'));
+    assert.ok(keys.includes('schema:accessibilityControl'));
+    assert.ok(keys.includes('schema:accessibilityAPI'));
+    assert.ok(keys.includes('dcterms:conformsTo'));
+    assert.ok(keys.includes('a11y:certifiedBy'));
+
+    const features = metadata.filter((item) => item.key === 'schema:accessibilityFeature');
+    assert.equal(features.length, 3);
+    assert.deepEqual(
+      features.map((f) => f.value),
+      ['structuralNavigation', 'alternativeText', 'tableOfContents'],
+    );
+  });
+
+  it('extracts EPUB package version from package element', () => {
+    assert.equal(extractEpubVersion('<package version="3.0">'), '3.0');
+    assert.equal(
+      extractEpubVersion('<package xmlns="http://www.idpf.org/2007/opf" version="2.0">'),
+      '2.0',
+    );
+    assert.equal(extractEpubVersion('<package version="3.4" unique-identifier="uid">'), '3.4');
+    assert.equal(extractEpubVersion('<package id="pkg">'), null);
+    assert.equal(extractEpubVersion(''), null);
+  });
+
+  it('validates and normalizes rootfile path safely', () => {
+    assert.equal(validateRootfilePath('OEBPS/content.opf'), 'OEBPS/content.opf');
+    assert.equal(validateRootfilePath('content.opf'), 'content.opf');
+    assert.equal(validateRootfilePath('EPUB/package.opf'), 'EPUB/package.opf');
+
+    assert.throws(() => validateRootfilePath(''), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+    assert.throws(() => validateRootfilePath('/OEBPS/content.opf'), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+    assert.throws(() => validateRootfilePath('../secret.opf'), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+    assert.throws(() => validateRootfilePath('OEBPS/../secret.opf'), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+    assert.throws(() => validateRootfilePath('OEBPS\\content.opf'), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+    assert.throws(() => validateRootfilePath('C:/content.opf'), {
+      name: 'EpubExtractionError',
+      code: 'INVALID_PACKAGE_PATH',
+    });
+  });
+
+  it('extracts primary rootfile path from container XML', () => {
+    const standard = `<?xml version="1.0"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+        </rootfiles>
+      </container>`;
+    assert.equal(extractRootfilePath(standard), 'OEBPS/content.opf');
+
+    const multiple = `<?xml version="1.0"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="other/random.xml" media-type="application/other"/>
+          <rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/>
+        </rootfiles>
+      </container>`;
+    assert.equal(extractRootfilePath(multiple), 'EPUB/package.opf');
+
+    const none = '<container><rootfiles></rootfiles></container>';
+    assert.equal(extractRootfilePath(none), null);
+  });
+
+  it('extracts OPF content from a complete synthetic EPUB archive', () => {
+    const opfContent = `<?xml version="1.0"?>
+      <package version="3.0" xmlns="http://www.idpf.org/2007/opf">
+        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+          <dc:language>en</dc:language>
+          <meta property="schema:accessMode">textual</meta>
+        </metadata>
+      </package>`;
+    const containerXml = `<?xml version="1.0"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+        </rootfiles>
+      </container>`;
+
+    const epubBytes = zipSync({
+      mimetype: strToU8('application/epub+zip'),
+      'META-INF/container.xml': strToU8(containerXml),
+      'OEBPS/content.opf': strToU8(opfContent),
+    });
+
+    const extraction = extractOpfFromZip(epubBytes);
+    assert.equal(extraction.opfPath, 'OEBPS/content.opf');
+    assert.ok(extraction.opf?.includes('schema:accessMode'));
+
+    const version = extractEpubVersion(extraction.opf!);
+    assert.equal(version, '3.0');
+
+    const metadata = metadataFromOpf(extraction.opf!);
+    assert.equal(metadata.length, 2);
+  });
+
+  it('fails safely on malformed rootfile path inside container XML', () => {
+    const containerXml = `<?xml version="1.0"?>
+      <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+        <rootfiles>
+          <rootfile full-path="../escape/content.opf" media-type="application/oebps-package+xml"/>
+        </rootfiles>
+      </container>`;
+
+    const epubBytes = zipSync({
+      'META-INF/container.xml': strToU8(containerXml),
+    });
+
+    assert.throws(
+      () => extractOpfFromZip(epubBytes),
+      (err: unknown) => {
+        assert.ok(err instanceof EpubExtractionError);
+        assert.equal(err.code, 'INVALID_PACKAGE_PATH');
+        return true;
+      },
+    );
+  });
+
+  it('returns null OPF when container.xml is absent from archive', () => {
+    const epubBytes = zipSync({
+      'OEBPS/content.opf': strToU8('<package/>'),
+    });
+
+    const extraction = extractOpfFromZip(epubBytes);
+    assert.equal(extraction.opf, null);
+    assert.equal(extraction.opfPath, null);
+  });
+
+  it('validates synthesized runner results against EpubRunnerResultSchema', () => {
+    const opf = `
+      <package version="3.0">
+        <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+          <dc:language>en</dc:language>
+          <meta property="schema:accessibilitySummary">Accessible text</meta>
+        </metadata>
+      </package>`;
+    const metadata = metadataFromOpf(opf);
+    const version = extractEpubVersion(opf);
+
+    const withMetadata = {
+      validatorVersion: EPUBCHECK_VERSION,
+      sha256: '0'.repeat(64),
+      epubVersion: version,
+      findings: [],
+      accessibility: {
+        metadata,
+        advisories: [
+          {
+            category: 'language' as const,
+            message: 'Language advisory',
+            source: 'manual-review' as const,
+          },
+        ],
+        manualReviewRequired: true,
+        certification: 'not-certified' as const,
+      },
+    };
+
+    const parsedWith = EpubRunnerResultSchema.parse(withMetadata);
+    assert.equal(parsedWith.epubVersion, '3.0');
+    assert.equal(parsedWith.accessibility.metadata.length, 2);
+    assert.equal(parsedWith.accessibility.metadata[0]?.key, 'dc:language');
+    assert.equal(parsedWith.accessibility.metadata[0]?.value, 'en');
+
+    const withoutMetadata = {
+      ...withMetadata,
+      epubVersion: null,
+      accessibility: {
+        ...withMetadata.accessibility,
+        metadata: [],
+      },
+    };
+
+    const parsedWithout = EpubRunnerResultSchema.parse(withoutMetadata);
+    assert.equal(parsedWithout.epubVersion, null);
+    assert.equal(parsedWithout.accessibility.metadata.length, 0);
   });
 });

@@ -111,6 +111,9 @@ importers:
 
   apps/epubcheck-runner:
     dependencies:
+      fflate:
+        specifier: ^0.8.2
+        version: 0.8.3
       tsx:
         specifier: ^4.20.6
         version: 4.23.15

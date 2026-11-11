@@ -77,7 +77,10 @@ describe('Admin Books Validation Routes', () => {
           },
         ]),
         accessibility_json: JSON.stringify({
-          metadata: [],
+          metadata: [
+            { key: 'dc:language', value: 'en', provenance: 'opf' },
+            { key: 'schema:accessMode', value: 'textual', provenance: 'opf' },
+          ],
           advisories: [],
           manualReviewRequired: true,
           certification: 'not-certified',
@@ -101,6 +104,13 @@ describe('Admin Books Validation Routes', () => {
     expect(await res.json()).toMatchObject({
       ok: true,
       data: {
+        epubVersion: '3.0',
+        accessibility: {
+          metadata: [
+            expect.objectContaining({ key: 'dc:language', value: 'en' }),
+            expect.objectContaining({ key: 'schema:accessMode', value: 'textual' }),
+          ],
+        },
         groups: {
           errors: [expect.objectContaining({ code: 'RSC-005' })],
         },
