@@ -16,6 +16,7 @@ interface AuthState {
     canDownloadOffline: boolean;
     canExportNotes: boolean;
     canManageAccess: boolean;
+    canAuthor?: boolean;
   } | null;
   isAuthenticated: boolean;
   isAdmin: boolean;

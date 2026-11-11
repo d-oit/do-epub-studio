@@ -69,7 +69,7 @@ describe('book invitation schemas', () => {
   });
 
   it('keeps lifecycle enums explicit', () => {
-    expect(InvitationRoleSchema.options).toEqual(['reader', 'creator']);
+    expect(InvitationRoleSchema.options).toEqual(['reader', 'creator', 'author']);
     expect(InvitationStatusSchema.options).toContain('processing');
     expect(InvitationDeliveryStatusSchema.options).toContain('manual_copy_required');
   });

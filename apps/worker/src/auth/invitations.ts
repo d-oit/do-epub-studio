@@ -118,13 +118,15 @@ export async function acceptBookInvitation(
     statements.push({
       sql: `UPDATE book_access_grants
         SET password_hash = ?, mode = ?, comments_allowed = ?, offline_allowed = ?,
-            email = ?, expires_at = ?, invited_by_user_id = ?, allowed = 1, revoked_at = NULL, updated_at = ?
+            authoring_allowed = ?, email = ?, expires_at = ?, invited_by_user_id = ?,
+            allowed = 1, revoked_at = NULL, updated_at = ?
         WHERE id = ? AND book_id = ? AND lower(email) = ?`,
       args: [
         passwordHash,
         invitation.grant_mode,
         invitation.comments_allowed,
         invitation.offline_allowed,
+        invitation.role === 'author' ? 1 : 0,
         invitation.email,
         invitation.grant_expires_at,
         invitation.created_by_user_id,
@@ -138,8 +140,8 @@ export async function acceptBookInvitation(
     statements.push({
       sql: `INSERT INTO book_access_grants
         (id, book_id, email, password_hash, mode, comments_allowed, offline_allowed,
-         expires_at, invited_by_user_id, allowed, created_at, updated_at, revoked_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NULL)`,
+         authoring_allowed, expires_at, invited_by_user_id, allowed, created_at, updated_at, revoked_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NULL)`,
       args: [
         grantId,
         invitation.book_id,
@@ -148,6 +150,7 @@ export async function acceptBookInvitation(
         invitation.grant_mode,
         invitation.comments_allowed,
         invitation.offline_allowed,
+        invitation.role === 'author' ? 1 : 0,
         invitation.grant_expires_at,
         invitation.created_by_user_id,
         now,

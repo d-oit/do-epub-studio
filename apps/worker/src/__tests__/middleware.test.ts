@@ -158,6 +158,7 @@ describe('requireAuth middleware', () => {
       allowed: 1,
       comments_allowed: 0,
       offline_allowed: 0,
+      authoring_allowed: 1,
       expires_at: new Date(Date.now() + 3600000).toISOString(),
     });
 
@@ -165,6 +166,7 @@ describe('requireAuth middleware', () => {
     const result = await requireAuth(makeEnv(), req);
     expect(result).not.toBeNull();
     expect(result?.email).toBe('user@example.com');
+    expect(result?.capabilities.canAuthor).toBe(true);
   });
 
   it('returns context for valid session and grant with no expiration', async () => {
@@ -188,5 +190,6 @@ describe('requireAuth middleware', () => {
     const result = await requireAuth(makeEnv(), req);
     expect(result).not.toBeNull();
     expect(result?.email).toBe('user@example.com');
+    expect(result?.capabilities.canAuthor).toBe(false);
   });
 });

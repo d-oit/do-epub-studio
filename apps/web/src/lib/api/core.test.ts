@@ -194,6 +194,50 @@ describe('401 handling', () => {
   });
 });
 
+describe('apiRequest binary responses', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns asset bytes without attempting JSON parsing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47])))),
+    );
+
+    const bytes = await apiRequest<ArrayBuffer>('/api/author/books/book-1/assets/asset-1', {
+      responseType: 'arrayBuffer',
+    });
+
+    expect([...new Uint8Array(bytes)]).toEqual([0x89, 0x50, 0x4e, 0x47]);
+    expect(events()).toContain('api.success');
+    expect(events()).not.toContain('api.parse-error');
+  });
+
+  it('still parses API error envelopes for binary requests', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({ ok: false, error: { code: 'FORBIDDEN', message: 'Forbidden' } }),
+            {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' },
+            },
+          ),
+        ),
+      ),
+    );
+
+    await expect(
+      apiRequest<ArrayBuffer>('/api/author/books/book-1/assets/asset-1', {
+        responseType: 'arrayBuffer',
+      }),
+    ).rejects.toThrow('Forbidden');
+  });
+});
+
 describe('apiRequest non-JSON response parsing', () => {
   beforeEach(() => {
     vi.clearAllMocks();

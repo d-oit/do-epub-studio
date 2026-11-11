@@ -39,6 +39,7 @@ const makeGrant = (overrides: Partial<Grant> = {}): Grant => ({
   expiresAt: null,
   createdAt: '2026-06-01T00:00:00Z',
   revokedAt: null,
+  authoringAllowed: false,
   ...overrides,
 });
 

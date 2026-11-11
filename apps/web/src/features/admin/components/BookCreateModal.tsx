@@ -11,6 +11,10 @@ interface BookCreateModalProps {
   setAuthorName: (v: string) => void;
   epubFile: File | null;
   setEpubFile: (f: File | null) => void;
+  createMode?: 'upload' | 'author';
+  setCreateMode?: (m: 'upload' | 'author') => void;
+  authorTemplate?: 'blank' | 'novel' | 'guide';
+  setAuthorTemplate?: (t: 'blank' | 'novel' | 'guide') => void;
   visibility: string;
   setVisibility: (v: string) => void;
   isSubmitting: boolean;
@@ -27,6 +31,10 @@ export function BookCreateModal({
   authorName,
   setAuthorName,
   setEpubFile,
+  createMode = 'upload',
+  setCreateMode,
+  authorTemplate = 'blank',
+  setAuthorTemplate,
   visibility,
   setVisibility,
   isSubmitting,
@@ -43,6 +51,38 @@ export function BookCreateModal({
         }}
         className="space-y-4"
       >
+        {setCreateMode && (
+          <div
+            role="group"
+            aria-label={t('admin.createBookModal.modeLabel')}
+            className="flex flex-wrap rounded-sm border border-border bg-background-tertiary p-1"
+          >
+            <button
+              type="button"
+              onClick={() => setCreateMode('upload')}
+              aria-pressed={createMode === 'upload'}
+              className={`touch-target min-h-11 flex-1 rounded-sm px-3 text-sm font-semibold transition-colors ${
+                createMode === 'upload'
+                  ? 'bg-surface text-foreground shadow-sm'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              {t('admin.createBookModal.uploadMode')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateMode('author')}
+              aria-pressed={createMode === 'author'}
+              className={`touch-target min-h-11 flex-1 rounded-sm px-3 text-sm font-semibold transition-colors ${
+                createMode === 'author'
+                  ? 'bg-surface text-foreground shadow-sm'
+                  : 'text-foreground-muted hover:text-foreground'
+              }`}
+            >
+              {t('admin.createBookModal.authorMode')}
+            </button>
+          </div>
+        )}
         <div>
           <label
             htmlFor="book-title"
@@ -81,23 +121,49 @@ export function BookCreateModal({
           />
         </div>
 
-        <div>
-          <label
-            htmlFor="book-epub"
-            className="block text-sm font-medium text-foreground-muted mb-1"
-          >
-            {t('admin.createBookModal.epubLabel')}
-          </label>
-          <input
-            id="book-epub"
-            type="file"
-            accept=".epub"
-            onChange={(e) => {
-              setEpubFile(e.target.files?.[0] ?? null);
-            }}
-            className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
-          />
-        </div>
+        {createMode === 'author' && setAuthorTemplate ? (
+          <div>
+            <label
+              htmlFor="book-template"
+              className="block text-sm font-medium text-foreground-muted mb-1"
+            >
+              {t('admin.createBookModal.templateLabel')}
+            </label>
+            <select
+              id="book-template"
+              value={authorTemplate}
+              onChange={(e) => {
+                setAuthorTemplate(e.target.value as 'blank' | 'novel' | 'guide');
+              }}
+              className="w-full px-4 py-3 bg-background border border-border rounded-lg text-foreground focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+            >
+              {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
+              <option value="blank">{t('admin.createBookModal.templateBlank')}</option>
+              {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
+              <option value="novel">{t('admin.createBookModal.templateNovel')}</option>
+              {/* eslint-disable-next-line i18next/no-literal-string -- form option value */}
+              <option value="guide">{t('admin.createBookModal.templateGuide')}</option>
+            </select>
+          </div>
+        ) : (
+          <div>
+            <label
+              htmlFor="book-epub"
+              className="block text-sm font-medium text-foreground-muted mb-1"
+            >
+              {t('admin.createBookModal.epubLabel')}
+            </label>
+            <input
+              id="book-epub"
+              type="file"
+              accept=".epub"
+              onChange={(e) => {
+                setEpubFile(e.target.files?.[0] ?? null);
+              }}
+              className="w-full text-sm text-foreground-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent/10 file:text-accent hover:file:bg-accent/20 cursor-pointer"
+            />
+          </div>
+        )}
 
         <div>
           <label
@@ -156,7 +222,9 @@ export function BookCreateModal({
           <Button type="submit" isLoading={isSubmitting}>
             {isSubmitting
               ? t('admin.createBookModal.submitting')
-              : t('admin.createBookModal.submit')}
+              : createMode === 'author'
+                ? t('admin.createBookModal.submitAuthor')
+                : t('admin.createBookModal.submit')}
           </Button>
         </div>
       </form>

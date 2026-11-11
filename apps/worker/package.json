@@ -16,26 +16,27 @@
     "test:coverage": "pnpm test:unit --coverage"
   },
   "dependencies": {
+    "@do-epub-studio/reader-core": "workspace:*",
     "@do-epub-studio/schema": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
     "@hono/zod-validator": "^0.9.1",
     "@libsql/client": "^0.18.0",
-    "@sentry/cloudflare": "^11.10.0",
-    "@simplewebauthn/server": "^14.0.3",
+    "@sentry/cloudflare": "^11.11.0",
+    "@simplewebauthn/server": "^14.1.0",
     "argon2-wasm-edge": "^1.0.23",
-    "hono": "^4.13.14",
+    "hono": "^4.13.17",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.23.0",
-    "@cloudflare/workers-types": "^5.20261024.1",
+    "@cloudflare/workers-types": "^5.20261107.1",
     "@do-epub-studio/testkit": "workspace:*",
     "@types/node": "^26",
     "@vitest/coverage-v8": "4.1.12",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "jszip": "^3.10.2",
     "typescript": "^6.0.3",
     "vitest": "4.1.12",
-    "wrangler": "^4.152.0"
+    "wrangler": "^4.158.0"
   }
 }

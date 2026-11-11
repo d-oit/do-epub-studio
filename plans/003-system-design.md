@@ -36,3 +36,40 @@ Implemented and locally proved. `analysis/triz-core-2026-10-20.md` records the t
 4. **Segmentation:** each synthetic EPUB fixture targets one or more named capabilities; fixture bytes and provenance are generated from committed source, never copyrighted books or personal data.
 
 **New contradictions:** NONE unresolved. The external runner and production/preview Queue resources introduce operator configuration dependencies; bindings are declared and fail-closed preflighted, while missing runner configuration or processing failures remain visible and retryable rather than being treated as validation success.
+
+## GOAP-1020 — Structured EPUB Authoring Workspace and EPUB 3 Export Pipeline
+
+### Architecture contract (acceptance-gap follow-up, 2026-11-08)
+
+The original feature section recorded intended behavior, not verified implementation. This contract resolves the gaps in `analysis/triz-core-2026-11-08.md`; the design resolutions are detailed in `analysis/triz-resolution-2026-11-08.md`. Implementation status remains pending until the acceptance checks below pass.
+
+### Component contracts
+
+- **Manuscript schema:** `AuthorPublication` stores title, ordered creators, language, stable identifier, description, publisher/rights, optional cover asset ID, ordered stylesheet asset IDs, and structured chapters. Chapter content remains an allowlisted semantic HTML fragment. `expectedVersion` is required on every draft write.
+- **Draft lifecycle:** D1 `book_manuscript_drafts` remains the mutable draft store. A conditional versioned `UPDATE ... RETURNING` is the only save boundary; a stale version returns the latest draft with HTTP 409. The persisted `updated_at` is passed to packaging.
+- **Authorization:** An independent `authoring_allowed` capability is stored on a book access grant and an explicit `author` invitation role sets only that capability. Reader/comment/offline rights and creator membership do not imply authoring. Each author request checks the active capability against the exact route `book_id`; global admins retain access. Book creation remains admin-only.
+- **Assets:** A book-scoped D1 metadata row points to immutable R2 bytes under a generated asset ID. Raw uploads are bounded and MIME/signature-checked; accepted raster formats exclude SVG. CSS parsing rejects imports, at-rules, URLs, and unsafe declarations. Draft references use `asset:<uuid>` and can resolve only to assets owned by that same book. Cover and stylesheet selections are explicit metadata.
+- **Packager:** `packageEpub3` is a pure browser/Worker/Node-safe function of publication, validated asset bytes, stable identifier, and persisted `modifiedAt`. It has no clock-derived fallback. ZIP output uses a fixed entry timestamp, an uncompressed first `mimetype`, a complete EPUB 3 manifest/spine/nav, cover-image metadata, stylesheet references, and generated local asset paths.
+- **Publish:** Capture one saved draft version and its referenced asset bytes; package and synchronously run archive-safety validation; SHA-256 the exact bytes; store the immutable object at a digest-addressed R2 key; create a deterministic book-scoped revision ID; enqueue EPUBCheck asynchronously only for a new revision. Old revisions never depend on mutable draft assets.
+- **Preview:** The safe AST renderer remains the immediate chapter-edit preview. An explicit “Preview book” action flushes pending autosave, dynamically loads the packager, builds an in-memory EPUB, and loads it through `createEpubLoader` with production sanitization and blocked external resource policy. The rendition exists only while the preview is mounted; no packaging occurs on keystrokes.
+- **Web interface:** Admins and explicit book authors use the same workspace. Metadata fields, asset management, chapter actions, preview frames, and errors have accessible names/states. New user-facing controls use the app's translation catalogs. Asset object URLs are revoked on replacement/unmount.
+
+### Interfaces and trust boundaries
+
+1. `AuthorPublicationSchema` validates the draft shape; the Worker additionally verifies that cover, stylesheet, and `asset:<uuid>` references belong to the current book before save/publish.
+2. The author asset API accepts bounded raw bytes and returns metadata. Browser retrieval uses the authenticated, book-scoped endpoint; R2 keys are never accepted from the client.
+3. The packager receives validated `{ id, mediaType, data }` assets and required `{ identifier, modifiedAt }` options. It resolves asset IDs to generated archive paths; author strings cannot choose ZIP entry names.
+4. Publish snapshots the package bytes before archive validation/storage. The revision digest, R2 object key, DB identity, and async validator job all refer to those exact bytes.
+5. Admin grant/invitation changes revoke existing sessions; author middleware still rechecks the active grant on each operation.
+
+### Required verification
+
+- Schema and package tests cover required versioning, metadata boundaries, asset reference/path resolution, hostile HTML/CSS rejection, deterministic ZIP bytes, stored first `mimetype`, and package metadata.
+- Worker tests cover atomic save races/stale conflicts, admin/author/read-only/creator/cross-book access, grant revocation, MIME/signature/size failures, and content-addressed immutable publish with async validation queue behavior.
+- Reader-core integration loads the generated EPUB with `createEpubLoader` and asserts metadata, ordered TOC/spine, and local image/stylesheet entries.
+- Chromium and WebKit E2E exercise metadata, asset, chapter, full-reader-preview, conflict, and publish flows; axe plus keyboard checks cover the author surface.
+- Full monorepo quality gate runs after implementation; no PR merge is performed without human approval.
+
+### Status
+
+Architecture resolved; follow-up implementation and verification pending. Full IFR/separation rationale and secondary-contradiction check: `analysis/triz-resolution-2026-11-08.md`.

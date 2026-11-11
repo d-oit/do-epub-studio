@@ -5,6 +5,12 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./author-content": "./src/author-content.ts",
+    "./author-styles": "./src/author-styles.ts",
+    "./packager": "./src/packager/index.ts"
+  },
   "scripts": {
     "test:unit": "node src/__tests__/fixtures/generate.mjs && node src/__tests__/fixtures/generate-capabilities.mjs && vitest --run",
     "test:coverage": "node src/__tests__/fixtures/generate.mjs && node src/__tests__/fixtures/generate-capabilities.mjs && vitest run --coverage",
@@ -18,7 +24,9 @@
     "@huggingface/transformers": "^4.3.2",
     "@intity/epub-js": "0.3.96",
     "dompurify": "^3.4.17",
-    "fflate": "^0.8.3"
+    "fflate": "^0.8.3",
+    "parse5": "8.1.0",
+    "postcss": "8.5.32"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

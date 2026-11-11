@@ -71,7 +71,11 @@ export function LoginPage() {
         });
 
         setAuth(toAuthStorePayload(data, email));
-        void navigate(`/read/${data.book.slug}`);
+        void navigate(
+          data.capabilities?.canAuthor
+            ? `/author/books/${data.book.id}`
+            : `/read/${data.book.slug}`,
+        );
         return { error: null, success: true };
       } catch (err) {
         return { error: (err as Error).message, success: false };
@@ -110,7 +114,11 @@ export function LoginPage() {
         });
         if (cancelledRef.value) return;
         setAuth(toAuthStorePayload(data, ''));
-        void navigate(`/read/${data.book.slug}`);
+        void navigate(
+          data.capabilities?.canAuthor
+            ? `/author/books/${data.book.id}`
+            : `/read/${data.book.slug}`,
+        );
       } catch (err) {
         if (!cancelledRef.value) setVerifyError((err as Error).message);
       } finally {

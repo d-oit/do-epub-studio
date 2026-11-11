@@ -137,6 +137,7 @@ const FULL_CAPABILITIES: AuthContext['capabilities'] = {
   canDownloadOffline: true,
   canExportNotes: true,
   canManageAccess: false,
+  canAuthor: false,
 };
 
 function createHarness(options?: TestHarnessOptions) {

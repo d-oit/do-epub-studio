@@ -13,6 +13,7 @@ export interface GrantRow extends JsonRow {
   allowed: number;
   comments_allowed: number;
   offline_allowed: number;
+  authoring_allowed: number;
   expires_at: string | null;
   revoked_at: string | null;
 }
@@ -96,7 +97,7 @@ export async function validateGrant(
   const grant = await queryFirst<GrantRow>(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
-            offline_allowed, expires_at, revoked_at
+            offline_allowed, authoring_allowed, expires_at, revoked_at
      FROM book_access_grants
      WHERE book_id = ? AND email = ? AND revoked_at IS NULL`,
     [book.id, email.toLowerCase()],
@@ -136,6 +137,7 @@ export async function createGrant(
     mode?: string;
     commentsAllowed?: boolean;
     offlineAllowed?: boolean;
+    authoringAllowed?: boolean;
     expiresAt?: string;
     invitedByUserId?: string;
   },
@@ -163,14 +165,15 @@ export async function createGrant(
       env,
       `UPDATE book_access_grants
        SET password_hash = ?, mode = ?, comments_allowed = ?, offline_allowed = ?,
-           expires_at = ?, invited_by_user_id = ?, allowed = 1, revoked_at = NULL,
-           updated_at = ?
+           authoring_allowed = ?, expires_at = ?, invited_by_user_id = ?,
+           allowed = 1, revoked_at = NULL, updated_at = ?
        WHERE id = ?`,
       [
         passwordHash,
         options?.mode ?? 'private',
         options?.commentsAllowed ? 1 : 0,
         options?.offlineAllowed ? 1 : 0,
+        options?.authoringAllowed ? 1 : 0,
         options?.expiresAt ?? null,
         options?.invitedByUserId ?? null,
         new Date().toISOString(),
@@ -187,8 +190,8 @@ export async function createGrant(
     env,
     `INSERT INTO book_access_grants
      (id, book_id, email, password_hash, mode, comments_allowed, offline_allowed,
-      expires_at, invited_by_user_id, allowed)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+      authoring_allowed, expires_at, invited_by_user_id, allowed)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
     [
       id,
       bookId,
@@ -197,6 +200,7 @@ export async function createGrant(
       options?.mode ?? 'private',
       options?.commentsAllowed ? 1 : 0,
       options?.offlineAllowed ? 1 : 0,
+      options?.authoringAllowed ? 1 : 0,
       options?.expiresAt ?? null,
       options?.invitedByUserId ?? null,
     ],
@@ -214,6 +218,7 @@ export function computeCapabilities(grant: GrantRow) {
     canDownloadOffline: grant.offline_allowed === 1,
     canExportNotes: grant.comments_allowed === 1,
     canManageAccess: false,
+    canAuthor: grant.authoring_allowed === 1,
   };
 }
 
@@ -225,7 +230,7 @@ export async function getGrantByBookAndSession(
   return queryFirst(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
-            offline_allowed, expires_at, revoked_at
+            offline_allowed, authoring_allowed, expires_at, revoked_at
      FROM book_access_grants
      WHERE book_id = ? AND email = ? AND allowed = 1 AND revoked_at IS NULL
        AND (expires_at IS NULL OR expires_at > datetime('now'))`,
@@ -238,7 +243,7 @@ export async function getGrantsBySession(env: Env, email: string): Promise<Grant
   return queryAll<GrantRow>(
     env,
     `SELECT id, book_id, email, password_hash, mode, allowed, comments_allowed,
-            offline_allowed, expires_at, revoked_at
+            offline_allowed, authoring_allowed, expires_at, revoked_at
      FROM book_access_grants
      WHERE email = ? AND allowed = 1 AND revoked_at IS NULL
        AND (expires_at IS NULL OR expires_at > datetime('now'))`,

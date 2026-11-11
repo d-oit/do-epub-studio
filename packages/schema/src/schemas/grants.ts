@@ -8,6 +8,7 @@ export const CreateGrantSchema = z.object({
   mode: GrantModeSchema.default('private'),
   commentsAllowed: z.boolean().default(false),
   offlineAllowed: z.boolean().default(false),
+  authoringAllowed: z.boolean().default(false),
   expiresAt: z.string().datetime().optional(),
 });
 
@@ -17,6 +18,7 @@ export const UpdateGrantSchema = z.object({
   mode: GrantModeSchema.optional(),
   commentsAllowed: z.boolean().optional(),
   offlineAllowed: z.boolean().optional(),
+  authoringAllowed: z.boolean().optional(),
   expiresAt: z.string().datetime().nullable().optional(),
 });
 

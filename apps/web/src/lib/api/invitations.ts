@@ -1,6 +1,6 @@
 import { apiRequest } from './core';
 
-export type InvitationRole = 'reader' | 'creator';
+export type InvitationRole = 'reader' | 'creator' | 'author';
 export type InvitationStatus =
   'pending' | 'processing' | 'accepted' | 'revoked' | 'expired' | 'failed';
 export type InvitationDeliveryStatus = 'pending' | 'sent' | 'manual_copy_required' | 'failed';
@@ -60,6 +60,7 @@ export interface AcceptedInvitation {
     canDownloadOffline: boolean;
     canExportNotes: boolean;
     canManageAccess: boolean;
+    canAuthor?: boolean;
   };
 }
 

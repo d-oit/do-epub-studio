@@ -15,3 +15,5 @@ export { notificationsRouter } from './notifications';
 export { searchRouter } from './search';
 export { exportRouter } from './export';
 export { demoRouter } from './demo';
+export { authorRouter } from './author';
+export { authorAssetsRouter } from './author-assets';

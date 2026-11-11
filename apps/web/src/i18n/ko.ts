@@ -1,7 +1,8 @@
-import type { TranslationKeys, TranslationValue } from './en';
+import { en, type TranslationKeys, type TranslationValue } from './en';
 import { APP_NAME } from '../config/app-identity';
 
 export const ko: Record<TranslationKeys, TranslationValue> = {
+  ...en,
   'app.title': APP_NAME,
   'app.versionLabel': '버전',
   'ui.showPassword': '비밀번호 표시',

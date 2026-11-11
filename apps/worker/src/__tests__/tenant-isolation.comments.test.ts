@@ -23,6 +23,7 @@ const authCtx: AuthContext = {
     canDownloadOffline: false,
     canExportNotes: false,
     canManageAccess: false,
+    canAuthor: false,
   },
 };
 

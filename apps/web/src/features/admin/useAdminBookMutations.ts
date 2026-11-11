@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../../lib/api';
 import type { TFunction } from '../../hooks/useTranslation';
 import type { BookResponse } from '@do-epub-studio/shared';
@@ -32,6 +33,9 @@ export function useAdminBookMutations({
   const [epubFile, setEpubFile] = useState<File | null>(null);
   const [visibility, setVisibility] = useState('private');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createMode, setCreateMode] = useState<'upload' | 'author'>('upload');
+  const [authorTemplate, setAuthorTemplate] = useState<'blank' | 'novel' | 'guide'>('blank');
+  const navigate = useNavigate();
   const [createError, setCreateError] = useState<string | null>(null);
   const [validationResult, setValidationResult] = useState<{
     isValid: boolean;
@@ -52,6 +56,8 @@ export function useAdminBookMutations({
   } | null>(null);
 
   const resetCreateForm = () => {
+    setCreateMode('upload');
+    setAuthorTemplate('blank');
     setBookTitle('');
     setAuthorName('');
     setEpubFile(null);
@@ -99,6 +105,46 @@ export function useAdminBookMutations({
       return;
     }
 
+    const slug =
+      bookTitle
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s_-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .substring(0, 255) || 'untitled';
+
+    if (createMode === 'author') {
+      setIsSubmitting(true);
+      setCreateError(null);
+      try {
+        const res = await executeWithStepUp((tok) =>
+          apiRequest<{ bookId: string; slug: string }>('/api/author/books', {
+            method: 'POST',
+            token: tok ?? undefined,
+            body: JSON.stringify({
+              title: bookTitle.trim(),
+              slug,
+              ...(authorName.trim() ? { authorName: authorName.trim() } : {}),
+              visibility,
+              template: authorTemplate,
+            }),
+          }),
+        );
+        setIsCreateModalOpen(false);
+        resetCreateForm();
+        await refreshBooks();
+        onSuccess('Manuscript created. Opening author workspace...');
+        void navigate(`/admin/books/${res.bookId}/author`);
+      } catch (err) {
+        setCreateError((err as Error).message);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     if (!epubFile) {
       setCreateError(t('admin.createBookModal.error.selectEpub'));
       return;
@@ -110,16 +156,6 @@ export function useAdminBookMutations({
     if (!localValidation.isValid) {
       return;
     }
-
-    const slug =
-      bookTitle
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9\s_-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .substring(0, 255) || 'untitled';
 
     setIsSubmitting(true);
 
@@ -292,6 +328,10 @@ export function useAdminBookMutations({
     setEpubFile,
     visibility,
     setVisibility,
+    createMode,
+    setCreateMode,
+    authorTemplate,
+    setAuthorTemplate,
     isSubmitting,
     createError,
     validationResult,

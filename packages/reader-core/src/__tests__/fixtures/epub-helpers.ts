@@ -27,18 +27,17 @@ export function readZipEntries(buf: Buffer): Map<string, Buffer> {
     const localOffset = buf.readUInt32LE(cdPos + 42);
 
     const fn = buf.subarray(cdPos + 46, cdPos + 46 + fnLen).toString('utf-8');
+    const compressedSize = buf.readUInt32LE(cdPos + 20);
+    const compressionMethod = buf.readUInt16LE(cdPos + 10);
 
     const lfhNameLen = buf.readUInt16LE(localOffset + 26);
     const lfhExtLen = buf.readUInt16LE(localOffset + 28);
     const dataStart = localOffset + 30 + lfhNameLen + lfhExtLen;
-    const localCompSize = buf.readUInt32LE(localOffset + 18);
-    const localCompMethod = buf.readUInt16LE(localOffset + 8);
+    const dataSlice = buf.subarray(dataStart, dataStart + compressedSize);
 
-    const dataSlice = buf.subarray(dataStart, dataStart + localCompSize);
-
-    if (localCompMethod === 0) {
+    if (compressionMethod === 0) {
       entries.set(fn, dataSlice);
-    } else if (localCompMethod === 8) {
+    } else if (compressionMethod === 8) {
       entries.set(fn, inflateRawSync(dataSlice));
     } else {
       entries.set(fn, dataSlice);

@@ -58,6 +58,7 @@ const mockGrants = [
     mode: 'reader_only',
     offlineAllowed: true,
     commentsAllowed: true,
+    authoringAllowed: false,
     createdAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 86400000).toISOString(),
     revokedAt: null,
@@ -134,6 +135,7 @@ describe('AdminGrantResponsesPage', () => {
       target: { value: 'password123' },
     });
 
+    fireEvent.click(within(modal).getByRole('checkbox', { name: /grants\.form\.authoring/ }));
     // React 19 form actions fire on form submit, not button click in jsdom.
     const modalForm = modal.querySelector('form');
     expect(modalForm).toBeInTheDocument();
@@ -148,6 +150,7 @@ describe('AdminGrantResponsesPage', () => {
         '/api/admin/books/b1/grants',
         expect.objectContaining({
           method: 'POST',
+          body: expect.stringContaining('"authoringAllowed":true'),
         }),
       );
     });
@@ -229,6 +232,41 @@ describe('AdminGrantResponsesPage', () => {
     expect(grantsFetches).toBeGreaterThan(1);
   });
 
+  it('saves and displays the authoring capability', async () => {
+    const updatedGrant = { ...mockGrants[0], authoringAllowed: true };
+    let grantsFetches = 0;
+    vi.mocked(api.apiRequest).mockImplementation((url: string) => {
+      if (url === '/api/admin/books') return Promise.resolve(mockBooks);
+      if (url.includes('/grants')) {
+        grantsFetches += 1;
+        return Promise.resolve(grantsFetches === 1 ? mockGrants : [updatedGrant]);
+      }
+      return Promise.resolve({ ok: true });
+    });
+
+    await renderAndFlush('/admin/books/b1/grants');
+    fireEvent.click(screen.getByText('grants.actions.edit'));
+
+    const modal = screen.getByRole('dialog');
+    fireEvent.click(within(modal).getByRole('checkbox', { name: /grants\.form\.authoring/ }));
+    const modalForm = modal.querySelector('form');
+    expect(modalForm).toBeInTheDocument();
+    await act(async () => {
+      (modalForm as HTMLFormElement).requestSubmit();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
+    await waitFor(() => {
+      expect(api.apiRequest).toHaveBeenCalledWith(
+        '/api/admin/grants/g1',
+        expect.objectContaining({
+          method: 'PATCH',
+          body: expect.stringContaining('"authoringAllowed":true'),
+        }),
+      );
+      expect(screen.getByText('grants.capabilities.authoring')).toBeInTheDocument();
+    });
+  });
   it('revokes a grant', async () => {
     vi.mocked(api.apiRequest).mockImplementation((url: string) => {
       if (url === '/api/admin/books') return Promise.resolve(mockBooks);

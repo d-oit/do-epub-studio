@@ -23,7 +23,7 @@ vi.mock('@intity/epub-js', () => {
     prev: vi.fn().mockResolvedValue(undefined),
     next: vi.fn().mockResolvedValue(undefined),
     getContents: vi.fn().mockReturnValue(null),
-    destroy: vi.fn(),
+    destroy: vi.fn<() => void>(),
     hooks: {
       content: {
         register: vi.fn(),
@@ -58,8 +58,15 @@ vi.mock('@intity/epub-js', () => {
       ),
     },
     packaging: { direction: 'default', metadata: new Map() },
-    renderTo: vi.fn().mockReturnValue(mockRendition),
-    destroy: vi.fn(),
+    rendition: null as { destroy: () => void } | null,
+    renderTo: vi.fn().mockImplementation(() => {
+      mockBook.rendition = mockRendition;
+      return mockRendition;
+    }),
+    destroy: vi.fn(() => {
+      mockBook.rendition?.destroy();
+      mockBook.rendition = null;
+    }),
   };
 
   const ePub = vi.fn().mockReturnValue(mockBook);
@@ -72,6 +79,7 @@ interface MockBook {
   opened: Promise<void>;
   renderTo: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
+  rendition: { destroy: () => void } | null;
   packaging: { direction: string; metadata: Map<string, string> };
 }
 
@@ -135,6 +143,7 @@ describe('createEpubLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     epubjsMock.__mockBook.packaging = { direction: 'default', metadata: new Map() };
+    epubjsMock.__mockBook.rendition = null;
   });
 
   it('creates a loader with null rendition initially', () => {
@@ -276,6 +285,45 @@ describe('createEpubLoader', () => {
     await expect(loader.load('test.epub')).rejects.toThrow('EpubLoader has been destroyed');
   });
 
+  it('destroys the rendition once through its owning book', async () => {
+    const loader = createEpubLoader();
+    const renditionDestroy = epubjsMock.__mockRendition.destroy;
+    await loader.load('test.epub');
+    loader.createRendition(document.createElement('div'));
+
+    loader.destroy();
+    loader.destroy();
+
+    expect(epubjsMock.__mockBook.destroy).toHaveBeenCalledTimes(1);
+    expect(renditionDestroy).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores the previous pagehide handler before destroying its rendition', async () => {
+    const originalHandler = window.onpagehide;
+    const previousHandler = vi.fn();
+    const renditionHandler = vi.fn();
+    window.onpagehide = previousHandler;
+    epubjsMock.__mockRendition.display.mockImplementationOnce(() => {
+      window.onpagehide = renditionHandler;
+      return Promise.resolve();
+    });
+    const loader = createEpubLoader();
+    const renditionDestroy = epubjsMock.__mockRendition.destroy;
+
+    try {
+      await loader.load('test.epub');
+      const rendition = loader.createRendition(document.createElement('div'));
+      await rendition.display();
+      loader.destroy();
+
+      expect(window.onpagehide).toBe(previousHandler);
+      expect(renditionDestroy).toHaveBeenCalledTimes(1);
+    } finally {
+      loader.destroy();
+      window.onpagehide = originalHandler;
+    }
+  });
+
   // GOAP-224 A7: destroy() may run while loadInner is awaiting (reader
   // unmount). The remaining awaits must bail out before writing any instance
   // state so a destroyed loader cannot resurrect `book`/raws after teardown.
@@ -349,6 +397,10 @@ describe('createEpubLoader', () => {
     expect(book).toBe(epubjsMock.__mockBook);
 
     const handle = loader.createRendition(document.createElement('div'));
+    expect(epubjsMock.__mockBook.renderTo).toHaveBeenCalledWith(
+      expect.any(HTMLElement),
+      expect.objectContaining({ manager: 'default' }),
+    );
     const mockRendition = epubjsMock.__mockRendition;
     const startedCall = mockRendition.on.mock.calls.find(
       (call: unknown[]) => call[0] === 'started',

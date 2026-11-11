@@ -26,6 +26,7 @@ const readerCapabilitiesArb: fc.Arbitrary<ReaderCapabilities> = fc.record({
   canDownloadOffline: fc.boolean(),
   canExportNotes: fc.boolean(),
   canManageAccess: fc.boolean(),
+  canAuthor: fc.boolean(),
 });
 
 const bookResponseArb: fc.Arbitrary<BookResponse> = fc.record({
@@ -82,6 +83,7 @@ const grantResponseArb: fc.Arbitrary<GrantResponse> = fc.record({
   ),
   commentsAllowed: fc.boolean(),
   offlineAllowed: fc.boolean(),
+  authoringAllowed: fc.boolean(),
   expiresAt: optionalString,
   createdAt: isoDateString,
   revokedAt: optionalString,
