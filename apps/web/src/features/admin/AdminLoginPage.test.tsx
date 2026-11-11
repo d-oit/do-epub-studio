@@ -146,6 +146,20 @@ describe('AdminLoginPage', () => {
   });
 
   describe('login flow', () => {
+    const deferSuccessfulLogin = () => {
+      let release!: () => void;
+      vi.mocked(apiRequest).mockImplementationOnce(async () => {
+        await new Promise<void>((resolve) => {
+          release = resolve;
+        });
+        return {
+          token: 'test-token',
+          user: { id: 'u1', email: 'admin@example.com', role: 'admin' },
+        };
+      });
+      return () => release();
+    };
+
     it('calls apiRequest with correct params on submit', async () => {
       const user = userEvent.setup();
       const mockApiRequest = vi.mocked(apiRequest);
@@ -227,9 +241,7 @@ describe('AdminLoginPage', () => {
 
     it('shows loading state during login', async () => {
       const user = userEvent.setup();
-      vi.mocked(apiRequest).mockImplementationOnce(
-        () => new Promise((resolve) => setTimeout(resolve, 1000)),
-      );
+      const releaseLogin = deferSuccessfulLogin();
 
       renderLoginPage();
 
@@ -237,15 +249,18 @@ describe('AdminLoginPage', () => {
       await user.type(screen.getByLabelText('admin.login.password'), 'password123');
       await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
 
-      // Button should show loading text
       expect(screen.getByText('admin.login.signingIn')).toBeInTheDocument();
+
+      releaseLogin();
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/admin/books');
+        expect(screen.queryByText('admin.login.signingIn')).not.toBeInTheDocument();
+      });
     });
 
-    it('disables submit button during loading', async () => {
+    it('disables submit button during login', async () => {
       const user = userEvent.setup();
-      vi.mocked(apiRequest).mockImplementationOnce(
-        () => new Promise((resolve) => setTimeout(resolve, 1000)),
-      );
+      const releaseLogin = deferSuccessfulLogin();
 
       renderLoginPage();
 
@@ -254,6 +269,12 @@ describe('AdminLoginPage', () => {
       await user.click(screen.getByRole('button', { name: 'admin.login.signIn' }));
 
       expect(screen.getByRole('button', { name: 'admin.login.signingIn' })).toBeDisabled();
+
+      releaseLogin();
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/admin/books');
+        expect(screen.queryByText('admin.login.signingIn')).not.toBeInTheDocument();
+      });
     });
   });
 
