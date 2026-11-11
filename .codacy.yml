@@ -27,10 +27,9 @@ engines:
       - '**/*.spec.tsx'
       - '**/__tests__/**'
       - '**/tests/**'
-      - 'apps/web/src/lib/api/index.ts'
-      - 'apps/web/src/lib/api/core.ts'
-      - 'apps/worker/src/__tests__/routes.export.test.ts'
-      - 'apps/worker/src/__tests__/routes.search.test.ts'
+      - 'scripts/**'
+      - 'apps/web/src/**'
+      - 'apps/worker/src/**'
       - 'packages/**'
   biome:
     enabled: false

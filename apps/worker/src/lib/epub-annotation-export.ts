@@ -113,27 +113,21 @@ function textValue(record: Record<string, unknown>, ...keys: string[]): string |
 }
 
 function bookmarkAnnotation(row: BookmarkExportRow): EpubExportAnnotation {
+  const fallback: EpubExportAnnotation = {
+    id: row.id,
+    type: 'bookmark',
+    body: '',
+    label: row.label,
+    locatorContext: row.locator_json,
+  };
   let locator: unknown;
   try {
     locator = JSON.parse(row.locator_json) as unknown;
   } catch {
-    return {
-      id: row.id,
-      type: 'bookmark',
-      body: '',
-      label: row.label,
-      locatorContext: row.locator_json,
-    };
+    return fallback;
   }
-
   if (!locator || typeof locator !== 'object' || Array.isArray(locator)) {
-    return {
-      id: row.id,
-      type: 'bookmark',
-      body: '',
-      label: row.label,
-      locatorContext: row.locator_json,
-    };
+    return fallback;
   }
 
   const value = locator as Record<string, unknown>;
@@ -352,7 +346,7 @@ async function validateWithEpubCheck(env: Env, epub: Uint8Array<ArrayBuffer>): P
 
   let endpoint: URL;
   try {
-    endpoint = getValidatedRunnerUrl(env.EPUBCHECK_RUNNER_URL);
+    endpoint = getValidatedRunnerUrl(env.EPUBCHECK_RUNNER_URL, env.EPUBCHECK_RUNNER_ALLOWED_HOSTS);
   } catch {
     throw new EpubAnnotationExportFailure(
       'EPUBCHECK_UNAVAILABLE',

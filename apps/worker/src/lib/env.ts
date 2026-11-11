@@ -50,6 +50,7 @@ export type Env = Omit<CloudflareEnv, RelaxedKeys> & {
   EPUB_VALIDATION_QUEUE?: Queue<{ bookId: string; revisionId: string }>;
   EPUBCHECK_RUNNER_URL?: string;
   EPUBCHECK_RUNNER_TOKEN?: string;
+  EPUBCHECK_RUNNER_ALLOWED_HOSTS?: string;
 };
 
 export type JsonRow = Record<string, string | number | null | undefined>;

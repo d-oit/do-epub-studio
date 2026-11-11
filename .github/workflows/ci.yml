@@ -423,7 +423,7 @@ jobs:
 
       - name: Install do-harness (pinned)
         env:
-          DO_HARNESS_VERSION: v0.2.1
+          DO_HARNESS_VERSION: v0.4.2
         run: |
           set -euo pipefail
           target=x86_64-unknown-linux-musl
@@ -469,7 +469,7 @@ jobs:
 
       - name: Install do-harness (pinned)
         env:
-          DO_HARNESS_VERSION: v0.2.1
+          DO_HARNESS_VERSION: v0.4.2
         run: |
           set -euo pipefail
           target=x86_64-unknown-linux-musl

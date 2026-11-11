@@ -9,5 +9,6 @@
   "tag_glob": "refs/tags/v*",
   "merge_strategy": "squash",
   "revert_pattern": "^revert(\\(|:)",
-  "bot_allowlist": ["dependabot", "github-actions"]
+  "bot_allowlist": ["dependabot", "github-actions"],
+  "max_rework_rate": 1.0
 }
