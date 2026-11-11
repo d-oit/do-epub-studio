@@ -1,17 +1,52 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../lib/env';
 import type { AuthContext } from '../auth/middleware';
 import { queryAll, queryFirst } from '../db/client';
 import { readerAuth } from '../middleware/auth';
 import { assertBookAccess } from '../lib/tenant-isolation';
-import { getRequestTraceId } from '../lib/api-error';
+import { getRequestTraceId, apiError } from '../lib/api-error';
 import { ExportQuerySchema } from '@do-epub-studio/schema';
+import { EpubAnnotationExportError } from '@do-epub-studio/reader-core/packager';
+import {
+  EpubAnnotationExportFailure,
+  createValidatedAnnotationEpub,
+} from '../lib/epub-annotation-export';
 
 /** Maximum rows per entity type to prevent unbounded memory usage on large exports. */
 const MAX_EXPORT_ROWS = 10_000;
 
 export const exportRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
+function epubExportErrorResponse(c: Context, error: unknown): Response | null {
+  if (error instanceof EpubAnnotationExportError) {
+    const tooLarge =
+      error.code === 'SOURCE_TOO_LARGE' ||
+      error.code === 'ANNOTATIONS_TOO_LARGE' ||
+      error.code === 'OUTPUT_TOO_LARGE';
+    const message =
+      error.code === 'ANNOTATIONS_TOO_LARGE'
+        ? 'The annotations exceed the EPUB export limits.'
+        : tooLarge
+          ? 'The EPUB export exceeds a configured size limit.'
+          : 'The EPUB source or annotations are not safe to export.';
+    return apiError(c, tooLarge ? 413 : 422, error.code, message);
+  }
+  if (!(error instanceof EpubAnnotationExportFailure)) return null;
+
+  switch (error.code) {
+    case 'SOURCE_NOT_FOUND':
+      return apiError(c, 404, error.code, 'No EPUB revision is available for this book.');
+    case 'SOURCE_UNAVAILABLE':
+    case 'EPUBCHECK_UNAVAILABLE':
+      return apiError(c, 503, error.code, 'EPUB export is temporarily unavailable.');
+    case 'EPUBCHECK_INVALID_RESPONSE':
+    case 'EPUBCHECK_INTEGRITY_ERROR':
+      return apiError(c, 502, error.code, 'EPUB validation could not verify the exported file.');
+    case 'EPUBCHECK_REJECTED':
+      return apiError(c, 422, error.code, 'The generated EPUB did not pass EPUBCheck validation.');
+  }
+  return null;
+}
 
 interface HighlightRow {
   [key: string]: string | number | null | undefined;
@@ -66,6 +101,24 @@ exportRouter.get(
       getRequestTraceId(c),
     );
     if (mismatch) return mismatch.response;
+    if (format === 'epub') {
+      try {
+        const epub = await createValidatedAnnotationEpub(c.env, bookId, auth.email);
+        return new Response(epub, {
+          status: 200,
+          headers: {
+            'content-type': 'application/epub+zip',
+            'content-disposition': 'attachment; filename="annotations.epub"',
+            'cache-control': 'no-store',
+            'content-length': String(epub.byteLength),
+          },
+        });
+      } catch (error) {
+        const response = epubExportErrorResponse(c, error);
+        if (response) return response;
+        throw error;
+      }
+    }
 
     // The three queries are independent (separate tables, each with its own
     // internal ORDER BY and a bounded LIMIT), so they can run concurrently.

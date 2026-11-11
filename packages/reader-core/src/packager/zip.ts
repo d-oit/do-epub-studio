@@ -39,13 +39,17 @@ export interface ZipEntry {
  * Builds an EPUB-compatible ZIP with `mimetype` as the first stored entry.
  * Fixed entry timestamps and pinned compression make identical inputs stable.
  */
-export function buildZip(entries: readonly ZipEntry[]): Promise<Uint8Array> {
+export function buildZip(
+  entries: readonly ZipEntry[],
+  options: { maxOutputBytes?: number } = {},
+): Promise<Uint8Array<ArrayBuffer>> {
   if (entries[0]?.name !== 'mimetype' || !entries[0].store) {
     throw new TypeError('EPUB ZIP must start with an uncompressed mimetype entry');
   }
 
-  const { promise, resolve, reject } = Promise.withResolvers<Uint8Array>();
+  const { promise, resolve, reject } = Promise.withResolvers<Uint8Array<ArrayBuffer>>();
   const chunks: Uint8Array[] = [];
+  let outputSize = 0;
   let settled = false;
   let zip: Zip | null = null;
   try {
@@ -57,13 +61,22 @@ export function buildZip(entries: readonly ZipEntry[]): Promise<Uint8Array> {
         reject(error);
         return;
       }
-      if (data) chunks.push(data);
+      if (data) {
+        outputSize += data.byteLength;
+        if (options.maxOutputBytes !== undefined && outputSize > options.maxOutputBytes) {
+          settled = true;
+          zip?.terminate();
+          reject(
+            new RangeError(`ZIP output exceeds maximum size of ${options.maxOutputBytes} bytes`),
+          );
+          return;
+        }
+        chunks.push(data);
+      }
       if (!final) return;
 
       settled = true;
-      let size = 0;
-      for (const chunk of chunks) size += chunk.byteLength;
-      const output = new Uint8Array(size);
+      const output = new Uint8Array(outputSize);
       let offset = 0;
       for (const chunk of chunks) {
         output.set(chunk, offset);

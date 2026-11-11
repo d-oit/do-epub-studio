@@ -14,11 +14,37 @@ export async function enqueueEpubValidation(
   if (!env.EPUB_VALIDATION_QUEUE) return;
   await env.EPUB_VALIDATION_QUEUE.send(message);
 }
+// Static set of allowed runner hostnames for defense-in-depth SSRF mitigation.
+export const DEFAULT_ALLOWED_RUNNER_HOSTNAMES = Object.freeze([
+  'localhost',
+  '127.0.0.1',
+  'runner.example',
+]);
+
 // Worker configuration owns this URL; HTTP requests and queue messages never
 // supply it. Pin the path so only the configured runner receives validation.
-export function getValidatedRunnerUrl(rawUrl: string): URL {
-  const parsed = new URL(rawUrl);
+export function getValidatedRunnerUrl(rawUrl: string, customAllowedHosts?: string): URL {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error('invalid_runner_url');
+  }
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error('invalid_runner_url');
+  }
+  const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  if (parsed.protocol === 'http:' && !isLoopback) {
+    throw new Error('invalid_runner_url');
+  }
+  const allowed = new Set<string>(DEFAULT_ALLOWED_RUNNER_HOSTNAMES);
+  if (customAllowedHosts) {
+    for (const host of customAllowedHosts.split(/[,\s]+/)) {
+      const trimmed = host.trim();
+      if (trimmed) allowed.add(trimmed);
+    }
+  }
+  if (!allowed.has(parsed.hostname)) {
     throw new Error('invalid_runner_url');
   }
   return new URL('/validate', parsed.origin);
@@ -73,7 +99,10 @@ async function validateRevision(env: Env, message: EpubValidationMessage): Promi
   if (!object || object.size > 100 * 1024 * 1024 || object.size !== row.file_size_bytes)
     throw new Error('source_unavailable');
 
-  const endpoint = getValidatedRunnerUrl(env.EPUBCHECK_RUNNER_URL);
+  const endpoint = getValidatedRunnerUrl(
+    env.EPUBCHECK_RUNNER_URL,
+    env.EPUBCHECK_RUNNER_ALLOWED_HOSTS,
+  );
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {

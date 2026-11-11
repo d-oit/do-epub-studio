@@ -47,6 +47,11 @@ describe('epub-validation schemas', () => {
             message: 'Check language',
             source: 'manual-review' as const,
           },
+          {
+            category: 'reader-ui' as const,
+            message: 'Reader UI accessibility is evaluated separately.',
+            source: 'reader-ui' as const,
+          },
         ],
         manualReviewRequired: true,
         certification: 'not-certified' as const,

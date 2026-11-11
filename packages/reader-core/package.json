@@ -26,7 +26,8 @@
     "dompurify": "^3.4.17",
     "fflate": "^0.8.3",
     "parse5": "8.1.0",
-    "postcss": "8.5.32"
+    "postcss": "8.5.32",
+    "saxes": "6.0.0"
   },
   "devDependencies": {
     "@types/jsdom": "^30.0.0",

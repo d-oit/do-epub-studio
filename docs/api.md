@@ -155,11 +155,16 @@ empty result set when the book is not indexed.
 ### GET `/api/books/:bookId/export`
 
 Export the authenticated user's annotations (highlights, comments, bookmarks)
-as Markdown or HTML.
+as Markdown, HTML, or an EPUB containing the latest source publication and a
+navigable annotation appendix. EPUB responses are returned as
+`application/epub+zip` only after archive-safety checks and EPUBCheck succeed.
 
 ```
-?format=markdown|html
+?format=markdown|html|epub
 ```
+
+The JSON annotation interchange profile is separate from this endpoint; see
+[`annotation-interchange.md`](annotation-interchange.md).
 
 ## Notifications Endpoints
 

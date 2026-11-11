@@ -911,6 +911,10 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 - **`fflate.Unzip` recurses synchronously on large archives**: Pushing a large archive with 10,000+ entries into `Unzip.push(data, true)` in a single call causes a stack overflow (`RangeError: Maximum call stack size exceeded`). Feeding data in 64 KiB chunks (`unzip.push(data.subarray(offset, offset + CHUNK), end)`) and breaking the loop when `finished` is set allows thousands of entries to be validated safely without exceeding the V8 call stack.
 - **Cloudflare `waitUntil()` cancels after 30 seconds**: Official Cloudflare Workers documentation specifies that `ctx.waitUntil()` tasks running longer than 30 seconds after HTTP response delivery are cancelled by the runtime. Long-running or resilient post-upload work (such as full EPUBCheck execution) must be dispatched through Cloudflare Queues with bounded retry backoff and dead-letter queues rather than running under `waitUntil()`.
 - **Preflight resource verification extends to Queues**: `scripts/preflight-cloudflare.mjs` verifies declared production and preview `queues` bindings against the Cloudflare Client v4 accounts API (`GET /client/v4/accounts/{id}/queues`) with pagination, failing closed if a declared queue does not exist.
+- **Runner/schema advisory sets must match**: `apps/epubcheck-runner/src/server.ts` emits `reader-ui`; if
+  `EpubRunnerResultSchema` omits that category, a successful EPUBCheck result becomes `EPUBCHECK_INVALID_RESPONSE` (502).
+- **Mocked EPUBCheck responses do not validate the source fixture**: route fixtures need OPF
+  `dcterms:modified`, XHTML `head/title`, and valid image bytes; the live-runner smoke exposed all three.
 
 - Capability fixture ZIP generation shares `packages/reader-core/src/__tests__/fixtures/zip-builder.mjs` with the pre-existing generator; generated archives are ignored binaries and the package test scripts must generate them before Vitest reads them.
 

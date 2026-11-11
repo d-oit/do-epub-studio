@@ -73,3 +73,21 @@ The original feature section recorded intended behavior, not verified implementa
 ### Status
 
 Architecture resolved; follow-up implementation and verification pending. Full IFR/separation rationale and secondary-contradiction check: `analysis/triz-resolution-2026-11-08.md`.
+
+## GOAP-1432 — EPUB Annotation Re-export
+
+### Component contracts
+
+- **Export contract:** `ExportQuerySchema` accepts `markdown`, `html`, and `epub`; Markdown remains the default. Markdown/HTML JSON responses stay unchanged. EPUB is a bounded `application/epub+zip` attachment with a static safe filename.
+- **Package transformation:** A reader-core helper preserves original chapter/resource bytes and package metadata values; adds one escaped XHTML appendix, OPF manifest/spine references, and EPUB 3 TOC navigation (or EPUB 2 NCX navigation). It performs no network access.
+- **Locator handling:** A link is generated only from a normalized exact manifest/spine target and a supported CFI that agrees with that target. Stale-revision, orphaned, needs-review, malformed, missing, or ambiguous locations remain visibly unresolved with available chapter/quote context.
+- **Bounds:** Source compressed ≤8 MiB, source expanded ≤16 MiB, generated compressed ≤10 MiB, generated expanded ≤24 MiB, ≤2,000 entries, ≤500 annotations, and ≤1 MiB aggregate annotation text. Reject rather than truncate. ZIP output is bounded during generation.
+- **Worker validation:** Reuse reader authentication, `assertBookAccess`, global rate limiting, and user-scoped annotation queries. Select the latest `book_files` revision as the reader does; verify R2 size against D1; run strict archive checks and the existing token-authenticated EPUBCheck runner synchronously. Missing runner, unsafe archive, runner/schema/SHA mismatch, or EPUBCheck error never returns success.
+- **Reader UI:** Add a localized accessible format selector. Keep the existing local Markdown path. HTML/EPUB use the authenticated export route; EPUB Annotations JSON interchange remains separate.
+- **Verification:** Package tests cover source fidelity, navigation/locators, unresolved records, escaping, malformed packages, and caps. Worker tests cover formats, permissions, R2 and validator failures. Integration loads generated output with the production reader and validates the exact bytes with EPUBCheck.
+
+### TRIZ resolution
+
+`analysis/triz-core-1432.md` identifies the fidelity/memory, locator/safety, validator availability, and offline/API contradictions. `analysis/triz-resolution-1432.md` resolves them through explicit caps, additive packaging, verified internal navigation with unresolved fallback, fail-closed synchronous validation, and separate local/server paths. See `plans/1432-adr-epub-annotation-reexport.md` for accepted limits and tradeoffs.
+
+**Status:** Architecture resolved; implementation and verification in progress.
