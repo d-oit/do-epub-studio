@@ -13,8 +13,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends openjdk-21-jre-
   && rm -rf /tmp/epubcheck.zip "/opt/epubcheck/epubcheck-${EPUBCHECK_VERSION}"
 WORKDIR /service/apps/epubcheck-runner
 COPY apps/epubcheck-runner/package.json ./package.json
-RUN npm install --omit=dev --no-audit --no-fund
-COPY packages/shared ./packages/shared
+RUN npm install --omit=dev --no-audit --no-fund \
+  && npm install --no-save --no-package-lock --no-audit --no-fund fflate@^0.8.3
+COPY packages/shared/package.json /service/packages/shared/package.json
+COPY packages/shared/src /service/packages/shared/src
+RUN mkdir -p /service/packages/shared/node_modules \
+  && ln -s /service/apps/epubcheck-runner/node_modules/fflate /service/packages/shared/node_modules/fflate
 COPY apps/epubcheck-runner/src ./src
 EXPOSE 8080
 USER node

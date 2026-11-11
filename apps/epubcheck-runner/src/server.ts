@@ -175,7 +175,7 @@ async function executeEpubcheck(
   const reportPath = join(workDir, 'epubcheck-report.json');
   const child = spawn(
     'java',
-    ['-Xmx512m', '-jar', '/opt/epubcheck/epubcheck.jar', '-j', '-o', reportPath, inputPath],
+    ['-Xmx512m', '-jar', '/opt/epubcheck/epubcheck.jar', '-j', reportPath, inputPath],
     {
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -269,7 +269,7 @@ async function validate(
         certification: 'not-certified',
       },
       safetyStatus: 'accepted',
-      conformanceStatus: result.code === 0 ? 'completed' : 'completed',
+      conformanceStatus: result.code === 0 ? 'completed' : 'failed',
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : 'runner_failure';

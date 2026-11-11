@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { Rendition } from '@intity/epub-js';
+import type { Contents, Rendition } from '@intity/epub-js';
 import type { MutableRefObject, RefObject } from 'react';
 import type { PageDirection, ReaderZoom } from '../../../stores';
 import type { EpubRenditionInternals } from '../lib/epub-internals';
@@ -36,6 +36,72 @@ interface EpubRenditionOptions {
   zoomRef: MutableRefObject<ReaderZoom>;
   progressFlushRef: MutableRefObject<(() => Promise<void>) | null>;
   t: TranslationFunction;
+}
+
+function registerIntraPublicationCfiLinks(rendition: Rendition): void {
+  rendition.hooks.content.register((contents: Contents) => {
+    const contentDocument = contents.document;
+    if (!contentDocument) return;
+
+    const handleClick = (event: MouseEvent): void => {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+      const target = event.target as Element | null;
+      if (!target || typeof target.closest !== 'function') return;
+      const link = target.closest('a[href]');
+      if (!link || link.hasAttribute('download')) return;
+      const targetWindow = link.getAttribute('target');
+      if (targetWindow && targetWindow !== '_self') return;
+
+      const href = link.getAttribute('href');
+      const hashIndex = href?.indexOf('#') ?? -1;
+      if (href === null || hashIndex <= 0) return;
+      const resource = href.slice(0, hashIndex);
+      const slashIndex = resource.indexOf('/');
+      const colonIndex = resource.indexOf(':');
+      if (
+        resource.startsWith('/') ||
+        resource.startsWith('\\') ||
+        resource.includes('\\') ||
+        resource.includes('?') ||
+        (colonIndex >= 0 && (slashIndex < 0 || colonIndex < slashIndex))
+      ) {
+        return;
+      }
+
+      let cfi: string;
+      try {
+        cfi = decodeURIComponent(href.slice(hashIndex + 1));
+      } catch {
+        return;
+      }
+      if (cfi.length > 2048 || !cfi.startsWith('epubcfi(') || !cfi.endsWith(')')) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void rendition.display(cfi).catch((caught: unknown) => {
+        const error = caught instanceof Error ? caught : new Error(String(caught));
+        logClientEvent({
+          level: 'warn',
+          event: 'reader.cfi_link_navigation_failed',
+          traceId: createTraceId(),
+          spanId: createSpanId(),
+          error: { name: error.name, message: error.message },
+          metadata: { cfiLength: cfi.length },
+        });
+      });
+    };
+
+    contentDocument.addEventListener('click', handleClick, true);
+  });
 }
 
 export function useEpubRendition({
@@ -101,6 +167,7 @@ export function useEpubRendition({
         fixedLayoutViewport: presentation.fixedLayoutViewport,
         zoomRef,
       });
+      registerIntraPublicationCfiLinks(createdRendition);
       renditionRef.current = createdRendition;
       createdAdapter = createEpubAnnotationAdapter(createdRendition);
       adapterRef.current = createdAdapter;

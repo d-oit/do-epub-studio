@@ -182,11 +182,24 @@ describe('ReaderToolbar', () => {
     expect(mockProps.onToggleInfo).toHaveBeenCalled();
   });
 
-  it('shows export notes button', () => {
+  it('opens format choices and keeps Markdown export local', () => {
     render(<ReaderToolbar {...mockProps} />);
-    const exportButton = screen.getByLabelText('Export Notes');
-    exportButton.click();
-    expect(mockProps.onExportNotes).toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText('Export Notes'));
+
+    expect(screen.getByRole('dialog', { name: 'reader.exportDialogTitle' })).toBeInTheDocument();
+    expect(mockProps.onExportNotes).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'reader.exportMarkdown' }));
+    expect(mockProps.onExportNotes).toHaveBeenCalledOnce();
+  });
+
+  it('keeps Markdown export available while disabling online formats offline', () => {
+    act(() => useReaderStore.setState({ isOffline: true }));
+    render(<ReaderToolbar {...mockProps} />);
+    fireEvent.click(screen.getByLabelText('Export Notes'));
+
+    expect(screen.getByRole('button', { name: 'reader.exportMarkdown' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'reader.exportHtml' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'reader.exportEpub' })).toBeDisabled();
   });
 
   it('shows settings button', () => {
@@ -418,13 +431,12 @@ describe('ReaderToolbar', () => {
     expect(mockProps.onToggleInfo).toHaveBeenCalled();
   });
 
-  it('clicks export notes in mobile menu', () => {
+  it('opens the export format dialog from the mobile menu', () => {
     render(<ReaderToolbar {...mockProps} />);
-    const menuButton = screen.getByLabelText('More Options');
-    fireEvent.click(menuButton);
-    const exportBtn = screen.getByText('Export Notes').closest('button') as HTMLElement;
-    fireEvent.click(exportBtn);
-    expect(mockProps.onExportNotes).toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText('More Options'));
+    fireEvent.click(screen.getByText('Export Notes').closest('button') as HTMLElement);
+    expect(screen.getByRole('dialog', { name: 'reader.exportDialogTitle' })).toBeInTheDocument();
+    expect(mockProps.onExportNotes).not.toHaveBeenCalled();
   });
 
   it('clicks settings in mobile menu', () => {

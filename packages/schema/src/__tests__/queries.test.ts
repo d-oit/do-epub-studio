@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   SearchQuerySchema,
   ExportQuerySchema,
+  ExportTextResponseSchema,
+  ExportEpubResponseSchema,
   NotificationsQuerySchema,
   AdminInsightsQuerySchema,
   AuditQuerySchema,
@@ -96,12 +98,38 @@ describe('ExportQuerySchema', () => {
     expect(result.format).toBe('html');
   });
 
+  it('accepts epub format', () => {
+    const result = ExportQuerySchema.parse({ format: 'epub' });
+    expect(result.format).toBe('epub');
+  });
+
   it('rejects invalid format', () => {
     expect(() => ExportQuerySchema.parse({ format: 'pdf' })).toThrow();
   });
 
   it('rejects uppercase format (HTML)', () => {
     expect(() => ExportQuerySchema.parse({ format: 'HTML' })).toThrow();
+  });
+});
+
+describe('Export response contracts', () => {
+  it('accepts the unchanged HTML JSON response', () => {
+    expect(
+      ExportTextResponseSchema.parse({
+        ok: true,
+        data: { format: 'html', title: 'Book', content: '<!doctype html>' },
+      }).data.format,
+    ).toBe('html');
+  });
+
+  it('describes the binary EPUB attachment metadata', () => {
+    expect(
+      ExportEpubResponseSchema.parse({
+        format: 'epub',
+        contentType: 'application/epub+zip',
+        filename: 'annotations.epub',
+      }).contentType,
+    ).toBe('application/epub+zip');
   });
 });
 

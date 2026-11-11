@@ -54,11 +54,34 @@ export const SearchQuerySchema = z.object({
 
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
 
+export const ExportFormatSchema = z.enum(['markdown', 'html', 'epub']);
+export type ExportFormat = z.infer<typeof ExportFormatSchema>;
+
 export const ExportQuerySchema = z.object({
-  format: z.enum(['markdown', 'html']).default('markdown'),
+  format: ExportFormatSchema.default('markdown'),
 });
 
 export type ExportQuery = z.infer<typeof ExportQuerySchema>;
+
+export const ExportTextResponseSchema = z.object({
+  ok: z.literal(true),
+  data: z.object({
+    format: z.enum(['markdown', 'html']),
+    title: z.string(),
+    content: z.string(),
+  }),
+});
+export type ExportTextResponse = z.infer<typeof ExportTextResponseSchema>;
+
+export const ExportEpubResponseSchema = z.object({
+  format: z.literal('epub'),
+  contentType: z.literal('application/epub+zip'),
+  filename: z.literal('annotations.epub'),
+});
+export type ExportEpubResponse = z.infer<typeof ExportEpubResponseSchema>;
+
+/** Text responses are JSON; EPUB responses use the metadata above with a binary HTTP body. */
+export type ExportResponse = ExportTextResponse | ExportEpubResponse;
 
 export const NotificationsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),

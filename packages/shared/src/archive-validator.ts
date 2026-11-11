@@ -15,21 +15,48 @@ export class ArchiveValidationError extends Error {
   }
 }
 
-export async function validateArchive(
-  data: Uint8Array,
-  options?: { timeoutMs?: number; traceId?: string },
-): Promise<void> {
-  await withTimeout((signal) => validateArchiveInner(data, signal), {
-    timeoutMs: options?.timeoutMs ?? ARCHIVE_VALIDATION_TIMEOUT_MS,
-    operation: 'archive-validation',
-    traceId: options?.traceId ?? createTraceId(),
-  });
+export interface ArchiveValidationOptions {
+  timeoutMs?: number;
+  traceId?: string;
+  maxCompressedSize?: number;
+  maxUncompressedSize?: number;
+  maxEntryCount?: number;
+  maxCompressionRatio?: number;
 }
 
-function validateArchiveInner(data: Uint8Array, signal: AbortSignal): Promise<void> {
-  if (data.byteLength > MAX_COMPRESSED_SIZE) {
+export async function validateArchive(
+  data: Uint8Array,
+  options?: ArchiveValidationOptions,
+): Promise<void> {
+  await withTimeout(
+    (signal) =>
+      validateArchiveInner(
+        data,
+        signal,
+        options?.maxCompressedSize ?? MAX_COMPRESSED_SIZE,
+        options?.maxUncompressedSize ?? MAX_UNCOMPRESSED_SIZE,
+        options?.maxEntryCount ?? MAX_ENTRY_COUNT,
+        options?.maxCompressionRatio ?? MAX_COMPRESSION_RATIO,
+      ),
+    {
+      timeoutMs: options?.timeoutMs ?? ARCHIVE_VALIDATION_TIMEOUT_MS,
+      operation: 'archive-validation',
+      traceId: options?.traceId ?? createTraceId(),
+    },
+  );
+}
+
+function validateArchiveInner(
+  data: Uint8Array,
+  signal: AbortSignal,
+  maxCompressedSize: number,
+  maxUncompressedSize: number,
+  maxEntryCount: number,
+  maxCompressionRatio: number,
+): Promise<void> {
+  if (data.byteLength > maxCompressedSize) {
     throw new ArchiveValidationError(
-      `Archive exceeds maximum compressed size of ${MAX_COMPRESSED_SIZE} bytes`,
+      `Archive exceeds maximum compressed size of ${maxCompressedSize} bytes`,
     );
   }
 
@@ -46,10 +73,10 @@ function validateArchiveInner(data: Uint8Array, signal: AbortSignal): Promise<vo
         return;
       }
       entryCount += 1;
-      if (entryCount > MAX_ENTRY_COUNT) {
+      if (entryCount > maxEntryCount) {
         finished = true;
         reject(
-          new ArchiveValidationError(`Archive contains too many entries (max: ${MAX_ENTRY_COUNT})`),
+          new ArchiveValidationError(`Archive contains too many entries (max: ${maxEntryCount})`),
         );
         return;
       }
@@ -63,7 +90,7 @@ function validateArchiveInner(data: Uint8Array, signal: AbortSignal): Promise<vo
       const compressed = file.size;
       if (uncompressed !== undefined && compressed !== undefined && compressed > 0) {
         const ratio = uncompressed / compressed;
-        if (ratio > MAX_COMPRESSION_RATIO) {
+        if (ratio > maxCompressionRatio) {
           finished = true;
           reject(
             new ArchiveValidationError(
@@ -75,11 +102,11 @@ function validateArchiveInner(data: Uint8Array, signal: AbortSignal): Promise<vo
       }
       if (uncompressed !== undefined) {
         totalUncompressedSize += uncompressed;
-        if (totalUncompressedSize > MAX_UNCOMPRESSED_SIZE) {
+        if (totalUncompressedSize > maxUncompressedSize) {
           finished = true;
           reject(
             new ArchiveValidationError(
-              `Total uncompressed size exceeds limit of ${MAX_UNCOMPRESSED_SIZE} bytes`,
+              `Total uncompressed size exceeds limit of ${maxUncompressedSize} bytes`,
             ),
           );
         }

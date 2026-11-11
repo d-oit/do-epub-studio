@@ -5,6 +5,7 @@ import { packageEpub3, type PackagedAsset, type PackagerOptions } from '../packa
 import { sanitizeAuthorStylesheet } from '../author-styles';
 import { readZipEntries } from './fixtures/epub-helpers';
 import { validateArchive } from '../archive-validator';
+import { buildZip } from '../packager/zip';
 
 const IMAGE_ID = '11111111-1111-4111-8111-111111111111';
 const STYLESHEET_ID = '22222222-2222-4222-8222-222222222222';
@@ -86,6 +87,22 @@ describe('EPUB 3 Packager', () => {
       modifiedAt: '2026-11-06T12:00:00Z',
     });
     expect(changedTimestamp.equals(first)).toBe(false);
+  });
+
+  it('rejects ZIP generation as soon as the output byte cap is exceeded', async () => {
+    await expect(
+      buildZip(
+        [
+          {
+            name: 'mimetype',
+            data: new TextEncoder().encode('application/epub+zip'),
+            store: true,
+          },
+          { name: 'payload.bin', data: new Uint8Array(1024), store: true },
+        ],
+        { maxOutputBytes: 128 },
+      ),
+    ).rejects.toThrow('ZIP output exceeds maximum size of 128 bytes');
   });
 
   it('packages complete metadata, cover, stylesheets, ordered spine and navigation', async () => {

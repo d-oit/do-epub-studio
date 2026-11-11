@@ -35,4 +35,18 @@ describe('shared archive safety boundary', () => {
     );
     await expect(validateArchive(zipSync(entries))).rejects.toThrow('too many entries');
   });
+
+  it('honors caller-supplied compressed, expanded, entry-count, and ratio limits', async () => {
+    const bytes = zipSync({ chapter: strToU8('publication text') });
+    await expect(
+      validateArchive(bytes, { maxCompressedSize: bytes.byteLength - 1 }),
+    ).rejects.toThrow('maximum compressed size');
+    await expect(validateArchive(bytes, { maxUncompressedSize: 1 })).rejects.toThrow(
+      'Total uncompressed size exceeds limit',
+    );
+    await expect(validateArchive(bytes, { maxEntryCount: 0 })).rejects.toThrow('too many entries');
+    await expect(validateArchive(bytes, { maxCompressionRatio: 0 })).rejects.toThrow(
+      'Compression ratio too high',
+    );
+  });
 });

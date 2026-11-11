@@ -11,6 +11,8 @@ import type { TranslationKeys } from '../../../../i18n';
 import type { ReaderPanel } from '../../hooks/useReaderUi';
 import type { TocItem } from '../../lib/epub-init';
 import { NotificationBadge } from '../notifications/NotificationBadge';
+import { ExportFormatDialog, type ReaderExportFormat } from './ExportFormatDialog';
+import { useExportOnlineFile } from '../../hooks/useExportOnlineFile';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;
@@ -321,6 +323,20 @@ export function ReaderToolbar({
     isHeaderVisible,
     chapterProgressLabel,
   } = useReaderToolbarState(comments, toc, currentChapter, t);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const { isExporting, hasError, clearError, downloadOnlineExport } = useExportOnlineFile();
+  const openExportDialog = () => {
+    clearError();
+    setIsExportDialogOpen(true);
+  };
+  const handleExportFormat = async (format: ReaderExportFormat) => {
+    if (format === 'markdown') {
+      onExportNotes();
+      setIsExportDialogOpen(false);
+      return;
+    }
+    if (await downloadOnlineExport(format)) setIsExportDialogOpen(false);
+  };
 
   const sharedActionProps = {
     capabilities,
@@ -332,7 +348,7 @@ export function ReaderToolbar({
     onToggleBookmarks,
     onToggleInfo,
     onToggleFixedLayoutControls,
-    onExportNotes,
+    onExportNotes: openExportDialog,
     onToggleSettings,
     onLogout,
     onToggleNotifications,
@@ -340,55 +356,68 @@ export function ReaderToolbar({
   };
 
   return (
-    <Header
-      sticky
-      aria-hidden={isHeaderVisible ? undefined : true}
-      inert={isHeaderVisible ? undefined : true}
-      data-container-name="reader-toolbar" /* eslint-disable-line i18next/no-literal-string -- internal container identifier */
-      className={`cq cq--reader-toolbar transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14">
-          <ToolbarLeft
-            bookTitle={bookTitle}
-            progressPercent={progressPercent}
-            isOffline={isOffline}
-            pendingSyncCount={pendingSyncCount}
-            chapterProgressLabel={chapterProgressLabel}
-            onToggleToc={onToggleToc}
-            activePanel={activePanel}
-            t={t}
-          />
-          <ToolbarActions activePanel={activePanel} {...sharedActionProps} />
-          <OverflowMenu
-            isMenuOpen={isMenuOpen}
-            menuRef={menuRef}
-            onToggleMenu={() => {
-              const opening = !isMenuOpen;
-              setIsMenuOpen((v) => !v);
-              if (opening) {
-                requestAnimationFrame(() => {
-                  // eslint-disable-next-line i18next/no-literal-string -- ARIA role selector, not user-visible text
-                  const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
-                  first?.focus();
-                });
-              }
-            }}
-            {...sharedActionProps}
+    <>
+      <Header
+        sticky
+        aria-hidden={isHeaderVisible ? undefined : true}
+        inert={isHeaderVisible ? undefined : true}
+        data-container-name="reader-toolbar" /* eslint-disable-line i18next/no-literal-string -- internal container identifier */
+        className={`cq cq--reader-toolbar transition-transform duration-300 ${isHeaderVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14">
+            <ToolbarLeft
+              bookTitle={bookTitle}
+              progressPercent={progressPercent}
+              isOffline={isOffline}
+              pendingSyncCount={pendingSyncCount}
+              chapterProgressLabel={chapterProgressLabel}
+              onToggleToc={onToggleToc}
+              activePanel={activePanel}
+              t={t}
+            />
+            <ToolbarActions activePanel={activePanel} {...sharedActionProps} />
+            <OverflowMenu
+              isMenuOpen={isMenuOpen}
+              menuRef={menuRef}
+              onToggleMenu={() => {
+                const opening = !isMenuOpen;
+                setIsMenuOpen((v) => !v);
+                if (opening) {
+                  requestAnimationFrame(() => {
+                    // eslint-disable-next-line i18next/no-literal-string -- ARIA role selector, not user-visible text
+                    const first = menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]');
+                    first?.focus();
+                  });
+                }
+              }}
+              {...sharedActionProps}
+            />
+          </div>
+        </div>
+        <div className="h-1 w-full bg-muted">
+          <div
+            className="h-full bg-accent transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+            role="progressbar"
+            aria-label={t('a11y.reading_progress')}
+            aria-valuenow={Math.round(progressPercent)}
+            aria-valuemin={0}
+            aria-valuemax={100}
           />
         </div>
-      </div>
-      <div className="h-1 w-full bg-muted">
-        <div
-          className="h-full bg-accent transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
-          role="progressbar"
-          aria-label={t('a11y.reading_progress')}
-          aria-valuenow={Math.round(progressPercent)}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        />
-      </div>
-    </Header>
+      </Header>
+      <ExportFormatDialog
+        isOpen={isExportDialogOpen}
+        isOffline={isOffline}
+        isExporting={isExporting}
+        hasError={hasError}
+        onClose={() => setIsExportDialogOpen(false)}
+        onSelect={(format) => {
+          void handleExportFormat(format);
+        }}
+        t={t}
+      />
+    </>
   );
 }

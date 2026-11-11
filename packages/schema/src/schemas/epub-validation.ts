@@ -44,6 +44,7 @@ export const EpubRunnerResultSchema = z.object({
             'tables',
             'landmarks',
             'media',
+            'reader-ui',
           ]),
           message: z.string().max(300),
           source: z.enum(['machine-metadata', 'machine-advisory', 'manual-review', 'reader-ui']),

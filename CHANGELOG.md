@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(export): add bounded EPUB annotation re-export with navigable source links and fail-closed archive-safety and EPUBCheck validation; Markdown/HTML downloads and JSON interchange remain separate.
 - fix(auth): surface a demo-login refusal instead of retrying it through the credential endpoints. The reader and admin demo logins fell back to `/api/access/request` / `/api/admin/login` for every failure, so a `429 TOO_MANY_REQUESTS` doubled the throttled attempts; the fallback is now limited to transport failures (including the client's own request timeout) and unparseable SPA responses.
 - fix(reader): re-apply the rendition theme when a typography preference changes; the engine treats selecting the already-current theme as a no-op, so font size, line height and family changes never reached the open chapter.
 - fix(security): allow inline `<style>` on the Pages `style-src` so the EPUB engine can style reader content (font size, line height, family, theme colours, image constraints); `script-src` stays strict and the Worker CSP is unchanged. See ADR-1018.
