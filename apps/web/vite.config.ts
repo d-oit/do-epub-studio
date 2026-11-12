@@ -270,6 +270,13 @@ export default defineConfig({
           if (id.includes('features/reader')) {
             return 'reader-route';
           }
+          if (
+            id.includes('features/admin/components/RevisionValidationModal') ||
+            id.includes('features/admin/components/Validation') ||
+            id.includes('features/admin/components/FindingsGroupList')
+          ) {
+            return 'admin-validation';
+          }
           if (id.includes('features/admin')) {
             return 'admin-route';
           }

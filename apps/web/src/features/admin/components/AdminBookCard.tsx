@@ -9,6 +9,7 @@ interface AdminBookCardProps {
   onArchive: (book: BookResponse) => void;
   onManageAccess: (book: BookResponse) => void;
   onAuthor?: (book: BookResponse) => void;
+  onViewValidation?: (book: BookResponse) => void;
   isArchiving: boolean;
   t: TFunction;
 }
@@ -20,6 +21,7 @@ export function AdminBookCard({
   onArchive,
   onManageAccess,
   onAuthor,
+  onViewValidation,
   isArchiving,
   t,
 }: AdminBookCardProps) {
@@ -58,6 +60,15 @@ export function AdminBookCard({
           >
             {t('admin.books.uploadRevision')}
           </button>
+          {onViewValidation && (
+            <button
+              type="button"
+              onClick={() => onViewValidation(book)}
+              className="touch-target inline-flex items-center text-xs font-medium text-foreground-muted hover:text-foreground"
+            >
+              {t('admin.books.validationAction')}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onArchive(book)}
