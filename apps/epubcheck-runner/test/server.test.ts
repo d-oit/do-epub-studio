@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import { zipSync, strToU8 } from 'fflate';
 import {
   parseFindings,
+  parseJsonReport,
+  normalizeFindingPath,
   metadataFromOpf,
   validateRootfilePath,
   extractRootfilePath,
@@ -28,10 +30,21 @@ describe('epubcheck runner helper functions', () => {
     assert.equal(findings.length, 3);
     assert.equal(findings[0]?.severity, 'error');
     assert.equal(findings[0]?.code, 'RSC-005');
+    assert.equal(findings[0]?.path, 'OEBPS/ch1.xhtml');
+    assert.equal(findings[0]?.location, '10:5');
+    assert.equal(findings[0]?.message, 'Error message here');
+
     assert.equal(findings[1]?.severity, 'warning');
     assert.equal(findings[1]?.code, 'ACC-001');
+    assert.equal(findings[1]?.path, 'OEBPS/ch1.xhtml');
+    assert.equal(findings[1]?.location, null);
+    assert.equal(findings[1]?.message, 'Warning message');
+
     assert.equal(findings[2]?.severity, 'info');
     assert.equal(findings[2]?.code, 'HTM-001');
+    assert.equal(findings[2]?.path, null);
+    assert.equal(findings[2]?.location, null);
+    assert.equal(findings[2]?.message, 'Info message');
   });
 
   it('extracts accessibility metadata from OPF content', () => {
@@ -279,5 +292,98 @@ describe('epubcheck runner helper functions', () => {
     const parsedWithout = EpubRunnerResultSchema.parse(withoutMetadata);
     assert.equal(parsedWithout.epubVersion, null);
     assert.equal(parsedWithout.accessibility.metadata.length, 0);
+  });
+  it('parses findings from structured EPUBCheck JSON report', () => {
+    const sampleJson = JSON.stringify({
+      messages: [
+        {
+          id: 'RSC-005',
+          severity: 'ERROR',
+          message: 'Error in chapter',
+          locations: [
+            {
+              path: '/service/tmp/epubcheck-1234/input.epub/OEBPS/ch1.xhtml',
+              line: 42,
+              column: 17,
+            },
+          ],
+        },
+        {
+          id: 'CSS-001',
+          severity: 'WARNING',
+          message: 'Unknown CSS property',
+          locations: [
+            {
+              path: 'OEBPS/styles/style.css',
+              line: 88,
+              column: -1,
+            },
+          ],
+        },
+        {
+          id: 'OPF-015',
+          severity: 'ERROR',
+          message: 'Invalid OPF declaration',
+          locations: [
+            {
+              path: 'OEBPS/content.opf',
+              line: -1,
+              column: -1,
+            },
+          ],
+        },
+        {
+          id: 'PKG-004',
+          severity: 'FATAL',
+          message: 'Corrupted package header',
+          locations: [
+            {
+              path: 'input.epub',
+              line: 0,
+              column: 0,
+            },
+          ],
+        },
+      ],
+    });
+
+    const findings = parseJsonReport(sampleJson);
+    assert.equal(findings.length, 4);
+
+    assert.equal(findings[0]?.severity, 'error');
+    assert.equal(findings[0]?.code, 'RSC-005');
+    assert.equal(findings[0]?.path, 'OEBPS/ch1.xhtml');
+    assert.equal(findings[0]?.location, '42:17');
+    assert.equal(findings[0]?.message, 'Error in chapter');
+
+    assert.equal(findings[1]?.severity, 'warning');
+    assert.equal(findings[1]?.code, 'CSS-001');
+    assert.equal(findings[1]?.path, 'OEBPS/styles/style.css');
+    assert.equal(findings[1]?.location, 'line 88');
+
+    assert.equal(findings[2]?.severity, 'error');
+    assert.equal(findings[2]?.code, 'OPF-015');
+    assert.equal(findings[2]?.path, 'OEBPS/content.opf');
+    assert.equal(findings[2]?.location, null);
+
+    assert.equal(findings[3]?.severity, 'error');
+    assert.equal(findings[3]?.code, 'PKG-004');
+    assert.equal(findings[3]?.path, null);
+    assert.equal(findings[3]?.location, null);
+  });
+
+  it('normalizes finding paths and strips runner temporary prefixes', () => {
+    assert.equal(
+      normalizeFindingPath('/tmp/epubcheck-123/book.epub/OEBPS/nav.xhtml'),
+      'OEBPS/nav.xhtml',
+    );
+    assert.equal(
+      normalizeFindingPath('file:/tmp/runner/book.epub!/EPUB/package.opf'),
+      'EPUB/package.opf',
+    );
+    assert.equal(normalizeFindingPath('OEBPS\\chapter.xhtml'), 'OEBPS/chapter.xhtml');
+    assert.equal(normalizeFindingPath('book.epub'), null);
+    assert.equal(normalizeFindingPath('/tmp/runner/input.epub'), null);
+    assert.equal(normalizeFindingPath(null), null);
   });
 });
