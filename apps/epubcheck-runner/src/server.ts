@@ -5,14 +5,28 @@ import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validateArchive } from '../../../packages/shared/src/archive-validator';
+import { unzipSync, strFromU8 } from 'fflate';
 
 const PORT = Number(process.env.PORT ?? 8080);
 const MAX_INPUT_BYTES = 100 * 1024 * 1024;
 const MAX_OUTPUT_BYTES = 64 * 1024;
 const MAX_REPORT_BYTES = 256 * 1024;
+const MAX_CONTAINER_BYTES = 64 * 1024;
+const MAX_OPF_BYTES = 2 * 1024 * 1024;
 const MAX_RUNTIME_MS = 120_000;
 const VERSION = '5.4.0';
 const TOKEN = process.env.EPUBCHECK_RUNNER_TOKEN ?? '';
+
+export class EpubExtractionError extends Error {
+  constructor(
+    readonly code:
+      'INVALID_PACKAGE_PATH' | 'CONTAINER_TOO_LARGE' | 'OPF_TOO_LARGE' | 'CORRUPT_ARCHIVE',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'EpubExtractionError';
+  }
+}
 
 interface Finding {
   severity: 'error' | 'warning' | 'info';
@@ -98,74 +112,221 @@ function decodeXml(str: string): string {
   return str.replace(/&(?:lt|gt|quot|apos|amp);/g, (entity) => XML_ENTITIES[entity] ?? entity);
 }
 
+const TARGET_PROPERTIES_SET = new Set([
+  'dc:language',
+  'schema:accessMode',
+  'schema:accessModeSufficient',
+  'schema:accessibilityFeature',
+  'schema:accessibilityHazard',
+  'schema:accessibilitySummary',
+  'schema:accessibilityControl',
+  'schema:accessibilityAPI',
+  'dcterms:conformsTo',
+  'a11y:certifiedBy',
+  'a11y:certifierCredential',
+  'a11y:certifierReport',
+]);
+
+const META_TAG_REGEX = /<meta\b([^>]*?)(?:>([^<]*)<\/meta>|\/?>)/gi;
+const DC_LANG_REGEX = /<dc:language\b[^>]*>([^<]*)<\/dc:language>/gi;
+const LEGACY_ELEM_REGEX = /<(schema:[a-zA-Z]+)\b[^>]*>([^<]*)<\/\1>/gi;
+const PROP_REGEX = /\b(?:property|name)\s*=\s*["']([^"']+)["']/i;
+const CONTENT_REGEX = /\bcontent\s*=\s*["']([^"']*)["']/i;
+
+function validateRootfilePath(rawPath: string): string {
+  const trimmed = rawPath.trim();
+  if (!trimmed)
+    throw new EpubExtractionError('INVALID_PACKAGE_PATH', 'Rootfile path cannot be empty');
+  if (
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('\\') ||
+    /^[a-zA-Z]:/.test(trimmed) ||
+    trimmed.includes('\\')
+  ) {
+    throw new EpubExtractionError(
+      'INVALID_PACKAGE_PATH',
+      'Rootfile path must be relative and cannot contain backslashes',
+    );
+  }
+  const segments = trimmed.split('/');
+  for (const seg of segments) {
+    if (seg === '..' || seg === '.' || !seg) {
+      throw new EpubExtractionError(
+        'INVALID_PACKAGE_PATH',
+        'Rootfile path contains invalid segments',
+      );
+    }
+  }
+  return segments.join('/');
+}
+
+function extractRootfilePath(containerXml: string): string | null {
+  const rootfileMatches = containerXml.matchAll(/<rootfile\b([^>]*)\/?>/gi);
+  let fallback: string | null = null;
+  for (const match of rootfileMatches) {
+    const attrs = match[1] ?? '';
+    const fullPathMatch = attrs.match(/\bfull-path\s*=\s*["']([^"']+)["']/i);
+    const mediaTypeMatch = attrs.match(/\bmedia-type\s*=\s*["']([^"']+)["']/i);
+    if (fullPathMatch) {
+      const path = fullPathMatch[1];
+      if (mediaTypeMatch && mediaTypeMatch[1]?.toLowerCase() === 'application/oebps-package+xml') {
+        return path;
+      }
+      if (!fallback) fallback = path;
+    }
+  }
+  return fallback;
+}
+
+function extractOpfFromZip(bytes: Uint8Array): {
+  opf: string | null;
+  opfPath: string | null;
+} {
+  let unzippedContainer: Record<string, Uint8Array>;
+  try {
+    unzippedContainer = unzipSync(bytes, {
+      filter: (file) => file.name === 'META-INF/container.xml',
+    });
+  } catch {
+    throw new EpubExtractionError('CORRUPT_ARCHIVE', 'Failed to read container.xml from archive');
+  }
+
+  const containerBytes = unzippedContainer['META-INF/container.xml'];
+  if (!containerBytes) return { opf: null, opfPath: null };
+  if (containerBytes.byteLength > MAX_CONTAINER_BYTES) {
+    throw new EpubExtractionError(
+      'CONTAINER_TOO_LARGE',
+      'META-INF/container.xml exceeds size limit',
+    );
+  }
+
+  const containerXml = strFromU8(containerBytes);
+  const rawRootfilePath = extractRootfilePath(containerXml);
+  if (!rawRootfilePath) return { opf: null, opfPath: null };
+
+  const normalizedOpfPath = validateRootfilePath(rawRootfilePath);
+
+  let unzippedOpf: Record<string, Uint8Array>;
+  try {
+    unzippedOpf = unzipSync(bytes, {
+      filter: (file) => {
+        if (file.name === normalizedOpfPath) {
+          if (file.originalSize && file.originalSize > MAX_OPF_BYTES) {
+            throw new EpubExtractionError('OPF_TOO_LARGE', 'Package document exceeds size limit');
+          }
+          return true;
+        }
+        return false;
+      },
+    });
+  } catch (error) {
+    if (error instanceof EpubExtractionError) throw error;
+    throw new EpubExtractionError(
+      'CORRUPT_ARCHIVE',
+      'Failed to extract package document from archive',
+    );
+  }
+
+  const opfBytes = unzippedOpf[normalizedOpfPath];
+  if (!opfBytes) return { opf: null, opfPath: normalizedOpfPath };
+  if (opfBytes.byteLength > MAX_OPF_BYTES) {
+    throw new EpubExtractionError('OPF_TOO_LARGE', 'Package document exceeds size limit');
+  }
+
+  return { opf: strFromU8(opfBytes), opfPath: normalizedOpfPath };
+}
+
+function extractEpubVersion(opf: string): string | null {
+  const packageMatch = opf.match(/<package\b([^>]*)>/i);
+  if (!packageMatch) return null;
+  const attrs = packageMatch[1] ?? '';
+  const versionMatch = attrs.match(/\bversion\s*=\s*["']([^"']+)["']/i);
+  if (!versionMatch) return null;
+  const version = versionMatch[1]?.trim();
+  return version ? version.slice(0, 10) : null;
+}
+
 function metadataFromOpf(opf: string): Array<{ key: string; value: string; provenance: 'opf' }> {
+  if (!opf || opf.length > MAX_OPF_BYTES) return [];
   const metadata: Array<{ key: string; value: string; provenance: 'opf' }> = [];
-  for (const key of [
-    'dc:language',
-    'schema:accessMode',
-    'schema:accessModeSufficient',
-    'schema:accessibilityFeature',
-    'schema:accessibilityHazard',
-    'schema:accessibilitySummary',
-  ]) {
-    const open = `<${key}`;
-    const begin = opf.indexOf(open);
-    if (begin < 0) continue;
-    const content = opf.indexOf('>', begin);
-    const end = content < 0 ? -1 : opf.indexOf(`</${key}>`, content + 1);
-    if (content < 0 || end < 0) continue;
-    const value = decodeXml(opf.slice(content + 1, end))
-      .trim()
-      .slice(0, 300);
+  const seen = new Set<string>();
+
+  function add(key: string, rawVal: string) {
+    if (metadata.length >= 100) return;
+    const value = decodeXml(rawVal).trim().slice(0, 500);
+    if (!value) return;
+    const dedupeKey = `${key}:::${value}`;
+    if (seen.has(dedupeKey)) return;
+    seen.add(dedupeKey);
     metadata.push({ key, value, provenance: 'opf' });
+  }
+
+  for (const match of opf.matchAll(DC_LANG_REGEX)) {
+    if (match[1]) add('dc:language', match[1]);
+  }
+  for (const match of opf.matchAll(LEGACY_ELEM_REGEX)) {
+    if (match[1] && match[2] && TARGET_PROPERTIES_SET.has(match[1])) {
+      add(match[1], match[2]);
+    }
+  }
+  for (const match of opf.matchAll(META_TAG_REGEX)) {
+    const attrs = match[1] ?? '';
+    const child = match[2];
+    const propMatch = attrs.match(PROP_REGEX);
+    if (propMatch && TARGET_PROPERTIES_SET.has(propMatch[1])) {
+      let val = child ? child.trim() : null;
+      if (!val) {
+        const contentMatch = attrs.match(CONTENT_REGEX);
+        if (contentMatch) val = contentMatch[1].trim();
+      }
+      if (val) add(propMatch[1], val);
+    }
   }
   return metadata;
 }
 
-function advisories(): Array<{ category: string; message: string; source: string }> {
-  return [
-    {
-      category: 'language',
-      message: 'Confirm language declarations match the publication and its passages.',
-      source: 'manual-review',
-    },
-    {
-      category: 'headings',
-      message: 'Review heading hierarchy and meaningful section structure.',
-      source: 'manual-review',
-    },
-    {
-      category: 'navigation-labels',
-      message: 'Review navigation labels for clarity and context.',
-      source: 'manual-review',
-    },
-    {
-      category: 'image-alternatives',
-      message: 'Review image alternatives for equivalent meaning and decorative images.',
-      source: 'manual-review',
-    },
-    {
-      category: 'tables',
-      message: 'Review table headers, relationships, and reading order.',
-      source: 'manual-review',
-    },
-    {
-      category: 'landmarks',
-      message: 'Review landmark navigation and semantic roles.',
-      source: 'manual-review',
-    },
-    {
-      category: 'media',
-      message: 'Review captions, transcripts, and audio descriptions where applicable.',
-      source: 'manual-review',
-    },
-    {
-      category: 'reader-ui',
-      message: 'Reader UI accessibility is evaluated separately from publication metadata.',
-      source: 'reader-ui',
-    },
-  ];
-}
+const ADVISORIES: ReadonlyArray<{ category: string; message: string; source: string }> = [
+  {
+    category: 'language',
+    message: 'Confirm language declarations match the publication and its passages.',
+    source: 'manual-review',
+  },
+  {
+    category: 'headings',
+    message: 'Review heading hierarchy and meaningful section structure.',
+    source: 'manual-review',
+  },
+  {
+    category: 'navigation-labels',
+    message: 'Review navigation labels for clarity and context.',
+    source: 'manual-review',
+  },
+  {
+    category: 'image-alternatives',
+    message: 'Review image alternatives for equivalent meaning and decorative images.',
+    source: 'manual-review',
+  },
+  {
+    category: 'tables',
+    message: 'Review table headers, relationships, and reading order.',
+    source: 'manual-review',
+  },
+  {
+    category: 'landmarks',
+    message: 'Review landmark navigation and semantic roles.',
+    source: 'manual-review',
+  },
+  {
+    category: 'media',
+    message: 'Review captions, transcripts, and audio descriptions where applicable.',
+    source: 'manual-review',
+  },
+  {
+    category: 'reader-ui',
+    message: 'Reader UI accessibility is evaluated separately from publication metadata.',
+    source: 'reader-ui',
+  },
+];
 
 async function executeEpubcheck(
   inputPath: string,
@@ -227,10 +388,25 @@ async function validate(
       });
     }
     const result = await executeEpubcheck(inputPath, workDir);
-    let opf = '';
-    // Only metadata extracted by the EPUB parser is returned; archive paths are never disclosed.
-    const container = bytes.indexOf(Buffer.from('META-INF/container.xml'));
-    if (container >= 0) opf = '';
+    let opf: string | null = null;
+    let epubVersion: string | null = null;
+    try {
+      const extraction = extractOpfFromZip(bytes);
+      opf = extraction.opf;
+      if (opf) {
+        epubVersion = extractEpubVersion(opf);
+      }
+    } catch (error) {
+      if (error instanceof EpubExtractionError) {
+        const status =
+          error.code === 'OPF_TOO_LARGE' || error.code === 'CONTAINER_TOO_LARGE' ? 413 : 422;
+        return send(response, status, {
+          error: error.code.toLowerCase(),
+          message: error.message,
+        });
+      }
+      throw error;
+    }
     const reportPath = join(workDir, 'epubcheck-report.json');
     let findings = parseFindings(result.output);
     try {
@@ -256,15 +432,14 @@ async function validate(
     } catch {
       /* EPUBCheck stdout remains the bounded fallback source. */
     }
-    const epubVersion = null;
     send(response, 200, {
       validatorVersion: VERSION,
       sha256,
       epubVersion,
       findings,
       accessibility: {
-        metadata: metadataFromOpf(opf),
-        advisories: advisories(),
+        metadata: opf ? metadataFromOpf(opf) : [],
+        advisories: [...ADVISORIES],
         manualReviewRequired: true,
         certification: 'not-certified',
       },
@@ -295,4 +470,13 @@ if (
   server.listen(PORT, '0.0.0.0');
 }
 
-export { server, validate, parseFindings, metadataFromOpf };
+export {
+  server,
+  validate,
+  parseFindings,
+  metadataFromOpf,
+  extractOpfFromZip,
+  extractRootfilePath,
+  validateRootfilePath,
+  extractEpubVersion,
+};

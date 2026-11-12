@@ -18,21 +18,20 @@ export const EpubFindingSchema = z.object({
   message: z.string().max(500),
 });
 
+export const EpubAccessibilityMetadataItemSchema = z.object({
+  key: z.string().max(80),
+  value: z.string().max(500),
+  present: z.boolean().optional(),
+  provenance: z.literal('opf'),
+});
+
 export const EpubRunnerResultSchema = z.object({
   validatorVersion: z.literal(EPUBCHECK_VERSION),
   sha256: z.string().refine(isSha256),
   epubVersion: z.string().max(10).nullable(),
   findings: z.array(EpubFindingSchema).max(1000),
   accessibility: z.object({
-    metadata: z
-      .array(
-        z.object({
-          key: z.string().max(80),
-          present: z.literal(true),
-          provenance: z.literal('opf'),
-        }),
-      )
-      .max(100),
+    metadata: z.array(EpubAccessibilityMetadataItemSchema).max(100),
     advisories: z
       .array(
         z.object({
@@ -62,5 +61,6 @@ export const AccessibilityRemediationSchema = z.object({
 });
 
 export type EpubFinding = z.infer<typeof EpubFindingSchema>;
+export type EpubAccessibilityMetadataItem = z.infer<typeof EpubAccessibilityMetadataItemSchema>;
 export type EpubRunnerResult = z.infer<typeof EpubRunnerResultSchema>;
 export type AccessibilityRemediation = z.infer<typeof AccessibilityRemediationSchema>;

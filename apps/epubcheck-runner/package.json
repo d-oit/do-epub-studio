@@ -8,6 +8,7 @@
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "fflate": "^0.8.2",
     "tsx": "^4.20.6"
   }
 }
