@@ -985,3 +985,10 @@ Temporary probe: with ci.yml's `paths-ignore` removed, a markdown-only PR must n
 ### Rate limit window testing
 
 - **Freeze system time in rate limit window tests.** Tests asserting request limits within a fixed time window (e.g. 60,000 ms) must use `vi.useFakeTimers()` to prevent real wall-clock minute rollovers mid-test, which resets `window_started_at` and drops request count back to 1.
+
+### Authoring packaging and preview snapshots (2026-11-13)
+
+- fflate derives DOS ZIP fields from local `Date` getters; use a local-time 1980 epoch and verify stable output in both west- and east-of-UTC timezones.
+- D1 `datetime('now')` stores UTC without a zone marker; adapt only its known `YYYY-MM-DD HH:MM:SS` form before strict EPUB timestamp validation.
+- Full-book preview must wait for the queued/debounced draft write before requesting packaging assets; capture the first asset GET's save count to prove that ordering.
+- `@intity/epub-js` exposes loaded sections as a `Map` and runtime metadata through `book.packaging.metadata` in the installed build; loader integrations must exercise those runtime shapes, not only mocked `loaded.spine`/`loaded.metadata`.

@@ -59,11 +59,10 @@ const config: KnipConfig = {
 
     // ---- apps/worker -----------------------------------------------------
     'apps/worker': {
-      // cloudflare:workers is a virtual CF Workers runtime module (not npm).
       // @libsql/client is imported in src/db/ which is a barrel not traced
       // from the worker entry point (pre-existing baseline).
       // @cloudflare/vitest-pool-workers is consumed by vitest config only.
-      ignoreDependencies: ['cloudflare', '@libsql/client', '@cloudflare/vitest-pool-workers'],
+      ignoreDependencies: ['@libsql/client', '@cloudflare/vitest-pool-workers'],
     },
 
     // ---- packages/schema -------------------------------------------------

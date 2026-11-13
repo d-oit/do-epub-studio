@@ -127,6 +127,22 @@ describe('author asset API', () => {
     expect(crossBookRes.status).toBe(403);
     expect(mockQueryFirst).not.toHaveBeenCalled();
   });
+  it('rejects unsafe asset IDs before database or object-store access', async () => {
+    const getObject = vi.fn();
+    env.BOOKS_BUCKET.get = getObject;
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/author/books/book-1/assets/not-a-uuid', {
+        headers: { Authorization: 'Bearer admin-token' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+
+    expect(res.status).toBe(400);
+    expect(mockQueryFirst).not.toHaveBeenCalled();
+    expect(getObject).not.toHaveBeenCalled();
+  });
 
   it('returns local asset bytes with private, nosniff response headers', async () => {
     mockAuthor('book-1', true);

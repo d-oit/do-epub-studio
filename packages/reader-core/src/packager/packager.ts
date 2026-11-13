@@ -67,10 +67,62 @@ const ASSET_EXTENSIONS = {
 
 const textEncoder = new TextEncoder();
 const fatalUtf8Decoder = new TextDecoder('utf-8', { fatal: true });
-const assetIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidAssetId(id: string): boolean {
+  if (id.length !== 36) return false;
+  for (let index = 0; index < id.length; index += 1) {
+    const code = id.charCodeAt(index);
+    if (index === 8 || index === 13 || index === 18 || index === 23) {
+      if (code !== 0x2d) return false;
+      continue;
+    }
+    if (index === 14) {
+      if (code < 0x31 || code > 0x38) return false;
+      continue;
+    }
+    if (index === 19) {
+      if (
+        code !== 0x38 &&
+        code !== 0x39 &&
+        code !== 0x61 &&
+        code !== 0x62 &&
+        code !== 0x41 &&
+        code !== 0x42
+      ) {
+        return false;
+      }
+      continue;
+    }
+    if (
+      (code >= 0x30 && code <= 0x39) ||
+      (code >= 0x61 && code <= 0x66) ||
+      (code >= 0x41 && code <= 0x46)
+    ) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
+function isValidChapterId(id: string): boolean {
+  if (id.length < 1 || id.length > 100) return false;
+  for (let index = 0; index < id.length; index += 1) {
+    const code = id.charCodeAt(index);
+    if (
+      (code >= 0x30 && code <= 0x39) ||
+      (code >= 0x61 && code <= 0x7a) ||
+      code === 0x5f ||
+      code === 0x2d
+    ) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
 
 function assetName(asset: PackagedAsset): string {
-  if (!assetIdPattern.test(asset.id)) throw new TypeError('Invalid author asset ID');
+  if (!isValidAssetId(asset.id)) throw new TypeError('Invalid author asset ID');
   return `${asset.id}.${ASSET_EXTENSIONS[asset.mediaType]}`;
 }
 
@@ -92,9 +144,40 @@ function collectImageAssetIds(publication: AuthorPublication): Set<string> {
 }
 
 function normalizeModifiedAt(value: string): string {
+  const hasMilliseconds = value.length === 24;
+  if (
+    (!hasMilliseconds && value.length !== 20) ||
+    value[4] !== '-' ||
+    value[7] !== '-' ||
+    value[10] !== 'T' ||
+    value[13] !== ':' ||
+    value[16] !== ':' ||
+    !value.endsWith('Z') ||
+    (hasMilliseconds && value[19] !== '.') ||
+    (!hasMilliseconds && value[19] !== 'Z')
+  ) {
+    throw new TypeError('Invalid EPUB modified timestamp');
+  }
+  for (let index = 0; index < 19; index += 1) {
+    if (index === 4 || index === 7 || index === 10 || index === 13 || index === 16) continue;
+    const code = value.charCodeAt(index);
+    if (code < 0x30 || code > 0x39) throw new TypeError('Invalid EPUB modified timestamp');
+  }
+  if (hasMilliseconds) {
+    for (let index = 20; index < 23; index += 1) {
+      const code = value.charCodeAt(index);
+      if (code < 0x30 || code > 0x39) throw new TypeError('Invalid EPUB modified timestamp');
+    }
+  }
   const timestamp = new Date(value);
-  if (!Number.isFinite(timestamp.getTime())) throw new TypeError('Invalid EPUB modified timestamp');
-  return timestamp.toISOString().replace('.000Z', 'Z');
+  if (!Number.isFinite(timestamp.getTime())) {
+    throw new TypeError('Invalid EPUB modified timestamp');
+  }
+  const normalized = timestamp.toISOString();
+  if (normalized.slice(0, 19) !== value.slice(0, 19)) {
+    throw new TypeError('Invalid EPUB modified timestamp');
+  }
+  return `${normalized.slice(0, 19)}Z`;
 }
 
 function createPackageEntries(
@@ -106,6 +189,10 @@ function createPackageEntries(
   if (!options.identifier.trim()) throw new TypeError('EPUB identifier must not be empty');
   const publicationId = publication.identifier?.trim() || options.identifier.trim();
   const sortedChapters = [...publication.chapters].sort((a, b) => a.order - b.order);
+  for (const chapter of sortedChapters) {
+    if (!isValidChapterId(chapter.id)) throw new TypeError('Invalid EPUB chapter ID');
+  }
+
   const assetsById = new Map<string, PackagedAsset>();
   for (const asset of packageAssets) {
     if (assetsById.has(asset.id)) throw new TypeError(`Duplicate author asset ID: ${asset.id}`);

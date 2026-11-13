@@ -68,7 +68,7 @@ export async function finalizeBookEpubRevision(
     );
   }
 
-  if (insertedRevision || !report || report.status === 'pending') {
+  if (insertedRevision) {
     await enqueueEpubValidation(env, { bookId: input.bookId, revisionId: input.fileId });
   }
   if (input.chapters && input.chapters.length > 0) {

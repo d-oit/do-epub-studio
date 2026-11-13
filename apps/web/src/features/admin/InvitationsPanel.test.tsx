@@ -126,12 +126,20 @@ describe('InvitationsPanel', () => {
     ).toBeInTheDocument();
   });
 
-  it('creates an author invitation with book-scoped author role', async () => {
+  it('creates an author invitation without comments or offline access', async () => {
     render(<InvitationsPanel bookId={bookId} executeWithStepUp={mockExecuteWithStepUp} />);
     fireEvent.click(screen.getByRole('button', { name: 'invitations.invitePerson' }));
+    const comments = screen.getByLabelText('grants.capabilities.comments');
+    const offline = screen.getByLabelText('grants.capabilities.offline');
+    fireEvent.click(comments);
+    fireEvent.click(offline);
     fireEvent.change(screen.getByLabelText('invitations.roleLabel'), {
       target: { value: 'author' },
     });
+    expect(comments).toBeDisabled();
+    expect(offline).toBeDisabled();
+    expect(comments).not.toBeChecked();
+    expect(offline).not.toBeChecked();
     fireEvent.change(screen.getByLabelText('invitations.emailLabel'), {
       target: { value: 'author@example.com' },
     });
@@ -140,7 +148,12 @@ describe('InvitationsPanel', () => {
     await waitFor(() =>
       expect(createBookInvitation).toHaveBeenCalledWith(
         bookId,
-        expect.objectContaining({ email: 'author@example.com', role: 'author' }),
+        expect.objectContaining({
+          email: 'author@example.com',
+          role: 'author',
+          commentsAllowed: false,
+          offlineAllowed: false,
+        }),
         'step-up-token',
       ),
     );

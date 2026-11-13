@@ -23,15 +23,33 @@ export const InvitationDeliveryStatusSchema = z.enum([
 ]);
 export type InvitationDeliveryStatus = z.infer<typeof InvitationDeliveryStatusSchema>;
 
-export const CreateBookInvitationSchema = z.object({
-  bookId: z.string().uuid(),
-  email: z.string().email().max(255),
-  role: InvitationRoleSchema.default('reader'),
-  mode: GrantModeSchema.default('private'),
-  commentsAllowed: z.boolean().default(false),
-  offlineAllowed: z.boolean().default(false),
-  expiresAt: z.string().datetime().optional(),
-});
+export const CreateBookInvitationSchema = z
+  .object({
+    bookId: z.string().uuid(),
+    email: z.string().email().max(255),
+    role: InvitationRoleSchema.default('reader'),
+    mode: GrantModeSchema.default('private'),
+    commentsAllowed: z.boolean().default(false),
+    offlineAllowed: z.boolean().default(false),
+    expiresAt: z.string().datetime().optional(),
+  })
+  .superRefine((invitation, context) => {
+    if (invitation.role !== 'author') return;
+    if (invitation.commentsAllowed) {
+      context.addIssue({
+        code: 'custom',
+        path: ['commentsAllowed'],
+        message: 'Author invitations cannot grant comments',
+      });
+    }
+    if (invitation.offlineAllowed) {
+      context.addIssue({
+        code: 'custom',
+        path: ['offlineAllowed'],
+        message: 'Author invitations cannot grant offline access',
+      });
+    }
+  });
 
 export type CreateBookInvitation = z.infer<typeof CreateBookInvitationSchema>;
 

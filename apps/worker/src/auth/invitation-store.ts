@@ -198,6 +198,8 @@ export async function createBookInvitation(
     );
   }
 
+  const commentsAllowed = input.role === 'author' ? false : input.commentsAllowed;
+  const offlineAllowed = input.role === 'author' ? false : input.offlineAllowed;
   const statements = [];
   if (pending) {
     statements.push({
@@ -225,8 +227,8 @@ export async function createBookInvitation(
       input.role,
       tokenHash,
       input.mode,
-      input.commentsAllowed ? 1 : 0,
-      input.offlineAllowed ? 1 : 0,
+      commentsAllowed ? 1 : 0,
+      offlineAllowed ? 1 : 0,
       input.expiresAt ?? null,
       expiresAt,
       createdByUserId,
@@ -247,8 +249,8 @@ export async function createBookInvitation(
       deliveryStatus: 'pending',
       deliveryErrorCode: null,
       grantMode: input.mode,
-      commentsAllowed: input.commentsAllowed,
-      offlineAllowed: input.offlineAllowed,
+      commentsAllowed,
+      offlineAllowed,
       grantExpiresAt: input.expiresAt ?? null,
       expiresAt,
       createdAt: now.toISOString(),

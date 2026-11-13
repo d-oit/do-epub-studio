@@ -13,6 +13,7 @@ import { authorAuth } from '../middleware/auth';
 import { AppError, ConflictError, NotFoundError, ValidationError } from '../lib/http-errors';
 import { MaxBodySizeError, withByteCap } from '../lib/stream-body';
 import { sanitizeAuthorStylesheet } from '@do-epub-studio/reader-core/author-styles';
+import { isValidAuthorAssetId } from '../lib/author-publication-assets';
 
 interface AssetRow extends JsonRow {
   id: string;
@@ -24,9 +25,6 @@ interface AssetRow extends JsonRow {
   storage_key: string;
   created_at: string;
 }
-
-const ASSET_ID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function matchesImageSignature(type: AssetRow['media_type'], bytes: Uint8Array): boolean {
   switch (type) {
@@ -188,7 +186,7 @@ authorAssetsRouter.get('/books/:id/assets', authorAuth, async (c) => {
 authorAssetsRouter.put('/books/:id/assets/:assetId', authorAuth, async (c) => {
   const bookId = c.req.param('id');
   const assetId = c.req.param('assetId');
-  if (!ASSET_ID_PATTERN.test(assetId)) throw new ValidationError('Invalid asset ID');
+  if (!isValidAuthorAssetId(assetId)) throw new ValidationError('Invalid asset ID');
 
   const mediaType = parseAssetType(c.req.raw);
   const name = parseAssetName(c.req.raw);
@@ -291,7 +289,7 @@ authorAssetsRouter.put('/books/:id/assets/:assetId', authorAuth, async (c) => {
 authorAssetsRouter.get('/books/:id/assets/:assetId', authorAuth, async (c) => {
   const bookId = c.req.param('id');
   const assetId = c.req.param('assetId');
-  if (!ASSET_ID_PATTERN.test(assetId)) throw new ValidationError('Invalid asset ID');
+  if (!isValidAuthorAssetId(assetId)) throw new ValidationError('Invalid asset ID');
   const metadata = await getBookAsset(c.env, bookId, assetId);
   const object = await c.env.BOOKS_BUCKET.get(metadata.storage_key);
   if (!object) throw new NotFoundError('Author asset');
@@ -309,7 +307,7 @@ authorAssetsRouter.get('/books/:id/assets/:assetId', authorAuth, async (c) => {
 authorAssetsRouter.delete('/books/:id/assets/:assetId', authorAuth, async (c) => {
   const bookId = c.req.param('id');
   const assetId = c.req.param('assetId');
-  if (!ASSET_ID_PATTERN.test(assetId)) throw new ValidationError('Invalid asset ID');
+  if (!isValidAuthorAssetId(assetId)) throw new ValidationError('Invalid asset ID');
 
   const deleted = await queryFirst<{ storage_key: string }>(
     c.env,

@@ -112,6 +112,36 @@ describe('book invitation service', () => {
     expect(insert?.args).toContain('hashed-token');
     expect(insert?.args).not.toContain(result.rawToken);
   });
+  it('stores no comments or offline capabilities for an author invitation', async () => {
+    mocks.queryFirst
+      .mockResolvedValueOnce({ id: BOOK_ID })
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null);
+
+    const result = await createBookInvitation(
+      makeEnv(),
+      {
+        bookId: BOOK_ID,
+        email: 'author@example.com',
+        role: 'author',
+        mode: 'private',
+        commentsAllowed: true,
+        offlineAllowed: true,
+      },
+      'admin-1',
+    );
+
+    expect(result.invitation).toMatchObject({ commentsAllowed: false, offlineAllowed: false });
+    const statements = mocks.transaction.mock.calls[0]?.[1] as Array<{
+      sql: string;
+      args: unknown[];
+    }>;
+    const insert = statements.find((statement) =>
+      statement.sql.includes('INSERT INTO book_invitations'),
+    );
+    expect(insert?.args.slice(6, 8)).toEqual([0, 0]);
+  });
 
   it('accepts a creator invitation and creates user, grant, and assignment together', async () => {
     mocks.queryFirst
@@ -139,6 +169,31 @@ describe('book invitation service', () => {
       statements.some((statement) => statement.sql.includes('INSERT OR IGNORE INTO book_creators')),
     ).toBe(true);
     expect(statements.some((statement) => statement.args.includes('argon2id-hash'))).toBe(true);
+  });
+  it('normalizes legacy author invitation grants when accepted', async () => {
+    mocks.queryFirst
+      .mockResolvedValueOnce(
+        invitationRow({ role: 'author', comments_allowed: 1, offline_allowed: 1 }),
+      )
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ status: 'accepted' });
+
+    const result = await acceptBookInvitation(makeEnv(), {
+      token: 'a'.repeat(64),
+      newPassword: 'A-long-invite-passphrase!',
+      newPasswordConfirm: 'A-long-invite-passphrase!',
+    });
+
+    expect(result.role).toBe('author');
+    const statements = mocks.transaction.mock.calls[0]?.[1] as Array<{
+      sql: string;
+      args: unknown[];
+    }>;
+    const grant = statements.find((statement) =>
+      statement.sql.includes('INSERT INTO book_access_grants'),
+    );
+    expect(grant?.args.slice(5, 8)).toEqual([0, 0, 1]);
   });
 
   it('rejects a grant expiry that is already in the past', async () => {

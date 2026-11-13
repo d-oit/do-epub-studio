@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Env } from '../lib/env';
+import { MAX_AUTHOR_ASSET_COUNT } from '@do-epub-studio/shared';
 import {
+  makeAuthContext,
   makeEnv,
   makePassThroughContext,
   mockExecute,
+  mockQueryAll,
   mockQueryFirst,
   mockRequireAdminAuth,
+  mockRequireAuth,
+  mockTransaction,
 } from './fixtures';
 import { app } from '../app';
 
@@ -15,6 +20,10 @@ describe('Author API routes (/api/author/*)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockQueryFirst.mockReset();
+    mockQueryFirst.mockResolvedValue(null);
+    mockRequireAuth.mockReset();
+    mockTransaction.mockReset();
     env = makeEnv();
 
     mockRequireAdminAuth.mockResolvedValue({
@@ -29,7 +38,7 @@ describe('Author API routes (/api/author/*)', () => {
   });
 
   describe('Authorization', () => {
-    it('returns 401 UNAUTHORIZED when no admin/editor credentials are provided', async () => {
+    it('returns 401 UNAUTHORIZED without valid authoring credentials', async () => {
       mockRequireAdminAuth.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -48,15 +57,88 @@ describe('Author API routes (/api/author/*)', () => {
       expect(body.error.code).toBe('UNAUTHORIZED');
     });
 
-    it('returns 401 when authenticated user has reader role', async () => {
+    it('denies a reader without author capability for the requested book', async () => {
       mockRequireAdminAuth.mockResolvedValueOnce({
-        ok: true,
-        context: {
-          userId: 'reader-1',
-          email: 'reader@example.com',
-          globalRole: 'reader',
-          token: 'reader-token',
-        },
+        ok: false,
+        status: 401,
+        error: 'Invalid admin session',
+      });
+      mockRequireAuth.mockResolvedValueOnce(makeAuthContext({ bookId: 'book-1' }));
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          headers: { Authorization: 'Bearer reader-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(403);
+      expect(mockQueryFirst).not.toHaveBeenCalled();
+    });
+
+    it('denies an author session scoped to a different book', async () => {
+      mockRequireAdminAuth.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        error: 'Invalid admin session',
+      });
+      const auth = makeAuthContext({ bookId: 'book-2' });
+      auth.capabilities.canAuthor = true;
+      mockRequireAuth.mockResolvedValueOnce(auth);
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          headers: { Authorization: 'Bearer author-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(403);
+      expect(mockQueryFirst).not.toHaveBeenCalled();
+    });
+
+    it('allows an author session scoped to the requested book', async () => {
+      mockRequireAdminAuth.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        error: 'Invalid admin session',
+      });
+      const auth = makeAuthContext({ bookId: 'book-1' });
+      auth.capabilities.canAuthor = true;
+      mockRequireAuth.mockResolvedValueOnce(auth);
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug', title: 'Book One' })
+        .mockResolvedValueOnce({
+          publication_json: JSON.stringify({
+            title: 'Book One',
+            creators: ['Ada'],
+            language: 'en',
+            chapters: [
+              { id: 'chapter-1', title: 'Chapter 1', order: 0, contentHtml: '<p>Text.</p>' },
+            ],
+          }),
+          draft_version: 1,
+          updated_at: '2026-11-08T10:00:00Z',
+        });
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/manuscript', {
+          headers: { Authorization: 'Bearer author-token' },
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(200);
+    });
+
+    it('returns 403 for a valid non-admin global session', async () => {
+      mockRequireAdminAuth.mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        error: 'Admin access required',
       });
 
       const res = await app.fetch(
@@ -67,7 +149,8 @@ describe('Author API routes (/api/author/*)', () => {
         makePassThroughContext(),
       );
 
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(403);
+      expect(mockRequireAuth).not.toHaveBeenCalled();
     });
   });
 
@@ -272,9 +355,9 @@ describe('Author API routes (/api/author/*)', () => {
 
   describe('PUT /api/author/books/:id/manuscript', () => {
     it('detects concurrent draft conflicts and returns 409 Conflict', async () => {
+      mockTransaction.mockResolvedValueOnce([]);
       mockQueryFirst
         .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
-        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
           draft_version: 3,
           publication_json: JSON.stringify({
@@ -312,10 +395,14 @@ describe('Author API routes (/api/author/*)', () => {
       expect(json.error.currentVersion).toBe(3);
     });
 
-    it('saves draft and increments version when expectedVersion matches', async () => {
-      mockQueryFirst
-        .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
-        .mockResolvedValueOnce({ draft_version: 4, updated_at: '2026-11-08T10:00:00Z' });
+    it('saves draft and increments version atomically when expectedVersion matches', async () => {
+      mockQueryFirst.mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' });
+      mockTransaction.mockResolvedValueOnce([
+        {
+          results: [{ draft_version: 4, updated_at: '2026-11-08T10:00:00Z' }],
+        },
+        { results: [] },
+      ]);
 
       const res = await app.fetch(
         new Request('http://localhost/api/author/books/book-1/manuscript', {
@@ -348,8 +435,18 @@ describe('Author API routes (/api/author/*)', () => {
       expect(json.data.bookSlug).toBe('book-1-slug');
       expect(json.data.draftVersion).toBe(4);
       expect(json.data.publication.title).toBe('Updated Title');
-      expect(mockExecute).toHaveBeenCalledTimes(1);
-      expect(mockQueryFirst.mock.calls[1]?.[1]).toContain('draft_version = ?');
+      expect(mockTransaction).toHaveBeenCalledOnce();
+      const statements = mockTransaction.mock.calls[0]?.[1] as Array<{
+        sql: string;
+        args: unknown[];
+      }>;
+      expect(statements).toHaveLength(2);
+      expect(statements[0]?.sql).toContain('UPDATE book_manuscript_drafts');
+      expect(statements[1]?.sql).toContain('UPDATE books');
+      expect(statements[1]?.sql).toContain('draft_version = ? AND publication_json = ?');
+      expect(statements[1]?.args.slice(5, 8)).toEqual(['book-1', 'book-1', 4]);
+      expect(statements[1]?.args[8]).toBe(statements[0]?.args[0]);
+      expect(mockExecute).not.toHaveBeenCalled();
     });
     it('rejects a save without an expected draft version', async () => {
       const res = await app.fetch(
@@ -373,9 +470,9 @@ describe('Author API routes (/api/author/*)', () => {
     });
 
     it('rejects an update that references an asset not owned by the book', async () => {
+      mockTransaction.mockResolvedValueOnce([]);
       mockQueryFirst
         .mockResolvedValueOnce({ id: 'book-1', slug: 'book-1-slug' })
-        .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({
           draft_version: 3,
           publication_json: JSON.stringify({
@@ -416,7 +513,7 @@ describe('Author API routes (/api/author/*)', () => {
   });
 
   describe('POST /api/author/books/:id/publish', () => {
-    it('packages draft, saves to R2, creates book_files revision, and enqueues validation', async () => {
+    it('packages draft bytes, creates a content-addressed revision, and enqueues validation', async () => {
       mockQueryFirst
         .mockResolvedValueOnce({
           id: 'book-1',
@@ -425,7 +522,7 @@ describe('Author API routes (/api/author/*)', () => {
         })
         .mockResolvedValueOnce({
           draft_version: 2,
-          updated_at: '2026-11-08T10:00:00Z',
+          updated_at: '2026-11-08 10:00:00',
           publication_json: JSON.stringify({
             title: 'My Published Book',
             creators: ['Author Name'],
@@ -445,7 +542,15 @@ describe('Author API routes (/api/author/*)', () => {
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ count: 2 });
 
-      mockExecute.mockResolvedValue({ rows: [] });
+      const sendValidation = vi.fn().mockResolvedValue(undefined);
+      const unexpectedQueueCall = vi.fn(() =>
+        Promise.reject(new Error('Unexpected validation queue method')),
+      );
+      env.EPUB_VALIDATION_QUEUE = {
+        send: sendValidation,
+        sendBatch: unexpectedQueueCall,
+        metrics: unexpectedQueueCall,
+      };
       const putSpy = vi.fn().mockResolvedValue(null);
       env.BOOKS_BUCKET.put = putSpy;
 
@@ -476,6 +581,10 @@ describe('Author API routes (/api/author/*)', () => {
       expect(json.data.status).toBe('published');
       expect(json.data.sha256).toHaveLength(64);
       expect(json.data.fileSize).toBeGreaterThan(100);
+      expect(sendValidation).toHaveBeenCalledWith({
+        bookId: 'book-1',
+        revisionId: json.data.fileId,
+      });
 
       // Verify file was put into R2 BOOKS_BUCKET
       expect(putSpy).toHaveBeenCalledWith(
@@ -487,6 +596,145 @@ describe('Author API routes (/api/author/*)', () => {
           }),
         }),
       );
+      expect(putSpy.mock.calls[0]?.[0]).toBe(
+        `books/book-1/author-revisions/${json.data.sha256}.epub`,
+      );
+    });
+    it('rejects manuscripts that reference more than the per-book asset cap', async () => {
+      const imageMarkup = Array.from({ length: MAX_AUTHOR_ASSET_COUNT + 1 }, (_, index) => {
+        const suffix = index.toString(16).padStart(12, '0');
+        return `<img src="asset:00000000-0000-4000-8000-${suffix}" alt="Figure">`;
+      }).join('');
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'my-book', title: 'My Book' })
+        .mockResolvedValueOnce({
+          draft_version: 2,
+          updated_at: '2026-11-08T10:00:00Z',
+          publication_json: JSON.stringify({
+            title: 'My Published Book',
+            creators: ['Author Name'],
+            language: 'en',
+            chapters: [{ id: 'ch-1', title: 'Chapter 1', order: 0, contentHtml: imageMarkup }],
+          }),
+        });
+      const getSpy = vi.fn();
+      const putSpy = vi.fn();
+      env.BOOKS_BUCKET.get = getSpy;
+      env.BOOKS_BUCKET.put = putSpy;
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/publish', {
+          method: 'POST',
+          headers: authHeaders,
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(400);
+      expect(mockQueryAll).not.toHaveBeenCalled();
+      expect(getSpy).not.toHaveBeenCalled();
+      expect(putSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects references not owned by the publishing book', async () => {
+      const assetId = '550e8400-e29b-41d4-a716-446655440000';
+      const publication = {
+        title: 'My Published Book',
+        creators: ['Author Name'],
+        language: 'en',
+        chapters: [
+          {
+            id: 'ch-1',
+            title: 'Chapter 1',
+            order: 0,
+            contentHtml: `<img src="asset:${assetId}" alt="Figure">`,
+          },
+        ],
+      };
+      const draft = {
+        draft_version: 2,
+        updated_at: '2026-11-08T10:00:00Z',
+        publication_json: JSON.stringify(publication),
+      };
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'my-book', title: 'My Book' })
+        .mockResolvedValueOnce(draft);
+      mockQueryAll.mockResolvedValueOnce([]);
+      const getSpy = vi.fn();
+      const putSpy = vi.fn();
+      env.BOOKS_BUCKET.get = getSpy;
+      env.BOOKS_BUCKET.put = putSpy;
+
+      const missingRes = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/publish', {
+          method: 'POST',
+          headers: authHeaders,
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(missingRes.status).toBe(400);
+      expect(mockQueryAll.mock.calls[0]?.[1]).toContain(
+        'FROM author_assets WHERE book_id = ? AND id IN',
+      );
+      expect(mockQueryAll.mock.calls[0]?.[2]).toEqual(['book-1', assetId]);
+      expect(getSpy).not.toHaveBeenCalled();
+      expect(putSpy).not.toHaveBeenCalled();
+    });
+
+    it('rejects corrupted stored asset bytes before publishing', async () => {
+      const assetId = '550e8400-e29b-41d4-a716-446655440000';
+      const publication = {
+        title: 'My Published Book',
+        creators: ['Author Name'],
+        language: 'en',
+        chapters: [
+          {
+            id: 'ch-1',
+            title: 'Chapter 1',
+            order: 0,
+            contentHtml: `<img src="asset:${assetId}" alt="Figure">`,
+          },
+        ],
+      };
+      mockQueryFirst
+        .mockResolvedValueOnce({ id: 'book-1', slug: 'my-book', title: 'My Book' })
+        .mockResolvedValueOnce({
+          draft_version: 2,
+          updated_at: '2026-11-08T10:00:00Z',
+          publication_json: JSON.stringify(publication),
+        });
+      mockQueryAll.mockResolvedValueOnce([
+        {
+          id: assetId,
+          media_type: 'image/png',
+          sha256: '0'.repeat(64),
+          size_bytes: 3,
+          storage_key: 'books/book-1/author-assets/asset-id/hash',
+        },
+      ]);
+      const bytes = new Uint8Array([1, 2, 3]);
+      const getSpy = vi.fn().mockResolvedValue({
+        arrayBuffer: () => Promise.resolve(bytes.buffer),
+      });
+      const putSpy = vi.fn();
+      env.BOOKS_BUCKET.get = getSpy;
+      env.BOOKS_BUCKET.put = putSpy;
+
+      const res = await app.fetch(
+        new Request('http://localhost/api/author/books/book-1/publish', {
+          method: 'POST',
+          headers: authHeaders,
+        }),
+        env,
+        makePassThroughContext(),
+      );
+
+      expect(res.status).toBe(409);
+      expect(getSpy).toHaveBeenCalledWith('books/book-1/author-assets/asset-id/hash');
+      expect(putSpy).not.toHaveBeenCalled();
     });
   });
 });

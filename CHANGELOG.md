@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(authoring): add deterministic EPUB 3 packaging, book-scoped asset validation and immutable publishing, atomic versioned drafts, and a full production-reader preview for admins and explicit book authors.
 - feat(export): add bounded EPUB annotation re-export with navigable source links and fail-closed archive-safety and EPUBCheck validation; Markdown/HTML downloads and JSON interchange remain separate.
 - fix(auth): surface a demo-login refusal instead of retrying it through the credential endpoints. The reader and admin demo logins fell back to `/api/access/request` / `/api/admin/login` for every failure, so a `429 TOO_MANY_REQUESTS` doubled the throttled attempts; the fallback is now limited to transport failures (including the client's own request timeout) and unparseable SPA responses.
 - fix(reader): re-apply the rendition theme when a typography preference changes; the engine treats selecting the already-current theme as a no-op, so font size, line height and family changes never reached the open chapter.
@@ -37,6 +38,7 @@
 - feat(offline): create ordinary highlights and shared comments offline with encrypted local records, idempotent replay, and durable failed-sync state.
 - fix(reader): keep progress CFI changes from rebuilding the active EPUB rendition during reading and reconnect.
 - fix(knip): remove unused EPUB fixture exports instead of masking them with a Knip entry.
+- fix(knip): remove the nonexistent `cloudflare` ignore entry from the Worker workspace configuration, which Knip reported as a hint.
 - fix(reader): use semantic background tokens for active table-of-contents items and memoize the empty grants promise in admin book access.
 - fix(e2e): mock reader bookmark endpoints by default to prevent unmocked background requests, and handle responsive overflow menus in keyboard navigation tests.
 - test(worker): freeze system time during rate limit window tests to prevent cross-minute rollover flakes.

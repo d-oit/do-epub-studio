@@ -1,7 +1,6 @@
 import type { Context } from 'hono';
 import { AuthorPublicationSchema, type AuthorPublication } from '@do-epub-studio/shared';
 import { packageEpub3 } from '@do-epub-studio/reader-core/packager';
-import { parseAuthorContent } from '@do-epub-studio/reader-core/author-content';
 import { validateArchive } from '@do-epub-studio/shared/src/archive-validator';
 import type { Env, JsonRow } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
@@ -9,13 +8,12 @@ import { ConflictError, NotFoundError, ValidationError } from '../lib/http-error
 import { logAudit } from '../audit';
 import { bumpCacheVersion } from '../lib/edge-cache';
 import { finalizeBookEpubRevision } from '../lib/epub-revisions';
+import { publicationAssetRequirements } from '../lib/author-publication-assets';
 
 type AuthorContext = Context<{
   Bindings: Env;
   Variables: { authorUser: { email: string; id: string; role: string } };
 }>;
-
-type AssetKind = 'image' | 'stylesheet';
 
 interface AssetRow extends JsonRow {
   id: string;
@@ -23,32 +21,6 @@ interface AssetRow extends JsonRow {
   sha256: string;
   size_bytes: number;
   storage_key: string;
-}
-
-function publicationAssetRequirements(publication: AuthorPublication): Map<string, AssetKind> {
-  const requirements = new Map<string, AssetKind>();
-  const requireAsset = (id: string, kind: AssetKind) => {
-    const previousKind = requirements.get(id);
-    if (previousKind && previousKind !== kind) {
-      throw new ValidationError('An author asset cannot be both an image and a stylesheet');
-    }
-    requirements.set(id, kind);
-  };
-  if (publication.coverImageAssetId) requireAsset(publication.coverImageAssetId, 'image');
-  for (const id of publication.stylesheetAssetIds) requireAsset(id, 'stylesheet');
-  const pending = publication.chapters.flatMap((chapter) =>
-    parseAuthorContent(chapter.contentHtml),
-  );
-  while (pending.length > 0) {
-    const node = pending.pop();
-    if (!node || node.type !== 'element') continue;
-    if (node.tag === 'img') {
-      const source = node.attributes.find((attribute) => attribute.name === 'src')?.value;
-      if (source?.startsWith('asset:')) requireAsset(source.slice('asset:'.length), 'image');
-    }
-    pending.push(...node.children);
-  }
-  return requirements;
 }
 
 async function sha256Hex(data: Uint8Array): Promise<string> {
@@ -66,6 +38,13 @@ async function deterministicRevisionId(bookId: string, sha256: string): Promise<
   bytes[8] = (variantByte & 0x3f) | 0x80;
   const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+function normalizeDraftTimestamp(value: string): string {
+  if (value.length === 19 && value[10] === ' ') {
+    return `${value.slice(0, 10)}T${value.slice(11)}Z`;
+  }
+  return value;
 }
 
 async function loadPackagedAssets(
@@ -140,7 +119,7 @@ export async function handlePublishManuscript(c: AuthorContext): Promise<Respons
   const assets = await loadPackagedAssets(c.env, book.id, publication);
   const epubBuffer = await packageEpub3(publication, assets, {
     identifier: publication.identifier ?? `urn:uuid:${book.id}`,
-    modifiedAt: draftRow.updated_at,
+    modifiedAt: normalizeDraftTimestamp(draftRow.updated_at),
   });
 
   // Validate archive safety prior to R2 storage.

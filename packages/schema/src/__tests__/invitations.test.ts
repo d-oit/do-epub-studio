@@ -35,6 +35,19 @@ describe('book invitation schemas', () => {
     expect(result.role).toBe('creator');
     expect(result.mode).toBe('editorial_review');
   });
+  it('rejects reader-only capabilities on author invitations', () => {
+    const base = { bookId: BOOK_ID, email: 'author@example.com', role: 'author' as const };
+    expect(CreateBookInvitationSchema.parse(base)).toMatchObject({
+      commentsAllowed: false,
+      offlineAllowed: false,
+    });
+    expect(CreateBookInvitationSchema.safeParse({ ...base, commentsAllowed: true }).success).toBe(
+      false,
+    );
+    expect(CreateBookInvitationSchema.safeParse({ ...base, offlineAllowed: true }).success).toBe(
+      false,
+    );
+  });
 
   it('rejects an invalid role, book id, and email', () => {
     expect(() =>
