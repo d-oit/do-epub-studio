@@ -893,4 +893,7 @@ export const es: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Reproduciendo narración',
   'reader.mediaOverlay.playingElement': 'Reproduciendo frase {id}',
   'reader.mediaOverlay.paused': 'Narración pausada',
+  'reader.renditions.title': 'Rendiciones',
+  'reader.renditions.select': 'Seleccionar edición o rendición',
+  'reader.renditions.active': 'Rendición activa: {label}',
 };

@@ -2,6 +2,7 @@ import type { KeyboardEvent, RefObject } from 'react';
 import { IconButton, Tooltip } from '../../../../components/ui';
 import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
 import type { TFn } from './toolbar-types';
+import type { RenditionItem } from '@do-epub-studio/reader-core';
 
 interface OverflowMenuProps {
   isMenuOpen: boolean;
@@ -21,6 +22,9 @@ interface OverflowMenuProps {
   onToggleNotifications?: () => void;
   hasMediaOverlays?: boolean;
   onToggleMediaOverlay?: () => void;
+  renditions?: RenditionItem[];
+  activeRendition?: RenditionItem | null;
+  onSelectRendition?: (fullPath: string) => void;
   onToggleMenu: () => void;
   t: TFn;
 }
@@ -43,6 +47,9 @@ export function OverflowMenu({
   onToggleNotifications,
   hasMediaOverlays,
   onToggleMediaOverlay,
+  renditions,
+  activeRendition,
+  onSelectRendition,
   onToggleMenu,
   t,
 }: OverflowMenuProps) {
@@ -265,6 +272,50 @@ export function OverflowMenu({
                 </svg>
                 {t('reader.mediaOverlay.title')}
               </button>
+            )}
+            {renditions && renditions.length > 1 && (
+              <div className="py-1 border-t border-border mt-1">
+                <div className="px-3 py-1 text-xs font-semibold text-foreground-muted">
+                  {t('reader.renditions.title')}
+                </div>
+                {renditions.map((item) => {
+                  const isSelected =
+                    activeRendition?.fullPath === item.fullPath ||
+                    (!activeRendition && item.isDefault);
+                  return (
+                    <button
+                      key={item.fullPath}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={isSelected}
+                      onClick={close(() => onSelectRendition?.(item.fullPath))}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-colors text-left ${
+                        isSelected
+                          ? 'font-semibold text-foreground bg-muted/60'
+                          : 'text-foreground-muted hover:bg-background-secondary'
+                      }`}
+                    >
+                      <span>{item.label}</span>
+                      {isSelected && (
+                        <svg
+                          className="w-4 h-4 text-accent"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             )}
             {isFixedLayout && onToggleFixedLayoutControls && (
               <button

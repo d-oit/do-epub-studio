@@ -886,4 +886,7 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': '読み上げ再生中',
   'reader.mediaOverlay.playingElement': 'フレーズ {id} を再生中',
   'reader.mediaOverlay.paused': '読み上げ一時停止',
+  'reader.renditions.title': 'レンディション',
+  'reader.renditions.select': 'レンディションを選択',
+  'reader.renditions.active': '現在のレンディション: {label}',
 };

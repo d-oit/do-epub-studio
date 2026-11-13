@@ -1,4 +1,4 @@
-import type { FixedLayoutInfo } from './epub-types';
+import type { FixedLayoutInfo, PageDirection, BookMetadata } from './epub-types';
 import { escapeRegex, matchBounded, checkDeadline, createDeadline } from '@do-epub-studio/shared';
 
 const OPF_RENDITION_MAX_LEN = 1048576;
@@ -70,4 +70,28 @@ export function parseFixedLayoutFromOpf(
 
 export function isFixedLayout(info?: FixedLayoutInfo): boolean {
   return info?.layout === 'pre-paginated';
+}
+
+export function resolveBookDirection(direction?: string): PageDirection {
+  switch (direction) {
+    case 'rtl':
+      return 'rtl';
+    case 'ltr':
+      return 'ltr';
+    default:
+      return 'default';
+  }
+}
+
+export function resolveFixedLayoutFromMeta(
+  pkgMeta: Map<string, string> | undefined,
+): BookMetadata['fixedLayout'] {
+  const layout = pkgMeta?.get('layout');
+  if (!layout) return undefined;
+  return {
+    layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
+    orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
+    spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
+    viewport: pkgMeta?.get('viewport'),
+  };
 }

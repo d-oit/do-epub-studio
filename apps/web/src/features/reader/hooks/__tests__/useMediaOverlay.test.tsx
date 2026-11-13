@@ -2,10 +2,13 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor, cleanup } from '@testing-library/react';
 import type { Book } from '@intity/epub-js';
 import { useMediaOverlay } from '../useMediaOverlay';
-import * as readerCore from '@do-epub-studio/reader-core';
+import type * as readerCore from '@do-epub-studio/reader-core';
+import * as mediaOverlayMod from '@do-epub-studio/reader-core/media-overlay';
 
-vi.mock('@do-epub-studio/reader-core', async () => {
-  const actual = await vi.importActual<typeof readerCore>('@do-epub-studio/reader-core');
+vi.mock('@do-epub-studio/reader-core/media-overlay', async () => {
+  const actual = await vi.importActual<typeof mediaOverlayMod>(
+    '@do-epub-studio/reader-core/media-overlay',
+  );
   return {
     ...actual,
     extractMediaOverlays: vi.fn(),
@@ -23,7 +26,7 @@ describe('useMediaOverlay hook', () => {
   });
 
   it('initializes with default empty state when book has no media overlays', async () => {
-    vi.mocked(readerCore.extractMediaOverlays).mockResolvedValue({
+    vi.mocked(mediaOverlayMod.extractMediaOverlays).mockResolvedValue({
       sequencesByChapter: {},
       totalDuration: 0,
       hasMediaOverlays: false,
@@ -64,7 +67,7 @@ describe('useMediaOverlay hook', () => {
       ],
     };
 
-    vi.mocked(readerCore.extractMediaOverlays).mockResolvedValue({
+    vi.mocked(mediaOverlayMod.extractMediaOverlays).mockResolvedValue({
       sequencesByChapter: {
         'OEBPS/chapter.xhtml': mockSequence,
         'chapter.xhtml': mockSequence,
@@ -134,7 +137,7 @@ describe('useMediaOverlay hook', () => {
       ],
     };
 
-    vi.mocked(readerCore.extractMediaOverlays).mockResolvedValue({
+    vi.mocked(mediaOverlayMod.extractMediaOverlays).mockResolvedValue({
       sequencesByChapter: { 'c.xhtml': mockSequence },
       totalDuration: 10,
       hasMediaOverlays: true,

@@ -37,8 +37,16 @@ export function useReaderEpub(
   onNavigateToAnnotationRef.current = onNavigateToAnnotation;
   const zoomRef = useRef<ReaderZoom>(1);
 
-  const { bookRef, loadedEpub, toc, metadata, directionRef, fixedLayoutRef, prefetchManagerRef } =
-    useEpubLoader({ epubUrl, bookId, t });
+  const {
+    bookRef,
+    loadedEpub,
+    toc,
+    metadata,
+    directionRef,
+    fixedLayoutRef,
+    prefetchManagerRef,
+    switchRendition,
+  } = useEpubLoader({ epubUrl, bookId, t });
 
   const rendition = useEpubRendition({
     bookId,
@@ -87,5 +95,14 @@ export function useReaderEpub(
     [readerTheme],
   );
 
-  return { bookRef, renditionRef, currentChapterRef, adapterRef, toc, resolvedTheme, metadata };
+  return {
+    bookRef,
+    renditionRef,
+    currentChapterRef,
+    adapterRef,
+    toc,
+    resolvedTheme,
+    metadata,
+    switchRendition,
+  };
 }

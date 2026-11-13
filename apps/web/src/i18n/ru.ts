@@ -908,4 +908,7 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Воспроизведение озвучивания',
   'reader.mediaOverlay.playingElement': 'Воспроизведение фразы {id}',
   'reader.mediaOverlay.paused': 'Озвучивание приостановлено',
+  'reader.renditions.title': 'Версии оформления',
+  'reader.renditions.select': 'Выберите версию оформления',
+  'reader.renditions.active': 'Активная версия: {label}',
 };

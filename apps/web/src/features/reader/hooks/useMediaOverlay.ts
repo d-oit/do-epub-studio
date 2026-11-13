@@ -1,13 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Rendition, Book } from '@intity/epub-js';
-import {
-  extractMediaOverlays,
-  resolveAudioClipUrl,
-  findActiveClip,
-  type MediaOverlayManifest,
-  type MediaOverlaySequence,
-  type MediaOverlayClip,
+import type {
+  MediaOverlayManifest,
+  MediaOverlaySequence,
+  MediaOverlayClip,
 } from '@do-epub-studio/reader-core';
+import type * as MediaOverlayModule from '@do-epub-studio/reader-core/media-overlay';
 
 export interface UseMediaOverlayOptions {
   book: Book | null;
@@ -105,6 +103,7 @@ export function useMediaOverlay({
   const activeClipRef = useRef<MediaOverlayClip | null>(null);
   activeClipRef.current = activeClip;
   const isMountedRef = useRef(true);
+  const mediaOverlayModRef = useRef<typeof MediaOverlayModule | null>(null);
 
   // Extract manifest whenever book changes
   useEffect(() => {
@@ -114,7 +113,9 @@ export function useMediaOverlay({
       return;
     }
 
-    void extractMediaOverlays(book).then((m) => {
+    void import('@do-epub-studio/reader-core/media-overlay').then(async (mod) => {
+      mediaOverlayModRef.current = mod;
+      const m = await mod.extractMediaOverlays(book);
       if (active) {
         setManifest(m);
       }
@@ -196,7 +197,10 @@ export function useMediaOverlay({
         audioRevokeRef.current = null;
       }
 
-      const resolved = await resolveAudioClipUrl(book, clip.audioSrc);
+      const mod =
+        mediaOverlayModRef.current ?? (await import('@do-epub-studio/reader-core/media-overlay'));
+      mediaOverlayModRef.current = mod;
+      const resolved = await mod.resolveAudioClipUrl(book, clip.audioSrc);
       if (!resolved) {
         const msg = `Audio asset not found: ${clip.audioSrc}`;
         setErrorState(msg);
@@ -233,7 +237,10 @@ export function useMediaOverlay({
         audioRef.current.currentTime = bounded;
       }
       if (activeSequence) {
-        const clip = findActiveClip(activeSequence, bounded);
+        const clip =
+          mediaOverlayModRef.current?.findActiveClip(activeSequence, bounded) ??
+          activeSequence.clips.find((c) => bounded >= c.clipBegin && bounded < c.clipEnd) ??
+          null;
         setActiveClip(clip);
         updateElementHighlight(rendition, clip?.elementId);
       }
@@ -258,7 +265,9 @@ export function useMediaOverlay({
       return;
     }
 
-    const startClip = findActiveClip(activeSequence, currentTime) ?? activeSequence.clips[0];
+    const startClip =
+      mediaOverlayModRef.current?.findActiveClip(activeSequence, currentTime) ??
+      activeSequence.clips[0];
     if (!startClip) return;
 
     const loaded = await loadAudioForClip(startClip);
@@ -275,7 +284,7 @@ export function useMediaOverlay({
       const t = audioRef.current.currentTime;
       setCurrentTime(t);
 
-      const matchingClip = findActiveClip(activeSequence, t);
+      const matchingClip = mediaOverlayModRef.current?.findActiveClip(activeSequence, t) ?? null;
       if (matchingClip?.id !== activeClipRef.current?.id) {
         setActiveClip(matchingClip);
         updateElementHighlight(rendition, matchingClip?.elementId);

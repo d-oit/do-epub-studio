@@ -34,6 +34,9 @@ export function useEpubLoader({ epubUrl, bookId, t }: EpubLoaderOptions) {
   const setError = useReaderStore((state) => state.setError);
   const setBookDirection = useReaderStore((state) => state.setBookDirection);
   const setIsFixedLayout = useReaderStore((state) => state.setIsFixedLayout);
+  const setRenditions = useReaderStore((state) => state.setRenditions);
+  const setActiveRendition = useReaderStore((state) => state.setActiveRendition);
+  const [selectedRootfile, setSelectedRootfile] = useState<string | null>(null);
   const bookRef = useRef<Book | null>(null);
   const loaderRef = useRef<EpubLoader | null>(null);
   const directionRef = useRef<PageDirection>('default');
@@ -67,7 +70,11 @@ export function useEpubLoader({ epubUrl, bookId, t }: EpubLoaderOptions) {
 
     const load = async (): Promise<void> => {
       try {
-        await loader.load(epubUrl);
+        if (selectedRootfile) {
+          await loader.load(epubUrl, { rootfile: selectedRootfile });
+        } else {
+          await loader.load(epubUrl);
+        }
         const book = loader.getBook();
         if (!book) throw new Error('EPUB load returned no book');
         bookRef.current = book;
@@ -84,6 +91,14 @@ export function useEpubLoader({ epubUrl, bookId, t }: EpubLoaderOptions) {
         const direction = resolveBookDirection(book);
         const presentation = await resolveBookPresentation(book, rawMetadata);
         if (!active) return;
+        if (typeof loader.getRenditions === 'function') {
+          const availableRenditions = await loader.getRenditions();
+          setRenditions?.(availableRenditions);
+        }
+        if (typeof loader.getActiveRendition === 'function') {
+          const currentRendition = loader.getActiveRendition();
+          setActiveRendition?.(currentRendition);
+        }
 
         const spineItems = collectSpineItems(book);
         if (spineItems.length > 0) {
@@ -133,7 +148,16 @@ export function useEpubLoader({ epubUrl, bookId, t }: EpubLoaderOptions) {
       if (loaderRef.current === loader) loaderRef.current = null;
       bookRef.current = null;
     };
-  }, [epubUrl, bookId, setBookDirection, setError, setIsFixedLayout]);
+  }, [
+    epubUrl,
+    bookId,
+    selectedRootfile,
+    setBookDirection,
+    setError,
+    setIsFixedLayout,
+    setRenditions,
+    setActiveRendition,
+  ]);
 
   return {
     bookRef,
@@ -144,5 +168,7 @@ export function useEpubLoader({ epubUrl, bookId, t }: EpubLoaderOptions) {
     directionRef,
     fixedLayoutRef,
     prefetchManagerRef,
+    selectedRootfile,
+    switchRendition: setSelectedRootfile,
   };
 }

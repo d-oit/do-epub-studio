@@ -6,6 +6,7 @@ import type {
   ConflictResolutionStrategy,
 } from '../lib/offline/conflict-resolution';
 import type { AnnotationLocator } from '@do-epub-studio/shared';
+import type { RenditionItem } from '@do-epub-studio/reader-core';
 import type { FeedbackItem } from '../lib/api/feedback';
 
 export type PageDirection = 'ltr' | 'rtl' | 'default';
@@ -110,6 +111,12 @@ interface ReaderState {
   activePanel: ReaderPanel;
   readerSpread: ReaderSpread;
   readerZoom: ReaderZoom;
+  renditions: RenditionItem[];
+  activeRendition: RenditionItem | null;
+  progressByRendition: Record<string, ReadingProgress>;
+  setRenditions: (renditions: RenditionItem[]) => void;
+  setActiveRendition: (rendition: RenditionItem | null) => void;
+  setProgressForRendition: (renditionId: string, progress: ReadingProgress) => void;
   setProgress: (progress: ReadingProgress) => void;
   setProgressRestored: (restored: boolean) => void;
   addBookmark: (bookmark: Bookmark) => void;
@@ -169,6 +176,9 @@ const initialReaderState = {
   readerSpread: 'auto' as const,
   readerZoom: 1.0 as const,
   conflicts: [],
+  renditions: [],
+  activeRendition: null,
+  progressByRendition: {},
 };
 
 /**
@@ -275,7 +285,47 @@ export const useReaderStore = create<ReaderState>((set) => ({
     return result;
   },
   clearConflicts: () => set({ conflicts: [] }),
-  setProgress: (progress) => set({ progress }),
+  setProgress: (progress) =>
+    set((state) => {
+      const activeId = state.activeRendition?.fullPath ?? state.activeRendition?.id;
+      return {
+        progress,
+        progressByRendition: activeId
+          ? { ...state.progressByRendition, [activeId]: progress }
+          : state.progressByRendition,
+      };
+    }),
+  setRenditions: (renditions) => set({ renditions }),
+  setActiveRendition: (rendition) =>
+    set((state) => {
+      const targetId = rendition?.fullPath ?? rendition?.id;
+      const prevId = state.activeRendition?.fullPath ?? state.activeRendition?.id;
+      const nextByRendition = prevId
+        ? { ...state.progressByRendition, [prevId]: state.progress }
+        : { ...state.progressByRendition };
+      if (!prevId || prevId === targetId) {
+        if (targetId && !nextByRendition[targetId]) {
+          nextByRendition[targetId] = state.progress;
+        }
+        return {
+          activeRendition: rendition,
+          progressByRendition: nextByRendition,
+        };
+      }
+      const targetProgress =
+        targetId && nextByRendition[targetId]
+          ? nextByRendition[targetId]
+          : { locator: null, progressPercent: 0, updatedAt: null, revision: 0 };
+      return {
+        activeRendition: rendition,
+        progress: targetProgress,
+        progressByRendition: nextByRendition,
+      };
+    }),
+  setProgressForRendition: (renditionId, progress) =>
+    set((state) => ({
+      progressByRendition: { ...state.progressByRendition, [renditionId]: progress },
+    })),
   setProgressRestored: (restored) => set({ progressRestored: restored }),
   addBookmark: (bookmark) => set((state) => ({ bookmarks: [bookmark, ...state.bookmarks] })),
   removeBookmark: (id) =>

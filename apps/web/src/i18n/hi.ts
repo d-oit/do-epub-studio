@@ -900,4 +900,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'वाचन चल रहा है',
   'reader.mediaOverlay.playingElement': 'वाक्यांश {id} चल रहा है',
   'reader.mediaOverlay.paused': 'वाचन रोक दिया गया',
+  'reader.renditions.title': 'संस्करण',
+  'reader.renditions.select': 'संस्करण चुनें',
+  'reader.renditions.active': 'सक्रिय संस्करण: {label}',
 };

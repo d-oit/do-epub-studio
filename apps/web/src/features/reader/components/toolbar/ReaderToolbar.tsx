@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useKeyboardShortcut } from '../../../../hooks/useKeyboardShortcut';
 import { Header, IconButton, Button, Tooltip } from '../../../../components/ui';
 import { useFocusTrap } from '@do-epub-studio/ui';
@@ -37,10 +37,17 @@ interface ReaderToolbarProps {
   hasMediaOverlays?: boolean;
   isMediaOverlayActive?: boolean;
   onToggleMediaOverlay?: () => void;
+  renditions?: RenditionItem[];
+  activeRendition?: RenditionItem | null;
+  onSelectRendition?: (fullPath: string) => void;
   t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }
 
 import { OverflowMenu } from './ToolbarOverflowMenu';
+const RenditionSelector = lazy(() =>
+  import('./RenditionSelector').then((m) => ({ default: m.RenditionSelector })),
+);
+import type { RenditionItem } from '@do-epub-studio/reader-core';
 import type { TFn } from './toolbar-types';
 import {
   ToolbarIconButton,
@@ -157,6 +164,9 @@ interface ToolbarActionsProps {
   hasMediaOverlays?: boolean;
   isMediaOverlayActive?: boolean;
   onToggleMediaOverlay?: () => void;
+  renditions?: RenditionItem[];
+  activeRendition?: RenditionItem | null;
+  onSelectRendition?: (fullPath: string) => void;
   t: TFn;
 }
 
@@ -178,6 +188,9 @@ function ToolbarActions({
   hasMediaOverlays,
   isMediaOverlayActive,
   onToggleMediaOverlay,
+  renditions,
+  activeRendition,
+  onSelectRendition,
   t,
 }: ToolbarActionsProps) {
   return (
@@ -242,6 +255,16 @@ function ToolbarActions({
           isExpanded={isMediaOverlayActive}
           svgPath={PATH_SPEAKER}
         />
+      )}
+      {renditions && renditions.length > 1 && (
+        <Suspense fallback={null}>
+          <RenditionSelector
+            renditions={renditions}
+            activeRendition={activeRendition ?? null}
+            onSelectRendition={onSelectRendition ?? (() => {})}
+            t={t}
+          />
+        </Suspense>
       )}
       <div className="mx-1 h-6 w-px bg-border cq-reader-toolbar-divider" />
       <LocaleSwitcher />
@@ -331,6 +354,9 @@ export function ReaderToolbar({
   hasMediaOverlays,
   isMediaOverlayActive,
   onToggleMediaOverlay,
+  renditions,
+  activeRendition,
+  onSelectRendition,
   t,
 }: ReaderToolbarProps) {
   const {
@@ -376,6 +402,9 @@ export function ReaderToolbar({
     hasMediaOverlays,
     isMediaOverlayActive,
     onToggleMediaOverlay,
+    renditions,
+    activeRendition,
+    onSelectRendition,
     t,
   };
 

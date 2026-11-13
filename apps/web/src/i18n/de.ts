@@ -1002,4 +1002,7 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Sprachausgabe wird abgespielt',
   'reader.mediaOverlay.playingElement': 'Satz {id} wird abgespielt',
   'reader.mediaOverlay.paused': 'Sprachausgabe angehalten',
+  'reader.renditions.title': 'Ausgaben',
+  'reader.renditions.select': 'Ausgabe oder Rendition wählen',
+  'reader.renditions.active': 'Aktive Ausgabe: {label}',
 };

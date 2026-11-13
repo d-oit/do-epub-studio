@@ -877,4 +877,7 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': '내레이션 재생 중',
   'reader.mediaOverlay.playingElement': '프레이즈 {id} 재생 중',
   'reader.mediaOverlay.paused': '내레이션 일시정지됨',
+  'reader.renditions.title': '렌디션',
+  'reader.renditions.select': '렌디션 선택',
+  'reader.renditions.active': '활성 렌디션: {label}',
 };

@@ -306,9 +306,13 @@ export interface EpubManifestItemLike {
 }
 
 export interface EpubBookLike {
-  package?: {
-    manifest?: Record<string, EpubManifestItemLike>;
+  packaging?: {
+    manifest?: Map<string, EpubManifestItemLike> | Record<string, EpubManifestItemLike>;
   };
+  package?: {
+    manifest?: Map<string, EpubManifestItemLike> | Record<string, EpubManifestItemLike>;
+  };
+  resolve?: (path: string) => string;
   load?: (path: string, type?: string) => Promise<unknown>;
   archive?: {
     getText?: (url: string) => Promise<string | null>;
@@ -321,12 +325,13 @@ export interface EpubBookLike {
  */
 export async function extractMediaOverlays(book: unknown): Promise<MediaOverlayManifest> {
   const bookCandidate = book as EpubBookLike | null | undefined;
-  const manifest = bookCandidate?.package?.manifest;
-  if (!manifest) {
+  const manifest = bookCandidate?.packaging?.manifest ?? bookCandidate?.package?.manifest;
+  if (!bookCandidate || !manifest) {
     return { sequencesByChapter: {}, totalDuration: 0, hasMediaOverlays: false };
   }
 
-  const manifestItems: EpubManifestItemLike[] = Object.values(manifest);
+  const manifestItems: EpubManifestItemLike[] =
+    manifest instanceof Map ? Array.from(manifest.values()) : Object.values(manifest);
   const itemById = new Map<string, EpubManifestItemLike>();
   for (const it of manifestItems) {
     if (it?.id) itemById.set(it.id, it);
@@ -341,12 +346,26 @@ export async function extractMediaOverlays(book: unknown): Promise<MediaOverlayM
     if (!smilItem?.href) continue;
 
     let smilXml: string | null = null;
+    let smilArchivePath = smilItem.href;
     try {
-      if (typeof bookCandidate.load === 'function') {
+      const candidates = [
+        typeof bookCandidate.resolve === 'function' ? bookCandidate.resolve(smilItem.href) : null,
+        smilItem.href.startsWith('/') ? smilItem.href : `/${smilItem.href}`,
+        smilItem.href,
+      ].filter((c): c is string => Boolean(c));
+
+      if (bookCandidate.archive && typeof bookCandidate.archive.getText === 'function') {
+        for (const c of candidates) {
+          smilXml = await bookCandidate.archive.getText(c);
+          if (smilXml) {
+            smilArchivePath = c.replace(/^\//, '');
+            break;
+          }
+        }
+      }
+      if (!smilXml && typeof bookCandidate.load === 'function') {
         const loaded = await bookCandidate.load(smilItem.href, 'text');
         if (typeof loaded === 'string') smilXml = loaded;
-      } else if (bookCandidate.archive && typeof bookCandidate.archive.getText === 'function') {
-        smilXml = await bookCandidate.archive.getText(smilItem.href);
       }
     } catch {
       continue;
@@ -355,7 +374,7 @@ export async function extractMediaOverlays(book: unknown): Promise<MediaOverlayM
     if (!smilXml || typeof smilXml !== 'string') continue;
 
     try {
-      const sequence = parseSmilDocument(smilXml, smilItem.href);
+      const sequence = parseSmilDocument(smilXml, smilArchivePath);
       if (sequence.clips.length > 0) {
         const normHref = it.href ? it.href.replace(/^\//, '') : '';
         sequencesByChapter[normHref] = sequence;
@@ -389,8 +408,17 @@ export async function resolveAudioClipUrl(
   try {
     let blob: Blob | null = null;
     if (bookCandidate.archive && typeof bookCandidate.archive.getBlob === 'function') {
-      blob = await bookCandidate.archive.getBlob(audioSrc);
-    } else if (typeof bookCandidate.load === 'function') {
+      const candidates = [
+        audioSrc.startsWith('/') ? audioSrc : `/${audioSrc}`,
+        typeof bookCandidate.resolve === 'function' ? bookCandidate.resolve(audioSrc) : null,
+        audioSrc,
+      ].filter((c): c is string => Boolean(c));
+      for (const c of candidates) {
+        blob = await bookCandidate.archive.getBlob(c);
+        if (blob) break;
+      }
+    }
+    if (!blob && typeof bookCandidate.load === 'function') {
       const data = await bookCandidate.load(audioSrc, 'blob');
       if (data instanceof Blob) {
         blob = data;

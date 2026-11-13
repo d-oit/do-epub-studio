@@ -9,7 +9,9 @@
     ".": "./src/index.ts",
     "./author-content": "./src/author-content.ts",
     "./author-styles": "./src/author-styles.ts",
-    "./packager": "./src/packager/index.ts"
+    "./packager": "./src/packager/index.ts",
+    "./media-overlay": "./src/media-overlay.ts",
+    "./rendition-container": "./src/rendition-container.ts"
   },
   "scripts": {
     "test:unit": "node src/__tests__/fixtures/generate.mjs && node src/__tests__/fixtures/generate-capabilities.mjs && vitest --run",
