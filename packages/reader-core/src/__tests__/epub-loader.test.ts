@@ -245,6 +245,13 @@ describe('createEpubLoader', () => {
     const metadata = loader.getMetadata();
     expect(metadata.fixedLayout).toBeUndefined();
   });
+  it('returns media overlays manifest via getMediaOverlays()', async () => {
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+    const manifest = await loader.getMediaOverlays();
+    expect(manifest).toBeDefined();
+    expect(manifest.hasMediaOverlays).toBe(false);
+  });
 
   it('parses orientation and spread from packaging metadata', async () => {
     epubjsMock.__mockBook.packaging = {

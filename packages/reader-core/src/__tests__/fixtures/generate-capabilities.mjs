@@ -8,6 +8,18 @@ const output = resolve(dirname(fileURLToPath(import.meta.url)), 'capability-corp
 const bytes = (text) => Buffer.from(text, 'utf8');
 const navigation =
   '<nav epub:type="toc"><h1>Contents</h1><ol><li><a href="chapter.xhtml#start">Start</a></li></ol></nav><nav epub:type="landmarks"><h2>Landmarks</h2><ol><li><a epub:type="bodymatter" href="chapter.xhtml#start">Begin reading</a></li></ol></nav>';
+function createSilentMp3(frameCount = 38) {
+  const frameLength = 417;
+  const buffer = new Uint8Array(frameLength * frameCount);
+  for (let i = 0; i < frameCount; i++) {
+    const offset = i * frameLength;
+    buffer[offset] = 0xff;
+    buffer[offset + 1] = 0xfb;
+    buffer[offset + 2] = 0x90;
+    buffer[offset + 3] = 0x64;
+  }
+  return buffer;
+}
 const cases = [
   ['epub2-reflow', '2.0', '<h1 id="start">A Small Atlas</h1><p>A short original passage.</p>'],
   ['epub3-0-reflow-nav', '3.0', `${navigation}<h1 id="start">A Small Atlas</h1>`],
@@ -94,7 +106,7 @@ function epub([id, version, content]) {
   const packageMeta = `${id === 'fixed-layout' ? '<meta property="rendition:layout">pre-paginated</meta><meta property="rendition:orientation">portrait</meta>' : ''}${id === 'accessibility-metadata' ? '<meta property="schema:accessibilityFeature">structuralNavigation</meta><meta property="schema:accessibilitySummary">Synthetic metadata sample; not a certification.</meta><meta property="schema:accessibilityHazard">none</meta>' : ''}`;
   const mediaItems =
     id === 'media-overlay'
-      ? '<item id="smil" href="overlay.smil" media-type="application/smil+xml"/><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" media-overlay="smil"/>'
+      ? '<item id="smil" href="overlay.smil" media-type="application/smil+xml"/><item id="audio" href="silence.mp3" media-type="audio/mpeg"/><item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml" media-overlay="smil"/>'
       : '<item id="chapter" href="chapter.xhtml" media-type="application/xhtml+xml"/>';
   const navManifest = epub2
     ? '<item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>'
@@ -135,13 +147,15 @@ function epub([id, version, content]) {
       'OEBPS/alternate.opf',
       bytes(opf.replace(`<dc:title>${id}</dc:title>`, '<dc:title>alternate-rendition</dc:title>')),
     ]);
-  if (id === 'media-overlay')
+  if (id === 'media-overlay') {
     entries.push([
       'OEBPS/overlay.smil',
       bytes(
-        '<smil xmlns="http://www.w3.org/ns/SMIL"><body><seq><par><text src="chapter.xhtml#line"/><audio src="silence.mp3" clipBegin="0s" clipEnd="1s"/></par></seq></body></smil>',
+        '<?xml version="1.0" encoding="utf-8"?><smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0"><body><seq id="seq1" epub:textref="chapter.xhtml"><par id="par1"><text src="chapter.xhtml#line"/><audio src="silence.mp3" clipBegin="0s" clipEnd="1s"/></par></seq></body></smil>',
       ),
     ]);
+    entries.push(['OEBPS/silence.mp3', createSilentMp3()]);
+  }
   if (id === 'image-alternative')
     entries.push([
       'OEBPS/seed.svg',

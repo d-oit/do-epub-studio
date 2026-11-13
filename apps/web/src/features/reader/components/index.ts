@@ -1,4 +1,9 @@
-export { ReaderToolbar, ReaderSettingsPanel, FixedLayoutControls } from './toolbar';
+export {
+  ReaderToolbar,
+  ReaderSettingsPanel,
+  FixedLayoutControls,
+  MediaOverlayBar,
+} from './toolbar';
 export { TableOfContents } from './toc';
 export { BookmarksPanel } from './bookmarks';
 export { ReaderViewer } from './viewer';

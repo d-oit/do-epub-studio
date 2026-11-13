@@ -7,7 +7,9 @@ import type {
   BookMetadata,
   ProgressPosition,
   PageDirection,
+  MediaOverlayManifest,
 } from './epub-types';
+import { extractMediaOverlays } from './media-overlay';
 import {
   createTraceId,
   createSpanId,
@@ -46,6 +48,7 @@ export interface EpubLoader {
   setProgress(cfi: string): Promise<void>;
   on(event: string, callback: EventCallback): void;
   off(event: string, callback: EventCallback): void;
+  getMediaOverlays(): Promise<MediaOverlayManifest>;
   rendition: EpubRenditionHandle | null;
 }
 
@@ -71,6 +74,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   let spineItems: SpineItem[] = [];
   let metadata: BookMetadata = { title: '' };
   let currentProgress: ProgressPosition | null = null;
+  let mediaOverlayManifest: MediaOverlayManifest | null = null;
   const eventListeners = new Map<string, Set<EventCallback>>();
   let destroyed = false;
   let previousPageHideHandler: Window['onpagehide'] = null;
@@ -412,6 +416,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       // loader. terminateParserWorker() is idempotent (guards on the pool) and
       // resets the module-level pool so the next loader gets a fresh worker.
       terminateParserWorker();
+      mediaOverlayManifest = null;
     },
     getMetadata(): BookMetadata {
       ensureParsed();
@@ -447,6 +452,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     },
     off(event: string, callback: EventCallback): void {
       eventListeners.get(event)?.delete(callback);
+    },
+    async getMediaOverlays(): Promise<MediaOverlayManifest> {
+      if (mediaOverlayManifest) return mediaOverlayManifest;
+      if (!book) return { sequencesByChapter: {}, totalDuration: 0, hasMediaOverlays: false };
+      mediaOverlayManifest = await extractMediaOverlays(book);
+      return mediaOverlayManifest;
     },
     get rendition(): EpubRenditionHandle | null {
       return renditionHandle;
