@@ -30,7 +30,8 @@
     "knip": "knip",
     "check:dead-code": "scripts/dead-code-check.sh",
     "preflight:cloudflare": "node scripts/preflight-cloudflare.mjs",
-    "check:epub-fixtures": "node scripts/check-epub-fixtures.mjs"
+    "check:epub-fixtures": "node scripts/check-epub-fixtures.mjs",
+    "check:standards-status": "node scripts/check-standards-status.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

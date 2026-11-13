@@ -115,3 +115,5 @@ performed and documented.
 - [WCAG 2.2 Understanding documents](https://www.w3.org/WAI/WCAG22/Understanding/)
 - [WAI-ARIA Authoring Practices](https://www.w3.org/WAI/ARIA/apg/)
 - [axe-core rule descriptions](https://github.com/dequelabs/axe-core/blob/develop/doc/rule-descriptions.md)
+- [EPUB Accessibility 1.1 Recommendation](https://www.w3.org/TR/epub-a11y-11/) (normative publication accessibility baseline)
+- [EPUB Accessibility 1.2 Candidate Recommendation Draft (12 September 2026)](https://www.w3.org/TR/epub-a11y-12/) (forward-looking only; not a normative replacement)
