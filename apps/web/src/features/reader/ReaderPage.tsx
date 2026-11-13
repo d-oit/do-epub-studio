@@ -3,11 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { setupZombieDetection } from '../../lib/offline/permissions';
-import {
-  HighlightToolbarLayer,
-  extractSelectionData,
-  CommentsPanel,
-} from './components/annotations';
+import { HighlightToolbarLayer, CommentsPanel } from './components/annotations';
 import { FeedbackComposerModal } from './components/annotations/FeedbackComposerModal';
 import {
   useReaderUI,
@@ -20,6 +16,8 @@ import {
   useReaderDataLoader,
   useReaderLogout,
   useBookFileUrl,
+  useMediaOverlay,
+  useIframeSelectionObserver,
 } from './hooks';
 import { useFeedbackComposer } from './hooks/useFeedbackComposer';
 import { useFlushInsightsOnExit, useOpenInfoPanel } from './hooks/useInsightFlushes';
@@ -34,6 +32,7 @@ import {
   InfoPanel,
   FixedLayoutControls,
   ScrollProgressBar,
+  MediaOverlayBar,
 } from './components';
 import { AnnotationInterchangeBar } from './components/toolbar/AnnotationInterchangeBar';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
@@ -178,6 +177,13 @@ export function ReaderPage() {
     markPageRead,
     setChapter,
   );
+  const [isMediaOverlayOpen, setIsMediaOverlayOpen] = useState(false);
+  const mediaOverlay = useMediaOverlay({
+    book: bookRef.current,
+    rendition: renditionRef.current,
+    currentChapter,
+    onError: setError,
+  });
 
   // Navigate to an annotation by displaying the given chapter/CFI on the
   // rendition. renditionRef is a stable useRef object, so its identity
@@ -200,100 +206,15 @@ export function ReaderPage() {
     setProgress,
   });
 
-  useEffect(() => {
-    // The viewer (and its frames) mount after the EPUB URL resolves, so bind
-    // from the page root and resolve the container lazily rather than bailing
-    // out when the ref is still empty.
-    const viewer = viewerRef;
-    const bindingRoot = rootRef.current ?? document.body;
-    if (!bindingRoot) return;
-
-    // epub.js renders the book into its own same-origin <iframe> inside the
-    // viewer, and mouse/selection events inside a frame never reach the parent
-    // document — so selection must be observed on each content document.
-    // Frames mount and unmount as sections display, hence the observer.
-    const attached = new WeakSet<Document>();
-    let settleTimer: number | undefined;
-
-    const readSelection = () => {
-      if (isCommentMode) return;
-      const container = viewer.current;
-      if (!container) return;
-      let frame: HTMLIFrameElement | null = null;
-      for (const candidate of container.querySelectorAll('iframe')) {
-        const live = candidate.contentWindow?.getSelection();
-        if (live && !live.isCollapsed && live.rangeCount > 0) {
-          frame = candidate;
-          break;
-        }
-      }
-      const sel = frame ? extractSelectionData(frame) : null;
-      if (sel && frame) {
-        // Anchor evidence the DOM alone cannot supply: the source file, the
-        // chapter the passage sits in, and a CFI for the exact range (browser
-        // selections carry no epub.js `cfiRange`).
-        sel.bookFileId = bookFileIdRef.current ?? undefined;
-        sel.chapterRef = currentChapterRef.current || sel.chapterRef;
-        const contents = renditionRef.current
-          ?.getContents()
-          .find((entry) => entry.document === frame?.contentDocument);
-        const range = frame.contentWindow?.getSelection()?.getRangeAt(0);
-        if (contents && range) {
-          try {
-            sel.cfiRange = contents.cfiFromRange(range);
-          } catch {
-            // Range outside the rendition's mapping: keep the anchor partial.
-          }
-        }
-      }
-      setSelection(sel && sel.text.length >= 3 ? sel : null);
-    };
-
-    // `selectionchange` fires per character while dragging, so settle first;
-    // mouseup ends a mouse selection immediately.
-    const onSelectionChange = () => {
-      window.clearTimeout(settleTimer);
-      settleTimer = window.setTimeout(readSelection, 150);
-    };
-    const onMouseUp = () => {
-      window.clearTimeout(settleTimer);
-      readSelection();
-    };
-
-    const attachToFrames = () => {
-      const container = viewer.current;
-      if (!container) return;
-      for (const frame of container.querySelectorAll('iframe')) {
-        const doc = frame.contentDocument;
-        if (!doc || attached.has(doc)) continue;
-        attached.add(doc);
-        doc.addEventListener('selectionchange', onSelectionChange);
-        doc.addEventListener('mouseup', onMouseUp);
-      }
-    };
-
-    attachToFrames();
-    const observer = new MutationObserver(attachToFrames);
-    observer.observe(bindingRoot, { childList: true, subtree: true });
-
-    return () => {
-      window.clearTimeout(settleTimer);
-      observer.disconnect();
-      for (const frame of viewer.current?.querySelectorAll('iframe') ?? []) {
-        frame.contentDocument?.removeEventListener('selectionchange', onSelectionChange);
-        frame.contentDocument?.removeEventListener('mouseup', onMouseUp);
-      }
-    };
-  }, [
-    epubUrl,
+  useIframeSelectionObserver({
+    viewerRef,
+    rootRef,
+    renditionRef,
+    currentChapterRef,
+    bookFileIdRef,
     isCommentMode,
     setSelection,
-    currentChapterRef,
-    renditionRef,
-    bookFileIdRef,
-    rootRef,
-    viewerRef,
-  ]);
+  });
 
   useEffect(() => {
     if (!bookId || !sessionToken) return;
@@ -347,8 +268,32 @@ export function ReaderPage() {
         t={tFn}
         isFixedLayout={isFixedLayout}
         onToggleFixedLayoutControls={() => togglePanel('fl-controls')}
+        hasMediaOverlays={mediaOverlay.hasMediaOverlays}
+        isMediaOverlayActive={isMediaOverlayOpen || mediaOverlay.isPlaying}
+        onToggleMediaOverlay={() => setIsMediaOverlayOpen((v) => !v)}
       />
       <AnnotationInterchangeBar bookId={bookId} bookTitle={bookTitle} onError={setError} />
+      {mediaOverlay.hasMediaOverlays && (isMediaOverlayOpen || mediaOverlay.isPlaying) && (
+        <MediaOverlayBar
+          isPlaying={mediaOverlay.isPlaying}
+          isPaused={mediaOverlay.isPaused}
+          currentTime={mediaOverlay.currentTime}
+          duration={mediaOverlay.duration}
+          playbackRate={mediaOverlay.playbackRate}
+          activeClip={mediaOverlay.activeClip}
+          error={mediaOverlay.error}
+          onTogglePlay={() => void mediaOverlay.togglePlay()}
+          onSeek={mediaOverlay.seek}
+          onNextPhrase={mediaOverlay.nextPhrase}
+          onPreviousPhrase={mediaOverlay.previousPhrase}
+          onSetPlaybackRate={mediaOverlay.setPlaybackRate}
+          onClose={() => {
+            mediaOverlay.pause();
+            setIsMediaOverlayOpen(false);
+          }}
+          t={tFn}
+        />
+      )}
       {activePanel === 'settings' && (
         <ReaderSettingsPanel
           isOpen

@@ -98,4 +98,11 @@ describe('generated synthetic EPUB capability corpus', () => {
     expect(remoteDocument.querySelector('img')?.getAttribute('src')).toBeNull();
     expect(remoteDocument.querySelector('img')?.getAttribute('alt')).toBe('Remote test resource');
   });
+
+  it('packages valid SMIL and local audio for media-overlay fixture', () => {
+    const archive = readZipEntries(readFileSync(resolve(CORPUS, 'media-overlay.epub')));
+    expect(archive.has('OEBPS/overlay.smil')).toBe(true);
+    expect(archive.has('OEBPS/silence.mp3')).toBe(true);
+    expect(archive.get('OEBPS/silence.mp3')?.byteLength).toBeGreaterThan(0);
+  });
 });

@@ -34,6 +34,9 @@ interface ReaderToolbarProps {
   onExportNotes: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
+  hasMediaOverlays?: boolean;
+  isMediaOverlayActive?: boolean;
+  onToggleMediaOverlay?: () => void;
   t: (key: TranslationKeys, params?: Record<string, string | number>) => string;
 }
 
@@ -49,6 +52,7 @@ import {
   PATH_EXPORT,
   PATH_SETTINGS_GEAR,
   PATH_SETTINGS_DOT,
+  PATH_SPEAKER,
 } from './ToolbarIconButton';
 
 // ─── Left section: TOC toggle + book title + progress ───────────────────────
@@ -150,6 +154,9 @@ interface ToolbarActionsProps {
   onToggleSettings: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
+  hasMediaOverlays?: boolean;
+  isMediaOverlayActive?: boolean;
+  onToggleMediaOverlay?: () => void;
   t: TFn;
 }
 
@@ -168,6 +175,9 @@ function ToolbarActions({
   onToggleSettings,
   onLogout,
   onToggleNotifications,
+  hasMediaOverlays,
+  isMediaOverlayActive,
+  onToggleMediaOverlay,
   t,
 }: ToolbarActionsProps) {
   return (
@@ -225,6 +235,14 @@ function ToolbarActions({
         isExpanded={activePanel === 'settings'}
         svgPath={[PATH_SETTINGS_GEAR, PATH_SETTINGS_DOT]}
       />
+      {hasMediaOverlays && onToggleMediaOverlay && (
+        <ToolbarIconButton
+          label={t('reader.mediaOverlay.title')}
+          onClick={onToggleMediaOverlay}
+          isExpanded={isMediaOverlayActive}
+          svgPath={PATH_SPEAKER}
+        />
+      )}
       <div className="mx-1 h-6 w-px bg-border cq-reader-toolbar-divider" />
       <LocaleSwitcher />
       <Button onClick={onLogout} variant="ghost" size="sm">
@@ -310,6 +328,9 @@ export function ReaderToolbar({
   onExportNotes,
   onLogout,
   onToggleNotifications,
+  hasMediaOverlays,
+  isMediaOverlayActive,
+  onToggleMediaOverlay,
   t,
 }: ReaderToolbarProps) {
   const {
@@ -352,6 +373,9 @@ export function ReaderToolbar({
     onToggleSettings,
     onLogout,
     onToggleNotifications,
+    hasMediaOverlays,
+    isMediaOverlayActive,
+    onToggleMediaOverlay,
     t,
   };
 

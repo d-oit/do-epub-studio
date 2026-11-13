@@ -273,4 +273,36 @@ test.describe('synthetic EPUB content browser rendering smoke', () => {
     });
     await expect(scriptFrame.locator('[onclick]')).toHaveCount(0);
   });
+
+  test('plays media overlay synchronized narration and renders highlight in reader engine', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(
+      browserName !== 'chromium' && browserName !== 'webkit',
+      'Chromium/WebKit baseline only',
+    );
+    await mockReaderApi(page, { epubBuffer: loadCorpusEpub('media-overlay') });
+    await loginAsReader(page);
+    const frame = page.frameLocator('[data-epub-content-host] iframe').first();
+    await expect(frame.getByRole('heading', { level: 1, name: 'A quiet line' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.locator('#line')).toHaveText('Rain taps softly.');
+
+    const narrationBtn = page.getByRole('button', { name: 'Narration' });
+    await expect(narrationBtn).toBeVisible({ timeout: 10000 });
+    await narrationBtn.click();
+
+    const playBtn = page.getByRole('button', { name: 'Play narration' });
+    await expect(playBtn).toBeVisible();
+    await playBtn.click();
+
+    await expect(frame.locator('#line')).toHaveClass(
+      /media-overlay-active|-epub-media-overlay-active/,
+      {
+        timeout: 10000,
+      },
+    );
+  });
 });

@@ -1000,6 +1000,16 @@ export const en = {
   'admin.validation.checklist.altText': 'Image alternative text verified',
   'admin.validation.checklist.navigation': 'TOC and reading order verified',
   'admin.validation.remediationSuccess': 'Remediation state saved successfully.',
+  'reader.mediaOverlay.title': 'Narration',
+  'reader.mediaOverlay.play': 'Play narration',
+  'reader.mediaOverlay.pause': 'Pause narration',
+  'reader.mediaOverlay.nextPhrase': 'Next phrase',
+  'reader.mediaOverlay.previousPhrase': 'Previous phrase',
+  'reader.mediaOverlay.seek': 'Seek playback time',
+  'reader.mediaOverlay.playbackRate': 'Playback rate: {rate}',
+  'reader.mediaOverlay.playing': 'Playing narration',
+  'reader.mediaOverlay.playingElement': 'Playing phrase {id}',
+  'reader.mediaOverlay.paused': 'Narration paused',
 } as const;
 
 export type TranslationKeys = keyof typeof en;
