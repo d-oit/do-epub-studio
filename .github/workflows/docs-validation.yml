@@ -105,3 +105,6 @@ jobs:
 
       - name: Validate plan references (ADR-083)
         run: node scripts/check-plan-references.mjs
+
+      - name: Validate EPUB and accessibility standards status
+        run: node scripts/check-standards-status.mjs
