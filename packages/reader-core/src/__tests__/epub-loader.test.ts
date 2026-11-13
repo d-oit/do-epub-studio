@@ -77,6 +77,10 @@ vi.mock('@intity/epub-js', () => {
 // Get mock references after hoisting
 interface MockBook {
   opened: Promise<void>;
+  loaded: {
+    metadata: Promise<Map<string, string> | undefined>;
+    spine: Promise<unknown>;
+  };
   renderTo: ReturnType<typeof vi.fn>;
   destroy: ReturnType<typeof vi.fn>;
   rendition: { destroy: () => void } | null;
@@ -143,6 +147,19 @@ describe('createEpubLoader', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     epubjsMock.__mockBook.packaging = { direction: 'default', metadata: new Map() };
+    epubjsMock.__mockBook.loaded.metadata = Promise.resolve(
+      new Map([
+        ['title', 'Test Book'],
+        ['creator', 'Test Author'],
+        ['language', 'en'],
+        ['publisher', 'Test Publisher'],
+        ['description', 'A test book'],
+      ]),
+    );
+    epubjsMock.__mockBook.loaded.spine = Promise.resolve([
+      { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] },
+      { index: 1, href: 'chapter2.xhtml' },
+    ]);
     epubjsMock.__mockBook.rendition = null;
   });
 
@@ -184,6 +201,44 @@ describe('createEpubLoader', () => {
     expect(metadata.title).toBe('Test Book');
     expect(metadata.creator).toBe('Test Author');
     expect(metadata.language).toBe('en');
+  });
+
+  it('reads spine items from an EPUB.js Map in manifest order', async () => {
+    epubjsMock.__mockBook.loaded.spine = Promise.resolve(
+      new Map([
+        ['chapter-1', { index: 0, href: 'chapter1.xhtml', properties: ['page-spread-right'] }],
+        ['chapter-2', { index: 1, href: 'chapter2.xhtml' }],
+      ]),
+    );
+    const loader = createEpubLoader();
+    try {
+      await loader.load('test.epub');
+      expect(loader.getSpineItems().map(({ index, href }) => ({ index, href }))).toEqual([
+        { index: 0, href: 'chapter1.xhtml' },
+        { index: 1, href: 'chapter2.xhtml' },
+      ]);
+    } finally {
+      loader.destroy();
+    }
+  });
+  it('falls back to package metadata when loaded metadata is missing', async () => {
+    epubjsMock.__mockBook.loaded.metadata = Promise.resolve(undefined);
+    epubjsMock.__mockBook.packaging.metadata = new Map([
+      ['title', 'Package Metadata Book'],
+      ['creator', 'Package Author'],
+      ['language', 'en-GB'],
+    ]);
+    const loader = createEpubLoader();
+    try {
+      await loader.load('test.epub');
+      expect(loader.getMetadata()).toMatchObject({
+        title: 'Package Metadata Book',
+        creator: 'Package Author',
+        language: 'en-GB',
+      });
+    } finally {
+      loader.destroy();
+    }
   });
 
   it('detects default direction from packaging', async () => {

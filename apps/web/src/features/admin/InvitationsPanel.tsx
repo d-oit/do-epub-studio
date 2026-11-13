@@ -225,7 +225,14 @@ export function InvitationsPanel({
               <span className="mb-1 block font-medium">{t('invitations.roleLabel')}</span>
               <select
                 value={role}
-                onChange={(event) => setRole(event.target.value as InvitationRole)}
+                onChange={(event) => {
+                  const nextRole = event.target.value as InvitationRole;
+                  setRole(nextRole);
+                  if (nextRole === AUTHOR_ROLE) {
+                    setCommentsAllowed(false);
+                    setOfflineAllowed(false);
+                  }
+                }}
                 className="min-h-11 w-full rounded-sm border border-border bg-background px-2"
               >
                 <option value={READER_ROLE}>{t('invitations.roleReader')}</option>
@@ -254,6 +261,7 @@ export function InvitationsPanel({
                 type="checkbox"
                 checked={commentsAllowed}
                 onChange={(event) => setCommentsAllowed(event.target.checked)}
+                disabled={role === AUTHOR_ROLE}
               />
               {t('grants.capabilities.comments')}
             </label>
@@ -262,6 +270,7 @@ export function InvitationsPanel({
                 type="checkbox"
                 checked={offlineAllowed}
                 onChange={(event) => setOfflineAllowed(event.target.checked)}
+                disabled={role === AUTHOR_ROLE}
               />
               {t('grants.capabilities.offline')}
             </label>

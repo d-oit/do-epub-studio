@@ -44,13 +44,13 @@ async function query<T extends JsonRow = JsonRow>(
   return { rows: result.results ?? [] };
 }
 
-export async function transaction(
+export async function transaction<T extends JsonRow = JsonRow>(
   env: Env,
   statements: { sql: string; args?: (string | number | null)[] }[],
-): Promise<void> {
+): Promise<D1Result<T>[]> {
   if (!env || !env.DB) {
     throw new AppError('Database binding (DB) is not configured', 'DB_NOT_CONFIGURED', 500);
   }
   const stmts = statements.map((s) => env.DB.prepare(s.sql).bind(...(s.args ?? [])));
-  await env.DB.batch(stmts);
+  return env.DB.batch<T>(stmts);
 }

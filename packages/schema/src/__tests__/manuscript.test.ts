@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AuthorPublicationSchema } from '../schemas';
+import { AuthorPublicationSchema, SaveManuscriptDraftSchema } from '../schemas';
 
 const basePublication = {
   title: '  A Test Publication  ',
@@ -41,5 +41,24 @@ describe('AuthorPublicationSchema', () => {
     expect(issuePaths).toEqual(
       expect.arrayContaining(['chapters.1.id', 'chapters.1.order', 'stylesheetAssetIds']),
     );
+  });
+});
+describe('SaveManuscriptDraftSchema', () => {
+  it('requires a positive integer expectedVersion', () => {
+    expect(
+      SaveManuscriptDraftSchema.safeParse({ publication: basePublication, expectedVersion: 1 })
+        .success,
+    ).toBe(true);
+    expect(SaveManuscriptDraftSchema.safeParse({ publication: basePublication }).success).toBe(
+      false,
+    );
+    expect(
+      SaveManuscriptDraftSchema.safeParse({ publication: basePublication, expectedVersion: 0 })
+        .success,
+    ).toBe(false);
+    expect(
+      SaveManuscriptDraftSchema.safeParse({ publication: basePublication, expectedVersion: 1.5 })
+        .success,
+    ).toBe(false);
   });
 });

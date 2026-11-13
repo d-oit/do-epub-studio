@@ -24,7 +24,8 @@ describe('db/client', () => {
       all: vi.fn().mockResolvedValue({ results: [{ id: '1', title: 'Book 1' }] }),
       batch: vi.fn().mockResolvedValue([]),
     });
-    const mockBatch = vi.fn().mockResolvedValue([]);
+    const batchResults = [{ results: [{ id: '1' }] }];
+    const mockBatch = vi.fn().mockResolvedValue(batchResults);
 
     const mockEnv = {
       DB: {
@@ -39,7 +40,9 @@ describe('db/client', () => {
     const allResult = await queryAll(mockEnv, 'SELECT * FROM books');
     expect(allResult).toEqual([{ id: '1', title: 'Book 1' }]);
 
-    await transaction(mockEnv, [{ sql: 'DELETE FROM books WHERE id = ?', args: ['1'] }]);
-    expect(mockBatch).toHaveBeenCalled();
+    const transactionResult = await transaction<{ id: string }>(mockEnv, [
+      { sql: 'DELETE FROM books WHERE id = ?', args: ['1'] },
+    ]);
+    expect(transactionResult).toEqual(batchResults);
   });
 });

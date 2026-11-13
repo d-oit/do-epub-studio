@@ -41,7 +41,7 @@ Implemented and locally proved. `analysis/triz-core-2026-10-20.md` records the t
 
 ### Architecture contract (acceptance-gap follow-up, 2026-11-08)
 
-The original feature section recorded intended behavior, not verified implementation. This contract resolves the gaps in `analysis/triz-core-2026-11-08.md`; the design resolutions are detailed in `analysis/triz-resolution-2026-11-08.md`. Implementation status remains pending until the acceptance checks below pass.
+The original feature section recorded intended behavior, not verified implementation. This contract resolves the gaps in `analysis/triz-core-2026-11-08.md`; the design resolutions are detailed in `analysis/triz-resolution-2026-11-08.md`. Required implementation and repository verification have passed; external screen-reader validation remains pending.
 
 ### Component contracts
 
@@ -67,12 +67,12 @@ The original feature section recorded intended behavior, not verified implementa
 - Schema and package tests cover required versioning, metadata boundaries, asset reference/path resolution, hostile HTML/CSS rejection, deterministic ZIP bytes, stored first `mimetype`, and package metadata.
 - Worker tests cover atomic save races/stale conflicts, admin/author/read-only/creator/cross-book access, grant revocation, MIME/signature/size failures, and content-addressed immutable publish with async validation queue behavior.
 - Reader-core integration loads the generated EPUB with `createEpubLoader` and asserts metadata, ordered TOC/spine, and local image/stylesheet entries.
-- Chromium and WebKit E2E exercise metadata, asset, chapter, full-reader-preview, conflict, and publish flows; axe plus keyboard checks cover the author surface.
-- Full monorepo quality gate runs after implementation; no PR merge is performed without human approval.
+- Chromium and WebKit E2E passed for metadata, asset, chapter, full-reader-preview, conflict, and publish flows; axe plus keyboard checks passed on the author surface.
+- Full monorepo quality gate passed (lint, typecheck, coverage tests, build, and smoke E2E); PR merge remains subject to human approval.
 
 ### Status
 
-Architecture resolved; follow-up implementation and verification pending. Full IFR/separation rationale and secondary-contradiction check: `analysis/triz-resolution-2026-11-08.md`.
+Implementation and repository verification complete (2026-11-13). External screen-reader verification remains pending: NVDA is unavailable in the current WSL2 environment and VoiceOver requires macOS. No merge performed without human approval.
 
 ## GOAP-1432 — EPUB Annotation Re-export
 

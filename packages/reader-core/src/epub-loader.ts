@@ -1,6 +1,5 @@
 import ePub from '@intity/epub-js';
 import type { Book, Rendition, Location, Contents } from '@intity/epub-js';
-import type { SpineItem as EpubSpineItem } from '@intity/epub-js/types/section';
 import type {
   TocItem,
   SpineItem,
@@ -10,8 +9,6 @@ import type {
   RenditionItem,
 } from './epub-types';
 import type { BookContainerHost } from './rendition-container';
-import { parseNavigationToc } from './toc';
-import { resolveBookDirection, resolveFixedLayoutFromMeta } from './fixed-layout';
 import {
   createTraceId,
   createSpanId,
@@ -19,6 +16,8 @@ import {
   testBounded,
   withTimeout,
 } from '@do-epub-studio/shared';
+import { parseLoadedEpubMetadata } from './epub-loader-metadata';
+import { markLoaderPhase, measureLoaderPhase } from './epub-loader-performance';
 import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
 import {
   createEpubSanitizerHook,
@@ -109,65 +108,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       ? globalThis.performance
       : undefined;
 
-  function safeMark(name: string): void {
-    try {
-      perf?.mark?.(name);
-    } catch {
-      // performance.mark unavailable — telemetry is best-effort
-    }
-  }
-
-  function safeMeasure(name: string, start: string, end: string): void {
-    try {
-      perf?.measure?.(name, start, end);
-    } catch {
-      // Performance measure unavailable — telemetry is best-effort
-    }
-  }
-
-  function getSpineIterable(spine: unknown): EpubSpineItem[] {
-    if (!spine) return [];
-    if (Array.isArray(spine)) return spine as EpubSpineItem[];
-    if (typeof (spine as Iterable<EpubSpineItem>)[Symbol.iterator] === 'function') {
-      return Array.from(spine as Iterable<EpubSpineItem>);
-    }
-    return [];
-  }
-
-  function parseSpineFromRaw(spine: unknown): SpineItem[] {
-    const spineItems: SpineItem[] = [];
-    let index = 0;
-    for (const item of getSpineIterable(spine)) {
-      spineItems.push({
-        index: item.index ?? index,
-        href: item.href ?? '',
-        properties: item.properties?.join(' '),
-      });
-      index++;
-    }
-    return spineItems;
-  }
-
   function ensureParsed(): void {
     if (parsed || !book) return;
     parsed = true;
-    if (rawNav && 'toc' in rawNav && rawNav.toc) {
-      toc = parseNavigationToc(rawNav.toc as Parameters<typeof parseNavigationToc>[0]);
-    }
-    if (rawSpine !== null && rawSpine !== undefined) {
-      spineItems = parseSpineFromRaw(rawSpine);
-    }
-    if (!rawMeta) return;
-    const pkgMeta = book.packaging?.metadata as Map<string, string> | undefined;
-    metadata = {
-      title: rawMeta.get('title') ?? '',
-      creator: rawMeta.get('creator'),
-      language: rawMeta.get('language'),
-      publisher: rawMeta.get('publisher'),
-      description: rawMeta.get('description'),
-      direction: resolveBookDirection(book.packaging?.direction),
-      fixedLayout: resolveFixedLayoutFromMeta(pkgMeta),
-    };
+    const loaded = parseLoadedEpubMetadata({ book, rawNav, rawMeta, rawSpine });
+    if (loaded.toc) toc = loaded.toc;
+    if (loaded.spineItems) spineItems = loaded.spineItems;
+    if (loaded.metadata) metadata = loaded.metadata;
   }
 
   async function load(
@@ -208,7 +155,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     signal?: AbortSignal,
     loadOptions?: { rootfile?: string },
   ): Promise<void> {
-    safeMark('epub-fetch-start');
+    markLoaderPhase(perf, 'epub-fetch-start');
     const result = await parseEpubInWorker(url);
     // GOAP-224 A7: destroy() may have run while we were awaiting the worker
     // (e.g. reader unmount). Bail before touching any instance state so a
@@ -217,14 +164,14 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     if (!result.valid || !result.data) {
       throw new Error(result.error ?? 'Failed to parse EPUB');
     }
-    safeMark('epub-fetch-end');
-    safeMeasure('epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
+    markLoaderPhase(perf, 'epub-fetch-end');
+    measureLoaderPhase(perf, 'epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
 
     if (signal?.aborted) {
       throw new DOMException('Aborted', 'AbortError');
     }
 
-    safeMark('epub-unzip-start');
+    markLoaderPhase(perf, 'epub-unzip-start');
     const requestedRootfile = loadOptions?.rootfile ?? options?.rootfile;
     if (requestedRootfile) {
       book = ePub();
@@ -239,8 +186,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }
     await book.opened;
     if (destroyed) return;
-    safeMark('epub-unzip-end');
-    safeMeasure('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
+    markLoaderPhase(perf, 'epub-unzip-end');
+    measureLoaderPhase(perf, 'epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
 
     const readArchiveText = async (p: string): Promise<string | null> => {
       const normalized = p.startsWith('/') ? p : `/${p}`;
@@ -271,8 +218,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     // Fetch navigation, spine, and metadata in parallel — they are
     // independent and already-resolved by the time `opened` fires.
     // Sequential awaits add 20-60ms each on large EPUBs (per plan 065).
-    const [nav, meta] = await Promise.all([book.loaded.navigation, book.loaded.metadata]);
-    const spine = await book.loaded.spine;
+    const loaded = book.loaded as typeof book.loaded & { sections?: Promise<unknown> };
+    const [nav, meta, spine] = await Promise.all([
+      loaded.navigation,
+      loaded.metadata,
+      loaded.spine ?? loaded.sections ?? Promise.resolve(null),
+    ]);
     if (destroyed) return;
 
     rawNav = nav ?? null;

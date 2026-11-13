@@ -5,15 +5,15 @@ import {
   AuthorPublicationSchema,
   SaveManuscriptDraftSchema,
   CreateBookSchema,
-  MAX_AUTHOR_ASSET_COUNT,
 } from '@do-epub-studio/shared';
 import type { Env } from '../lib/env';
-import { execute, queryFirst } from '../db/client';
+import { execute, queryFirst, transaction } from '../db/client';
 import { authorAuth } from '../middleware/auth';
 import { NotFoundError, ConflictError, ValidationError } from '../lib/http-errors';
 import { logAudit } from '../audit';
 import { handlePublishManuscript } from './author-publish';
-import { parseAuthorContent } from '@do-epub-studio/reader-core/author-content';
+import { publicationAssetRequirements } from '../lib/author-publication-assets';
+
 export const authorRouter = new Hono<{
   Bindings: Env;
   Variables: { authorUser: { email: string; id: string; role: string } };
@@ -22,41 +22,6 @@ export const authorRouter = new Hono<{
 const CreateAuthorBookSchema = CreateBookSchema.extend({
   template: z.enum(['blank', 'novel', 'guide']).default('blank'),
 });
-
-type AssetKind = 'image' | 'stylesheet';
-
-function publicationAssetRequirements(
-  publication: z.infer<typeof AuthorPublicationSchema>,
-): { id: string; kind: AssetKind }[] {
-  const requirements = new Map<string, AssetKind>();
-  const requireAsset = (id: string, kind: AssetKind) => {
-    const previousKind = requirements.get(id);
-    if (previousKind && previousKind !== kind) {
-      throw new ValidationError('An author asset cannot be both an image and a stylesheet');
-    }
-    requirements.set(id, kind);
-  };
-  if (publication.coverImageAssetId) requireAsset(publication.coverImageAssetId, 'image');
-  for (const id of publication.stylesheetAssetIds) requireAsset(id, 'stylesheet');
-  const pending = publication.chapters.flatMap((chapter) =>
-    parseAuthorContent(chapter.contentHtml),
-  );
-  while (pending.length > 0) {
-    const node = pending.pop();
-    if (!node || node.type !== 'element') continue;
-    if (node.tag === 'img') {
-      const source = node.attributes.find((attribute) => attribute.name === 'src')?.value;
-      if (source?.startsWith('asset:')) requireAsset(source.slice('asset:'.length), 'image');
-    }
-    pending.push(...node.children);
-  }
-  if (requirements.size > MAX_AUTHOR_ASSET_COUNT) {
-    throw new ValidationError(
-      `A manuscript may reference at most ${MAX_AUTHOR_ASSET_COUNT} assets`,
-    );
-  }
-  return [...requirements].map(([id, kind]) => ({ id, kind }));
-}
 
 /**
  * POST /api/author/books
@@ -282,9 +247,9 @@ authorRouter.put(
       throw new NotFoundError('Book');
     }
 
-    const requirements = publicationAssetRequirements(publication);
+    const requirements = [...publicationAssetRequirements(publication)];
     const assetChecks = requirements
-      .map(({ kind }) => {
+      .map(([, kind]) => {
         const mediaTypes =
           kind === 'image' ? ['image/jpeg', 'image/png', 'image/gif'] : ['text/css'];
         return `AND EXISTS (
@@ -293,7 +258,7 @@ authorRouter.put(
         )`;
       })
       .join('\n');
-    const assetArgs = requirements.flatMap(({ id, kind }) => [
+    const assetArgs = requirements.flatMap(([id, kind]) => [
       bookId,
       id,
       ...(kind === 'image' ? ['image/jpeg', 'image/png', 'image/gif'] : ['text/css']),
@@ -301,14 +266,35 @@ authorRouter.put(
     const serializedPublication = JSON.stringify(publication);
     const now = new Date().toISOString();
     const newVersion = expectedVersion + 1;
-    const updatedDraft = await queryFirst<{ draft_version: number; updated_at: string }>(
-      c.env,
-      `UPDATE book_manuscript_drafts
-       SET publication_json = ?, draft_version = ?, updated_at = ?
-       WHERE book_id = ? AND draft_version = ? ${assetChecks}
-       RETURNING draft_version, updated_at`,
-      [serializedPublication, newVersion, now, bookId, expectedVersion, ...assetArgs],
-    );
+    const batchResults = await transaction<{ draft_version: number; updated_at: string }>(c.env, [
+      {
+        sql: `UPDATE book_manuscript_drafts
+               SET publication_json = ?, draft_version = ?, updated_at = ?
+               WHERE book_id = ? AND draft_version = ? ${assetChecks}
+               RETURNING draft_version, updated_at`,
+        args: [serializedPublication, newVersion, now, bookId, expectedVersion, ...assetArgs],
+      },
+      {
+        sql: `UPDATE books
+               SET title = ?, author_name = ?, description = ?, language = ?, updated_at = ?
+               WHERE id = ? AND EXISTS (
+                 SELECT 1 FROM book_manuscript_drafts
+                 WHERE book_id = ? AND draft_version = ? AND publication_json = ?
+               )`,
+        args: [
+          publication.title,
+          publication.creators[0] ?? 'Anonymous',
+          publication.description ?? null,
+          publication.language || 'en',
+          now,
+          bookId,
+          bookId,
+          newVersion,
+          serializedPublication,
+        ],
+      },
+    ]);
+    const updatedDraft = batchResults[0]?.results[0] ?? null;
 
     if (!updatedDraft) {
       const currentDraft = await queryFirst<{
@@ -337,21 +323,6 @@ authorRouter.put(
       }
       throw new ValidationError('A referenced author asset is missing or has the wrong media type');
     }
-
-    await execute(
-      c.env,
-      `UPDATE books
-       SET title = ?, author_name = ?, description = ?, language = ?, updated_at = ?
-       WHERE id = ?`,
-      [
-        publication.title,
-        publication.creators[0] ?? 'Anonymous',
-        publication.description ?? null,
-        publication.language || 'en',
-        now,
-        bookId,
-      ],
-    );
 
     return c.json({
       ok: true,

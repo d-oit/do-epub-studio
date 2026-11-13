@@ -39,10 +39,7 @@ export const authorAuth: MiddlewareHandler<{
   Variables: { authorUser: { email: string; id: string; role: string } };
 }> = async (c, next) => {
   const adminResult = await requireAdminAuth(c.env, c.req.raw);
-  if (
-    adminResult.ok &&
-    (adminResult.context.globalRole === 'admin' || adminResult.context.globalRole === 'editor')
-  ) {
+  if (adminResult.ok) {
     c.set('authorUser', {
       id: adminResult.context.userId,
       email: adminResult.context.email,
@@ -50,14 +47,16 @@ export const authorAuth: MiddlewareHandler<{
     });
     return next();
   }
+  if (adminResult.status === 403) {
+    return apiError(c, 403, 'FORBIDDEN', adminResult.error);
+  }
 
   const bookId = c.req.param('id');
   if (!bookId) {
-    const status = adminResult.ok ? 403 : adminResult.status;
     return apiError(
       c,
-      status as ContentfulStatusCode,
-      status === 403 ? 'FORBIDDEN' : 'UNAUTHORIZED',
+      adminResult.status as ContentfulStatusCode,
+      adminResult.status === 403 ? 'FORBIDDEN' : 'UNAUTHORIZED',
       'Book-scoped authoring access required',
     );
   }

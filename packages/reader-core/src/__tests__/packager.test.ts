@@ -77,6 +77,11 @@ describe('EPUB 3 Packager', () => {
     expect(epubBuffer.subarray(38, 58).toString('ascii')).toBe('application/epub+zip');
   });
 
+  it('uses the fixed ZIP timestamp in the local file header', async () => {
+    const epubBuffer = await archive();
+    expect(epubBuffer.readUInt32LE(10)).toBe(0x00210000);
+  });
+
   it('produces byte-identical archives for one saved snapshot', async () => {
     const first = await archive();
     const second = await archive();
@@ -87,6 +92,32 @@ describe('EPUB 3 Packager', () => {
       modifiedAt: '2026-11-06T12:00:00Z',
     });
     expect(changedTimestamp.equals(first)).toBe(false);
+  });
+
+  it('normalizes persisted millisecond timestamps to EPUB second precision', async () => {
+    const entries = readZipEntries(
+      await archive(samplePublication, sampleAssets, {
+        ...packageOptions,
+        modifiedAt: '2026-11-08T10:00:00.123Z',
+      }),
+    );
+    const opf = entries.get('OEBPS/content.opf')?.toString('utf8') ?? '';
+    expect(opf).toContain('<meta property="dcterms:modified">2026-11-08T10:00:00Z</meta>');
+  });
+
+  it('rejects modified timestamps that are invalid or timezone-ambiguous', async () => {
+    await expect(
+      packageEpub3(samplePublication, sampleAssets, {
+        ...packageOptions,
+        modifiedAt: '2026-11-08 10:00:00',
+      }),
+    ).rejects.toThrow('Invalid EPUB modified timestamp');
+    await expect(
+      packageEpub3(samplePublication, sampleAssets, {
+        ...packageOptions,
+        modifiedAt: '2026-02-31T10:00:00Z',
+      }),
+    ).rejects.toThrow('Invalid EPUB modified timestamp');
   });
 
   it('rejects ZIP generation as soon as the output byte cap is exceeded', async () => {
@@ -191,6 +222,27 @@ describe('EPUB 3 Packager', () => {
     const entries = readZipEntries(await archive(malformed));
     const chapter = entries.get('OEBPS/chapters/ch-intro.xhtml')?.toString('utf8') ?? '';
     expect(chapter).toContain('<img alt="bad" />');
+  });
+
+  it('rejects asset and chapter IDs that could choose unsafe ZIP paths', async () => {
+    const invalidAsset: PackagedAsset = {
+      id: '../escape',
+      data: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+      mediaType: 'image/png',
+    };
+    await expect(packageEpub3(samplePublication, [invalidAsset], packageOptions)).rejects.toThrow(
+      'Invalid author asset ID',
+    );
+
+    const introChapter = samplePublication.chapters[0];
+    if (!introChapter) throw new Error('Expected introduction chapter fixture');
+    const unsafeChapter = {
+      ...samplePublication,
+      chapters: [{ ...introChapter, id: '../escape' }],
+    };
+    await expect(packageEpub3(unsafeChapter, sampleAssets, packageOptions)).rejects.toThrow(
+      'Invalid EPUB chapter ID',
+    );
   });
 
   it('omits unreferenced local assets from the publication snapshot', async () => {

@@ -1,6 +1,6 @@
 import { Zip, ZipDeflate, ZipPassThrough } from 'fflate';
 
-const FIXED_ZIP_DATE = new Date(Date.UTC(1980, 0, 1));
+const FIXED_ZIP_DATE = new Date(1980, 0, 1, 0, 0, 0);
 declare global {
   interface PromiseConstructor {
     withResolvers<T>(): {

@@ -114,6 +114,8 @@ export async function acceptBookInvitation(
     });
   }
 
+  const commentsAllowed = invitation.role === 'author' ? 0 : invitation.comments_allowed;
+  const offlineAllowed = invitation.role === 'author' ? 0 : invitation.offline_allowed;
   if (existingGrant) {
     statements.push({
       sql: `UPDATE book_access_grants
@@ -124,8 +126,8 @@ export async function acceptBookInvitation(
       args: [
         passwordHash,
         invitation.grant_mode,
-        invitation.comments_allowed,
-        invitation.offline_allowed,
+        commentsAllowed,
+        offlineAllowed,
         invitation.role === 'author' ? 1 : 0,
         invitation.email,
         invitation.grant_expires_at,
@@ -148,8 +150,8 @@ export async function acceptBookInvitation(
         invitation.email,
         passwordHash,
         invitation.grant_mode,
-        invitation.comments_allowed,
-        invitation.offline_allowed,
+        commentsAllowed,
+        offlineAllowed,
         invitation.role === 'author' ? 1 : 0,
         invitation.grant_expires_at,
         invitation.created_by_user_id,

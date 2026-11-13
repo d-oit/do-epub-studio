@@ -41,6 +41,10 @@ async function mockAuthoringApi(page: Page) {
   const assetContents = new Map<string, Buffer>();
   const assetIds = new Map<string, string>();
   let publishedPublication: AuthorPublication | null = null;
+  let previewPublication: AuthorPublication | null = null;
+  let draftSaveCount = 0;
+  let previewDraftSaveCount: number | null = null;
+  let conflictNextSave = false;
 
   await page.route('**/api/admin/login', async (route: Route) => {
     await route.fulfill({
@@ -127,6 +131,33 @@ async function mockAuthoringApi(page: Page) {
 
     if (route.request().method() === 'PUT') {
       const body = route.request().postDataJSON() as { publication: AuthorPublication };
+      draftSaveCount += 1;
+      if (conflictNextSave) {
+        conflictNextSave = false;
+        draftVersion += 1;
+        publication = {
+          ...body.publication,
+          chapters: body.publication.chapters.map((chapter, index) =>
+            index === 0
+              ? { ...chapter, contentHtml: '<p>Remote draft after conflict.</p>' }
+              : chapter,
+          ),
+        };
+        await route.fulfill({
+          status: 409,
+          json: {
+            ok: false,
+            error: {
+              code: 'CONCURRENCY_CONFLICT',
+              message:
+                'The manuscript was updated by another session. Please reload to review the latest changes.',
+              currentVersion: draftVersion,
+              currentDraft: publication,
+            },
+          },
+        });
+        return;
+      }
       draftVersion += 1;
       publication = body.publication;
       await route.fulfill({
@@ -183,6 +214,10 @@ async function mockAuthoringApi(page: Page) {
     }
 
     if (request.method() === 'GET' && assetId) {
+      if (previewDraftSaveCount === null) {
+        previewDraftSaveCount = draftSaveCount;
+        previewPublication = JSON.parse(JSON.stringify(publication)) as AuthorPublication;
+      }
       const asset = assets.find((item) => item.id === assetId);
       const data = assetContents.get(assetId);
       if (!asset || !data) {
@@ -225,6 +260,12 @@ async function mockAuthoringApi(page: Page) {
   return {
     getAssetId: (name: string) => assetIds.get(name),
     getPublishedPublication: () => publishedPublication,
+    getDraftSaveCount: () => draftSaveCount,
+    getPreviewDraftSaveCount: () => previewDraftSaveCount,
+    getPreviewPublication: () => previewPublication,
+    triggerConflictOnNextSave: () => {
+      conflictNextSave = true;
+    },
   };
 }
 
@@ -307,6 +348,11 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
     );
     await metadataDialog.getByRole('button', { name: 'Done' }).click();
 
+    const savesBeforePreviewEdit = mock.getDraftSaveCount();
+    const previewFlushMarker = 'Latest manuscript snapshot before preview.';
+    await contentEditor.fill(
+      `<h2>Reader preview heading</h2><p>${previewFlushMarker}</p><img src="asset:${imageAssetId}" alt="Diagram">`,
+    );
     await page.getByRole('button', { name: 'Preview', exact: true }).click();
     await expect(
       page.getByText('This EPUB preview uses the production reader and sanitizer.'),
@@ -322,6 +368,19 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
     expect(previewFrameSize.height).toBeGreaterThan(200);
     const readerFrame = page.frameLocator('[data-testid="author-epub-preview"] iframe');
     await expect(readerFrame.locator('body')).toContainText('Reader preview heading');
+    await expect(
+      readerFrame.getByRole('heading', { name: 'Prologue: The Awakening' }),
+    ).toBeVisible();
+    const renderedTextColor = await readerFrame
+      .locator('p')
+      .first()
+      .evaluate((paragraph) => {
+        return getComputedStyle(paragraph).color;
+      });
+    expect(renderedTextColor).toBe('rgb(18, 52, 86)');
+    await expect(readerFrame.locator('body')).toContainText(previewFlushMarker);
+    expect(mock.getPreviewDraftSaveCount()).toBeGreaterThan(savesBeforePreviewEdit);
+    expect(mock.getPreviewPublication()?.chapters[0]?.contentHtml).toContain(previewFlushMarker);
     const renderedImage = readerFrame.locator('img');
     await expect(renderedImage).toHaveCount(1);
     const imageDetails = await renderedImage.evaluate((image: HTMLImageElement) => ({
@@ -336,8 +395,101 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
       },
     }));
     expect(imageDetails.naturalWidth, JSON.stringify(imageDetails)).toBeGreaterThan(0);
+    await page.getByRole('button', { name: 'Next page' }).click();
+    await expect(readerFrame.locator('body')).toContainText('Initial chapter text.');
+
+    const previewPublication = mock.getPreviewPublication();
+    if (!previewPublication) throw new Error('Reader preview did not load a saved publication');
+    const stylesheetAssetId = mock.getAssetId('book.css');
+    if (!stylesheetAssetId || !imageAssetId) {
+      throw new Error('Reader preview did not load its local asset IDs');
+    }
+    const expectedChapters = [...previewPublication.chapters]
+      .sort((left, right) => left.order - right.order)
+      .map(({ id, title }) => ({ id, title }));
+    const loaderModuleUrl = `/@fs${new URL('../../packages/reader-core/src/epub-loader.ts', import.meta.url).pathname}`;
+    const packagerModuleUrl = `/@fs${new URL('../../packages/reader-core/src/packager/packager.ts', import.meta.url).pathname}`;
+    const loaderContract = await page.evaluate(
+      async ({
+        loaderModuleUrl,
+        packagerModuleUrl,
+        publication,
+        assets,
+        imageId,
+        stylesheetId,
+      }) => {
+        const [{ createEpubLoader }, { packageEpub3 }] = await Promise.all([
+          import(loaderModuleUrl),
+          import(packagerModuleUrl),
+        ]);
+        const packagedAssets = assets.map(({ id, mediaType, bytes }) => ({
+          id,
+          mediaType,
+          data: new Uint8Array(bytes),
+        }));
+        const epubBytes = await packageEpub3(publication, packagedAssets, {
+          identifier: 'urn:uuid:5d1f4318-e9f2-4e6b-89fd-2cb8f2e6398d',
+          modifiedAt: '2026-01-01T00:00:00.000Z',
+        });
+        const loader = createEpubLoader();
+        try {
+          await loader.load(epubBytes);
+          const book = loader.getBook();
+          if (!book?.archive) throw new Error('Reader loader did not expose the EPUB archive');
+          const [stylesheet, image] = await Promise.all([
+            book.archive.getText(`/OEBPS/styles/${stylesheetId}.css`),
+            book.archive.getBlob(`/OEBPS/assets/${imageId}.png`),
+          ]);
+          return {
+            metadata: loader.getMetadata(),
+            toc: loader.getToc().map(({ label, href }) => ({ label, href })),
+            spine: loader.getSpineItems().map(({ href }) => href),
+            stylesheet,
+            imageSize: image?.size ?? 0,
+          };
+        } finally {
+          loader.destroy();
+        }
+      },
+      {
+        loaderModuleUrl,
+        packagerModuleUrl,
+        publication: previewPublication,
+        assets: [
+          { id: imageAssetId, mediaType: 'image/png', bytes: Array.from(PNG_BYTES) },
+          { id: stylesheetAssetId, mediaType: 'text/css', bytes: Array.from(CSS_BYTES) },
+        ],
+        imageId: imageAssetId,
+        stylesheetId: stylesheetAssetId,
+      },
+    );
+    expect(loaderContract.metadata).toMatchObject({
+      title: 'Authoring E2E Book',
+      creator: 'Augusta King',
+      language: 'en-GB',
+    });
+    expect(loaderContract.toc.map(({ label }) => label)).toEqual(
+      expectedChapters.map(({ title }) => title),
+    );
+    const tocChapterIds = loaderContract.toc.map(
+      ({ href }) => expectedChapters.find(({ id }) => href.includes(id))?.id,
+    );
+    const spineChapterIds = loaderContract.spine.map(
+      (href) => expectedChapters.find(({ id }) => href.includes(id))?.id,
+    );
+    expect(tocChapterIds).toEqual(expectedChapters.map(({ id }) => id));
+    expect(spineChapterIds).toEqual(expectedChapters.map(({ id }) => id));
+    expect(loaderContract.stylesheet).toContain('#123456');
+    expect(loaderContract.imageSize).toBe(PNG_BYTES.length);
 
     await page.getByRole('button', { name: 'Editor', exact: true }).click();
+    mock.triggerConflictOnNextSave();
+    await contentEditor.fill('<h2>Uncommitted local copy</h2><p>Local work.</p>');
+    await expect(page.getByRole('alert')).toContainText(
+      'This manuscript changed in another session.',
+    );
+    await page.getByRole('button', { name: 'Reload latest draft' }).click();
+    await expect(contentEditor).toHaveValue(/Remote draft after conflict/);
     await contentEditor.fill(
       `<h2>Final publish snapshot</h2><p>Last-minute copy.</p><img src="asset:${imageAssetId}" alt="Diagram">`,
     );
