@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { apiRequest } from '../../lib/api';
 import { useAuthStore } from '../../stores/auth';
 import type { BookResponse } from '@do-epub-studio/shared';
-// EPUB validator (jszip) is lazy-loaded: only needed at book-upload time,
-// keeps it out of the admin-route entry chunk (bundle budget ADR-107 §3).
+// EPUB validator and validation workspace are lazy-loaded: only needed on
+// user action, keeps them out of the admin-route entry chunk (bundle budget ADR-107 §3).
 import { ConfirmDialog } from '../../components/ui';
 import { Spinner } from '@do-epub-studio/ui';
 import { BookCreateModal, BookEditModal, BookRevisionModal, AdminBookCard } from './components';
+
+const RevisionValidationModal = lazy(() =>
+  import('./components/RevisionValidationModal').then((m) => ({
+    default: m.RevisionValidationModal,
+  })),
+);
+import { retryRevisionValidation, updateRevisionRemediation } from '../../lib/api/admin-validation';
 import { useAdminStepUp } from './step-up';
 import { BooksPageHeader } from './BooksPageHeader';
 import { useAdminBookMutations } from './useAdminBookMutations';
@@ -56,6 +63,7 @@ export function AdminBookResponsesPage() {
 
   const [archivingBookId, setArchivingBookId] = useState<string | null>(null);
   const [archiveConfirmBook, setArchiveConfirmBook] = useState<BookResponse | null>(null);
+  const [validationBook, setValidationBook] = useState<BookResponse | null>(null);
 
   const fetchBookResponses = useCallback(async () => {
     setIsLoading(true);
@@ -217,6 +225,7 @@ export function AdminBookResponsesPage() {
                 setRevisionError(null);
                 setRevisionValidation(null);
               }}
+              onViewValidation={setValidationBook}
               onArchive={setArchiveConfirmBook}
               onManageAccess={handleViewGrants}
               onAuthor={(b) => {
@@ -308,6 +317,26 @@ export function AdminBookResponsesPage() {
           setArchiveConfirmBook(null);
         }}
       />
+
+      {validationBook && (
+        <Suspense fallback={null}>
+          <RevisionValidationModal
+            isOpen={validationBook !== null}
+            onClose={() => setValidationBook(null)}
+            book={validationBook}
+            onRetryWithStepUp={async (bookId, revisionId) => {
+              await executeWithStepUp(async (token) => {
+                await retryRevisionValidation(bookId, revisionId, token);
+              });
+            }}
+            onSaveRemediationWithStepUp={async (bookId, revisionId, remediation) => {
+              await executeWithStepUp(async (token) => {
+                await updateRevisionRemediation(bookId, revisionId, remediation, token);
+              });
+            }}
+          />
+        </Suspense>
+      )}
 
       {stepUpModal}
     </main>
