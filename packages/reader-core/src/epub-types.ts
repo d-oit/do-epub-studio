@@ -85,3 +85,22 @@ export interface MediaOverlayManifest {
   /** Whether the publication has any valid media overlays */
   hasMediaOverlays: boolean;
 }
+
+export interface RenditionItem {
+  /** Identifier or package filename, e.g. "default", "alternate" */
+  id: string;
+  /** Publication-relative full path to the OPF package document, e.g. "OEBPS/content.opf" */
+  fullPath: string;
+  /** Declared media type, typically "application/oebps-package+xml" */
+  mediaType: string;
+  /** User-facing label (language/layout/title), never raw internal paths */
+  label: string;
+  /** Whether this rootfile is the first/default declared in container.xml */
+  isDefault: boolean;
+  /** Extracted layout if declared in OPF metadata */
+  layout?: 'reflowable' | 'pre-paginated';
+  /** Extracted language if declared in OPF metadata */
+  language?: string;
+  /** Extracted package title */
+  title?: string;
+}

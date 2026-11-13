@@ -848,4 +848,7 @@ export const zh: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': '正在朗读',
   'reader.mediaOverlay.playingElement': '正在朗读短语 {id}',
   'reader.mediaOverlay.paused': '朗读已暂停',
+  'reader.renditions.title': '版式版本',
+  'reader.renditions.select': '选择版式版本',
+  'reader.renditions.active': '当前版式：{label}',
 };

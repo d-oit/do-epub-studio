@@ -6,10 +6,12 @@ import type {
   SpineItem,
   BookMetadata,
   ProgressPosition,
-  PageDirection,
   MediaOverlayManifest,
+  RenditionItem,
 } from './epub-types';
-import { extractMediaOverlays } from './media-overlay';
+import type { BookContainerHost } from './rendition-container';
+import { parseNavigationToc } from './toc';
+import { resolveBookDirection, resolveFixedLayoutFromMeta } from './fixed-layout';
 import {
   createTraceId,
   createSpanId,
@@ -37,7 +39,7 @@ export interface EpubRenditionHandle {
 }
 
 export interface EpubLoader {
-  load(url: string | Uint8Array): Promise<void>;
+  load(url: string | Uint8Array, options?: { rootfile?: string }): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
   destroy(): void;
   getMetadata(): BookMetadata;
@@ -49,6 +51,8 @@ export interface EpubLoader {
   on(event: string, callback: EventCallback): void;
   off(event: string, callback: EventCallback): void;
   getMediaOverlays(): Promise<MediaOverlayManifest>;
+  getRenditions(): Promise<RenditionItem[]>;
+  getActiveRendition(): RenditionItem | null;
   rendition: EpubRenditionHandle | null;
 }
 
@@ -64,6 +68,7 @@ interface EpubLoaderOptions {
    * to permit specific trusted hosts (see `ExternalUrlPolicy`).
    */
   externalUrlPolicy?: ExternalUrlPolicy;
+  rootfile?: string;
 }
 
 export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
@@ -81,6 +86,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
   let renditionPageHideHandler: Window['onpagehide'] = null;
   let pageHideCaptureComplete = false;
   // Raw nav/meta/spine captured during load; parsed lazily on first getter use
+  let renditions: RenditionItem[] = [];
+  let activeRendition: RenditionItem | null = null;
   // so the production path (which only calls getBook) skips the duplicate work.
   let rawNav: { toc?: unknown } | null = null;
   let rawMeta: Map<string, string> | null = null;
@@ -118,25 +125,6 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }
   }
 
-  function parseToc(
-    navigationToc: Array<{
-      label: string;
-      href: string;
-      subitems?: Array<{ label: string; href: string }>;
-    }>,
-  ): TocItem[] {
-    return navigationToc.map((item, index) => ({
-      id: item.href ?? `toc-${index}`,
-      label: item.label,
-      href: item.href,
-      subitems: item.subitems?.map((sub) => ({
-        id: sub.href ?? `toc-${index}-${sub.label}`,
-        label: sub.label,
-        href: sub.href,
-      })),
-    }));
-  }
-
   function getSpineIterable(spine: unknown): EpubSpineItem[] {
     if (!spine) return [];
     if (Array.isArray(spine)) return spine as EpubSpineItem[];
@@ -160,35 +148,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     return spineItems;
   }
 
-  function resolveDirection(b: Book): PageDirection {
-    switch (b.packaging?.direction) {
-      case 'rtl':
-        return 'rtl';
-      case 'ltr':
-        return 'ltr';
-      default:
-        return 'default';
-    }
-  }
-
-  function resolveFixedLayout(
-    pkgMeta: Map<string, string> | undefined,
-  ): BookMetadata['fixedLayout'] {
-    const layout = pkgMeta?.get('layout');
-    if (!layout) return undefined;
-    return {
-      layout: layout === 'pre-paginated' ? ('pre-paginated' as const) : ('reflowable' as const),
-      orientation: pkgMeta?.get('orientation') as 'auto' | 'landscape' | 'portrait' | undefined,
-      spread: pkgMeta?.get('spread') as 'none' | 'auto' | 'both' | 'landscape' | undefined,
-      viewport: pkgMeta?.get('viewport'),
-    };
-  }
-
   function ensureParsed(): void {
     if (parsed || !book) return;
     parsed = true;
     if (rawNav && 'toc' in rawNav && rawNav.toc) {
-      toc = parseToc(rawNav.toc as Parameters<typeof parseToc>[0]);
+      toc = parseNavigationToc(rawNav.toc as Parameters<typeof parseNavigationToc>[0]);
     }
     if (rawSpine !== null && rawSpine !== undefined) {
       spineItems = parseSpineFromRaw(rawSpine);
@@ -201,12 +165,15 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       language: rawMeta.get('language'),
       publisher: rawMeta.get('publisher'),
       description: rawMeta.get('description'),
-      direction: resolveDirection(book),
-      fixedLayout: resolveFixedLayout(pkgMeta),
+      direction: resolveBookDirection(book.packaging?.direction),
+      fixedLayout: resolveFixedLayoutFromMeta(pkgMeta),
     };
   }
 
-  async function load(url: string | Uint8Array): Promise<void> {
+  async function load(
+    url: string | Uint8Array,
+    loadOptions?: { rootfile?: string },
+  ): Promise<void> {
     if (destroyed) {
       throw new Error('EpubLoader has been destroyed');
     }
@@ -216,7 +183,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     const totalTimeout = options?.loadTimeoutMs ?? 30_000;
 
     try {
-      await withTimeout((signal) => loadInner(url, signal), {
+      await withTimeout((signal) => loadInner(url, signal, loadOptions), {
         timeoutMs: totalTimeout,
         operation: 'epub-load',
         traceId,
@@ -236,7 +203,11 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }
   }
 
-  async function loadInner(url: string | Uint8Array, signal?: AbortSignal): Promise<void> {
+  async function loadInner(
+    url: string | Uint8Array,
+    signal?: AbortSignal,
+    loadOptions?: { rootfile?: string },
+  ): Promise<void> {
     safeMark('epub-fetch-start');
     const result = await parseEpubInWorker(url);
     // GOAP-224 A7: destroy() may have run while we were awaiting the worker
@@ -254,11 +225,48 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     }
 
     safeMark('epub-unzip-start');
-    book = ePub(result.data);
+    const requestedRootfile = loadOptions?.rootfile ?? options?.rootfile;
+    if (requestedRootfile) {
+      book = ePub();
+      const { openBookWithRootfile } = await import('./rendition-container');
+      await openBookWithRootfile(
+        book as unknown as BookContainerHost,
+        result.data,
+        requestedRootfile,
+      );
+    } else {
+      book = ePub(result.data);
+    }
     await book.opened;
     if (destroyed) return;
     safeMark('epub-unzip-end');
     safeMeasure('epub-unzip', 'epub-unzip-start', 'epub-unzip-end');
+
+    const readArchiveText = async (p: string): Promise<string | null> => {
+      const normalized = p.startsWith('/') ? p : `/${p}`;
+      const res = await book?.archive?.getText(normalized);
+      if (res != null) return res;
+      return book?.archive?.getText(p.replace(/^\//, '')) ?? null;
+    };
+
+    try {
+      const containerXml = await readArchiveText('META-INF/container.xml');
+      if (containerXml) {
+        const { resolveRenditions } = await import('./rendition-container');
+        renditions = await resolveRenditions(containerXml, { getText: readArchiveText });
+      }
+    } catch {
+      renditions = [];
+    }
+
+    if (requestedRootfile) {
+      activeRendition =
+        renditions.find((r) => r.fullPath === requestedRootfile || r.id === requestedRootfile) ??
+        renditions[0] ??
+        null;
+    } else if (renditions.length > 0) {
+      activeRendition = renditions[0] ?? null;
+    }
 
     // Fetch navigation, spine, and metadata in parallel — they are
     // independent and already-resolved by the time `opened` fires.
@@ -417,6 +425,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
       // resets the module-level pool so the next loader gets a fresh worker.
       terminateParserWorker();
       mediaOverlayManifest = null;
+      renditions = [];
+      activeRendition = null;
     },
     getMetadata(): BookMetadata {
       ensureParsed();
@@ -456,8 +466,15 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     async getMediaOverlays(): Promise<MediaOverlayManifest> {
       if (mediaOverlayManifest) return mediaOverlayManifest;
       if (!book) return { sequencesByChapter: {}, totalDuration: 0, hasMediaOverlays: false };
+      const { extractMediaOverlays } = await import('./media-overlay');
       mediaOverlayManifest = await extractMediaOverlays(book);
       return mediaOverlayManifest;
+    },
+    getRenditions(): Promise<RenditionItem[]> {
+      return Promise.resolve([...renditions]);
+    },
+    getActiveRendition(): RenditionItem | null {
+      return activeRendition;
     },
     get rendition(): EpubRenditionHandle | null {
       return renditionHandle;

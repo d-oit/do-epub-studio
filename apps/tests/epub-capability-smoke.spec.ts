@@ -238,7 +238,7 @@ test.describe('synthetic EPUB content browser rendering smoke', () => {
     await expect(frame.getByText('Fixed page text.')).toBeVisible();
   });
 
-  test('loads primary rendition for multiple-renditions publication through reader engine', async ({
+  test('loads primary rendition and switches to alternate rendition for multiple-renditions publication', async ({
     page,
     browserName,
   }) => {
@@ -253,6 +253,19 @@ test.describe('synthetic EPUB content browser rendering smoke', () => {
       timeout: 15000,
     });
     await expect(frame.getByText('One shared original sentence.')).toBeVisible();
+
+    const selector = page.getByRole('button', { name: 'Select edition or rendition' });
+    await expect(selector).toBeVisible({ timeout: 10000 });
+    await selector.click();
+
+    const altOption = page.getByRole('menuitemradio', { name: 'alternate-rendition' });
+    await expect(altOption).toBeVisible();
+    await altOption.click();
+
+    await expect(frame.getByRole('heading', { level: 1, name: 'Alternate View' })).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(frame.getByText('Rendered through alternate rendition.')).toBeVisible();
   });
 
   test('enforces security boundaries against scripts and remote resources through reader engine', async ({

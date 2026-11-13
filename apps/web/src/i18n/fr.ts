@@ -1002,4 +1002,7 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Narration en cours de lecture',
   'reader.mediaOverlay.playingElement': 'Lecture de la phrase {id}',
   'reader.mediaOverlay.paused': 'Narration en pause',
+  'reader.renditions.title': 'Rendus',
+  'reader.renditions.select': "Sélectionner l'édition ou le rendu",
+  'reader.renditions.active': 'Rendu actif : {label}',
 };

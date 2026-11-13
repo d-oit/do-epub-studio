@@ -1010,6 +1010,9 @@ export const en = {
   'reader.mediaOverlay.playing': 'Playing narration',
   'reader.mediaOverlay.playingElement': 'Playing phrase {id}',
   'reader.mediaOverlay.paused': 'Narration paused',
+  'reader.renditions.title': 'Renditions',
+  'reader.renditions.select': 'Select edition or rendition',
+  'reader.renditions.active': 'Active rendition: {label}',
 } as const;
 
 export type TranslationKeys = keyof typeof en;

@@ -71,3 +71,22 @@ export function buildTocHierarchy(
 
   return root;
 }
+
+export function parseNavigationToc(
+  navigationToc: Array<{
+    label: string;
+    href: string;
+    subitems?: Array<{ label: string; href: string }>;
+  }>,
+): TocItem[] {
+  return navigationToc.map((item, index) => ({
+    id: item.href ?? `toc-${index}`,
+    label: item.label,
+    href: item.href,
+    subitems: item.subitems?.map((sub) => ({
+      id: sub.href ?? `toc-${index}-${sub.label}`,
+      label: sub.label,
+      href: sub.href,
+    })),
+  }));
+}

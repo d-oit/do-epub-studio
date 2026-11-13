@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -32,8 +32,10 @@ import {
   InfoPanel,
   FixedLayoutControls,
   ScrollProgressBar,
-  MediaOverlayBar,
 } from './components';
+const MediaOverlayBar = lazy(() =>
+  import('./components/toolbar/MediaOverlayBar').then((m) => ({ default: m.MediaOverlayBar })),
+);
 import { AnnotationInterchangeBar } from './components/toolbar/AnnotationInterchangeBar';
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
 import { NotificationPanel } from './components/notifications/NotificationPanel';
@@ -87,6 +89,8 @@ export function ReaderPage() {
   const setBookmarks = useReaderStore((s) => s.setBookmarks);
   const currentChapter = useReaderStore((s) => s.currentChapter);
   const isFixedLayout = useReaderStore((s) => s.isFixedLayout);
+  const renditions = useReaderStore((s) => s.renditions);
+  const activeRendition = useReaderStore((s) => s.activeRendition);
   const readerSpread = useReaderStore((s) => s.readerSpread);
   const readerZoom = useReaderStore((s) => s.readerZoom);
   const setReaderSpread = useReaderStore((s) => s.setReaderSpread);
@@ -166,17 +170,18 @@ export function ReaderPage() {
   highlightsRef.current = highlights;
   const commentsRef = useRef(comments);
   commentsRef.current = comments;
-  const { bookRef, renditionRef, currentChapterRef, toc, metadata } = useReaderEpub(
-    epubUrl,
-    viewerRef,
-    rootRef,
-    highlightsRef,
-    commentsRef,
-    handleNavigateToAnnotationRef.current,
-    progress.locator?.cfi,
-    markPageRead,
-    setChapter,
-  );
+  const { bookRef, renditionRef, currentChapterRef, toc, metadata, switchRendition } =
+    useReaderEpub(
+      epubUrl,
+      viewerRef,
+      rootRef,
+      highlightsRef,
+      commentsRef,
+      handleNavigateToAnnotationRef.current,
+      progress.locator?.cfi,
+      markPageRead,
+      setChapter,
+    );
   const [isMediaOverlayOpen, setIsMediaOverlayOpen] = useState(false);
   const mediaOverlay = useMediaOverlay({
     book: bookRef.current,
@@ -271,28 +276,33 @@ export function ReaderPage() {
         hasMediaOverlays={mediaOverlay.hasMediaOverlays}
         isMediaOverlayActive={isMediaOverlayOpen || mediaOverlay.isPlaying}
         onToggleMediaOverlay={() => setIsMediaOverlayOpen((v) => !v)}
+        renditions={renditions}
+        activeRendition={activeRendition}
+        onSelectRendition={(fullPath) => void switchRendition(fullPath)}
       />
       <AnnotationInterchangeBar bookId={bookId} bookTitle={bookTitle} onError={setError} />
       {mediaOverlay.hasMediaOverlays && (isMediaOverlayOpen || mediaOverlay.isPlaying) && (
-        <MediaOverlayBar
-          isPlaying={mediaOverlay.isPlaying}
-          isPaused={mediaOverlay.isPaused}
-          currentTime={mediaOverlay.currentTime}
-          duration={mediaOverlay.duration}
-          playbackRate={mediaOverlay.playbackRate}
-          activeClip={mediaOverlay.activeClip}
-          error={mediaOverlay.error}
-          onTogglePlay={() => void mediaOverlay.togglePlay()}
-          onSeek={mediaOverlay.seek}
-          onNextPhrase={mediaOverlay.nextPhrase}
-          onPreviousPhrase={mediaOverlay.previousPhrase}
-          onSetPlaybackRate={mediaOverlay.setPlaybackRate}
-          onClose={() => {
-            mediaOverlay.pause();
-            setIsMediaOverlayOpen(false);
-          }}
-          t={tFn}
-        />
+        <Suspense fallback={null}>
+          <MediaOverlayBar
+            isPlaying={mediaOverlay.isPlaying}
+            isPaused={mediaOverlay.isPaused}
+            currentTime={mediaOverlay.currentTime}
+            duration={mediaOverlay.duration}
+            playbackRate={mediaOverlay.playbackRate}
+            activeClip={mediaOverlay.activeClip}
+            error={mediaOverlay.error}
+            onTogglePlay={() => void mediaOverlay.togglePlay()}
+            onSeek={mediaOverlay.seek}
+            onNextPhrase={mediaOverlay.nextPhrase}
+            onPreviousPhrase={mediaOverlay.previousPhrase}
+            onSetPlaybackRate={mediaOverlay.setPlaybackRate}
+            onClose={() => {
+              mediaOverlay.pause();
+              setIsMediaOverlayOpen(false);
+            }}
+            t={tFn}
+          />
+        </Suspense>
       )}
       {activePanel === 'settings' && (
         <ReaderSettingsPanel

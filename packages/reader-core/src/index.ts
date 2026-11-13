@@ -12,4 +12,3 @@ export * from './sanitizer';
 export * from './epub-accessibility';
 export * from './fixed-layout';
 export * from './ai';
-export * from './media-overlay';

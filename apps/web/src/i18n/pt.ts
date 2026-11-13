@@ -889,4 +889,7 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Reproduzindo narração',
   'reader.mediaOverlay.playingElement': 'Reproduzindo frase {id}',
   'reader.mediaOverlay.paused': 'Narração pausada',
+  'reader.renditions.title': 'Versões',
+  'reader.renditions.select': 'Selecionar edição ou versão',
+  'reader.renditions.active': 'Versão ativa: {label}',
 };

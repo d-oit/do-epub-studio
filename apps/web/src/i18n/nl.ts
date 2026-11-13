@@ -887,4 +887,7 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'Voorlezen is actief',
   'reader.mediaOverlay.playingElement': 'Zin {id} wordt afgespeeld',
   'reader.mediaOverlay.paused': 'Voorlezen gepauzeerd',
+  'reader.renditions.title': 'Weergaven',
+  'reader.renditions.select': 'Selecteer editie of weergave',
+  'reader.renditions.active': 'Actieve weergave: {label}',
 };

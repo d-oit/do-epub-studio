@@ -246,6 +246,12 @@ export default defineConfig({
           if (id.includes('packages/reader-core/src/archive-validator')) {
             return 'archive-validation';
           }
+          if (
+            id.includes('packages/reader-core/src/media-overlay') ||
+            id.includes('packages/reader-core/src/rendition-container')
+          ) {
+            return 'reader-extras';
+          }
 
           if (id.includes('packages/reader-core')) {
             return 'reader-core';
@@ -266,6 +272,12 @@ export default defineConfig({
           }
           if (id.includes('packages/ui')) {
             return 'ui-lib';
+          }
+          if (
+            id.includes('features/reader/components/toolbar/RenditionSelector') ||
+            id.includes('features/reader/components/toolbar/MediaOverlayBar')
+          ) {
+            return 'reader-extras';
           }
           if (id.includes('features/reader')) {
             return 'reader-route';

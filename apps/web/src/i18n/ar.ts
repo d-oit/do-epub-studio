@@ -901,4 +901,7 @@ export const ar: Record<TranslationKeys, TranslationValue> = {
   'reader.mediaOverlay.playing': 'يتم تشغيل السرد',
   'reader.mediaOverlay.playingElement': 'تشغيل العبارة {id}',
   'reader.mediaOverlay.paused': 'السرد متوقف مؤقتاً',
+  'reader.renditions.title': 'الإصدارات',
+  'reader.renditions.select': 'اختر الإصدار أو طريقة العرض',
+  'reader.renditions.active': 'الإصدار النشط: {label}',
 };

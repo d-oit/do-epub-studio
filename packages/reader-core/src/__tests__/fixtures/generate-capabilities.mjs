@@ -142,11 +142,14 @@ function epub([id, version, content]) {
         '<?xml version="1.0"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head/><docTitle><text>epub2-reflow</text></docTitle><navMap><navPoint id="start" playOrder="1"><navLabel><text>Start</text></navLabel><content src="chapter.xhtml#start"/></navPoint></navMap></ncx>',
       ),
     ]);
-  if (id === 'multiple-renditions')
-    entries.push([
-      'OEBPS/alternate.opf',
-      bytes(opf.replace(`<dc:title>${id}</dc:title>`, '<dc:title>alternate-rendition</dc:title>')),
-    ]);
+  if (id === 'multiple-renditions') {
+    const altOpf = opf
+      .replace(`<dc:title>${id}</dc:title>`, '<dc:title>alternate-rendition</dc:title>')
+      .replace('href="chapter.xhtml"', 'href="alternate.xhtml"');
+    const altChapter = `<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en"><head><title>alternate-rendition</title><link rel="stylesheet" href="style.css"/></head><body><h1 id="start">Alternate View</h1><p>Rendered through alternate rendition.</p></body></html>`;
+    entries.push(['OEBPS/alternate.opf', bytes(altOpf)]);
+    entries.push(['OEBPS/alternate.xhtml', bytes(altChapter)]);
+  }
   if (id === 'media-overlay') {
     entries.push([
       'OEBPS/overlay.smil',
@@ -154,7 +157,7 @@ function epub([id, version, content]) {
         '<?xml version="1.0" encoding="utf-8"?><smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0"><body><seq id="seq1" epub:textref="chapter.xhtml"><par id="par1"><text src="chapter.xhtml#line"/><audio src="silence.mp3" clipBegin="0s" clipEnd="1s"/></par></seq></body></smil>',
       ),
     ]);
-    entries.push(['OEBPS/silence.mp3', createSilentMp3()]);
+    entries.push(['OEBPS/silence.mp3', createSilentMp3(), true]);
   }
   if (id === 'image-alternative')
     entries.push([
