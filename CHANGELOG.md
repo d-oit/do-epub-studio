@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- refactor(quality): split five existing 450–500 LOC files into focused modules without changing behavior.
 - feat(authoring): add deterministic EPUB 3 packaging, book-scoped asset validation and immutable publishing, atomic versioned drafts, and a full production-reader preview for admins and explicit book authors.
 - feat(export): add bounded EPUB annotation re-export with navigable source links and fail-closed archive-safety and EPUBCheck validation; Markdown/HTML downloads and JSON interchange remain separate.
 - fix(auth): surface a demo-login refusal instead of retrying it through the credential endpoints. The reader and admin demo logins fell back to `/api/access/request` / `/api/admin/login` for every failure, so a `429 TOO_MANY_REQUESTS` doubled the throttled attempts; the fallback is now limited to transport failures (including the client's own request timeout) and unparseable SPA responses.
