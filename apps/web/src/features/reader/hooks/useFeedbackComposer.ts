@@ -116,7 +116,7 @@ function isNetworkFailure(error: unknown): boolean {
   return typeof error.status !== 'number';
 }
 
-export function useFeedbackComposer(bookId: string | null): {
+export interface UseFeedbackComposerResult {
   items: FeedbackItem[];
   composerOpen: boolean;
   composerKind: FeedbackKind;
@@ -130,7 +130,8 @@ export function useFeedbackComposer(bookId: string | null): {
   withdraw: (id: string) => Promise<void>;
   reply: (id: string, text: string) => Promise<void>;
   refresh: () => Promise<void>;
-} {
+}
+export function useFeedbackComposer(bookId: string | null): UseFeedbackComposerResult {
   const sessionToken = useAuthStore((s) => s.sessionToken);
   const email = useAuthStore((s) => s.email);
   const canComment = useAuthStore((s) => s.capabilities?.canComment ?? false);

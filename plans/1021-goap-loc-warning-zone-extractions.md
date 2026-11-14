@@ -1,6 +1,6 @@
 # GOAP-1021: Extract Existing Source Files from the LOC Warning Zone
 
-**Status:** IN PROGRESS (active follow-up)
+**Status:** IMPLEMENTED (awaiting follow-up PR merge)
 **Date:** 2026-11-05
 **Issue:** #1466
 **Decision:** [ADR-1021](1021-adr-loc-warning-zone-extractions.md)
@@ -35,4 +35,25 @@ The five source files are independent extraction slices; each must retain existi
 - `node scripts/check-loc.mjs` reports no warnings for these paths and no violations.
 - Existing behavior tests remain meaningful and pass; no test is weakened or removed to make the extraction pass.
 - `pnpm verify` and `pnpm format:check` pass.
-- The current PR description links issue #1466 and this active plan/ADR.
+- The follow-up PR description links issue #1466 and this active plan/ADR.
+
+## Implementation evidence
+
+| Source file                                                         | Before | After |
+| ------------------------------------------------------------------- | -----: | ----: |
+| `apps/epubcheck-runner/src/server.ts`                               |    484 |   225 |
+| `apps/web/src/features/reader/ReaderPage.tsx`                       |    473 |   443 |
+| `apps/web/src/features/reader/components/toolbar/ReaderToolbar.tsx` |    476 |   329 |
+| `apps/worker/src/lib/epub-annotation-export.ts`                     |    494 |   251 |
+| `packages/reader-core/src/packager/annotation-export.ts`            |    469 |   144 |
+
+`node scripts/check-loc.mjs` reported 561 in-scope source files, no warn-zone files, and no violations; `scripts/loc-baseline.json` was unchanged.
+
+Verification:
+
+- EPUBCheck runner tests: 12 passed.
+- Web unit suite: 1,600 tests passed across 165 files.
+- Worker unit suite: 656 tests passed across 86 files.
+- Reader-core unit suite: 585 passed; 14 skipped.
+- `pnpm verify`: passed; E2E smoke had 60 passed and 12 skipped.
+- `pnpm format:check`: passed.

@@ -3,8 +3,8 @@ import { useShallow } from 'zustand/react/shallow';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { setupZombieDetection } from '../../lib/offline/permissions';
-import { HighlightToolbarLayer, CommentsPanel } from './components/annotations';
-import { FeedbackComposerModal } from './components/annotations/FeedbackComposerModal';
+import { CommentsPanel } from './components/annotations';
+import { SelectionOverlays } from './components/annotations/SelectionOverlays';
 import {
   useReaderUI,
   useReaderEpub,
@@ -28,7 +28,6 @@ import {
   TableOfContents,
   BookmarksPanel,
   ReaderViewer,
-  CommentInputModal,
   InfoPanel,
   FixedLayoutControls,
   ScrollProgressBar,
@@ -376,54 +375,25 @@ export function ReaderPage() {
           direction={bookDirection === 'rtl' ? 'rtl' : undefined}
         />
       )}
-      {selection && capabilities?.canHighlight && (
-        <HighlightToolbarLayer
-          selection={selection}
-          canHighlight={capabilities.canHighlight ?? false}
-          canComment={capabilities.canComment ?? false}
-          locale={locale}
-          onHighlight={handleCreateHighlight}
-          onComment={() => {
-            setShowCommentInput(true);
-            setIsCommentMode(true);
-          }}
-          onFeedback={(kind) => feedback.openComposer(kind, selection)}
-          onClose={resetSelection}
-        />
-      )}
-      <CommentInputModal
-        isOpen={showCommentInput && !!selection}
+      <SelectionOverlays
         selection={selection}
-        onSubmit={async (text) => {
-          await handleCreateComment(text, selection);
+        canHighlight={capabilities?.canHighlight ?? false}
+        canComment={capabilities?.canComment ?? false}
+        locale={locale}
+        showCommentInput={showCommentInput}
+        t={tFn}
+        feedback={feedback}
+        onHighlight={handleCreateHighlight}
+        onCreateComment={async (text, sel) => {
+          await handleCreateComment(text, sel);
           resetSelection();
         }}
+        onStartComment={() => {
+          setShowCommentInput(true);
+          setIsCommentMode(true);
+        }}
         onCancel={resetSelection}
-        placeholder={t('comment.placeholder')}
-        submitLabel={t('annotation.comment')}
-      />
-      <FeedbackComposerModal
-        isOpen={feedback.composerOpen && !!feedback.composerSelection}
-        kind={feedback.composerKind}
-        selection={feedback.composerSelection}
-        submitting={feedback.submitting}
-        serverError={feedback.composerError}
-        onKindChange={(kind) => {
-          if (feedback.composerSelection) feedback.openComposer(kind, feedback.composerSelection);
-        }}
-        onSubmit={(input) => {
-          if (!feedback.composerSelection) return;
-          void feedback
-            .submit({ ...input, selection: feedback.composerSelection })
-            .then(() => {
-              feedback.closeComposer();
-              setSelection(null);
-            })
-            .catch(() => undefined);
-        }}
-        onClose={() => {
-          feedback.closeComposer();
-        }}
+        onFeedbackCleared={() => setSelection(null)}
       />
       {activePanel === 'bookmarks' && (
         <BookmarksPanel
