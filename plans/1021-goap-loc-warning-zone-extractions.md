@@ -1,6 +1,6 @@
 # GOAP-1021: Extract Existing Source Files from the LOC Warning Zone
 
-**Status:** IMPLEMENTED (awaiting follow-up PR merge)
+**Status:** IMPLEMENTED ([PR #1468](https://github.com/d-oit/do-epub-studio/pull/1468) merged)
 **Date:** 2026-11-05
 **Issue:** #1466
 **Decision:** [ADR-1021](1021-adr-loc-warning-zone-extractions.md)
