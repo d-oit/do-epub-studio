@@ -148,6 +148,8 @@ ALLOWED_SHAS=(
     "softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3"
     "github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066"
     "chromaui/action@6ac4c49524e1b1358b8c593c5eea877604228268"
+# Appended 2026-11-16 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "chromaui/action@2b75e3340bcec86b4ae38c6a10f14831114e8137"
 )
 
 # Function to check if an action@sha is allowed
