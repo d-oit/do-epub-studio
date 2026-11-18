@@ -42,6 +42,13 @@ DETECTED_LANGUAGES=()
 echo "Running quality gate..."
 echo ""
 
+# --- Validate pinned harness identity ---
+printf '%sValidating pinned do-harness identity...%s\n' "${BLUE}" "${NC}"
+if ! node "$REPO_ROOT/scripts/check-harness-version.mjs"; then
+    FAILED=1
+fi
+echo ""
+
 # --- Validate git hooks configuration (always run) ---
 printf '%sValidating git hooks configuration...%s\n' "${BLUE}" "${NC}"
 if ! "$REPO_ROOT/scripts/validate-git-hooks.sh" 2>&1; then
@@ -68,19 +75,15 @@ echo ""
 
 # --- Validate per-model agent adapter drift ---
 printf '%sValidating per-model agent adapters...%s\n' "${BLUE}" "${NC}"
-if [ -f "$REPO_ROOT/scripts/check-agent-sync.mjs" ]; then
-    if ! node "$REPO_ROOT/scripts/check-agent-sync.mjs"; then
-        FAILED=1
-    fi
+if ! node "$REPO_ROOT/scripts/check-agent-sync.mjs"; then
+    FAILED=1
 fi
 echo ""
 
 # --- Validate app identity and version governance (ADR-104) ---
 printf '%sValidating app identity and version governance...%s\n' "${BLUE}" "${NC}"
-if [ -f "$REPO_ROOT/scripts/check-app-identity.mjs" ]; then
-    if ! node "$REPO_ROOT/scripts/check-app-identity.mjs"; then
-        FAILED=1
-    fi
+if ! node "$REPO_ROOT/scripts/check-app-identity.mjs"; then
+    FAILED=1
 fi
 echo ""
 
@@ -140,13 +143,16 @@ echo ""
 if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
     printf '%sRunning TypeScript/JavaScript checks...%s\n' "${BLUE}" "${NC}"
 
-    # Determine which package manager is available
+    # Determine which package manager is available. TypeScript/JavaScript is a
+    # detected language here, so a missing package manager is a fail-closed
+    # environment defect — the required phases must not silently vanish.
     if command -v pnpm &> /dev/null; then
         PM="pnpm"
     elif command -v npm &> /dev/null; then
         PM="npm"
     else
-        printf '%s  ⚠ pnpm/npm not installed - skipping TypeScript checks%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ pnpm/npm not installed — TypeScript checks cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
         PM=""
     fi
 
@@ -210,43 +216,6 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 printf '%s  ✓ %s test:coverage passed%s\n' "${GREEN}" "$PM" "${NC}"
             fi
 
-            # Build (skip with SKIP_BUILD env var). Same zero-warning policy as
-            # lint: bundlers and compilers routinely print diagnostics while
-            # still exiting 0, so a clean exit code alone is not a clean build.
-            # The pattern is anchored on tool-specific markers — Vite/Rolldown's
-            # `(!)`, `[rolldown: …]`, `[plugin:…]`, `EMPTY_IMPORT_META`, and an
-            # explicit `warning:`/`deprecated:` prefix — NOT the bare word
-            # "warning", which also appears in benign output like "Built with 0
-            # warnings" and would fail every healthy build.
-            if [ "${SKIP_BUILD:-false}" != "true" ]; then
-                if ! OUTPUT=$($PM run build 2>&1); then
-                    printf '%s  ✗ %s build failed%s\n' "${RED}" "$PM" "${NC}"
-                    echo "$OUTPUT" >&2
-                    FAILED=1
-                elif echo "$OUTPUT" | grep -qiE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:'; then
-                    printf '%s  ✗ %s build emitted warnings (zero-warning policy)%s\n' "${RED}" "$PM" "${NC}"
-                    echo "$OUTPUT" | grep -iE '\(!\)|\[rolldown|\[plugin:|EMPTY_IMPORT_META|(^|[^[:alpha:]])warning:|deprecated:' | sort -u | head -40 >&2
-                    FAILED=1
-                else
-                    printf '%s  ✓ %s build passed (no warnings)%s\n' "${GREEN}" "$PM" "${NC}"
-                fi
-            else
-                printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
-                SKIPPED=1
-            fi
-
-            # Bundle budget + deploy-platform per-file cap (Cloudflare Pages
-            # rejects any dist file >25 MiB — #1188). Runs against the dist
-            # the build step above produced; skips when build did not run.
-            if [ "${SKIP_BUILD:-false}" != "true" ] && [ -d apps/web/dist ]; then
-                if ! OUTPUT=$(node scripts/check-bundle-budget.mjs --fail-on-violation 2>&1); then
-                    printf '%s  ✗ %s bundle budget failed%s\n' "${RED}" "check-bundle-budget" "${NC}"
-                    echo "$OUTPUT" >&2
-                    FAILED=1
-                else
-                    printf '%s  ✓ %s bundle budget passed%s\n' "${GREEN}" "check-bundle-budget" "${NC}"
-                fi
-            fi
 
             # Smoke tests (skip with SKIP_SMOKE env var)
             # CI sets QUALITY_GATE_NO_SMOKE=1: the gate's dev-server smoke cannot
@@ -325,6 +294,13 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
                 FAILED=1
             else
                 printf '%s  ✓ %s build passed (no warnings)%s\n' "${GREEN}" "$PM" "${NC}"
+                if ! OUTPUT=$(node "$REPO_ROOT/scripts/check-bundle-budget.mjs" --fail-on-violation 2>&1); then
+                    printf '%s  ✗ %s bundle budget failed%s\n' "${RED}" "check-bundle-budget" "${NC}"
+                    echo "$OUTPUT" >&2
+                    FAILED=1
+                else
+                    printf '%s  ✓ %s bundle budget passed%s\n' "${GREEN}" "check-bundle-budget" "${NC}"
+                fi
             fi
         else
             printf '%s  ⊘ %s build skipped (SKIP_BUILD=true)%s\n' "${YELLOW}" "$PM" "${NC}"
@@ -370,7 +346,10 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " markdown " ]]; then
             fi
         fi
     else
-        printf '%s  ⚠ markdownlint not installed - skipping markdown checks%s\n' "${YELLOW}" "${NC}"
+        # ADR-112: markdownlint is part of the default quality gate. A missing
+        # executable must not silently turn a required phase into a no-op.
+        printf '%s  ✗ markdownlint not installed — markdown checks cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
     fi
     echo ""
 fi
@@ -387,7 +366,10 @@ if [ "${SKIP_DESIGN:-0}" != "1" ]; then
             FAILED=1
         fi
     else
-        printf '%s  ⊘ scripts/run-impeccable.sh not found — skipping%s\n' "${YELLOW}" "${NC}"
+        # "design" is a recorded local gate phase; a missing wrapper is a
+        # broken install, not a skip.
+        printf '%s  ✗ scripts/run-impeccable.sh not found — design check cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
     fi
     echo ""
 else

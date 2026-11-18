@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-10-22
 **Deciders:** Project maintainer
-**Related:** GOAP-1011 (`plans/1011-goap-madge-circular-graph-resolution.md`), PR #1377, ADR-083, `AGENTS.md` Tier 1 quality-gate policy
+**Related:** GOAP-1011 (`plans/archive/1011-goap-madge-circular-graph-resolution.md`), PR #1377, ADR-083, `AGENTS.md` Tier 1 quality-gate policy
 
 ## Context
 

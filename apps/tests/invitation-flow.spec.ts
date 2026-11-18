@@ -3,7 +3,7 @@ import { ADMIN_LOGIN_RESPONSE, ADMIN_USER, loginAsAdmin } from './fixtures';
 
 /**
  * Browser verification of the book-invitation flow (GOAP-284 acceptance
- * criterion, and the last open box in `plans/284-goap-production-onboarding.md`).
+ * criterion, and the last open box in `plans/archive/284-goap-production-onboarding.md`).
  *
  * Phase 5 drove the whole chain at the API level against a real Worker
  * (13/13) and found a real tenant-guard bug. What was missing is this:

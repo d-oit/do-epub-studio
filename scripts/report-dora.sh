@@ -36,7 +36,7 @@ fi
 
 echo "::group::DORA metrics (report only)"
 
-OUTPUT="$(do-harness dora 2>&1)"
+OUTPUT="$(DO_HARNESS_AUTO_REPORT=off do-harness dora 2>&1)"
 STATUS=$?
 
 # The measured report is the interesting part; the trailing error line repeats

@@ -86,6 +86,30 @@ export function isContained(child: BoundingBox, parent: BoundingBox, tolerance =
 }
 
 /**
+ * Returns horizontal overflow in the document, main landmarks, and active
+ * reader panels. Per-surface measurements catch content clipped by an
+ * overflow-hidden ancestor even when the document itself still fits.
+ */
+export async function getHorizontalOverflowTargets(page: Page): Promise<string[]> {
+  return await page.evaluate(() => {
+    const targets = [
+      document.documentElement,
+      ...document.querySelectorAll<HTMLElement>(
+        'main, [role="main"], [role="dialog"], [data-container-name]',
+      ),
+    ];
+    return targets.flatMap((target) => {
+      const clientWidth =
+        target === document.documentElement ? window.innerWidth : target.clientWidth;
+      if (target.scrollWidth <= clientWidth + 1) return [];
+      const name =
+        target.id || target.getAttribute('data-container-name') || target.tagName.toLowerCase();
+      return [`${name}: ${target.scrollWidth}px > ${clientWidth}px`];
+    });
+  });
+}
+
+/**
  * Assert no horizontal overflow and visible key elements across all viewports.
  * Call this from any E2E test to verify responsive behavior.
  */
@@ -103,14 +127,12 @@ export async function assertViewportMatrix(
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-    // Core invariant: no horizontal scroll
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth + 1,
-    );
+    await expect(page.getByRole('main')).toHaveCount(1);
+    const overflow = await getHorizontalOverflowTargets(page);
     expect(
       overflow,
-      `${viewport.label} (${viewport.width}x${viewport.height}): no horizontal overflow`,
-    ).toBe(false);
+      `${viewport.label} (${viewport.width}x${viewport.height}): horizontal overflow targets`,
+    ).toEqual([]);
 
     // Required elements visible
     for (const selector of opts.required ?? []) {

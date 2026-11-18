@@ -58,7 +58,7 @@ export function validateAnnotations(annotations: readonly EpubExportAnnotation[]
   if (annotations.length > MAX_ANNOTATIONS) {
     throw new EpubAnnotationExportError(
       'ANNOTATIONS_TOO_LARGE',
-      'Exports support at most 500 annotations',
+      'Exports support at most 1000 annotations',
     );
   }
   const ids = new Set<string>();

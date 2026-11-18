@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** Issue #1213, Issue #1212, GOAP-277 (`plans/277-goap-ci-gates-that-never-run.md`), ADR-277 (fail-closed skip visibility), `agents-docs/LEARNINGS.md` ("The local git hook and CI's Pre-commit job do not run the same hooks")
+**Related:** Issue #1213, Issue #1212, GOAP-277 (`plans/archive/277-goap-ci-gates-that-never-run.md`), ADR-277 (fail-closed skip visibility), `agents-docs/LEARNINGS.md` ("The local git hook and CI's Pre-commit job do not run the same hooks")
 
 ## Context
 

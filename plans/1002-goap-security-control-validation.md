@@ -6,7 +6,7 @@
 **Source audit:** `plans/1000-goap-implementation-security-e2e-feature-audit.md`
 — GOAP-1000, findings S1–S4
 **Governance:** `plans/1000-adr-audit-evidence-and-scope.md` (ADR-1000)
-**Related:** GOAP-1003 (`plans/1003-goap-e2e-behavior-proof-gaps.md`) — E1/E4 do
+**Related:** GOAP-1003 (`plans/archive/1003-goap-e2e-behavior-proof-gaps.md`) — E1/E4 do
 not certify these controls; `SECURITY.md` (private reporting),
 `docs/security-posture.md` (adopted posture)
 
@@ -245,3 +245,5 @@ evidence remains outstanding; no cross-account readability claim is made.
 - **Limits.** Deployed behavior remains unclaimed. The commit-boundary fence
   rejects a stale write; it does not make the ciphertext that existed before
   the purge unreadable, and no cross-account readability claim is made.
+
+**Index disposition (2026-11-16):** DONE for S1/S2/S4/S5 (2026-10-05, extended 2026-10-20): logout/auth-loss teardown, fail-closed sensitive persistence, book-bound reader recovery, and session-bound offline replay that authenticates every protected-route call; S3 stays the recorded policy/evidence question — no TTL, session-binding or revocation model changed; deployed validation outstanding

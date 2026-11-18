@@ -5,7 +5,7 @@ import {
   resolvePackageHref,
   type EpubSpineTarget,
 } from './annotation-export-xml';
-import { encodeCfiFragment, parseCfiSpineIndex } from './annotation-export-cfi';
+import { parseCfiSpine } from './annotation-export-cfi';
 import { isValidLanguageTag, type EpubExportAnnotation } from './annotation-export-validate';
 
 interface AnnotationTarget {
@@ -36,6 +36,7 @@ function resolveAnnotationTarget(
   packagePath: string,
   appendixPath: string,
   sourceRevisionId: string | null,
+  spineStep: number,
   spineTargets: readonly EpubSpineTarget[],
 ): AnnotationTarget | null {
   if (
@@ -56,13 +57,19 @@ function resolveAnnotationTarget(
   const referenceTarget = findSpineByRef(annotation.chapterRef, packagePath, spineTargets);
   if (annotation.cfi !== undefined && annotation.cfi !== null) {
     if (annotation.cfi.length === 0) return null;
-    const spineIndex = parseCfiSpineIndex(annotation.cfi);
-    if (spineIndex === null) return null;
-    const cfiTarget = spineTargets.find((target) => target.index === spineIndex);
+    const parsed = parseCfiSpine(annotation.cfi, spineStep);
+    if (parsed === null) return null;
+    const cfiTarget = spineTargets.find((target) => target.index === parsed.index);
     if (!cfiTarget || (referenceTarget && referenceTarget.index !== cfiTarget.index)) return null;
-    const packageHref = relativeArchiveHref(appendixPath, packagePath);
+    if (parsed.assertion) {
+      const baseName = cfiTarget.path.slice(cfiTarget.path.lastIndexOf('/') + 1);
+      const stem = baseName.replace(/\.[^./]+$/, '');
+      if (parsed.assertion !== cfiTarget.idref && parsed.assertion !== stem) return null;
+    }
+    const href = relativeArchiveHref(appendixPath, cfiTarget.path);
+    if (!parsed.remainder) return { href };
     return {
-      href: `${packageHref}#${encodeCfiFragment(annotation.cfi)}`,
+      href: `${href}#epubcfi(${parsed.remainder})`,
     };
   }
   if (!referenceTarget) return null;
@@ -152,6 +159,7 @@ export function createAppendix(
   packageVersion: string,
   language: string,
   revisionId: string | null,
+  spineStep: number,
   spineTargets: readonly EpubSpineTarget[],
 ): string {
   const indicesById = new Map(annotations.map((annotation, index) => [annotation.id, index + 1]));
@@ -162,6 +170,7 @@ export function createAppendix(
         packagePath,
         appendixPath,
         revisionId,
+        spineStep,
         spineTargets,
       );
       return renderAnnotation(annotation, index, indicesById, target);

@@ -22,7 +22,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
             printf '%s  ✓ ruff check passed%s\n' "${GREEN}" "${NC}"
         fi
     else
-        printf '%s  ⚠ ruff not installed - skipping Python lint%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ ruff not installed — Python lint cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
     fi
 
     if command -v black &> /dev/null; then
@@ -34,7 +35,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
             printf '%s  ✓ black check passed%s\n' "${GREEN}" "${NC}"
         fi
     else
-        printf '%s  ⚠ black not installed - skipping Python format%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ black not installed — Python formatting cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
     fi
 
     # pytest — always run if tests/ directory exists
@@ -48,7 +50,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " python " ]]; then
                 printf '%s  ✓ pytest passed%s\n' "${GREEN}" "${NC}"
             fi
         else
-            printf '%s  ⚠ pytest not installed - skipping Python tests%s\n' "${YELLOW}" "${NC}"
+            printf '%s  ✗ pytest not installed — Python tests cannot run (required phase)%s\n' "${RED}" "${NC}"
+            FAILED=1
         fi
     fi
     echo ""
@@ -83,7 +86,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
             fi
         fi
     else
-        printf '%s  ⚠ shellcheck not installed - skipping shell checks%s\n' "${YELLOW}" "${NC}"
+        printf '%s  ✗ shellcheck not installed — shell checks cannot run (required phase)%s\n' "${RED}" "${NC}"
+        FAILED=1
     fi
 
     # BATS tests — always run if tests/ or scripts/tests/ directory exists
@@ -100,7 +104,8 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " shell " ]]; then
                 printf '%s  ✓ bats tests passed%s\n' "${GREEN}" "${NC}"
             fi
         else
-            printf '%s  ⚠ bats not installed - skipping shell tests%s\n' "${YELLOW}" "${NC}"
+            printf '%s  ✗ bats not installed — shell tests cannot run (required phase)%s\n' "${RED}" "${NC}"
+            FAILED=1
         fi
     fi
     echo ""

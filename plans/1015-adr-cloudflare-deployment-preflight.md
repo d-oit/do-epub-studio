@@ -34,3 +34,5 @@ Removing `BOOKS_BUCKET` or returning a graceful null is not a solution: `apps/wo
 - The Pages-native deployments still require `do-epub-studio-books` and `do-epub-studio-books-preview` to exist. Cloudflare's live 10042 response is an external blocker; this ADR does not claim the account has been repaired.
 - Exact dependency pinning prevents the observed Dependabot lockfile regression without adding a local ambient type shim for a package version that failed the provider build.
 - Production/preview storage isolation and the actual EPUB reading journey remain intact.
+
+**Index disposition (2026-11-16):** Accepted (2026-10-28: enforce fail-closed Cloudflare resource preflight before deployment; maintain required R2 bindings for EPUB streaming and preview demo isolation; treat error 10042 as external account blocker)

@@ -9,8 +9,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openjdk-21-jre-
     "https://github.com/w3c/epubcheck/releases/download/v${EPUBCHECK_VERSION}/epubcheck-${EPUBCHECK_VERSION}.zip" \
     -o /tmp/epubcheck.zip \
   && unzip /tmp/epubcheck.zip -d /opt/epubcheck \
-  && mv "/opt/epubcheck/epubcheck-${EPUBCHECK_VERSION}/epubcheck.jar" /opt/epubcheck/epubcheck.jar \
-  && rm -rf /tmp/epubcheck.zip "/opt/epubcheck/epubcheck-${EPUBCHECK_VERSION}"
+  && mv /opt/epubcheck/epubcheck-${EPUBCHECK_VERSION}/* /opt/epubcheck/ \
+  && rmdir /opt/epubcheck/epubcheck-${EPUBCHECK_VERSION} \
+  && rm -rf /tmp/epubcheck.zip
+ENV EPUBCHECK_JAR_PATH=/opt/epubcheck/epubcheck.jar
 WORKDIR /service/apps/epubcheck-runner
 COPY apps/epubcheck-runner/package.json ./package.json
 RUN npm install --omit=dev --no-audit --no-fund \

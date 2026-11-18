@@ -31,6 +31,18 @@ esac
 
 success "On feature branch: $CURRENT_BRANCH"
 
+if git diff --cached --quiet; then
+    error "No staged changes to commit"
+    error "Run 'git add <files>' first (this script does NOT auto-stage)"
+    exit 1
+else
+    STAGED_DIFF_STATUS=$?
+    if [[ "$STAGED_DIFF_STATUS" -ne 1 ]]; then
+        error "Could not inspect staged changes (git diff --cached --quiet exited $STAGED_DIFF_STATUS)"
+        exit 1
+    fi
+fi
+
 log "Running quality gate..."
 echo ""
 

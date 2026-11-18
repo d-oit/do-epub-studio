@@ -72,7 +72,39 @@ The original feature section recorded intended behavior, not verified implementa
 
 ### Status
 
-Implementation and repository verification complete (2026-11-13). External screen-reader verification remains pending: NVDA is unavailable in the current WSL2 environment and VoiceOver requires macOS. No merge performed without human approval.
+Implemented and verified (GOAP-1020 COMPLETE; evidence in
+`plans/archive/1020-goap-epub-authoring-workspace-and-packager.md`). The authoring
+workspace, packager, author routes, and production-reader preview are live; the
+Chromium authoring E2E re-ran green on 2026-11-16. Full IFR/separation rationale
+and secondary-contradiction check: `analysis/triz-resolution-2026-11-08.md`.
+
+## GOAP-1020 Follow-up — parser worker startup readiness
+
+### Architecture contract (2026-11-16)
+
+The production EPUB loader remains the only author-preview parser. `EpubParserWorkerPool` queues parse requests until a new module Worker sends its existing `ready` handshake, then transfers byte buffers without copying. The pool gives the Worker five seconds to become ready. If that exact Worker remains unready at the deadline, terminate and clear it, then run the existing bounded `fallbackParse()` for every queued request while their original bytes remain available. A pre-ready `onerror` uses the same fallback path; an error after readiness continues to reject pending parses.
+
+The fallback calls the same `validateArchive()` safety boundary. This changes neither EPUB bytes nor loader API and prevents a Worker that emits neither `ready` nor `error` from holding preview loading until the outer 30-second timeout.
+
+### TRIZ resolution
+
+`analysis/triz-core-2026-11-16.md` records the verified no-handshake failure and its availability/responsiveness contradiction. `analysis/triz-resolution-2026-11-16.md` resolves it through time separation: queue source bytes until the Worker is ready, then transfer them, or retain them for the existing fallback when the readiness deadline expires. The Worker remains preferred, and no unresolved secondary contradiction was identified.
+
+## GOAP-1020 Follow-up — responsive author preview
+
+### Architecture contract (2026-11-16)
+
+After the EPUB rendition is displayed, `AuthorEpubPreview` observes the preview container with `ResizeObserver`. It calls `EpubRenditionHandle.resize(width, height)` only when positive dimensions change. The handle clears current EPUB.js views and calls `resize` so the default manager recreates the current CFI at the new dimensions; the preview's `displayed` listener restores the iframe's accessible title after replacement. Effect cleanup disconnects the observer.
+
+### TRIZ resolution
+
+`analysis/triz-core-2026-11-16.md` records the reproducible zero-sized iframe after a dynamic viewport resize. `analysis/triz-resolution-2026-11-16.md` resolves it through condition-based dynamicity: resize the existing rendition in response to container size changes. The handle clears stale views before resizing so the current CFI is recreated at the new dimensions. Zero dimensions are ignored, the outer preview container avoids a resize feedback loop, and the displayed listener restores the iframe title. No secondary contradiction remains.
+
+### Status
+
+Implemented and verified 2026-11-16. Unit coverage: `AuthorEpubPreview.test.tsx` drives the observer and asserts a single `resize(356, 572)` plus title restoration on a replaced iframe; `epub-loader.test.ts` asserts `clear()` runs before `resize()`. Browser coverage: the authoring E2E resizes an open preview to 768×1024 and 390×844 and asserts positive iframe dimensions, the accessible title, chapter text, and no horizontal overflow; a live Demo Book preview reproduced the same result at both sizes.
+
+The zero-size measurement had a second, independent cause: `sanitizeEpubDocument` replaced `<html>`'s children, detaching the `document.body` that epub.js had captured in `Contents` before the content hook ran, so `Contents.textSize()` reported 0×0 and `expand()` reframed the view to zero. Both sanitizer paths now splice the sanitized clone's children into the live `<head>`/`<body>` and mirror their attributes; `sanitizer.test.ts` asserts element identity on the DOMPurify pass and on a cache hit, and the full reader-core suite (576 tests) plus the reader browser specs pass.
 
 ## GOAP-1432 — EPUB Annotation Re-export
 

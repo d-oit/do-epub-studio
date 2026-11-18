@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useShallow } from 'zustand/react/shallow';
-import { useReaderStore } from '../../../stores';
+import { useAuthStore, useReaderStore } from '../../../stores';
 import type { Bookmark, Comment, Highlight } from '../../../stores/reader';
+import { apiRequest } from '../../../lib/api';
 import { parseNotesMarkdown } from '../lib/export-notes-markdown';
 import {
   NOTES_FORMAT_VERSION,
@@ -11,6 +12,20 @@ import {
   type ExportedBookmark,
   type NotesExport,
 } from '../lib/notes-types';
+export type NotesExportFormat = 'markdown' | 'html' | 'epub';
+
+/**
+ * Deadline for the EPUB export request.
+ *
+ * The Worker validates the generated archive synchronously against the
+ * EPUBCheck runner with a 130 s budget (`RUNNER_TIMEOUT_MS` in
+ * `apps/worker/src/lib/epub-annotation-export.ts`) and only then returns bytes. The
+ * client default of 15 s (`DEFAULT_TIMEOUT_MS` in `lib/api/core.ts`) aborts a
+ * perfectly valid slow export, so this branch declares a deadline covering the
+ * runner budget plus R2 read, packaging, and transfer. Markdown/HTML export
+ * stays on the default deadline.
+ */
+export const EXPORT_EPUB_TIMEOUT_MS = 150_000;
 
 export interface NotesImportResult {
   ok: boolean;
@@ -253,13 +268,29 @@ export function importNotesFromMarkdown(markdown: string): NotesImportResult {
   };
 }
 
-export function parseExportFilename(bookTitle: string | null | undefined): string {
+export function parseExportFilename(
+  bookTitle: string | null | undefined,
+  format: NotesExportFormat = 'markdown',
+): string {
   const safe = (bookTitle || 'notes').replace(/[\\/:*?"<>|]+/g, '_');
-  return `${safe}-notes.md`;
+  if (format === 'epub') return `${safe}-annotated.epub`;
+  return `${safe}-notes.${format === 'html' ? 'html' : 'md'}`;
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 interface UseExportNotesReturn {
-  handleExportNotes: (bookTitle: string | null | undefined) => void;
+  handleExportNotes: (
+    bookTitle: string | null | undefined,
+    format?: NotesExportFormat,
+  ) => Promise<void>;
 }
 
 export function useExportNotes(): UseExportNotesReturn {
@@ -270,26 +301,57 @@ export function useExportNotes(): UseExportNotesReturn {
       bookmarks: s.bookmarks,
     })),
   );
+  const { bookId, sessionToken } = useAuthStore(
+    useShallow((s) => ({ bookId: s.bookId, sessionToken: s.sessionToken })),
+  );
 
   const handleExportNotes = useCallback(
-    (bookTitle: string | null | undefined) => {
-      const payload = buildNotesExport({
-        bookTitle: bookTitle ?? 'Book',
-        bookId: null,
-        highlights,
-        comments,
-        bookmarks,
+    async (bookTitle: string | null | undefined, format: NotesExportFormat = 'markdown') => {
+      if (format === 'markdown') {
+        const payload = buildNotesExport({
+          bookTitle: bookTitle ?? 'Book',
+          bookId: null,
+          highlights,
+          comments,
+          bookmarks,
+        });
+        downloadBlob(
+          new Blob([notesExportToMarkdown(payload)], { type: NOTES_MIME_TYPE }),
+          parseExportFilename(bookTitle),
+        );
+        return;
+      }
+
+      if (!bookId || !sessionToken) {
+        throw new Error('An active reader session is required to export notes');
+      }
+      const endpoint = `/api/books/${encodeURIComponent(bookId)}/export?format=${format}`;
+
+      if (format === 'epub') {
+        const bytes = await apiRequest<ArrayBuffer>(endpoint, {
+          token: sessionToken,
+          responseType: 'arrayBuffer',
+          timeoutMs: EXPORT_EPUB_TIMEOUT_MS,
+        });
+        downloadBlob(
+          new Blob([bytes], { type: 'application/epub+zip' }),
+          parseExportFilename(bookTitle, format),
+        );
+        return;
+      }
+
+      const htmlExport = await apiRequest<{ format: string; content: string }>(endpoint, {
+        token: sessionToken,
       });
-      const markdown = notesExportToMarkdown(payload);
-      const blob = new Blob([markdown], { type: NOTES_MIME_TYPE });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = parseExportFilename(bookTitle);
-      a.click();
-      URL.revokeObjectURL(url);
+      if (htmlExport.format !== 'html' || typeof htmlExport.content !== 'string') {
+        throw new Error('Invalid HTML export response');
+      }
+      downloadBlob(
+        new Blob([htmlExport.content], { type: 'text/html;charset=utf-8' }),
+        parseExportFilename(bookTitle, format),
+      );
     },
-    [highlights, comments, bookmarks],
+    [bookId, sessionToken, highlights, comments, bookmarks],
   );
 
   return { handleExportNotes };

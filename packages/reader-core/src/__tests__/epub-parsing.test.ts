@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Buffer } from 'node:buffer';
 import { inflateRawSync } from 'node:zlib';
-import { isValidCfi } from '../epub-loader';
+import { isValidCfi } from '../cfi-validation';
 
 const FIXTURES = resolve(import.meta.dirname, 'fixtures');
 
@@ -189,7 +189,8 @@ function parseSpineItems(buf: Buffer): Array<{ idref: string; properties: string
 }
 
 function generateSpineCfi(spineIndex: number): string {
-  return `epubcfi(/6/${spineIndex + 2})`;
+  // Spine itemrefs are even child steps of `/6`: index 0 → /6/2, index 1 → /6/4.
+  return `epubcfi(/6/${2 * (spineIndex + 1)})`;
 }
 
 // ---------------------------------------------------------------------------
@@ -306,7 +307,7 @@ describe('CFI generation for spine items', () => {
     const buf = readEpubFixture('multi-nav.epub');
     const spine = parseSpineItems(buf);
     const cfis = spine.map((_, i) => generateSpineCfi(i));
-    expect(cfis).toEqual(['epubcfi(/6/2)', 'epubcfi(/6/3)', 'epubcfi(/6/4)']);
+    expect(cfis).toEqual(['epubcfi(/6/2)', 'epubcfi(/6/4)', 'epubcfi(/6/6)']);
   });
 });
 
@@ -359,7 +360,7 @@ describe('Edge cases', () => {
     for (let i = 0; i < 20; i++) {
       const cfi = generateSpineCfi(i);
       expect(isValidCfi(cfi)).toBe(true);
-      expect(cfi).toMatch(new RegExp(`^epubcfi\\(/6/${i + 2}\\)$`));
+      expect(cfi).toMatch(new RegExp(`^epubcfi\\(/6/${2 * (i + 1)}\\)$`));
     }
   });
 });
