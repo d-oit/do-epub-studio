@@ -98,6 +98,7 @@ function mockEpubDatabase(
     highlightTextBytes?: number;
     commentTextBytes?: number;
     bookmarkTextBytes?: number;
+    title?: string;
   } = {},
 ) {
   const highlights = rows.highlights ?? [];
@@ -107,6 +108,7 @@ function mockEpubDatabase(
     .mockResolvedValueOnce({
       id: 'revision-1',
       storage_key: 'books/book-1/revision-1.epub',
+      storage_provider: 'r2',
       file_size_bytes: source.byteLength,
     })
     .mockResolvedValueOnce({
@@ -117,7 +119,8 @@ function mockEpubDatabase(
     .mockResolvedValueOnce({
       row_count: bookmarks.length,
       text_bytes: rows.bookmarkTextBytes ?? 0,
-    });
+    })
+    .mockResolvedValueOnce({ title: rows.title ?? 'Original title' });
   mockQueryAll
     .mockResolvedValueOnce(highlights)
     .mockResolvedValueOnce(comments)
@@ -146,6 +149,13 @@ async function exportRequest(env: Env): Promise<Response> {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks keeps queued mockOnce values, so a test that returns before
+  // consuming its full query queue would leak stale rows into the next test.
+  // Reset and re-seed the D1 defaults explicitly.
+  mockQueryFirst.mockReset();
+  mockQueryFirst.mockResolvedValue(null);
+  mockQueryAll.mockReset();
+  mockQueryAll.mockResolvedValue([]);
   mockRequireAuth.mockResolvedValue(makeAuthContext());
   mockAssertBookAccess.mockResolvedValue(null);
 });
@@ -215,21 +225,23 @@ describe('GET /api/books/:id/export?format=epub', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('content-type')).toBe('application/epub+zip');
     expect(response.headers.get('content-disposition')).toBe(
-      'attachment; filename="annotations.epub"',
+      `attachment; filename="Original title-annotations.epub"; filename*=UTF-8''Original%20title-annotations.epub`,
     );
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(Number(response.headers.get('content-length'))).toBeGreaterThan(0);
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(fetchMock.mock.calls[0]?.[0]).toEqual(new URL('https://runner.example/validate'));
+    expect(fetchMock.mock.calls[0]?.[1]?.redirect).toBe('error');
     expect((fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>).authorization).toBe(
       'Bearer runner-secret',
     );
     expect(getObject).toHaveBeenCalledWith('books/book-1/revision-1.epub');
-    expect(
-      mockQueryAll.mock.calls.every(
-        (call) => call[2]?.[0] === 'book-1' && call[2]?.[1] === 'user@example.com',
-      ),
-    ).toBe(true);
+    expect(mockQueryAll).toHaveBeenCalledTimes(3);
+    expect(mockQueryAll.mock.calls.map((call) => call[2])).toEqual([
+      ['book-1', 'user@example.com', EPUB_ANNOTATION_EXPORT_LIMITS.maxAnnotations + 1],
+      ['book-1', 'user@example.com', EPUB_ANNOTATION_EXPORT_LIMITS.maxAnnotations + 1],
+      ['book-1', 'user@example.com', EPUB_ANNOTATION_EXPORT_LIMITS.maxAnnotations + 1],
+    ]);
 
     const output = new Uint8Array(await response.arrayBuffer());
     const zip = await JSZip.loadAsync(output);
@@ -248,7 +260,7 @@ describe('GET /api/books/:id/export?format=epub', () => {
     expect(appendix).toContain('Comment 2');
     expect(appendix).toContain('Bookmark 3');
     expect(appendix.split('>Open source location</a>').length - 1).toBe(3);
-    expect(appendix).toContain('href="content.opf#epubcfi');
+    expect(appendix).toContain('href="chapter.xhtml#epubcfi(!/4/2:0)');
     expect(appendix).toContain('Highlighted passage');
     expect(appendix).toContain('Reading position');
     expect(appendix).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
@@ -273,18 +285,23 @@ describe('GET /api/books/:id/export?format=epub', () => {
   it('rejects source and annotation limits before fetching or buffering the EPUB', async () => {
     const env = makeEnv();
     const source = await sourceEpub();
-    const getObject = mockEpubDatabase(env, source, { highlightCount: 501 });
+    const getObject = mockEpubDatabase(env, source, { highlightCount: 1001 });
     expect((await exportRequest(env)).status).toBe(413);
     expect(getObject).not.toHaveBeenCalled();
 
     const oversizedEnv = makeEnv();
+    // The annotations-limit check above returned before the title lookup, so
+    // stale queue entries would otherwise be consumed by this request.
+    mockQueryFirst.mockReset();
+    mockQueryFirst.mockResolvedValue(null);
     mockQueryFirst.mockResolvedValueOnce({
       id: 'revision-2',
       storage_key: 'oversized.epub',
+      storage_provider: 'r2',
       file_size_bytes: 8 * 1024 * 1024 + 1,
     });
     expect((await exportRequest(oversizedEnv)).status).toBe(413);
-    expect(mockQueryFirst).toHaveBeenCalledTimes(5);
+    expect(mockQueryFirst).toHaveBeenCalledTimes(1);
   });
 
   it('rejects aggregate annotation text before fetching the source EPUB', async () => {
@@ -309,7 +326,58 @@ describe('GET /api/books/:id/export?format=epub', () => {
     const response = await exportRequest(env);
 
     expect(response.status).toBe(503);
-    expect((await parseBody(response)).error?.code).toBe('EPUBCHECK_UNAVAILABLE');
+    expect((await parseBody(response)).error?.code).toBe('EXPORT_VALIDATION_UNAVAILABLE');
+  });
+
+  it('returns 504 when the runner times out', async () => {
+    const env = makeEnv();
+    const source = await sourceEpub();
+    mockEpubDatabase(env, source);
+    env.EPUBCHECK_RUNNER_URL = 'https://runner.example';
+    env.EPUBCHECK_RUNNER_TOKEN = 'runner-secret';
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValue(new DOMException('The operation was aborted', 'TimeoutError'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await exportRequest(env);
+
+    expect(response.status).toBe(504);
+    expect((await parseBody(response)).error?.code).toBe('EXPORT_VALIDATION_TIMEOUT');
+  });
+
+  it('returns 504 when the runner response body times out', async () => {
+    const env = makeEnv();
+    const source = await sourceEpub();
+    mockEpubDatabase(env, source);
+    env.EPUBCHECK_RUNNER_URL = 'https://runner.example';
+    env.EPUBCHECK_RUNNER_TOKEN = 'runner-secret';
+    const timeoutController = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(timeoutController.signal);
+    const fetchMock = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      const signal = init?.signal;
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          if (signal) {
+            signal.addEventListener('abort', () => controller.error(signal.reason), { once: true });
+          }
+        },
+      });
+      return Promise.resolve(new Response(body));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const pendingResponse = exportRequest(env);
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledOnce());
+      timeoutController.abort(new DOMException('The operation was aborted', 'TimeoutError'));
+
+      const response = await pendingResponse;
+      expect(response.status).toBe(504);
+      expect((await parseBody(response)).error?.code).toBe('EXPORT_VALIDATION_TIMEOUT');
+    } finally {
+      timeoutSpy.mockRestore();
+    }
   });
 
   it.each([
@@ -368,6 +436,12 @@ describe('GET /api/books/:id/export?format=epub', () => {
       status: 200,
       expectedStatus: 502,
       body: () => 'x'.repeat(300_001),
+    },
+    {
+      name: 'runner execution timeout',
+      status: 504,
+      expectedStatus: 504,
+      body: () => 'timed out',
     },
   ])('returns an error for $name', async ({ status, expectedStatus, body }) => {
     const source = await sourceEpub();

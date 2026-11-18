@@ -85,8 +85,8 @@ above:
   export. The absence of a server web consumer is not a defect and does not
   invalidate the local export surface.
 
-See `plans/1001-goap-reader-integration-gaps.md` and
-`plans/1003-goap-e2e-behavior-proof-gaps.md`.
+See `plans/archive/1001-goap-reader-integration-gaps.md` and
+`plans/archive/1003-goap-e2e-behavior-proof-gaps.md`.
 
 ## Execution Strategy
 

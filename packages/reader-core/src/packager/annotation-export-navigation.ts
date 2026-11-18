@@ -21,10 +21,10 @@ function directoryName(path: string): string {
 }
 
 function uniqueValue(base: string, exists: (value: string) => boolean): string {
-  if (!exists(base)) return base;
+  if (!exists(base.toLowerCase())) return base;
   for (let suffix = 2; suffix <= 10_000; suffix += 1) {
     const candidate = `${base}-${suffix}`;
-    if (!exists(candidate)) return candidate;
+    if (!exists(candidate.toLowerCase())) return candidate;
   }
   throw new TypeError('Could not allocate a unique EPUB annotation resource name');
 }
@@ -128,20 +128,23 @@ export function updatePackageForAnnotations(
   ncxXmlSource: string | null,
 ): EpubPackageUpdate {
   const packageDirectory = directoryName(packagePath);
-  const manifestPaths = new Set(
-    packageDocument.manifestItems
-      .map((item) => resolvePackageHref(item.href, packagePath))
-      .filter((path): path is string => path !== null),
-  );
-  const appendixFile = uniqueValue('annotations', (name) => {
-    const path = packageDirectory ? `${packageDirectory}/${name}.xhtml` : `${name}.xhtml`;
-    return archivePaths.has(path) || manifestPaths.has(path);
+  const manifestPathsLower = new Set<string>();
+  const manifestIdsLower = new Set<string>();
+  for (const item of packageDocument.manifestItems) {
+    const path = resolvePackageHref(item.href, packagePath);
+    if (path) manifestPathsLower.add(path.toLowerCase());
+    manifestIdsLower.add(item.id.toLowerCase());
+  }
+  const archivePathsLower = new Set<string>();
+  for (const path of archivePaths) archivePathsLower.add(path.toLowerCase());
+  const appendixFile = uniqueValue('annotations', (lower) => {
+    const path = packageDirectory ? `${packageDirectory}/${lower}.xhtml` : `${lower}.xhtml`;
+    return archivePathsLower.has(path) || manifestPathsLower.has(path);
   });
   const appendixPath = packageDirectory
     ? `${packageDirectory}/${appendixFile}.xhtml`
     : `${appendixFile}.xhtml`;
-  const manifestIds = new Set(packageDocument.manifestItems.map((item) => item.id));
-  const itemId = uniqueValue('annotations', (value) => manifestIds.has(value));
+  const itemId = uniqueValue('annotations', (lower) => manifestIdsLower.has(lower));
   const appendixHref = relativeArchiveHref(packagePath, appendixPath);
   const manifestItem = `\n    <${packageDocument.manifestPrefix}item id="${escapeXml(itemId)}" href="${escapeXml(appendixHref)}" media-type="${XHTML_MEDIA_TYPE}"/>\n  `;
   const spineItem = `\n    <${packageDocument.spinePrefix}itemref idref="${escapeXml(itemId)}"/>\n  `;
@@ -167,5 +170,5 @@ export function updatePackageForAnnotations(
     ncxXml = updateNcxDocument(ncxXmlSource, relativeArchiveHref(ncxPath, appendixPath));
   }
 
-  return { appendixPath, appendixHref, opfXml, navPath, navXml, ncxPath, ncxXml };
+  return { appendixPath, appendixHref, itemId, opfXml, navPath, navXml, ncxPath, ncxXml };
 }

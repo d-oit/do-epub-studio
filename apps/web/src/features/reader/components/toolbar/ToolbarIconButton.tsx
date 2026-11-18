@@ -25,6 +25,9 @@ export interface ToolbarIconButtonProps {
   isExpanded?: boolean;
   badge?: number;
   badgeLabel?: string;
+  hasPopup?: 'dialog' | 'menu';
+  id?: string;
+  ariaControls?: string;
 }
 
 export function ToolbarIconButton({
@@ -34,16 +37,22 @@ export function ToolbarIconButton({
   isExpanded,
   badge,
   badgeLabel,
+  hasPopup,
+  id,
+  ariaControls,
 }: ToolbarIconButtonProps) {
   const paths = Array.isArray(svgPath) ? svgPath : [svgPath];
   const ariaLabel = badge && badge > 0 && badgeLabel ? badgeLabel : label;
   return (
     <Tooltip content={label}>
       <IconButton
+        id={id}
         onClick={onClick}
         variant="ghost"
         aria-label={ariaLabel}
         aria-expanded={isExpanded}
+        aria-haspopup={hasPopup}
+        aria-controls={ariaControls}
         className="relative"
       >
         <svg

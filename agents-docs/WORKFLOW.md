@@ -41,12 +41,20 @@ For faster iteration, use these scoped commands during the "Fix Loop" before run
 
 Checks executed (in order):
 
-1. `validate-git-hooks.sh` - Detects global hooks overriding local (non-blocking)
-2. `validate-github-actions-shas.sh` - No placeholder SHAs in workflows
-3. `validate-skills.sh` - Skill symlinks intact
-4. `validate-skill-format.sh` - SKILL.md frontmatter valid
-5. `validate-links.sh` - Reference links in skills exist
-6. Language detection + lint/typecheck/test
+1. `check-harness-version.mjs` — installed `do-harness` matches `.do-harness-version`
+2. `validate-git-hooks.sh` — detects global hooks overriding local
+3. `validate-workflows.sh` — actionlint + zizmor (medium+) on `.github/workflows`
+4. `validate-skills.sh` — skill symlinks intact
+5. `check-agent-sync.mjs` — per-model adapter drift
+6. `check-app-identity.mjs` — app identity and version governance (ADR-104)
+7. Documentation and index phases (`scripts/lib/quality_gate_docs.sh`): ADR index, plan references, 500-line source cap, Prettier `format:check`, coverage-threshold parity, gate-parity manifest, SKILL.md format, skill links, skills-catalog freshness
+8. `lint` → `typecheck` → `test:coverage` → `test:e2e:smoke` → `build` (TypeScript path)
+9. markdownlint (when installed)
+10. `run-impeccable.sh` — design detector (warnings unless `IMPECCABLE_REQUIRED=1`)
+11. `dead-code-check.sh` — dead code and circular dependencies
+
+Exit 0 = all required phases ran and passed. Exit 2 = failures. Exit 3 = passed
+with `SKIP_*` phases omitted — **not** a passing gate for commits.
 
 ### 3. Fix Loop
 
@@ -63,8 +71,12 @@ When quality gate fails:
 
 - Fix ALL errors and warnings
 - Include pre-existing issues in files you touched
-- Never use `--no-verify`, `SKIP_TESTS`, or bypass flags
-- These flags **do not exist** in this project
+- Never use `--no-verify` to skip the pre-commit hook
+- `SKIP_LINT` / `SKIP_TYPECHECK` / `SKIP_TESTS` / `SKIP_SMOKE` / `SKIP_BUILD` /
+  `SKIP_DESIGN` exist for local iteration only; each one makes the gate exit 3,
+  which `atomic-commit` rejects. CI never sets them.
+- `QUALITY_GATE_NO_SMOKE=1` is the exception: CI uses it where the gate's
+  dev-server smoke lane cannot reach a Worker backend, and it does not warn.
 
 ### 4. Skill-Based Remediation
 

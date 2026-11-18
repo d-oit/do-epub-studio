@@ -10,6 +10,13 @@ source "$REPO_ROOT/scripts/lib/colors.sh"
 
 SKILLS_SRC=${SKILLS_SRC:-"$REPO_ROOT/.agents/skills"}
 
+# Vendored skills are third-party payloads (installed by the impeccable CLI):
+# their frontmatter and section layout follow upstream, not this repo's
+# agentskills.io contract. Format ownership is partitioned the same way for
+# prettier (.prettierignore) and the design detector (.impeccable/). Keep the
+# list explicit and space-separated; every other skill remains enforced.
+VENDORED_SKILLS=${VENDORED_SKILLS:-"impeccable"}
+
 MAX_SKILL_LINES=${MAX_SKILL_LINES:-250}
 ERRORS=0
 
@@ -24,6 +31,12 @@ for skill_dir in "$SKILLS_SRC"/*/; do
     [ -d "$skill_dir" ] || continue
     skill_name=$(basename "$skill_dir")
     [[ "$skill_name" == _* ]] && continue
+    case " $VENDORED_SKILLS " in
+        *" $skill_name "*)
+            printf '%s[SKIP]%s %s: vendored skill (upstream frontmatter)\n' "${YELLOW}" "${NC}" "$skill_name"
+            continue
+            ;;
+    esac
 
     skill_file="${skill_dir}SKILL.md"
     if [ ! -f "$skill_file" ]; then

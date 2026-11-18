@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act, fireEvent, waitFor } from '@testing-library/react';
 import { ReaderPage } from './ReaderPage';
 import { App } from '../../App';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
@@ -44,13 +44,17 @@ async function renderReaderApp() {
   });
 }
 
-vi.mock('../../lib/api', () => ({
-  apiRequest: vi.fn((url: string) => {
+const apiMock = vi.hoisted(() => ({
+  defaultApiRequest: (url: string): Promise<unknown> => {
     if (url.includes('logout')) return Promise.resolve({});
     if (url.includes('bookmarks')) return Promise.resolve([]);
     if (url.includes('file-url')) return Promise.resolve({ url: 'mock-epub-url' });
     return Promise.resolve({ url: 'mock-url' });
-  }),
+  },
+}));
+
+vi.mock('../../lib/api', () => ({
+  apiRequest: vi.fn(apiMock.defaultApiRequest),
   fetchHighlights: vi.fn(() => Promise.resolve([])),
   fetchComments: vi.fn(() => Promise.resolve([])),
   fetchProgress: vi.fn(() =>
@@ -84,10 +88,51 @@ vi.mock('../../lib/offline/permissions', () => ({
 }));
 
 describe('ReaderPage Panels', () => {
-  beforeEach(() => {
+  // The reader's bootstrap is a promise chain, not one microtask. Draining it
+  // after unmount makes any late store write land before the next test's
+  // `beforeEach`; without this, a write that settled after the reset removed
+  // capability-gated buttons and closed panels at random.
+  afterEach(async () => {
+    vi.unstubAllGlobals();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  });
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // The reader mounts hooks that call the real `api` object (session refresh,
+    // grant validation). Those requests are not covered by the module mock, and
+    // a failed one runs `handleUnauthorized` → `logout()`, which clears
+    // capabilities and the reader store mid-test. Keep every request local.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify({ ok: true, data: {} }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      ),
+    );
+    // `clearAllMocks` keeps implementations, so an override set by one test
+    // (a rejecting apiRequest, a one-shot rejection) would leak into the next.
+    const api = await import('../../lib/api');
+    const offline = await import('../../lib/offline');
+    vi.mocked(api.apiRequest).mockImplementation(apiMock.defaultApiRequest);
+    vi.mocked(api.fetchHighlights).mockResolvedValue([]);
+    vi.mocked(api.fetchComments).mockResolvedValue([]);
+    vi.mocked(api.fetchProgress).mockResolvedValue({
+      locator: null,
+      progressPercent: 0,
+      updatedAt: null,
+    });
+    vi.mocked(offline.getAnnotations).mockResolvedValue([]);
+    vi.mocked(offline.getProgress).mockResolvedValue(undefined);
     useAuthStore.setState({
       sessionToken: 'test-token',
+      sessionExpiresAt: null,
       bookId: 'test-book-id',
       bookSlug: 'test-book',
       isAuthenticated: true,
@@ -108,6 +153,10 @@ describe('ReaderPage Panels', () => {
       error: null,
       isLoading: false,
       pendingSyncCount: 0,
+      // `activePanel` lives in the shared store, so a panel left open by the
+      // previous test turned the next test's `togglePanel` into a close.
+      activePanel: null,
+      progressRestored: false,
     });
   });
   it('exposes sync recovery from the reader route when items are pending', async () => {
@@ -120,12 +169,14 @@ describe('ReaderPage Panels', () => {
     await renderReaderPage();
 
     await clickAndSettle(screen.getByLabelText('Contents'));
-    expect(screen.getByText('Contents')).toBeInTheDocument();
+    expect(await screen.findByText('Contents')).toBeInTheDocument();
 
     await clickAndSettle(screen.getByLabelText('Bookmarks'));
 
-    expect(screen.queryByText('Contents')).not.toBeInTheDocument();
-    expect(screen.getByText('Bookmarks')).toBeInTheDocument();
+    // The TOC panel is replaced by the bookmarks panel in the same commit, so
+    // poll instead of sampling one render.
+    await waitFor(() => expect(screen.queryByText('Contents')).not.toBeInTheDocument());
+    expect(await screen.findByText('Bookmarks')).toBeInTheDocument();
   });
 
   it('toggles search panel', async () => {
@@ -137,25 +188,30 @@ describe('ReaderPage Panels', () => {
   it('toggles settings panel', async () => {
     await renderReaderPage();
     await clickAndSettle(screen.getByLabelText('Settings'));
-    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(await screen.findByText('Settings')).toBeInTheDocument();
   });
 
   it('toggles comments panel', async () => {
     await renderReaderPage();
     await clickAndSettle(screen.getByLabelText('Comment'));
-    expect(screen.getByText('Comments')).toBeInTheDocument();
+    expect(await screen.findByText('Comments')).toBeInTheDocument();
   });
 
   it('displays error from store', async () => {
-    useReaderStore.setState({ error: 'Access revoked' });
     await renderReaderPage();
-    expect(screen.getByText('Access revoked')).toBeInTheDocument();
+    // Seeded after mount: opening the reader clears stale errors, so seeding
+    // before render raced that reset.
+    act(() => {
+      useReaderStore.setState({ error: 'Access revoked' });
+    });
+    expect(await screen.findByText('Access revoked')).toBeInTheDocument();
   });
 
   it('toggles info panel', async () => {
     await renderReaderPage();
     await clickAndSettle(screen.getByLabelText('About This Book'));
-    expect(screen.getByText('About This Book')).toBeInTheDocument();
+    // Opening flushes device-local insights first and toggles in `finally`.
+    expect(await screen.findByText('About This Book')).toBeInTheDocument();
   });
 
   it('renders page content', async () => {
@@ -178,19 +234,21 @@ describe('ReaderPage Panels', () => {
       await import('../../lib/api');
     const { getProgress, getAnnotations } = await import('../../lib/offline');
 
-    // Server fetches fail
-    vi.mocked(fetchHighlights).mockRejectedValueOnce(new Error('Network error'));
-    vi.mocked(fetchComments).mockRejectedValueOnce(new Error('Network error'));
+    // Server fetches fail. Persistent (not `Once`) rejections: the reader can
+    // call these before its own bootstrap load, and a one-shot rejection gets
+    // consumed there, leaving the bootstrap on the "server succeeded" path.
+    vi.mocked(fetchHighlights).mockRejectedValue(new Error('Network error'));
+    vi.mocked(fetchComments).mockRejectedValue(new Error('Network error'));
     vi.mocked(apiRequest).mockImplementation((url: string) => {
       if (url.includes('logout')) return Promise.resolve({});
       if (url.includes('bookmarks')) return Promise.reject(new Error('Network error'));
       if (url.includes('file-url')) return Promise.resolve({ url: 'mock-epub-url' });
       return Promise.resolve({ url: 'mock-url' });
     });
-    vi.mocked(fetchProgress).mockRejectedValueOnce(new Error('Network error'));
+    vi.mocked(fetchProgress).mockRejectedValue(new Error('Network error'));
 
     // Offline cache returns data
-    vi.mocked(getProgress).mockResolvedValueOnce({
+    vi.mocked(getProgress).mockResolvedValue({
       id: 'prog-1',
       bookId: 'test-book-id',
       cfi: 'epubcfi(/6/14)',
@@ -244,9 +302,11 @@ describe('ReaderPage Panels', () => {
       await Promise.resolve();
     });
 
-    // Verify offline data was restored to the store
+    // Verify offline data was restored to the store. The loader merges the
+    // server failure with the cached rows over several awaits, so poll instead
+    // of assuming one microtask.
+    await waitFor(() => expect(useReaderStore.getState().highlights).toHaveLength(1));
     const storeState = useReaderStore.getState();
-    expect(storeState.highlights).toHaveLength(1);
     expect(storeState.highlights[0]?.id).toBe('h-1');
     expect(storeState.highlights[0]?.selectedText).toBe('saved passage');
     expect(storeState.comments).toHaveLength(1);

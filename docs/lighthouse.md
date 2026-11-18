@@ -25,8 +25,9 @@ In addition to Lighthouse scores, the project enforces hard JS/CSS budget gates 
 
 - **Config file:** `.performance-budgets.json` (`routeBudgets` section)
 - **Primary target:** Reader route (`/read/:bookSlug`)
-- **Budget:** 1MB (Total transitive JS and CSS assets)
-- **Enforcement:** PRs will fail CI if the reader route budget is exceeded.
+- **Budget:** 1,190,000 raw bytes for the reader's initial static graph: route entry,
+  transitive static JS imports, and linked CSS; dynamic imports excluded.
+- **Enforcement:** `scripts/check-bundle-budget.mjs` fails the bundle-size CI gate when the configured reader route limit is exceeded.
 
 ## CI Workflow
 

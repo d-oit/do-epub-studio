@@ -142,7 +142,7 @@ are replayed where cheap; re-runs are dated).
 ## Progress reconciliation (GOAP-290, 2026-09-30)
 
 Documentation-only edits, listed for auditability (details and exact headers in
-`plans/290-goap-feature-docs-harness-audit.md`):
+`plans/archive/290-goap-feature-docs-harness-audit.md`):
 
 - `plans/269-…`: header → `IN PROGRESS`; Phase 4 row qualified as delivered
   upstream/scaffolded locally; default-set paragraph corrected (`web-ui-tests`
@@ -182,7 +182,7 @@ resolver for all six runners (plus the masked a11y axe-context defect the F2
 fix unmasked), `web-ui-tests` in the `verification` set, the direction check
 after locale navigation, `missingMetrics` + a SKIP line instead of a false OK,
 and 13-size matrices in both lanes. GOAP-292
-(`plans/292-goap-local-setup-truth-d1.md`) implemented F4 — working
+(`plans/archive/292-goap-local-setup-truth-d1.md`) implemented F4 — working
 `db:migrate:local`/`db:check` against the local D1 state, `db:migrate:prod`
 removed in favour of the runbook's remote path, the Turso-service tooling and
 `docs/setup-turso.md` deleted, and the published docs (README, setup-local,
@@ -192,12 +192,12 @@ suite, 1/1 real-Chromium browser suite, six runner smokes against a served
 fixture, a stubbed-Lighthouse proof (null → SKIP, real → OK, slow → FAIL), a
 fresh `--persist-to` migration applying all 18 migrations, and a real
 `wrangler dev` smoke serving D1-backed routes. GOAP-293
-(`plans/293-goap-assistance-integration.md`) implemented F1 — the panel loads
+(`plans/archive/293-goap-assistance-integration.md`) implemented F1 — the panel loads
 real chapters through the creator's read access, dispatches per-category to
 the owning adapters with grounded input, and reports honestly when no engine
 is prepared; verified by unit/component suites plus a real-EPUB browser run
 (and three latent extractor/UX defects fixed en route). GOAP-294
-(`plans/294-goap-web-ui-suite-ci-evidence.md`) closed F3's second half: CI now
+(`plans/archive/294-goap-web-ui-suite-ci-evidence.md`) closed F3's second half: CI now
 runs the identical suite command in the `Web UI Audit Suite` job (Chromium
 installed; 28/28 locally, workflows validated) without touching the ADR-286
 required-check set. The reader search/prefetch `book.spine` no-op observed
@@ -216,7 +216,7 @@ human creator style review.
 
 This report's three-domain inventory is historical. The successor audit
 `analysis/comprehensive-gap-audit.md` (GOAP-298, 2026-09-30, record:
-`plans/298-goap-comprehensive-gap-audit.md`) expands to eight domains —
+`plans/archive/298-goap-comprehensive-gap-audit.md`) expands to eight domains —
 implementation, features, docs, harness, E2E, security, logging, i18n — with
 the current inventory A1–A13 plus the rejected A14 entry (the Turbo `test`
 task graph runs the unit suites). It revalidates F1–F10 above against the current

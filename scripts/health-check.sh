@@ -7,6 +7,7 @@ set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
+source "$REPO_ROOT/scripts/lib/node-version-policy.sh"
 
 # Colors
 RED='\033[0;31m'
@@ -29,12 +30,11 @@ if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
     echo -e "  ${GREEN}✓${NC} Node.js: $NODE_VERSION"
 
-    # Check version requirement (Node 20+)
-    NODE_MAJOR=$(echo "$NODE_VERSION" | cut -d'.' -f1 | tr -d 'v')
-    if [ "$NODE_MAJOR" -ge 20 ]; then
-        echo -e "  ${GREEN}✓${NC} Node.js version OK (>= 20)"
+    # Keep the local diagnostic aligned with package.json and the CI/release matrices.
+    if node_version_is_supported "$NODE_VERSION"; then
+        echo -e "  ${GREEN}✓${NC} Node.js version OK (22.13+ or 24.x)"
     else
-        echo -e "  ${RED}✗${NC} Node.js $NODE_VERSION is too old (require 20+)"
+        echo -e "  ${RED}✗${NC} Node.js $NODE_VERSION is unsupported (require 22.13+ or 24.x)"
         FAILED=1
     fi
 else

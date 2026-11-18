@@ -52,7 +52,7 @@ describe('ReaderToolbar', () => {
     onToggleBookmarks: vi.fn(),
     onToggleSettings: vi.fn(),
     onToggleInfo: vi.fn(),
-    onExportNotes: vi.fn(),
+    onToggleExport: vi.fn(),
     onLogout: vi.fn(),
     t: (key: string, params?: Record<string, string | number>) => {
       const translations: Record<string, string> = {
@@ -182,24 +182,19 @@ describe('ReaderToolbar', () => {
     expect(mockProps.onToggleInfo).toHaveBeenCalled();
   });
 
-  it('opens format choices and keeps Markdown export local', () => {
+  it('toggles the export panel from the desktop button', () => {
     render(<ReaderToolbar {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('Export Notes'));
-
-    expect(screen.getByRole('dialog', { name: 'reader.exportDialogTitle' })).toBeInTheDocument();
-    expect(mockProps.onExportNotes).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: 'reader.exportMarkdown' }));
-    expect(mockProps.onExportNotes).toHaveBeenCalledOnce();
+    const exportButton = screen.getByLabelText('Export Notes');
+    expect(exportButton).toHaveAttribute('id', 'reader-export-trigger');
+    expect(exportButton).toHaveAttribute('aria-controls', 'reader-export-panel');
+    expect(exportButton).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(exportButton);
+    expect(mockProps.onToggleExport).toHaveBeenCalledOnce();
   });
 
-  it('keeps Markdown export available while disabling online formats offline', () => {
-    act(() => useReaderStore.setState({ isOffline: true }));
-    render(<ReaderToolbar {...mockProps} />);
-    fireEvent.click(screen.getByLabelText('Export Notes'));
-
-    expect(screen.getByRole('button', { name: 'reader.exportMarkdown' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'reader.exportHtml' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'reader.exportEpub' })).toBeDisabled();
+  it('marks the desktop export button as expanded when the panel is open', () => {
+    render(<ReaderToolbar {...mockProps} activePanel="export" />);
+    expect(screen.getByLabelText('Export Notes')).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('shows settings button', () => {
@@ -431,12 +426,13 @@ describe('ReaderToolbar', () => {
     expect(mockProps.onToggleInfo).toHaveBeenCalled();
   });
 
-  it('opens the export format dialog from the mobile menu', () => {
+  it('opens the export panel from the mobile menu', () => {
     render(<ReaderToolbar {...mockProps} />);
     fireEvent.click(screen.getByLabelText('More Options'));
-    fireEvent.click(screen.getByText('Export Notes').closest('button') as HTMLElement);
-    expect(screen.getByRole('dialog', { name: 'reader.exportDialogTitle' })).toBeInTheDocument();
-    expect(mockProps.onExportNotes).not.toHaveBeenCalled();
+    const exportItem = screen.getByText('Export Notes').closest('button') as HTMLElement;
+    expect(exportItem).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(exportItem);
+    expect(mockProps.onToggleExport).toHaveBeenCalledOnce();
   });
 
   it('clicks settings in mobile menu', () => {

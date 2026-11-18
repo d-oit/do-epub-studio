@@ -47,7 +47,7 @@ async function spool(request: IncomingMessage, target: string): Promise<string> 
       bytes += chunk.byteLength;
       if (bytes > MAX_INPUT_BYTES) throw new Error('input_limit');
       hash.update(chunk);
-      await file.write(chunk);
+      await file.writeFile(chunk);
     }
   } finally {
     await file.close();
@@ -76,31 +76,27 @@ const ADVISORIES: Array<{ category: string; message: string; source: string }> =
     'Review captions, transcripts, and audio descriptions where applicable.',
     'manual-review',
   ],
-  [
-    'reader-ui',
-    'Reader UI accessibility is evaluated separately from publication metadata.',
-    'reader-ui',
-  ],
 ].map(([category, message, source]) => ({ category, message, source }));
 
-async function executeEpubcheck(
+export async function executeEpubcheck(
   inputPath: string,
   workDir: string,
+  timeoutMs = MAX_RUNTIME_MS,
 ): Promise<{ output: string; code: number }> {
   const { promise, resolve, reject } = Promise.withResolvers<{ output: string; code: number }>();
   const reportPath = join(workDir, 'epubcheck-report.json');
-  const child = spawn(
-    'java',
-    ['-Xmx512m', '-jar', '/opt/epubcheck/epubcheck.jar', '-j', reportPath, inputPath],
-    {
-      shell: false,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { PATH: process.env.PATH ?? '/usr/bin:/bin' },
-    },
-  );
-  let output = '';
-  let outputBytes = 0;
-  const timer = setTimeout(() => child.kill('SIGKILL'), MAX_RUNTIME_MS);
+  const jarPath = process.env.EPUBCHECK_JAR_PATH ?? '/opt/epubcheck/epubcheck.jar';
+  const javaCommand = process.env.EPUBCHECK_JAVA_BIN ?? 'java';
+  const child = spawn(javaCommand, ['-Xmx512m', '-jar', jarPath, '-j', reportPath, inputPath], {
+    shell: false,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: process.env.PATH ?? '/usr/bin:/bin' },
+  });
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    child.kill('SIGKILL');
+  }, timeoutMs);
   function capture(chunk: Buffer): void {
     outputBytes += chunk.byteLength;
     if (outputBytes > MAX_OUTPUT_BYTES) child.kill('SIGKILL');
@@ -112,6 +108,7 @@ async function executeEpubcheck(
   child.once('close', (code) => {
     clearTimeout(timer);
     if (outputBytes > MAX_OUTPUT_BYTES) reject(new Error('diagnostics_limit'));
+    else if (timedOut) reject(new Error('validator_timeout'));
     else if (code === null) reject(new Error('validator_terminated'));
     else resolve({ output, code });
   });
@@ -172,6 +169,9 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     } catch {
       /* EPUBCheck stdout remains the bounded fallback source. */
     }
+    if (result.code !== 0 && !findings.some((finding) => finding.severity === 'error')) {
+      return send(response, 503, { error: 'runner_unavailable' });
+    }
     send(response, 200, {
       validatorVersion: VERSION,
       sha256,
@@ -188,7 +188,14 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     });
   } catch (error) {
     const code = error instanceof Error ? error.message : 'runner_failure';
-    const status = code === 'input_limit' ? 413 : code === 'empty_input' ? 400 : 503;
+    const status =
+      code === 'input_limit'
+        ? 413
+        : code === 'empty_input'
+          ? 400
+          : code === 'validator_timeout'
+            ? 504
+            : 503;
     send(response, status, { error: status === 503 ? 'runner_unavailable' : code });
   } finally {
     await rm(workDir, { recursive: true, force: true, maxRetries: 2 });

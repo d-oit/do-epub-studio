@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
-import { assertViewportMatrix } from './viewport-matrix';
+import { assertViewportMatrix, getHorizontalOverflowTargets } from './viewport-matrix';
 import {
+  MOCK_EPUB,
   loginAsAdmin,
   mockAdminApi,
   loginAsReader,
@@ -68,6 +69,10 @@ async function assertKeyboardFocusAndNoOverflow(
   step: { locale: string },
   viewport: { label: string; width: number },
 ) {
+  await expect(
+    page.getByRole('main'),
+    `${step.locale} ${viewport.label}: exactly one main landmark`,
+  ).toHaveCount(1);
   await page.keyboard.press('Tab');
   const focused1 = page.locator(':focus');
   await expect(focused1).toBeVisible();
@@ -114,10 +119,11 @@ async function assertKeyboardFocusAndNoOverflow(
     `${step.locale} ${viewport.label}: next focused stays within viewport width`,
   ).toBeLessThanOrEqual(viewport.width + 1);
 
-  const overflow = await page.evaluate(
-    () => document.documentElement.scrollWidth > window.innerWidth + 1,
-  );
-  expect(overflow, `${step.locale} ${viewport.label}: no horizontal overflow`).toBe(false);
+  const overflow = await getHorizontalOverflowTargets(page);
+  expect(
+    overflow,
+    `${step.locale} ${viewport.label}: no horizontal overflow in document, main, or panel`,
+  ).toEqual([]);
 }
 test.describe('Viewport regression matrix', () => {
   test('@mobile login page has no overflow across all viewports', async ({ page }) => {
@@ -174,9 +180,18 @@ test.describe('Viewport regression matrix', () => {
   });
 
   test('@mobile catalog page has no overflow across all viewports', async ({ page }) => {
-    await assertViewportMatrix(page, '/', {
+    await page.route('**/api/catalog*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, data: { items: [], total: 0, pageSize: 24, offset: 0 } }),
+      });
+    });
+    await assertViewportMatrix(page, '/catalog', {
+      required: ['main#main-content h1'],
       assertAtEachViewport: async (page, viewport) => {
-        // Verify focus indicators are visible and contained within the viewport
+        await expect(page.getByText('No public books available yet.')).toBeVisible();
+
         const firstInteractive = page
           .locator('a, button, input:not([type="hidden"]), select, textarea, [tabindex="0"]')
           .first();
@@ -190,7 +205,6 @@ test.describe('Viewport regression matrix', () => {
           `${viewport.label}: interactive element should be focused`,
         ).toBeFocused();
 
-        // Focus ring / interactive box must be within viewport boundaries (not clipped or overflowing)
         const box = await firstInteractive.boundingBox();
         expect(
           box,
@@ -273,5 +287,46 @@ test.describe('Viewport regression matrix', () => {
         await assertKeyboardFocusAndNoOverflow(page, step, viewport);
       }
     }
+  });
+  test('@mobile export notes panel stays visible and returns focus at 320px', async ({ page }) => {
+    suppressWorkboxErrors(page);
+    await mockReaderApi(page, { epubBuffer: MOCK_EPUB });
+    await loginAsReader(page);
+    await page.setViewportSize({ width: 320, height: 568 });
+    await page.goto('/read/book-1', { waitUntil: 'domcontentloaded' });
+
+    const overflowButton = page.getByRole('button', { name: 'More Options' });
+    await expect(overflowButton).toBeVisible();
+    await overflowButton.click();
+    await page.getByRole('menuitem', { name: 'Export Notes' }).click();
+
+    const panel = page.getByRole('dialog', { name: 'Export annotations' });
+    await expect(panel).toBeVisible();
+    await expect(panel).toHaveAttribute('aria-modal', 'true');
+
+    const formatSelect = panel.getByRole('combobox', { name: 'Format' });
+    await expect(formatSelect).toHaveValue('markdown');
+    await expect(panel.getByRole('option', { name: 'HTML' })).toBeEnabled();
+    await expect(panel.getByRole('option', { name: 'Annotated EPUB' })).toBeEnabled();
+    await expect(formatSelect).toBeFocused();
+
+    const downloadButton = panel.getByRole('button', { name: 'Download' });
+    await expect(downloadButton).toBeVisible();
+    await expect(downloadButton).toBeEnabled();
+    const downloadBox = await downloadButton.boundingBox();
+    expect(downloadBox).not.toBeNull();
+    expect(downloadBox!.height).toBeGreaterThanOrEqual(44);
+
+    const box = await panel.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(321);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(569);
+    expect(await getHorizontalOverflowTargets(page)).toEqual([]);
+
+    await page.keyboard.press('Escape');
+    await expect(panel).not.toBeVisible();
+    await expect(overflowButton).toBeFocused();
   });
 });

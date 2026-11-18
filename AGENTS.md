@@ -93,7 +93,7 @@ readonly MAX_PR_TITLE_LENGTH=72
 - **Use OKLCH for color tokens** to ensure perceptually uniform lightness and wide-gamut P3 support.
 - **Enable View Transitions** for all page-to-page navigations.
 - **Enforce mutual exclusivity** for reader side-panels (TOC, Settings, etc.).
-- **New UI strings must land in all locales together**: add the key to `apps/web/src/i18n/en.ts` **and** the 13 locale files in the same change — each locale is typed `Record<TranslationKeys, …>`, so typecheck fails until every file has it; parity tests gate key-set equality, non-empty values, and `{count}` interpolation (`{other}` params are free).
+- **New UI strings must land in all locales together**: add the key to `apps/web/src/i18n/en.ts` **and** the 12 non-English locale files in the same change — each locale is typed `Record<TranslationKeys, …>`, so typecheck fails until every file has it; parity tests gate key-set equality, non-empty values, and `{count}` interpolation (`{other}` params are free).
 
 ---
 
@@ -145,7 +145,7 @@ The skill catalog is generated — never hand-edit it and never copy it back int
 ## Key Commands
 
 ```bash
-# Environment: node 22 required (system node 20 crashes eslint-plugin-unicorn)
+# Environment: Node 22.13+ or Node 24.x, matching `package.json` and CI; other majors are unsupported.
 export PATH=/home/node/.local/bin:$PATH   # persistent ~/.local/node22 symlink
 
 # Quality gates
@@ -173,9 +173,9 @@ codacy pull-request gh d-oit do-epub-studio <PR> --output json
 Computational agent-loop verification runs via do-harness (generic pack; ADR-246 / GOAP-269). Sensors wrap the same pnpm scripts as the gates. Repo git hooks are NOT managed by do-harness (they live in `scripts/hooks/`).
 
 ```bash
-do-harness verify --set feedback --changed --record             # during edits
-do-harness verify --set verification --changed --strict --record  # before claiming done
-do-harness status --set verification                   # evidence freshness (no run)
+DO_HARNESS_AUTO_REPORT=off do-harness verify --set feedback --since origin/main --record
+DO_HARNESS_AUTO_REPORT=off do-harness verify --set verification --since origin/main --strict --record
+DO_HARNESS_AUTO_REPORT=off do-harness status --set verification
 ```
 
 Never weaken a sensor to obtain a passing result; fix the underlying cause.

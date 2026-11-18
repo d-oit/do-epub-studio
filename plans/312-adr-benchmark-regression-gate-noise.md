@@ -4,7 +4,7 @@
 **Status:** Accepted
 **Deciders:** Project maintainer
 **Related:** ADR-218 (amended §3), ADR-022, ADR-277, GOAP-1006,
-`plans/1006-goap-scheduled-e2e-repairs.md`, `scripts/compare-benchmarks.mjs`
+`plans/archive/1006-goap-scheduled-e2e-repairs.md`, `scripts/compare-benchmarks.mjs`
 
 ## Context
 

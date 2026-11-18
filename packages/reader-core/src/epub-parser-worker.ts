@@ -20,23 +20,24 @@ interface WorkerResultMessage {
 
 type MainToWorkerMessage = WorkerPoolMessage;
 type WorkerToMainMessage = WorkerResultMessage | { type: 'ready' };
+interface PendingWorkerParse {
+  resolve: (result: EpubParseResult) => void;
+  reject: (error: Error) => void;
+  source: string | Uint8Array;
+  sent: boolean;
+}
 
 const PARSE_TIMEOUT_MS = 30_000;
+const WORKER_READY_TIMEOUT_MS = 5_000;
 
 class EpubParserWorkerPool {
   private worker: Worker | null = null;
-  private pending = new Map<
-    string,
-    {
-      resolve: (r: EpubParseResult) => void;
-      reject: (e: Error) => void;
-      source: string | Uint8Array;
-    }
-  >();
+  private pending = new Map<string, PendingWorkerParse>();
   private idCounter = 0;
   private terminated = false;
   /** True once the worker posts its 'ready' handshake — proof the script loaded. */
   private workerReady = false;
+  private workerReadyTimeout: ReturnType<typeof setTimeout> | null = null;
 
   private getWorker(): Worker | null {
     if (this.worker) return this.worker;
@@ -45,73 +46,98 @@ class EpubParserWorkerPool {
 
     try {
       const workerUrl = new URL('./epub-parser.worker.ts', import.meta.url);
-      this.worker = new Worker(workerUrl, { type: 'module' });
+      const worker = new Worker(workerUrl, { type: 'module' });
+      this.worker = worker;
       this.workerReady = false;
 
-      this.worker.onmessage = (event: MessageEvent<WorkerToMainMessage>) => {
+      worker.onmessage = (event: MessageEvent<WorkerToMainMessage>) => {
+        if (this.worker !== worker) return;
         const data = event.data;
         if (data.type === 'ready') {
           this.workerReady = true;
+          this.clearWorkerReadyTimeout();
+          for (const [id, pending] of this.pending) {
+            this.postPending(worker, id, pending);
+          }
           return;
         }
-        if (data.type === 'result') {
-          const pending = this.pending.get(data.id);
-          if (pending) {
-            pending.resolve(data.result);
-            this.pending.delete(data.id);
-          }
+        const pending = this.pending.get(data.id);
+        if (pending) {
+          pending.resolve(data.result);
+          this.pending.delete(data.id);
         }
       };
 
-      this.worker.onerror = (event) => {
+      worker.onerror = (event) => {
         const msg =
           event.message ??
           (event.filename
             ? `Worker load failed: ${event.filename}:${event.lineno}`
             : 'Worker initialization failed');
-        const error = new Error(msg);
-        const pendingList = [...this.pending.values()];
-        this.pending.clear();
-
-        if (!this.workerReady) {
-          // LOAD failure: the worker script never started (e.g. production
-          // builds where the worker chunk is mis-served — see issue #957).
-          // Degrade to the documented main-thread fallback instead of failing
-          // every book load. ADR-218 §6: the worker is the preferred path, the
-          // main-thread fallback exists for exactly this "worker unavailable"
-          // case.
-          for (const pending of pendingList) {
-            void this.fallbackParse(pending.source).then(pending.resolve, pending.reject);
-          }
-        } else {
-          // GOAP-224 A8: runtime crash after a successful load — reject ALL
-          // in-flight parses, not just the first. The previously-resolved
-          // handler only rejected `pending.keys().next().value` and left every
-          // other parse hanging until the 30s timeout while the crashed worker
-          // stayed in the pool for reuse.
-          for (const pending of pendingList) {
-            pending.reject(error);
-          }
-        }
-
-        // The worker is in an unknown state after an error event — terminate it
-        // and clear the slot so the next parse() spawns a fresh worker. Do NOT
-        // set `terminated` (that would permanently demote the pool to the
-        // main-thread fallback path instead of transparently recovering).
-        if (this.worker) {
-          try {
-            this.worker.terminate();
-          } catch {
-            // already terminated by the runtime
-          }
-          this.worker = null;
-        }
+        this.handleWorkerFailure(worker, new Error(msg));
       };
+
+      this.workerReadyTimeout = setTimeout(() => {
+        this.handleWorkerFailure(worker, new Error('Worker initialization timed out'));
+      }, WORKER_READY_TIMEOUT_MS);
     } catch {
       return null;
     }
 
     return this.worker;
+  }
+
+  private postPending(worker: Worker, id: string, pending: PendingWorkerParse): void {
+    if (pending.sent || this.worker !== worker) return;
+    const message: MainToWorkerMessage = {
+      type: 'parse',
+      id,
+      source: pending.source,
+    };
+    try {
+      if (pending.source instanceof Uint8Array) {
+        worker.postMessage(message, [pending.source.buffer as ArrayBuffer]);
+      } else {
+        worker.postMessage(message);
+      }
+      pending.sent = true;
+    } catch (error) {
+      this.pending.delete(id);
+      pending.reject(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  private clearWorkerReadyTimeout(): void {
+    if (this.workerReadyTimeout !== null) {
+      clearTimeout(this.workerReadyTimeout);
+      this.workerReadyTimeout = null;
+    }
+  }
+
+  private handleWorkerFailure(worker: Worker, error: Error): void {
+    if (this.worker !== worker) return;
+    this.clearWorkerReadyTimeout();
+    const pendingList = [...this.pending.values()];
+    this.pending.clear();
+
+    if (!this.workerReady) {
+      // If the worker never became ready, use the documented main-thread
+      // fallback instead of leaving pending parses until their outer timeout.
+      for (const pending of pendingList) {
+        void this.fallbackParse(pending.source).then(pending.resolve, pending.reject);
+      }
+    } else {
+      for (const pending of pendingList) {
+        pending.reject(error);
+      }
+    }
+
+    try {
+      worker.terminate();
+    } catch {
+      // already terminated by the runtime
+    }
+    this.worker = null;
   }
 
   async parse(source: string | Uint8Array): Promise<EpubParseResult> {
@@ -122,35 +148,29 @@ class EpubParserWorkerPool {
 
     const id = `parse_${++this.idCounter}`;
 
-    const transferables: Transferable[] = [];
-    if (source instanceof Uint8Array) {
-      transferables.push(source.buffer as ArrayBuffer);
-    }
-
     return new Promise<EpubParseResult>((resolve, reject) => {
-      this.pending.set(id, {
+      const pending: PendingWorkerParse = {
         resolve: (result) => {
           clearTimeout(timer);
           resolve(result);
         },
-        reject: (err) => {
+        reject: (error) => {
           clearTimeout(timer);
-          reject(err);
+          reject(error);
         },
         source,
-      });
+        sent: false,
+      };
+      this.pending.set(id, pending);
 
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new Error('EPUB parse timeout'));
       }, PARSE_TIMEOUT_MS);
 
-      const msg: MainToWorkerMessage = {
-        type: 'parse',
-        id,
-        source,
-      };
-      worker.postMessage(msg, transferables);
+      if (this.workerReady) {
+        this.postPending(worker, id, pending);
+      }
     });
   }
 
@@ -183,6 +203,7 @@ class EpubParserWorkerPool {
 
   terminate(): void {
     this.terminated = true;
+    this.clearWorkerReadyTimeout();
     if (this.worker) {
       this.worker.terminate();
       this.worker = null;

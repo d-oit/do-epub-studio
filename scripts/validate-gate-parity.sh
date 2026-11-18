@@ -4,14 +4,30 @@
 # Exit 0 = parity, Exit 1 = mismatch.
 #
 # Usage: ./scripts/validate-gate-parity.sh
+#
+# PR and release checks are validated by scripts/validate-gate-parity.mjs,
+# which parses every workflow with js-yaml and matches claims ONLY against
+# real job-level check contexts (matrix-expanded `name:` values or job ids),
+# plus the explicitly declared external Codacy check. Step names, comments,
+# and other workflow text can never satisfy a job claim. The three release
+# readiness obligations implemented as steps of the `release-readiness` job
+# are validated against that job's step list, so removing a required step or
+# the job itself fails the validator. The local gate phases are checked below
+# by grepping the gate and its sourced phase libs (ADR-278 pattern).
+#
+# Tests may point the script at a fixture tree with GATE_PARITY_REPO_ROOT.
 
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="${GATE_PARITY_REPO_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$REPO_ROOT" || exit 1
 
 # shellcheck source=scripts/lib/colors.sh
-source "$REPO_ROOT/scripts/lib/colors.sh"
+if [[ -f "$REPO_ROOT/scripts/lib/colors.sh" ]]; then
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/scripts/lib/colors.sh"
+fi
+: "${BLUE:=}" "${NC:=}" "${RED:=}" "${GREEN:=}" "${YELLOW:=}" "${BOLD:=}"
 
 FAILED=0
 MANIFEST="$REPO_ROOT/scripts/gate-manifest.json"
@@ -26,30 +42,6 @@ if ! command -v jq &> /dev/null; then
   printf '%s✗ jq is required but not available%s\n' "$RED" "$NC"
   exit 1
 fi
-
-# Extract PR check names from manifest
-PR_CHECKS=$(jq -r '.pr.checks[]' "$MANIFEST" 2>/dev/null)
-
-# Extract job names from ci.yml
-CI_FILE="$REPO_ROOT/.github/workflows/ci.yml"
-if [[ ! -f "$CI_FILE" ]]; then
-  printf '%s✗ ci.yml not found%s\n' "$RED" "$NC"
-  exit 1
-fi
-
-# Job names come from EVERY workflow under .github/workflows, and the `name:`
-# value is preferred over the job id, because the manifest names what GitHub
-# reports as a check context and those usually differ (job `budget` reports as
-# "Gzipped bundle budget"). Previously only job ids from ci.yml were read, so a
-# claim living in an auxiliary workflow could never resolve.
-CI_JOBS=$(grep -hE '^[[:space:]]{2,}name:[[:space:]]' "$REPO_ROOT"/.github/workflows/*.yml 2>/dev/null \
-  | sed -E 's/^[[:space:]]+name:[[:space:]]*//' || true)
-
-# Checks published by external GitHub Apps rather than by a workflow. These
-# report real check runs (verified live: `Codacy Static Code Analysis`, app
-# `codacy-production`), and Codacy is a required check on main via the
-# repository ruleset -- so it is a merge gate that simply has no file to grep.
-EXTERNAL_CHECKS="Codacy Static Code Analysis"
 
 printf '%s═════════════════════════════════════════════════════════════════%s\n' "$BLUE" "$NC"
 printf '%s  Gate Parity Validation%s\n' "$BOLD" "$NC"
@@ -88,71 +80,12 @@ while IFS= read -r check; do
   fi
 done <<< "$LOCAL_CHECKS"
 
-# Check PR checks against workflow job names.
-printf '\n%s▸ PR CI checks:%s\n' "$BLUE" "$NC"
-PR_FAILURES=0
-while IFS= read -r check; do
-  [[ -z "$check" ]] && continue
-  # Normalise the claim and the candidates the SAME way: lowercase, and every
-  # run of non-alphanumerics collapsed to a single space. The previous version
-  # deleted hyphens outright, so a hyphenated claim could never match its own
-  # job name — the identical bug ADR-287 fixed on the release side.
-  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
-  FOUND=0
-  while IFS= read -r job; do
-    [[ -z "$job" ]] && continue
-    JOB_NORMALIZED=$(echo "$job" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
-    if [[ -n "$JOB_NORMALIZED" && "$JOB_NORMALIZED" == *"$NORMALIZED"* ]]; then
-      FOUND=1
-      break
-    fi
-  done <<< "$(printf '%s\n%s\n' "$CI_JOBS" "$EXTERNAL_CHECKS")"
-  if [[ $FOUND -eq 1 ]]; then
-    printf '  %s✓%s %s\n' "$GREEN" "$NC" "$check"
-  else
-    printf '  %s✗%s %s (no workflow job or external check reports this name)\n' "$RED" "$NC" "$check"
-    PR_FAILURES=1
-  fi
-done <<< "$PR_CHECKS"
-
-# ADR-287 / #1207 applied to the PR side: these claims printed a permanent ⚠
-# while the script still exited 0, which is a warning nobody ever resolves. The
-# release set already fails; the PR set now does too.
-if [[ $PR_FAILURES -ne 0 ]]; then
-  FAILED=1
-fi
-
-# Check release manifest entries
-RELEASE_CHECKS=$(jq -r '.release.checks[]' "$MANIFEST" 2>/dev/null)
-RELEASE_FILE="$REPO_ROOT/.github/workflows/release.yml"
-printf '\n%s▸ Release gate checks:%s\n' "$BLUE" "$NC"
-RELEASE_FAILURES=0
-# The haystack is built once: the workflow text is normalised the same way as
-# the manifest entry, so a hyphenated claim matches its own job name.
-RELEASE_HAYSTACK=$(sed 's/[^a-zA-Z0-9]\+/ /g; s/^ *//; s/ *$//' "$RELEASE_FILE" 2>/dev/null | tr '[:upper:]' '[:lower:]')
-while IFS= read -r check; do
-  [[ -z "$check" ]] && continue
-  # Normalise the manifest entry the same way the workflow text is normalised:
-  # lowercase, and every non-alphanumeric run collapsed to a single space. The
-  # previous version deleted hyphens outright on the manifest side but not on
-  # the file side, so a hyphenated claim ("Cross-Browser E2E" -> "crossbrowser
-  # e2e") could never match its own job name ("Cross-Browser E2E" in the file)
-  # and reported a permanent false ⚠.
-  NORMALIZED=$(echo "$check" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/ /g; s/^ *//; s/ *$//')
-  if [[ -n "$NORMALIZED" ]] && grep -qF "$NORMALIZED" <<< "$RELEASE_HAYSTACK"; then
-    printf '  %s✓%s %s\n' "$GREEN" "$NC" "$check"
-  else
-    printf '  %s⚠%s %s (not found in release.yml — may use different naming)\n' "$YELLOW" "$NC" "$check"
-    RELEASE_FAILURES=1
-  fi
-done <<< "$RELEASE_CHECKS"
-
-# ADR-287 / #1207: these claims were permanently ⚠ and the script still exited 0.
-# A warning nobody resolves is the repo's known anti-pattern, so an unmet
-# release claim now fails the validator instead of scrolling past. The claims
-# themselves were implemented rather than deleted — deleting a claim to silence
-# the sensor is forbidden.
-if [[ $RELEASE_FAILURES -ne 0 ]]; then
+# PR and release checks are parser-backed: exact job-level contexts from the
+# workflows (matrix-expanded), the declared external app checks, and the
+# required steps of the release-readiness job. The node helper prints its own
+# section output and exits nonzero on any malformed/missing input or unmet
+# obligation.
+if ! node scripts/validate-gate-parity.mjs --root "$REPO_ROOT"; then
   FAILED=1
 fi
 
@@ -162,5 +95,4 @@ if [[ $FAILED -ne 0 ]]; then
   exit 1
 fi
 
-printf '%s✓ Gate parity manifest validated%s\n' "$GREEN" "$NC"
 exit 0

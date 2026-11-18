@@ -30,8 +30,9 @@ checker plus cleanup workflows for stale entries.
    pushes — the same trigger as `Full Quality Gate`, deliberately not
    path-filtered:
    - install do-harness **pinned** — download
-     `do-harness-v0.2.1-x86_64-unknown-linux-musl.tar.gz` from the upstream
-     release and verify it against that release's `checksums.txt` (never a
+     `do-harness-${DO_HARNESS_VERSION}-x86_64-unknown-linux-musl.tar.gz`
+     from the upstream release named by `.do-harness-version` (currently
+     `v0.4.6`) and verify it against that release's `checksums.txt` (never a
      floating install script or an unverified binary);
    - `do-harness verify --set verification --format json
 --evidence .do-harness/ci/evidence.json --strict --record`;
@@ -80,3 +81,7 @@ json --evidence … --strict --record` exited 0; `status --set verification
 --evidence … --format json` reported `state: green, reason: current`; the
 integrity `jq` assertion above returned true. `scripts/validate-workflows.sh`
 (actionlint + zizmor) passes with the job present.
+
+**Implementation follow-up (2026-11-17):** `.do-harness-version` now pins `v0.4.6`; CI installs the matching checksum-verified release and `scripts/check-harness-version.mjs` verifies JSON `name === "do-harness"` plus the exact pinned version in the quality gate, release preflight, and both CI install jobs.
+
+**Index disposition (2026-11-16):** Accepted (2026-10-17: `harness-contract` CI job installs do-harness pinned and checksum-verified, runs `verify --set verification --evidence … --strict --record`, asserts `status` green/`current` and evidence integrity (`git_sha`, `signal_set`, verdicts, `recorded`), and uploads the artifact; the committed `.github/ci-status/` state file and a ruleset-required context are deliberately not adopted)

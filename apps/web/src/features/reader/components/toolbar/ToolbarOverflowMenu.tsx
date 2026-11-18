@@ -6,6 +6,7 @@ import type { RenditionItem } from '@do-epub-studio/reader-core';
 
 interface OverflowMenuProps {
   isMenuOpen: boolean;
+  isExportOpen: boolean;
   menuRef: RefObject<HTMLDivElement | null>;
   capabilities: { canComment?: boolean } | null;
   isFixedLayout: boolean;
@@ -16,7 +17,7 @@ interface OverflowMenuProps {
   onToggleBookmarks: () => void;
   onToggleInfo: () => void;
   onToggleFixedLayoutControls?: () => void;
-  onExportNotes: () => void;
+  onToggleExport: () => void;
   onToggleSettings: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
@@ -31,6 +32,7 @@ interface OverflowMenuProps {
 
 export function OverflowMenu({
   isMenuOpen,
+  isExportOpen,
   menuRef,
   capabilities,
   isFixedLayout,
@@ -41,7 +43,7 @@ export function OverflowMenu({
   onToggleBookmarks,
   onToggleInfo,
   onToggleFixedLayoutControls,
-  onExportNotes,
+  onToggleExport,
   onToggleSettings,
   onLogout,
   onToggleNotifications,
@@ -84,6 +86,7 @@ export function OverflowMenu({
       <Tooltip content={t('reader.moreOptions')}>
         {/* B8: aria-haspopup="menu" matches the role="menu" popup below */}
         <IconButton
+          id="reader-overflow-trigger"
           onClick={onToggleMenu}
           variant="ghost"
           aria-label={t('reader.moreOptions')}
@@ -343,7 +346,9 @@ export function OverflowMenu({
             )}
             <button
               role="menuitem"
-              onClick={close(onExportNotes)}
+              aria-haspopup="dialog"
+              aria-expanded={isExportOpen}
+              onClick={close(onToggleExport)}
               className="flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-background-secondary rounded-lg transition-colors text-left"
             >
               <svg

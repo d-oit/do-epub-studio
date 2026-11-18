@@ -2,7 +2,7 @@
 
 > **Status:** Accepted (2026-10-02)
 > **Supersedes:** none
-> **Related:** `plans/301-goap-strictness-parity.md`, `plans/ADR-INDEX.md`,
+> **Related:** `plans/archive/301-goap-strictness-parity.md`, `plans/ADR-INDEX.md`,
 > ADR-083 (numbering), ADR-024 (warning management)
 > **Deciders:** maintainers
 > **Tags:** tooling, governance, typecheck

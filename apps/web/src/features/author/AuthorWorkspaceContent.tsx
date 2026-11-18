@@ -91,7 +91,11 @@ export function AuthorWorkspaceContent({
       <div className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-5 sm:p-6">
         {activeTab === 'editor' && activeChapter ? (
           <ChapterEditor
+            bookId={bookId ?? ''}
             chapter={activeChapter}
+            language={publication.language}
+            assets={assets}
+            token={sessionToken}
             onUpdate={onUpdateChapter}
             onAppendMarkup={onAppendMarkup}
           />

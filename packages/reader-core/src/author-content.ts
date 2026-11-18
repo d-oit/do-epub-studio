@@ -218,6 +218,15 @@ function sanitizeChildren(nodes: readonly ParsedChild[]): AuthorContentNode[] {
     const tag = node.tagName;
     if (Object.hasOwn(DROP_CONTENT_TAGS, tag)) continue;
 
+    if (tag === 'a') {
+      const rawHref = node.attrs.find((attr) => attr.name === 'href');
+      if (rawHref && !isSafeContentUrl(rawHref.value, 'href')) {
+        // Unsafe anchors (remote http(s), protocol-relative, junk schemes) are
+        // stripped with their content so no non-preview navigation survives.
+        continue;
+      }
+    }
+
     if (!isAuthorContentTag(tag) || frame.depth >= MAX_NESTED_AUTHOR_TAGS) {
       stack.push({ nodes: node.childNodes, output: frame.output, depth: frame.depth, index: 0 });
       continue;

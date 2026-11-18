@@ -19,33 +19,162 @@ const MAX_EXPORT_ROWS = 10_000;
 export const exportRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 function epubExportErrorResponse(c: Context, error: unknown): Response | null {
   if (error instanceof EpubAnnotationExportError) {
-    const tooLarge =
-      error.code === 'SOURCE_TOO_LARGE' ||
-      error.code === 'ANNOTATIONS_TOO_LARGE' ||
-      error.code === 'OUTPUT_TOO_LARGE';
-    const message =
-      error.code === 'ANNOTATIONS_TOO_LARGE'
-        ? 'The annotations exceed the EPUB export limits.'
-        : tooLarge
-          ? 'The EPUB export exceeds a configured size limit.'
-          : 'The EPUB source or annotations are not safe to export.';
-    return apiError(c, tooLarge ? 413 : 422, error.code, message);
+    switch (error.code) {
+      case 'SOURCE_TOO_LARGE':
+        return apiError(
+          c,
+          413,
+          'EXPORT_SOURCE_TOO_LARGE',
+          'The EPUB source exceeds the export size limit.',
+        );
+      case 'ANNOTATIONS_TOO_LARGE':
+        return apiError(
+          c,
+          413,
+          'EXPORT_ANNOTATIONS_TOO_LARGE',
+          'The annotations exceed the EPUB export limits.',
+        );
+      case 'OUTPUT_TOO_LARGE':
+        return apiError(
+          c,
+          413,
+          'EXPORT_OUTPUT_TOO_LARGE',
+          'The generated EPUB exceeds the export size limit.',
+        );
+      case 'SIGNATURES_UNSUPPORTED':
+        return apiError(
+          c,
+          422,
+          'EXPORT_UNSUPPORTED_SIGNATURE',
+          'Signed EPUB sources cannot be re-exported.',
+        );
+      case 'ENCRYPTION_UNSUPPORTED':
+        return apiError(
+          c,
+          422,
+          'EXPORT_UNSUPPORTED_ENCRYPTION',
+          'Encrypted EPUB sources cannot be re-exported.',
+        );
+      default:
+        return apiError(
+          c,
+          422,
+          'EXPORT_SOURCE_INVALID',
+          'The EPUB source or annotations are not safe to export.',
+        );
+    }
   }
   if (!(error instanceof EpubAnnotationExportFailure)) return null;
 
   switch (error.code) {
     case 'SOURCE_NOT_FOUND':
-      return apiError(c, 404, error.code, 'No EPUB revision is available for this book.');
+      return apiError(c, 404, 'NOT_FOUND', 'No EPUB revision is available for this book.');
     case 'SOURCE_UNAVAILABLE':
+      return apiError(
+        c,
+        409,
+        'EXPORT_SOURCE_UNAVAILABLE',
+        'The EPUB source is not available for export.',
+      );
     case 'EPUBCHECK_UNAVAILABLE':
-      return apiError(c, 503, error.code, 'EPUB export is temporarily unavailable.');
+      return apiError(
+        c,
+        503,
+        'EXPORT_VALIDATION_UNAVAILABLE',
+        'EPUB validation is temporarily unavailable.',
+      );
+    case 'EPUBCHECK_TIMEOUT':
+      return apiError(
+        c,
+        504,
+        'EXPORT_VALIDATION_TIMEOUT',
+        'EPUB validation did not finish in time.',
+      );
     case 'EPUBCHECK_INVALID_RESPONSE':
+      return apiError(
+        c,
+        502,
+        'EXPORT_VALIDATION_INVALID',
+        'EPUB validation could not verify the exported file.',
+      );
     case 'EPUBCHECK_INTEGRITY_ERROR':
-      return apiError(c, 502, error.code, 'EPUB validation could not verify the exported file.');
-    case 'EPUBCHECK_REJECTED':
-      return apiError(c, 422, error.code, 'The generated EPUB did not pass EPUBCheck validation.');
+      return apiError(
+        c,
+        502,
+        'EXPORT_VALIDATION_MISMATCH',
+        'EPUB validation verified different bytes.',
+      );
+    case 'EPUBCHECK_SAFETY_REJECTED':
+      return apiError(
+        c,
+        422,
+        'EXPORT_OUTPUT_UNSAFE',
+        'The generated EPUB failed archive safety validation.',
+      );
+    case 'EPUBCHECK_CONFORMANCE_FAILED':
+      return apiError(
+        c,
+        422,
+        'EXPORT_VALIDATION_FAILED',
+        'The generated EPUB did not pass EPUBCheck validation.',
+      );
   }
   return null;
+}
+
+/**
+ * Build an RFC 5987 attachment disposition with an ASCII-safe fallback stem.
+ * The title is stripped of control characters, quotes, backslashes and path
+ * separators; a bounded UTF-8 `filename*` carries the readable title.
+ */
+function exportAttachmentDisposition(title: string): string {
+  const stem = sanitizeTitleStem(title);
+  const ascii = asciiStem(stem) || 'book';
+  return `attachment; filename="${ascii}-annotations.epub"; filename*=UTF-8''${rfc5987Encode(
+    `${stem}-annotations.epub`,
+  )}`;
+}
+
+/**
+ * Encode a filename stem so every `filename*` ext-value octet is either an
+ * RFC 5987 attr-char or pct-encoded (`encodeURIComponent` exempts `*` and
+ * the parentheses/apostrophes that delimit ext-value components).
+ */
+function rfc5987Encode(value: string): string {
+  return encodeURIComponent(value)
+    .replaceAll('(', '%28')
+    .replaceAll(')', '%29')
+    .replaceAll('*', '%2A')
+    .replaceAll("'", '%27');
+}
+
+function sanitizeTitleStem(title: string): string {
+  let out = '';
+  for (const character of title) {
+    const code = character.charCodeAt(0);
+    if (code < 0x20 || code === 0x7f) continue;
+    if (
+      character === '"' ||
+      character === '\\' ||
+      character === '/' ||
+      character === '<' ||
+      character === '>' ||
+      character === '*'
+    ) {
+      continue;
+    }
+    out += character;
+  }
+  return out.replace(/\s+/g, ' ').trim().slice(0, 120);
+}
+
+function asciiStem(stem: string): string {
+  let out = '';
+  for (const character of stem) {
+    const code = character.charCodeAt(0);
+    out += code >= 0x20 && code <= 0x7e ? character : ' ';
+  }
+  return out.replace(/\s+/g, ' ').trim().slice(0, 60);
 }
 
 interface HighlightRow {
@@ -81,7 +210,7 @@ interface BookmarkRow {
 
 /**
  * GET /api/books/:id/export
- * Export a book's annotations as Markdown or HTML.
+ * Export a book's annotations as Markdown, HTML, or a validated EPUB.
  * Requires read access to the book.
  */
 exportRouter.get(
@@ -104,11 +233,16 @@ exportRouter.get(
     if (format === 'epub') {
       try {
         const epub = await createValidatedAnnotationEpub(c.env, bookId, auth.email);
+        const book = await queryFirst<{ title: string }>(
+          c.env,
+          `SELECT title FROM books WHERE id = ?`,
+          [bookId],
+        );
         return new Response(epub, {
           status: 200,
           headers: {
             'content-type': 'application/epub+zip',
-            'content-disposition': 'attachment; filename="annotations.epub"',
+            'content-disposition': exportAttachmentDisposition(book?.title ?? 'Untitled'),
             'cache-control': 'no-store',
             'content-length': String(epub.byteLength),
           },

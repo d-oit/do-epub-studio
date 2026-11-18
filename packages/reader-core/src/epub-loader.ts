@@ -9,13 +9,7 @@ import type {
   RenditionItem,
 } from './epub-types';
 import type { BookContainerHost } from './rendition-container';
-import {
-  createTraceId,
-  createSpanId,
-  serializeError,
-  testBounded,
-  withTimeout,
-} from '@do-epub-studio/shared';
+import { createTraceId, createSpanId, serializeError, withTimeout } from '@do-epub-studio/shared';
 import { parseLoadedEpubMetadata } from './epub-loader-metadata';
 import { markLoaderPhase, measureLoaderPhase } from './epub-loader-performance';
 import { parseEpubInWorker, terminateParserWorker } from './epub-parser-worker';
@@ -30,13 +24,22 @@ export interface EpubRenditionHandle {
   display(target?: string): Promise<void>;
   prev(): Promise<void>;
   next(): Promise<void>;
+  resize(width: number, height: number): void;
   on(event: string, callback: EventCallback): void;
   off(event: string, callback: EventCallback): void;
   getContents(): Contents[];
   registerContentHook(fn: (contents: Contents) => void): void;
+  /** Register an epub.js render hook (fires once per rendered spine item). */
   registerRenderHook(fn: (contents: Contents) => void): void;
+  /**
+   * Theme registry of the underlying epub.js rendition. Exposed as a
+   * read-only handle to theme APIs so callers (e.g. the author full-preview)
+   * can reuse the reader's theme applier without casting the handle to a raw
+   * Rendition. Throws when the rendition is gone (destroyed or never created),
+   * matching the existing "Rendition not initialized" behavior.
+   */
+  readonly themes: Rendition['themes'];
 }
-
 export interface EpubLoader {
   load(url: string | Uint8Array, options?: { rootfile?: string }): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
@@ -227,8 +230,8 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     if (destroyed) return;
 
     rawNav = nav ?? null;
-    rawMeta = meta ?? null;
-    rawSpine = spine ?? null;
+    rawMeta = meta ?? book.packaging?.metadata ?? null;
+    rawSpine = book.sections ?? spine ?? null;
   }
 
   function createRenditionHandle(container: HTMLElement): EpubRenditionHandle {
@@ -314,6 +317,16 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         }
         await rendition.next();
       },
+      resize(width: number, height: number): void {
+        if (!rendition) {
+          throw new Error('Rendition not initialized');
+        }
+        // The default manager reuses existing views without reframing them.
+        // Clear them so the resize redisplays the current CFI at the new size.
+        rendition.clear();
+        rendition.resize(width, height);
+      },
+
       on(event: string, callback: EventCallback): void {
         if (!rendition) return;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- epubjs event callbacks have varying signatures
@@ -331,6 +344,12 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
         } catch {
           return [];
         }
+      },
+      get themes(): Rendition['themes'] {
+        if (!rendition) {
+          throw new Error('Rendition not initialized');
+        }
+        return rendition.themes;
       },
       registerContentHook(fn: (contents: Contents) => void): void {
         if (!rendition) return;
@@ -437,9 +456,4 @@ export function extractCfi(text: string): string | null {
   if (text.length > 2048) return null;
   const match = text.match(/epubcfi\([^)]{1,1024}\)/);
   return match?.[0] ?? null;
-}
-
-export function isValidCfi(cfi: string): boolean {
-  const SIMPLE_CFI_RE = /^epubcfi\([^()]{1,1024}\)$/;
-  return testBounded(SIMPLE_CFI_RE, cfi, 1024);
 }

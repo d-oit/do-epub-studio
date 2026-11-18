@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** GOAP-283 (`plans/283-goap-release-gate-manifest-truth.md`), ADR-283, #1207, GOAP-277, ADR-277, ADR-286 (`plans/286-adr-required-status-check-set.md`)
+**Related:** GOAP-283 (`plans/archive/283-goap-release-gate-manifest-truth.md`), ADR-283, #1207, GOAP-277, ADR-277, ADR-286 (`plans/286-adr-required-status-check-set.md`)
 
 ## Context
 
@@ -94,3 +94,5 @@ identically and matched as whole phrases with `grep -qF`.
 - Any future rename of a release job must update `gate-manifest.json` **and**
   this step, and `validate-gate-parity.sh` will now fail the build if they
   disagree — which is the intended property.
+
+**Index disposition (2026-11-16):** Accepted (closes #1207: `Coverage Gate` / `Security Checks` / `Cross-Browser E2E` implemented as real jobs; `Verify CI checks passed` was fail-open and had two further bugs; parity validator exits 1 on an unmet claim)

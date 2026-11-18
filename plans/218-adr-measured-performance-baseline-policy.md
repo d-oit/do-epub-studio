@@ -72,18 +72,23 @@ comparison). See `plans/312-adr-benchmark-regression-gate-noise.md`.
 
 ### 4. Single authoritative budget model
 
-The raw-byte `bundleSize` section in `.performance-budgets.json` is removed.
-The gzipped `gzipBudgets` model (ADR-107 §3) is the single source of truth.
-`scripts/check-bundle-budget.mjs` is the single enforcement script. ADR-107 §3
-values are reconciled with current configured values; any deliberate change
+The raw-byte per-file `bundleSize` section in `.performance-budgets.json` is
+removed. `gzipBudgets` remains the source for compressed per-file limits;
+`routeBudgets.*.maxSize` retains raw-byte caps on each route's unique initial
+static graph: the route entry, transitive Vite `imports`, and their linked CSS.
+Vite `dynamicImports` are excluded because they are fetched after route entry.
+These route aggregates do not reinstate the removed per-file `bundleSize`
+model. Both measures are configured in `.performance-budgets.json` and
+enforced by the single `scripts/check-bundle-budget.mjs` entry point. ADR-107
+§3 values are reconciled with current configured values; any deliberate change
 is recorded here rather than silently drifting.
 
 ### 5. Bundle baseline artifact per route
 
 A committed `bundle-baseline.json` captures per-route gzipped entry-chunk and
-total transitive sizes. CI fails on a meaningful delta: >10 KB gzip for entry
-chunks or >3% total route growth. Brotli size is reported alongside gzip for
-Cloudflare-compatible clients.
+total initial static graph sizes. CI fails on a meaningful delta: >10 KB gzip
+for entry chunks or >3% total route growth. Brotli size is reported alongside
+gzip for Cloudflare-compatible clients.
 
 ### 6. Worker pipeline is the production EPUB path
 
@@ -126,7 +131,7 @@ change to epub-js's hook API could enable worker-based sanitization.
 
 - Performance claims are backed by measured evidence, not assumptions.
 - Regressions are caught at merge time rather than after release.
-- Single budget model removes raw-vs-gzipped enforcement confusion.
+- One budget file and checker keep per-file gzip limits and raw route totals explicit.
 - Worker pipeline activation improves main-thread responsiveness and applies
   decompression-bomb/path-traversal validation on every load.
 - Committed baselines enable meaningful before/after comparisons forever after.
