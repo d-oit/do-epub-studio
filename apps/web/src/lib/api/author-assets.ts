@@ -42,10 +42,12 @@ export async function fetchAuthorAsset(
   bookId: string,
   asset: Pick<AuthorAssetMetadata, 'id' | 'mediaType'>,
   token?: string | null,
+  signal?: AbortSignal,
 ): Promise<Blob> {
   const data = await apiRequest<ArrayBuffer>(assetPath(bookId, asset.id), {
     token: token ?? undefined,
     responseType: 'arrayBuffer',
+    signal,
   });
   return new Blob([data], { type: asset.mediaType });
 }

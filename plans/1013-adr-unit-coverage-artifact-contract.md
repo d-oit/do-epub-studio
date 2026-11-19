@@ -2,7 +2,7 @@
 
 **Status:** Accepted (scheduling fix PR #1370; task-contract cutover PR #1383)
 **Date:** 2026-10-22
-**Related:** GOAP-1013 (`plans/1013-goap-optional-unit-coverage-outputs.md`), PR #1370, PR #1383
+**Related:** GOAP-1013 (`plans/archive/1013-goap-optional-unit-coverage-outputs.md`), PR #1370, PR #1383
 
 ## Context
 
@@ -21,3 +21,5 @@ The approved repair explicitly preserves the root coverage command's `test:unit 
 ## Consequences
 
 The no-concurrent-workspace policy is enforced without losing cached coverage artifacts. Since PR #1383 a bare unit run declares and produces no coverage, so it no longer prints optional-output metadata diagnostics (measured: 7 before, 0 after), while the dedicated coverage task still caches and restores every report. No runtime test, cache report declaration, coverage floor or sensor is removed.
+
+**Index disposition (2026-11-16):** Accepted (scheduling fix PR #1370; task-contract cutover PR #1383 splits test:unit from test:coverage and keeps cached coverage reports with 0 bare-run diagnostics)

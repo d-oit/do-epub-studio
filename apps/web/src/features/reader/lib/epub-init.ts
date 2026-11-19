@@ -33,7 +33,7 @@ interface DirectionSettings {
 /** Latest direction per rendition; the content hook reads this. */
 const directionSettings = new WeakMap<Rendition, DirectionSettings>();
 
-function applyDirectionToContents(contents: Contents, dir: string): void {
+export function applyDirectionToContents(contents: Contents, dir: string): void {
   if (contents.document?.documentElement) {
     contents.document.documentElement.setAttribute('dir', dir);
   }

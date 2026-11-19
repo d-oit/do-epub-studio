@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 // check-adr-index.mjs — Validate ADR-INDEX.md for duplicates and missing files (ADR-083)
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, '..');
 
+// `--root` lets the fixture tests point at a throwaway tree. Default: repo root.
+const rootIdx = process.argv.indexOf('--root');
+const scanRoot = rootIdx !== -1 ? resolve(process.cwd(), process.argv[rootIdx + 1]) : repoRoot;
+
 const fileIdx = process.argv.indexOf('--file');
 const indexPath =
   fileIdx !== -1
-    ? join(repoRoot, process.argv[fileIdx + 1])
-    : join(repoRoot, 'plans', 'ADR-INDEX.md');
+    ? join(scanRoot, process.argv[fileIdx + 1])
+    : join(scanRoot, 'plans', 'ADR-INDEX.md');
 
 let content;
 try {
@@ -50,7 +54,8 @@ const leading = (s) => s.split(/[(—–]/)[0].trim().toLowerCase();
 // Exposed as predicates, not arrays: `str.startsWith(SOME_ARRAY)` coerces the
 // array to `"in progress,proposed"`, which never matches — a silent no-op that
 // looks like a working gate. (`some` is the only correct form.)
-const isIndexOpen = (s) => ['in progress', 'proposed'].some((p) => leading(s).startsWith(p));
+const isIndexOpen = (s) =>
+  ['open', 'in progress', 'proposed'].some((p) => leading(s).startsWith(p));
 const isPlanFinished = (s) =>
   ['done', 'accepted', 'complete', 'completed', 'closed'].some((p) => leading(s).startsWith(p));
 
@@ -64,6 +69,8 @@ function readPlanStatus(path) {
 }
 
 const warnings = [];
+/** Every path referenced from a File cell, for the root-coverage rule below. */
+const indexedPaths = new Set();
 
 function addNumber(baseNum, entry) {
   const existing = numbers.get(baseNum);
@@ -74,20 +81,91 @@ function addNumber(baseNum, entry) {
   }
 }
 
+/** Splits a Markdown table row into trimmed cells without dropping empties. */
+function splitRow(line) {
+  const trimmed = line.trim();
+  const body = trimmed.replace(/^\|/, '').replace(/\|$/, '');
+  const cells = [];
+  let cell = '';
+  let codeTicks = 0;
+  let escaped = false;
+
+  for (let i = 0; i < body.length; i++) {
+    const character = body[i];
+    if (escaped) {
+      cell += character;
+      escaped = false;
+      continue;
+    }
+    if (character === '\\') {
+      cell += character;
+      escaped = true;
+      continue;
+    }
+    if (character === '`') {
+      let end = i + 1;
+      while (body[end] === '`') end++;
+      const tickCount = end - i;
+      if (codeTicks === 0) codeTicks = tickCount;
+      else if (codeTicks === tickCount) codeTicks = 0;
+      cell += body.slice(i, end);
+      i = end - 1;
+      continue;
+    }
+    if (character === '|' && codeTicks === 0) {
+      cells.push(cell.trim());
+      cell = '';
+      continue;
+    }
+    cell += character;
+  }
+
+  cells.push(cell.trim());
+  return cells;
+}
+
+/** A Markdown separator row with one valid delimiter cell per column. */
+function isSeparatorRow(line, expectedCells) {
+  if (!line.trim().startsWith('|')) return false;
+  const cells = splitRow(line);
+  return cells.length === expectedCells && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
 const sections = content.split(/^## /m).filter((s) => s.trim());
 
 for (const section of sections) {
   const lines = section.split('\n');
   const sectionName = lines[0]?.trim() || 'Unknown';
-  const tableLines = lines.filter((l) => l.startsWith('|') && !l.startsWith('|---'));
-  if (tableLines.length < 2) continue;
+  const tableLines = lines.filter((line) => line.trim().startsWith('|'));
+  if (tableLines.length === 0) continue;
 
-  for (const line of tableLines.slice(1)) {
-    const cells = line
-      .split('|')
-      .map((c) => c.trim())
-      .filter(Boolean);
-    if (cells.length < 2) continue;
+  // Require a real Markdown table: a header row followed by a matching
+  // separator row. A missing or malformed separator cannot pass as prose.
+  const headerCells = splitRow(tableLines[0]);
+  if (
+    headerCells.length < 4 ||
+    headerCells[0]?.toLowerCase() !== 'number' ||
+    headerCells[1]?.toLowerCase() !== 'title' ||
+    headerCells[2]?.toLowerCase() !== 'file' ||
+    tableLines.length < 2 ||
+    !isSeparatorRow(tableLines[1], headerCells.length)
+  ) {
+    errors.push(
+      `Malformed table in "${sectionName}": expected Number/Title/File columns and a matching Markdown separator row.`,
+    );
+    continue;
+  }
+  const colCount = headerCells.length;
+
+  for (const line of tableLines.slice(2)) {
+    if (isSeparatorRow(line, colCount)) continue;
+    const cells = splitRow(line);
+    if (cells.length !== colCount) {
+      errors.push(
+        `Row in "${sectionName}" has ${cells.length} column(s), expected ${colCount}: ${line.trim()} (ADR-083 §2)`,
+      );
+      continue;
+    }
 
     const numStr = cells[0];
     const filePath = cells[2];
@@ -105,11 +183,20 @@ for (const section of sections) {
       addNumber(baseNum, { row: line, section: sectionName, num: numStr });
     }
 
-    if (sectionName.startsWith('Accepted') && filePath) {
-      const cleanPath = filePath.replace(/`/g, '').trim();
-      const fullPath = join(repoRoot, cleanPath);
-      if (!existsSync(fullPath)) {
-        errors.push(`File not found: ${cleanPath} (ADR ${numStr})`);
+    // File-cell paths must exist in every section, not only `Accepted`: a row
+    // that points at a moved or renamed record is exactly the drift this index
+    // is supposed to prevent (ADR-083 §2). Multi-file cells are split first —
+    // joining them would produce a comma-separated path that never exists.
+    if (filePath) {
+      const cellPaths = [...filePath.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
+      const referenced = cellPaths.length > 0 ? cellPaths : [filePath.replace(/`/g, '').trim()];
+      for (const cleanPath of referenced.filter(Boolean)) {
+        const fullPath = join(scanRoot, cleanPath);
+        if (!existsSync(fullPath)) {
+          errors.push(`File not found: ${cleanPath} (ADR ${numStr})`);
+        } else {
+          indexedPaths.add(cleanPath.replace(/^\.\//, ''));
+        }
       }
     }
 
@@ -123,7 +210,7 @@ for (const section of sections) {
     const candidates =
       paths.length > 0 ? paths : filePath ? [filePath.replace(/`/g, '').trim()] : [];
     const statuses = candidates
-      .map((p) => [p, readPlanStatus(join(repoRoot, p))])
+      .map((p) => [p, readPlanStatus(join(scanRoot, p))])
       .filter(([, s]) => s !== null);
 
     if (statuses.length > 0 && isIndexOpen(statusCell)) {
@@ -144,6 +231,36 @@ for (const section of sections) {
         );
       }
     }
+
+    // A row parked under Proposed while its own status cell (or every record it
+    // points at) says accepted is drift, not a proposal: ADR-999 sat there after
+    // its GOAP had closed.
+    if (sectionName.toLowerCase().startsWith('proposed')) {
+      const rowFinished = isPlanFinished(statusCell);
+      const recordsFinished = statuses.length > 0 && statuses.every(([, s]) => isPlanFinished(s));
+      if (rowFinished || recordsFinished) {
+        errors.push(
+          `ADR ${numStr} is listed under "Proposed" but its status says finished — move the row to Accepted (ADR-083 §2)`,
+        );
+      }
+    }
+  }
+}
+
+// Every root numbered record must be reachable by path from a File cell: a plan
+// absent from the index is invisible to an audit, and this file is the single
+// source of truth for numbers (ADR-083 §2).
+let rootRecords = [];
+try {
+  rootRecords = readdirSync(join(scanRoot, 'plans'), { withFileTypes: true })
+    .filter((entry) => entry.isFile() && /^\d+[a-z]?-(?:adr|goap)-.+\.md$/.test(entry.name))
+    .map((entry) => `plans/${entry.name}`);
+} catch {
+  // Fixture trees need not ship a plans/ directory.
+}
+for (const record of rootRecords) {
+  if (!indexedPaths.has(record)) {
+    errors.push(`Unindexed record: ${record} has no ADR-INDEX File cell (ADR-083 §2)`);
   }
 }
 

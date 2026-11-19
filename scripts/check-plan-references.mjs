@@ -22,11 +22,16 @@
 //   3. A line containing `plan-refs: ignore` is skipped — for prose that
 //      deliberately quotes a broken citation (e.g. the learnings entry that
 //      documents these very defects).
+//   4. Every inline Markdown link in `plans/**/*.md` whose target is a local
+//      `.md` file must resolve relative to the linking file. Fragments are
+//      stripped (`.../record.md#section`); remote or schemed URLs, absolute and
+//      fragment-only targets, fenced code and inline-code examples are ignored.
+//      Anchors are not validated — only that the file exists.
 //
 // Usage: node scripts/check-plan-references.mjs [--root <dir>]
 //   `--root` defaults to the repository root; tests point it at a fixture tree.
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -131,8 +136,36 @@ for (const name of planFileNames) {
   if (match) knownPlanNumbers.add(normalizeNumber(match[1]));
 }
 
+/**
+ * Masks markdown code so link-shaped text inside examples and fences is not
+ * treated as a citation. Returns one masked line per input line: fence
+ * contents are emptied in place rather than deleted (so diagnostics keep
+ * accurate line numbers), and inline spans lose only their backticked payload.
+ */
+function maskCodeLines(lines) {
+  const masked = [];
+  let inFence = false;
+  for (const line of lines) {
+    if (/^ {0,3}```/.test(line)) {
+      inFence = !inFence;
+      masked.push('');
+      continue;
+    }
+    if (inFence) {
+      masked.push('');
+      continue;
+    }
+    masked.push(line.replace(/`[^`\n]*`/g, '()'));
+  }
+  return masked;
+}
+
+/** Local `.md` link targets, ignoring schemes, absolute paths and anchors. */
+const MD_LINK_PATTERN = /\]\(\s*(?:<([^>]*)>|([^)\s]+))(?:\s+"[^"]*")?\s*\)/g;
+
 const errors = [];
 let citationCount = 0;
+let linkCount = 0;
 
 for (const absolute of walk(scanRoot)) {
   const relative = absolute
@@ -149,6 +182,7 @@ for (const absolute of walk(scanRoot)) {
     continue;
   }
   const goapApplies = GOAP_SCAN_PREFIXES.some((prefix) => relative.startsWith(prefix));
+  const isPlanFile = relative.startsWith('plans/') && relative.endsWith('.md');
 
   lines.forEach((line, i) => {
     if (line.includes(IGNORE_MARKER)) return;
@@ -179,6 +213,44 @@ for (const absolute of walk(scanRoot)) {
       }
     }
   });
+
+  if (!isPlanFile) continue;
+
+  // Rule 4: local record-to-record links. Plan bodies live inside plans/, so
+  // relative targets are the norm and a moved record silently breaks them —
+  // which is exactly what a bulk archive pass produces.
+  const searchable = maskCodeLines(lines);
+  searchable.forEach((line, i) => {
+    if (lines[i]?.includes(IGNORE_MARKER)) return;
+    for (const match of line.matchAll(MD_LINK_PATTERN)) {
+      const rawTarget = (match[1] ?? match[2] ?? '').trim();
+      if (!rawTarget) continue;
+      const target = rawTarget.split('#')[0].split('?')[0];
+      if (!target.endsWith('.md')) continue;
+      if (
+        /^[a-z][a-z0-9+.-]*:/i.test(target) ||
+        target.startsWith('//') ||
+        target.startsWith('/') ||
+        target.startsWith('#')
+      ) {
+        continue;
+      }
+      linkCount += 1;
+      // A malformed percent-escape cannot be resolved to a path; report it as
+      // a defect instead of crashing the gate on a URIError.
+      let decoded;
+      try {
+        decoded = decodeURIComponent(target);
+      } catch {
+        errors.push(`${relative}:${i + 1}: linked record has a malformed URI escape: ${target}`);
+        continue;
+      }
+      const resolved = resolve(dirname(absolute), decoded);
+      if (!existsSync(resolved)) {
+        errors.push(`${relative}:${i + 1}: linked record not found: ${target}`);
+      }
+    }
+  });
 }
 
 if (errors.length > 0) {
@@ -192,3 +264,4 @@ if (errors.length > 0) {
 
 console.log(`✓ Plan references resolve (ADR-083).`);
 console.log(`  Citations checked: ${citationCount}`);
+console.log(`  Local plan links checked: ${linkCount}`);

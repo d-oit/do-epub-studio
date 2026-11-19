@@ -58,3 +58,5 @@ The issues also expose four trust boundaries: uploaded EPUB archives, a validato
 ## Verification
 
 Implementation and acceptance evidence are tracked in [GOAP-1017](1017-goap-open-github-issues-1414-1419.md). Verification remains pending until the full feature, service/browser smoke, repository quality gates, Codacy, and PR CI have all been observed.
+
+**Index disposition (2026-11-16):** Accepted (2026-10-31: EPUBCheck 5.4.0 runs outside Worker requests; revision-bound reports separate safety, conformance, and accessibility evidence; draft annotation interchange and WCAG 2.2 evidence remain explicit)

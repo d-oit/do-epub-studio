@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** GOAP-286 (`plans/286-goap-required-status-checks.md`), #1206, ADR-279, ADR-277, GOAP-277, ADR-285
+**Related:** GOAP-286 (`plans/archive/286-goap-required-status-checks.md`), #1206, ADR-279, ADR-277, GOAP-277, ADR-285
 
 ## Context
 
@@ -250,3 +250,5 @@ discipline the rest of this ADR applies.
   matrix jobs so they do run on PRs, the correct follow-up is to register the
   **interpolated** names (`Lint (Node 22)`, `Lint (Node 24)`, …) — not the
   literal ones currently reported.
+
+**Index disposition (2026-11-16):** Accepted (resolves #1206. Three deadlocks from one rule: PR-gated jobs, release-time evaluation of push-only jobs, and `ci.yml`'s any-match `paths-ignore`. Fixed by removing the filter (not narrowing it) plus `pr-gate.yml`. Required set: `pr-title`, `commit-range`, `PR Gate (all paths)`, `Full Quality Gate`, `Pre-commit Hooks`, `CodeQL Alert Check` — all verified present on a markdown-only canary. `Fast Check`/`Worker Build` stay unrequired: they are legitimately path-gated)

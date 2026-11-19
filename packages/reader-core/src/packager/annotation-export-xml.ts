@@ -1,8 +1,18 @@
 import { SaxesParser } from 'saxes';
+import {
+  decodeXml,
+  EpubAnnotationExportError,
+  MAX_CONTAINER_XML_BYTES,
+  MAX_ENCRYPTION_XML_BYTES,
+} from './annotation-export-archive';
 
 const XHTML_MEDIA_TYPE = 'application/xhtml+xml';
 const NCX_MEDIA_TYPE = 'application/x-dtbncx+xml';
 const MAX_XML_BYTES = 2 * 1024 * 1024;
+const FONT_OBFUSCATION_ALGORITHMS = new Set([
+  'http://www.idpf.org/2008/embedding',
+  'http://ns.adobe.com/pdf/enc#RC',
+]);
 
 export interface XmlTag {
   name: string;
@@ -38,6 +48,8 @@ export interface EpubPackageDocument {
   language: string;
   navPath: string | null;
   ncxPath: string | null;
+  /** CFI element step of the `spine` element inside `package` (e.g. 6 for the standard third child). */
+  spineStep: number;
 }
 
 export interface EpubSpineTarget {
@@ -49,6 +61,7 @@ export interface EpubSpineTarget {
 export interface EpubPackageUpdate {
   appendixPath: string;
   appendixHref: string;
+  itemId: string;
   opfXml: string;
   navPath: string | null;
   navXml: string | null;
@@ -236,7 +249,7 @@ export function relativeArchiveHref(fromPath: string, targetPath: string): strin
 }
 
 export function parseContainerRootfile(xml: string): string {
-  if (utf8ByteLength(xml) > MAX_XML_BYTES) {
+  if (utf8ByteLength(xml) > MAX_CONTAINER_XML_BYTES) {
     throw new TypeError('EPUB container.xml exceeds the XML size limit');
   }
   let rootfile: string | null = null;
@@ -273,11 +286,16 @@ export function parsePackageDocument(xml: string, packagePath: string): EpubPack
   let language = 'en';
   let navPath: string | null = null;
   let ncxPath: string | null = null;
-
+  let packageChildOrdinal = 0;
+  let spineStep = 6;
   parseXml(xml, `EPUB package document ${packagePath}`, {
     open(tag, stack, depth) {
       const name = localName(tag.name);
       const parent = stack.length > 0 ? localName(stack[stack.length - 1] as string) : null;
+      if (depth === 2 && parent === 'package') {
+        packageChildOrdinal += 1;
+        if (name === 'spine') spineStep = packageChildOrdinal * 2;
+      }
       if (depth === 1) {
         if (name !== 'package') throw new TypeError('EPUB package document has no package root');
         packageSeen = true;
@@ -368,7 +386,6 @@ export function parsePackageDocument(xml: string, packagePath: string): EpubPack
   if (version === '2.0' && !ncxPath) {
     throw new TypeError('EPUB 2 package has no resolvable NCX navigation document');
   }
-
   return {
     xml,
     version,
@@ -381,7 +398,46 @@ export function parsePackageDocument(xml: string, packagePath: string): EpubPack
     language,
     navPath,
     ncxPath,
+    spineStep,
   };
+}
+
+/**
+ * Reject any encryption document whose algorithms are not the permitted font
+ * obfuscation schemes. Signatures, DRM rights and LCP licenses are rejected in
+ * the export pipeline before this runs; a malformed document fails closed.
+ */
+export function validateEncryptionFile(bytes: Uint8Array): void {
+  const xml = decodeXml(bytes, 'META-INF/encryption.xml', MAX_ENCRYPTION_XML_BYTES);
+  const algorithms: string[] = [];
+  parseXml(xml, 'EPUB encryption document', {
+    open(tag, _stack, depth) {
+      const name = localName(tag.name);
+      if (depth === 1 && name !== 'encryption') {
+        throw new TypeError('EPUB encryption document has no encryption root element');
+      }
+      if (name === 'EncryptionMethod') {
+        const algorithm = attribute(tag, 'Algorithm');
+        if (algorithm === null) {
+          throw new TypeError('EPUB encryption document has an EncryptionMethod without Algorithm');
+        }
+        algorithms.push(algorithm);
+      }
+    },
+  });
+  if (algorithms.length === 0) {
+    throw new TypeError('EPUB encryption document declares no encryption algorithms');
+  }
+  for (const algorithm of algorithms) {
+    if (!FONT_OBFUSCATION_ALGORITHMS.has(algorithm)) {
+      // Capability error, not a malformed-document error: the caller maps this
+      // to a dedicated export failure so users see "unsupported encryption".
+      throw new EpubAnnotationExportError(
+        'ENCRYPTION_UNSUPPORTED',
+        `EPUB encryption algorithm is not supported: ${algorithm}`,
+      );
+    }
+  }
 }
 
 export function getSpineTargets(

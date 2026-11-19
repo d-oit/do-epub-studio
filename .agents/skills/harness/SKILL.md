@@ -3,14 +3,14 @@ name: harness
 description: >
   Map the harness-engineering feedforward guides and feedback sensors, and run
   the self-correction protocol when a computational sensor fires. Use when a
-  sensor fails (cargo check, test, clippy, fmt), before making code changes, or
-  when setting up agent context for a new task. Triggers: "harness", "sensor
-  fire", "CI failure", "self-correction", "swarm".
+  sensor fails (typecheck, lint, unit test, build, or release gate), before
+  making code changes, or when setting up agent context for a new task.
+  Triggers: "harness", "sensor fire", "CI failure", "self-correction", "swarm".
 category: workflow
 allowed-tools: Read Write Edit Glob Grep Bash
 license: MIT
 metadata:
-  version: "0.1.0"
+  version: "0.1.1"
   tags: harness sensors feedback feedforward self-correction quality
 ---
 ## Guides
@@ -26,7 +26,7 @@ Agent = Model + Harness. The harness is the system of feedforward guides (what t
 - **Feedback (sensors):** automated checks that fire after code changes, providing structured error output.
 
 Two modes:
-- **Computational:** deterministic checks (fmt, clippy, test) — always trust the output.
+- **Computational:** deterministic checks (typecheck, lint, unit tests, repository gates) — always trust the output.
 - **Inferential:** LLM-based guidance (skill docs, agent context) — direction, not commands.
 
 ## Feedforward Guides
@@ -46,14 +46,28 @@ Two modes:
 requires every sensor to wrap the same command the quality gate and CI
 run. Query the pack instead of copying a list here; a copied list drifts:
 
-- `do-harness list` — sensor names
-- `do-harness explain --set verification` — sensors this change selects,
-  without running them
-- `do-harness verify --set <set> [--changed] [--strict]` — run them;
-  `--record` persists strikes/beats, `--evidence <file>` writes the
-  evidence artifact that `status` reads back
-- `do-harness status --set <set> [--evidence <file>]` — evidence
-  freshness without re-running
+This repository uses `language = "generic"` with explicitly declared sensors;
+do not infer its sensor list from another language pack.
+
+- `DO_HARNESS_AUTO_REPORT=off do-harness list` — sensor names.
+- `DO_HARNESS_AUTO_REPORT=off do-harness explain --set verification --since origin/main`
+  — preview sensors selected by committed changes on a branch.
+- `DO_HARNESS_AUTO_REPORT=off do-harness verify --set <set> --since origin/main [--changed] --strict --record`
+  — run committed changes plus any working-tree changes; `--changed` alone
+  selects only the current working tree.
+- `DO_HARNESS_AUTO_REPORT=off do-harness status --set <set>` — evidence
+  freshness without re-running.
+
+The exact version is `.do-harness-version` (`v0.4.6`); CI and
+`scripts/check-harness-version.mjs` compare the binary's JSON identity to it.
+For local installation, use the release-matched checksum-verifying installer:
+
+```bash
+version="$(cat .do-harness-version)"
+curl -fsSL "https://raw.githubusercontent.com/d-o-hub/do-harness/${version}/scripts/install.sh" \
+  | sh -s -- --version "$version"
+DO_HARNESS_AUTO_REPORT=off do-harness init-db
+```
 
 Git hooks are the repo's own `scripts/hooks/*`: `do-harness hook install`
 stays forbidden (ADR-246), and the quality gate plus CI remain the
@@ -84,8 +98,8 @@ If the same subtask fails a sensor 3 consecutive times: halt and surface a
 diagnostic to the developer. Strikes and beats only persist when verify
 runs with `--record`, so an unrecorded run leaves nothing to halt on.
 Signatures live in `.do-harness/agent_state.db`: inspect them with
-`do-harness errors list`, clear one with
-`do-harness errors clear sensor:<name>`.
+`DO_HARNESS_AUTO_REPORT=off do-harness errors list`, clear one with
+`DO_HARNESS_AUTO_REPORT=off do-harness errors clear sensor:<name>`.
 
 ## Steering Loop
 
@@ -93,9 +107,11 @@ When any sensor fires repeatedly (>2 times in one sprint):
 1. Identify the root cause category (maintainability / architecture / behaviour).
 2. Update the corresponding feedforward guide to prevent recurrence.
 3. If no guide exists, create one in `.agents/skills/` with the
-   `skill-creator` skill, or distill it from a resolved fix via
-   `do-harness distill --from-trace <ID>` — a resolved trace is the
-   required evidence (there is no `--from-strikes` flag).
+   `skill-creator` skill, or start a skill scaffold from recorded sensor
+   strikes: `DO_HARNESS_AUTO_REPORT=off do-harness distill --from-strikes --skill <name> [--min-strikes N]`
+   uses the default fail-fast strike threshold unless overridden; `--task <ID>`
+   scopes the strike lookup. `--from-trace <ID>` remains the alternative and
+   requires a resolved-fix trace ID. Review the generated skill before use.
 4. The loop closes: sensors fire -> guides update -> sensors fire less.
 
 ## Swarm Handoff Protocol
@@ -118,7 +134,7 @@ Using the harness in another codebase is proven, never assumed:
   real `[[sensors]]` are configured — do not report it as evidence.
 - The green/red paths are dogfooded by `crates/do-harness/tests/dogfood.rs`
   and CI (`init && verify` on a fresh temp workspace every push); re-prove
-  with `do-harness verify --format json` in the consumer repo.
+  with `DO_HARNESS_AUTO_REPORT=off do-harness verify --format json` in the consumer repo.
 
 ## Gotchas
 - Never trust LLM self-assessment over a computational sensor's exit code.
@@ -131,7 +147,7 @@ Using the harness in another codebase is proven, never assumed:
 | Rationalization | Reality |
 |-----------------|---------|
 | "The verify pass exited 0, so that's my evidence." | An empty or unconfigured sensor suite passes vacuously (the generic pack ships zero sensors); only a recorded run of real `[[sensors]]` from `do-harness.toml` is evidence. |
-| "I'll paste the sensor list into the doc so nobody has to run the CLI." | `do-harness.toml` is the single source of truth — a copied list drifts; query it with `do-harness list` / `explain --set verification`. |
+| "I'll paste the sensor list into the doc so nobody has to run the CLI." | `do-harness.toml` is the single source of truth — a copied list drifts; query it with `DO_HARNESS_AUTO_REPORT=off do-harness list` / `explain --set verification`. |
 | "I'll just run `do-harness hook install` to get the hooks." | Forbidden by ADR-246; hooks are the repo's own `scripts/hooks/*`. |
 | "Same subtask failed twice, third try will land." | 3 consecutive sensor failures must halt and surface a diagnostic, and strikes/beats only persist when verify ran with `--record`. |
 | "Every local gate is green, so the bundle is deployable." | Cloudflare Pages rejects >25 MiB files *after* local gates pass; only `check-bundle-budget.mjs`'s platform-cap walk sees it. |

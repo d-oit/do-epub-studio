@@ -3,7 +3,7 @@
 **Status:** Accepted for this audit
 **Date:** 2026-10-18
 **Deciders:** Project maintainer
-**Applies to:** `plans/1009-goap-production-readiness-audit.md` and findings assigned by that audit
+**Applies to:** `plans/archive/1009-goap-production-readiness-audit.md` and findings assigned by that audit
 **ADRs referenced:** ADR-1000 (audit evidence and execution boundaries), ADR-214 (audit recommendation governance), ADR-083 (ADR numbering)
 
 ## Context
@@ -26,3 +26,5 @@ The production-readiness audit combines source review, local execution, public d
 - Priorities order follow-up work and are not vulnerability severity ratings.
 - Production-readiness and demo-working verdicts are independent and limited to the stated evidence scope.
 - This ADR authorizes documentation and safe audit observations only; it authorizes no application, security-policy, or deployment change.
+
+**Index disposition (2026-11-16):** Accepted (2026-10-18: applies ADR-1000 evidence classes and restricts remote activity to public read-only requests and public demo-login session issuance; all other mutations require fresh disposable local resources)

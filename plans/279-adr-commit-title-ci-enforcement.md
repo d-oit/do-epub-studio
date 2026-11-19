@@ -208,7 +208,7 @@ which does enforce bodies — is what CI runs.
 
 The `pr-title` and `commit-range` job contexts are registered as required checks
 on `main` (confirmed through GitHub branch protection; see
-[GOAP-286](286-goap-required-status-checks.md)). The PR gate manifest lists both
+[GOAP-286](archive/286-goap-required-status-checks.md)). The PR gate manifest lists both
 contexts, and its parity validator checks named jobs across all workflow files.
 
 ## Consequences

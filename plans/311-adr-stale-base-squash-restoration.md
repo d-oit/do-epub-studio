@@ -3,7 +3,7 @@
 **Date:** 2026-10-06
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** GOAP-311 (`plans/311-goap-restore-stale-base-reverts.md`), GOAP-1000 (`plans/1000-goap-implementation-security-e2e-feature-audit.md`), ADR-250 (atomic-commit detection), ADR-279 (commit-title enforcement), AGENTS.md Tier 1 (rebase before merge)
+**Related:** GOAP-311 (`plans/archive/311-goap-restore-stale-base-reverts.md`), GOAP-1000 (`plans/1000-goap-implementation-security-e2e-feature-audit.md`), ADR-250 (atomic-commit detection), ADR-279 (commit-title enforcement), AGENTS.md Tier 1 (rebase before merge)
 
 ## Context
 

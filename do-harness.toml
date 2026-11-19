@@ -13,7 +13,7 @@ pre-push = []
 
 [signal-sets]
 feedback = ["verify-fast"]
-verification = ["typecheck", "lint", "test-unit", "skills", "loc", "web-ui-tests"]
+verification = ["typecheck", "lint", "test-unit", "skills", "loc", "web-ui-tests", "harness-version", "skills-catalog"]
 release = [
   "typecheck",
   "lint",
@@ -34,6 +34,8 @@ release = [
   "coverage-parity",
   "llms-drift",
   "compliance-drift",
+  "harness-version",
+  "skills-catalog",
 ]
 
 # GOAP-269 Phase 4: the upstream `web-ui` pack (d-o-hub/do-harness#75,
@@ -231,13 +233,32 @@ when-changed = [
 ]
 
 [[sensors]]
+name = "harness-version"
+argv = ["node", "scripts/check-harness-version.mjs"]
+when-changed = [
+  ".do-harness-version",
+  "do-harness.toml",
+  ".github/workflows/ci.yml",
+  "scripts/check-harness-version.mjs",
+]
+
+[[sensors]]
 name = "bundle"
-argv = ["node", "scripts/check-bundle-budget.mjs"]
+argv = ["node", "scripts/check-bundle-budget.mjs", "--fail-on-violation"]
 when-changed = [
   "scripts/check-bundle-budget.mjs",
   "scripts/bundle-baseline.json",
   "apps/web/src/**",
   "apps/web/vite.config.*",
+]
+
+[[sensors]]
+name = "skills-catalog"
+argv = ["python3", "scripts/generate-available-skills.py", "--check"]
+when-changed = [
+  ".agents/skills/**/SKILL.md",
+  "scripts/generate-available-skills.py",
+  "agents-docs/AVAILABLE_SKILLS.md",
 ]
 
 [[sensors]]

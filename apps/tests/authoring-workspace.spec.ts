@@ -41,10 +41,9 @@ async function mockAuthoringApi(page: Page) {
   const assetContents = new Map<string, Buffer>();
   const assetIds = new Map<string, string>();
   let publishedPublication: AuthorPublication | null = null;
-  let previewPublication: AuthorPublication | null = null;
   let draftSaveCount = 0;
-  let previewDraftSaveCount: number | null = null;
   let conflictNextSave = false;
+  let assetFetchCount = 0;
 
   await page.route('**/api/admin/login', async (route: Route) => {
     await route.fulfill({
@@ -214,10 +213,7 @@ async function mockAuthoringApi(page: Page) {
     }
 
     if (request.method() === 'GET' && assetId) {
-      if (previewDraftSaveCount === null) {
-        previewDraftSaveCount = draftSaveCount;
-        previewPublication = JSON.parse(JSON.stringify(publication)) as AuthorPublication;
-      }
+      assetFetchCount += 1;
       const asset = assets.find((item) => item.id === assetId);
       const data = assetContents.get(assetId);
       if (!asset || !data) {
@@ -262,7 +258,7 @@ async function mockAuthoringApi(page: Page) {
     getPublishedPublication: () => publishedPublication,
     getDraftSaveCount: () => draftSaveCount,
     getPreviewDraftSaveCount: () => previewDraftSaveCount,
-    getPreviewPublication: () => previewPublication,
+    getAssetFetchCount: () => assetFetchCount,
     triggerConflictOnNextSave: () => {
       conflictNextSave = true;
     },
@@ -274,6 +270,7 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
     page,
   }) => {
     const mock = await mockAuthoringApi(page);
+    const originalViewport = page.viewportSize() ?? { width: 1280, height: 720 };
     await loginAsAdmin(page);
 
     await page.getByRole('button', { name: /Create.*Book/i }).click();
@@ -482,6 +479,37 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
     expect(loaderContract.stylesheet).toContain('#123456');
     expect(loaderContract.imageSize).toBe(PNG_BYTES.length);
 
+    for (const viewport of [
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+    ]) {
+      await page.setViewportSize(viewport);
+      const iframe = preview.locator('iframe');
+      await expect
+        .poll(async () => iframe.evaluate((frame) => frame.getBoundingClientRect().width), {
+          timeout: 15000,
+        })
+        .toBeGreaterThan(200);
+      await expect
+        .poll(async () => iframe.evaluate((frame) => frame.getBoundingClientRect().height), {
+          timeout: 15000,
+        })
+        .toBeGreaterThan(200);
+      await expect(iframe).toHaveAttribute('title', 'EPUB reader preview');
+      await expect(readerFrame.locator('body')).toContainText('Reader preview heading');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        viewport.width,
+      );
+    }
+
+    await page.setViewportSize(originalViewport);
+    await expect
+      .poll(async () =>
+        preview.locator('iframe').evaluate((frame) => frame.getBoundingClientRect().width),
+      )
+      .toBeGreaterThan(200);
+    await expect(preview.locator('iframe')).toHaveAttribute('title', 'EPUB reader preview');
+    await expect(readerFrame.locator('body')).toContainText('Reader preview heading');
     await page.getByRole('button', { name: 'Editor', exact: true }).click();
     mock.triggerConflictOnNextSave();
     await contentEditor.fill('<h2>Uncommitted local copy</h2><p>Local work.</p>');
@@ -514,5 +542,72 @@ test.describe('EPUB authoring workspace and publishing pipeline', () => {
     expect(published?.identifier).toBe('urn:uuid:authoring-e2e-final');
     expect(published?.coverImageAssetId).toBe(imageAssetId);
     expect(published?.stylesheetAssetIds).toContain(mock.getAssetId('book.css'));
+  });
+
+  test('chapter preview reflects live sanitized edits, referenced-only assets, and chapter switches', async ({
+    page,
+  }) => {
+    const mock = await mockAuthoringApi(page);
+    await loginAsAdmin(page);
+
+    await page.getByRole('button', { name: /Create.*Book/i }).click();
+    const createDialog = page.getByRole('dialog', { name: 'Create New Book' });
+    await expect(createDialog).toBeVisible();
+    await createDialog.getByRole('button', { name: 'Author from scratch' }).click();
+    await createDialog.getByLabel('Book Title').fill('Preview E2E Book');
+    await createDialog.getByLabel('Author Name').fill('Ada Lovelace');
+    await createDialog.getByLabel('Manuscript template').selectOption('blank');
+    await createDialog.getByRole('button', { name: 'Create manuscript' }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/books/${BOOK_ID}/author`), {
+      timeout: 15000,
+    });
+
+    // The chapter preview is always visible in the editor.
+    const preview = page.getByTestId('author-chapter-preview');
+    await expect(preview).toBeVisible();
+    await expect(preview).toContainText('Initial chapter text.');
+
+    // Live edits render immediately — no autosave wait, and scripts never run.
+    const contentEditor = page.getByLabel('Content (Semantic XHTML)');
+    await contentEditor.fill('<p>Live text</p><script>window.__unsafe=1</script>');
+    await expect(preview).toContainText('Live text');
+    await expect(preview).not.toContainText('window.__unsafe');
+    expect(
+      await page.evaluate(() => {
+        const probe = window as { __unsafe?: number };
+        return probe.__unsafe;
+      }),
+    ).toBeUndefined();
+
+    // Uploading an asset does not fetch it until a chapter references it.
+    expect(mock.getAssetFetchCount()).toBe(0);
+    await page.getByLabel('Choose an image or stylesheet').setInputFiles({
+      name: 'diagram.png',
+      mimeType: 'image/png',
+      buffer: PNG_BYTES,
+    });
+    await page.getByRole('button', { name: 'Upload asset' }).click();
+    await expect(page.getByText('diagram.png', { exact: true })).toBeVisible();
+    const imageAssetId = mock.getAssetId('diagram.png');
+    expect(imageAssetId).toBeTruthy();
+    expect(mock.getAssetFetchCount()).toBe(0);
+
+    // Insert the image: exactly one fetch happens and the preview shows a blob URL.
+    await page.getByRole('button', { name: 'Insert diagram.png in chapter' }).click();
+    await expect(preview.locator('img')).toHaveCount(1);
+    await expect(preview.locator('img')).toHaveAttribute('src', /^blob:/);
+    expect(mock.getAssetFetchCount()).toBe(1);
+
+    // Deleting the referenced asset turns the image into a visible placeholder.
+    await page.getByRole('button', { name: 'Remove diagram.png' }).click();
+    await expect(preview.locator('img')).toHaveCount(0);
+    await expect(preview.locator('[role="img"]')).toHaveAttribute('aria-label', 'Diagram');
+
+    // Switching chapters replaces the preview content without stale text.
+    await page.getByRole('button', { name: 'Add chapter' }).click();
+    await expect(page.getByRole('heading', { name: 'Manuscript chapters (2)' })).toBeVisible();
+    await page.getByRole('button', { name: 'Move Chapter 2 up' }).click();
+    await expect(preview).not.toContainText('Live text');
+    await expect(preview).toContainText('Start writing this chapter here.');
   });
 });

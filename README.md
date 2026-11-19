@@ -38,6 +38,8 @@ do-epub-studio/
 - **Security First**: Argon2id password hashing, DOMPurify sanitization, bearer-token auth with session revocation, signed URL file access, CSP headers, and login rate limiting (5 attempts / 15 min lockout).
 - **Offline Capable**: PWA with IndexedDB sync queue, Background Sync API, and conflict detection.
 - **Privacy Focused**: Granular access grants and auditable trails.
+- **Annotation Export**: Reader notes (highlights, comments, bookmarks) as Markdown, HTML, or a bounded EPUB re-export that appends one XHTML annotation appendix to the current revision and is returned only after synchronous EPUBCheck accepts the exact bytes.
+- **Native Authoring**: Book-scoped authoring grants, version-locked manuscript drafts, metadata and bounded local assets, deterministic immutable EPUB 3 publishing, and a preview rendered by the production reader.
 
 ## Quick Start
 
@@ -67,28 +69,34 @@ See [docs/setup-local.md](docs/setup-local.md) for detailed development environm
 
 ## Commands
 
-| Command                     | Description                                          |
-| --------------------------- | ---------------------------------------------------- |
-| `pnpm dev`                  | Start all dev servers                                |
-| `pnpm build`                | Production build                                     |
-| `pnpm lint`                 | Lint all packages + workflow validation              |
-| `pnpm typecheck`            | Type-check all packages                              |
-| `pnpm test`                 | Run all unit tests                                   |
-| `pnpm test:coverage`        | Run tests with coverage                              |
-| `pnpm test:e2e:smoke`       | Run E2E smoke suite (Chromium + WebKit)              |
-| `./scripts/quality_gate.sh` | Full quality gate (lint + typecheck + test + design) |
-| `./scripts/health-check.sh` | Verify dev environment                               |
+| Command                     | Description                                                   |
+| --------------------------- | ------------------------------------------------------------- |
+| `pnpm dev`                  | Start all dev servers                                         |
+| `pnpm build`                | Production build                                              |
+| `pnpm lint`                 | Lint all packages + workflow validation                       |
+| `pnpm typecheck`            | Type-check all packages                                       |
+| `pnpm test`                 | Run all unit tests                                            |
+| `pnpm test:coverage`        | Run tests with coverage                                       |
+| `pnpm test:e2e:smoke`       | Run E2E smoke suite (`@smoke`; CI: chromium + webkit + pixel) |
+| `./scripts/quality_gate.sh` | Full quality gate (see Quality Gates)                         |
+| `./scripts/health-check.sh` | Verify dev environment                                        |
+
+Playwright defines `chromium`, `firefox`, `iphone`, `pixel` and `pwa-chromium`
+projects; `webkit` is registered only when `PLAYWRIGHT_INCLUDE_WEBKIT=1`, which
+CI sets for its smoke lane.
 
 ## Quality Gates
 
-Every commit must pass:
+Every commit must pass `./scripts/quality_gate.sh` (exit 0). It runs, in order:
 
-1. ESLint (all packages via `turbo run lint`)
-2. TypeScript strict mode (`turbo run typecheck`)
-3. Vitest unit tests with coverage thresholds
-4. Playwright E2E smoke tests
-5. Codacy static analysis (CI required check)
-6. Bundle budget enforcement
+1. Project rails: pinned `do-harness` version, git-hook config, workflow lint (actionlint + zizmor), skill symlinks, agent-adapter sync, app identity/version governance
+2. Documentation rails: ADR index, plan references, 500-line source cap, Prettier `format:check`, coverage parity, gate-parity manifest, SKILL.md format/links/catalog
+3. Code rails: ESLint (zero warnings), TypeScript strict, Vitest with coverage thresholds, Playwright E2E smoke, production build
+4. Quality rails: markdownlint, impeccable design detector, dead-code and circular-dependency check
+
+`SKIP_*` variables exist for local iteration and make the gate exit 3, which
+`atomic-commit` rejects. Codacy and bundle-budget enforcement are additional CI
+required checks.
 
 ## Documentation
 

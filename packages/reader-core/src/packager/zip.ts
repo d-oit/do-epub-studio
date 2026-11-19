@@ -29,6 +29,14 @@ export function crc32(data: Uint8Array): number {
   return (checksum ^ 0xffffffff) >>> 0;
 }
 
+/** Thrown by {@link buildZip} when emitted output exceeds the caller's cap. */
+export class ZipOutputLimitError extends RangeError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ZipOutputLimitError';
+  }
+}
+
 export interface ZipEntry {
   name: string;
   data: Uint8Array;
@@ -67,7 +75,9 @@ export function buildZip(
           settled = true;
           zip?.terminate();
           reject(
-            new RangeError(`ZIP output exceeds maximum size of ${options.maxOutputBytes} bytes`),
+            new ZipOutputLimitError(
+              `ZIP output exceeds maximum size of ${options.maxOutputBytes} bytes`,
+            ),
           );
           return;
         }

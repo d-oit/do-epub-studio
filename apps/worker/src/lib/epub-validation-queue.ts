@@ -111,6 +111,7 @@ async function validateRevision(env: Env, message: EpubValidationMessage): Promi
       'content-length': String(object.size),
     },
     body: object.body,
+    redirect: 'error',
   });
   if (!response.ok) throw new Error('runner_unavailable');
   const text = await response.text();

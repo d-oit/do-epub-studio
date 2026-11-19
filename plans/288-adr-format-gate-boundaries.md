@@ -3,7 +3,7 @@
 **Date:** 2026-09-26
 **Status:** Accepted
 **Deciders:** Project maintainer
-**Related:** GOAP-288 (`plans/288-goap-prettier-cleanup.md`), #1182, ADR-278 (LOC ratchet), ADR-285 (hook parity), AGENTS.md Tier 2 #6
+**Related:** GOAP-288 (`plans/archive/288-goap-prettier-cleanup.md`), #1182, ADR-278 (LOC ratchet), ADR-285 (hook parity), AGENTS.md Tier 2 #6
 
 ## Context
 
@@ -92,3 +92,5 @@ regenerated, re-proven, at each future reformat until the metric is replaced.
 - The reformat was proved equivalent by AST, not by inspection. That proof is
   the artifact that makes the baseline regeneration defensible; a future
   reformat should repeat it rather than assert it.
+
+**Index disposition (2026-11-16):** Accepted (closes #1182: skills excluded from prettier because its markdown output broke `MAX_LINES_SKILL_MD`; source-text assertions must not pin formatting; LOC baseline regeneration requires an AST proof)

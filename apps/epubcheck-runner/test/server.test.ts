@@ -1,5 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { zipSync, strToU8 } from 'fflate';
 import {
   parseFindings,
@@ -11,6 +15,7 @@ import {
   extractOpfFromZip,
   extractEpubVersion,
   EpubExtractionError,
+  executeEpubcheck,
 } from '../src/server.js';
 import {
   EpubRunnerResultSchema,
@@ -24,10 +29,11 @@ describe('epubcheck runner helper functions', () => {
       'ERROR(RSC-005): file.epub/OEBPS/ch1.xhtml(10,5): Error message here',
       'WARNING(ACC-001): file.epub/OEBPS/ch1.xhtml: Warning message',
       'INFO(HTM-001): file.epub: Info message',
+      'FATAL(PKG-004): file.epub: Corrupted package header',
     ].join('\n');
 
     const findings = parseFindings(sampleOutput);
-    assert.equal(findings.length, 3);
+    assert.equal(findings.length, 4);
     assert.equal(findings[0]?.severity, 'error');
     assert.equal(findings[0]?.code, 'RSC-005');
     assert.equal(findings[0]?.path, 'OEBPS/ch1.xhtml');
@@ -45,6 +51,10 @@ describe('epubcheck runner helper functions', () => {
     assert.equal(findings[2]?.path, null);
     assert.equal(findings[2]?.location, null);
     assert.equal(findings[2]?.message, 'Info message');
+
+    assert.equal(findings[3]?.severity, 'error');
+    assert.equal(findings[3]?.code, 'PKG-004');
+    assert.equal(findings[3]?.message, 'Corrupted package header');
   });
 
   it('extracts accessibility metadata from OPF content', () => {
@@ -259,6 +269,8 @@ describe('epubcheck runner helper functions', () => {
       validatorVersion: EPUBCHECK_VERSION,
       sha256: '0'.repeat(64),
       epubVersion: version,
+      safetyStatus: 'accepted' as const,
+      conformanceStatus: 'completed' as const,
       findings: [],
       accessibility: {
         metadata,
@@ -385,5 +397,93 @@ describe('epubcheck runner helper functions', () => {
     assert.equal(normalizeFindingPath('book.epub'), null);
     assert.equal(normalizeFindingPath('/tmp/runner/input.epub'), null);
     assert.equal(normalizeFindingPath(null), null);
+  });
+});
+
+describe('EPUBCheck runtime limit', () => {
+  it('kills a validator that exceeds its runtime and reports a timeout', async () => {
+    const workDir = mkdtempSync(join(tmpdir(), 'epubcheck-timeout-'));
+    const javaBin = join(workDir, 'java');
+    writeFileSync(javaBin, "#!/bin/sh\nexec node -e 'setTimeout(() => {}, 10000)'\n", {
+      mode: 0o755,
+    });
+    const previousJavaBin = process.env.EPUBCHECK_JAVA_BIN;
+    process.env.EPUBCHECK_JAVA_BIN = javaBin;
+
+    try {
+      await assert.rejects(
+        executeEpubcheck(join(workDir, 'input.epub'), workDir, 25),
+        /validator_timeout/,
+      );
+    } finally {
+      if (previousJavaBin === undefined) delete process.env.EPUBCHECK_JAVA_BIN;
+      else process.env.EPUBCHECK_JAVA_BIN = previousJavaBin;
+      rmSync(workDir, { recursive: true, force: true });
+    }
+  });
+});
+describe('epubcheck runner HTTP integration', () => {
+  // Real clock polling is required: readiness depends on an external child
+  // process starting, which cannot be driven by fake timers.
+  async function waitForHealth(port: number, timeoutMs = 10_000): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/health`);
+        if (res.ok) return;
+      } catch {
+        /* server not up yet */
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    throw new Error('validator server did not become healthy');
+  }
+
+  it('returns 503, never a false 200, when Java exits nonzero without usable findings', async () => {
+    const fakeJavaDir = mkdtempSync(join(tmpdir(), 'epubcheck-fakejava-'));
+    const javaBin = join(fakeJavaDir, 'java');
+    writeFileSync(javaBin, '#!/bin/sh\nexit 1\n', { mode: 0o755 });
+    const port = 18_000 + Math.floor(Math.random() * 500);
+    const token = 'runner-token';
+    const child = spawn(process.execPath, ['--import', 'tsx', 'src/server.ts'], {
+      cwd: join(import.meta.dirname, '..'),
+      env: {
+        ...process.env,
+        PORT: String(port),
+        PATH: `${fakeJavaDir}:${process.env.PATH ?? ''}`,
+        EPUBCHECK_RUNNER_TOKEN: token,
+        EPUBCHECK_JAR_PATH: join(fakeJavaDir, 'epubcheck.jar'),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    try {
+      await waitForHealth(port);
+      const epubBytes = zipSync({
+        mimetype: strToU8('application/epub+zip'),
+        'META-INF/container.xml': strToU8(
+          '<container xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>',
+        ),
+        'content.opf': strToU8('<package version="3.0"/>'),
+      });
+      const res = await fetch(`http://127.0.0.1:${port}/validate`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${token}`,
+          'content-type': 'application/epub+zip',
+        },
+        body: epubBytes,
+      });
+      assert.equal(res.status, 503);
+      const body = (await res.json()) as { error?: string };
+      assert.equal(body.error, 'runner_unavailable');
+    } finally {
+      const childClosed = new Promise<void>((resolve) => {
+        if (child.exitCode !== null || child.signalCode !== null) resolve();
+        else child.once('close', () => resolve());
+      });
+      child.kill('SIGKILL');
+      await childClosed;
+      rmSync(fakeJavaDir, { recursive: true, force: true });
+    }
   });
 });

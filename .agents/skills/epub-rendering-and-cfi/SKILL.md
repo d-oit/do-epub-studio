@@ -64,6 +64,22 @@ loader.on('relocated', (progress) => {
 });
 ```
 
+### Resizing a Live Rendition
+
+`EpubRenditionHandle.resize(width, height)` clears the current views before
+resizing, because the default manager otherwise reuses the old frame:
+
+```ts
+// packages/reader-core/src/epub-loader.ts (handle implementation)
+rendition.clear();
+rendition.resize(width, height);
+```
+
+Call it from a `ResizeObserver` on the preview container, ignoring zero and
+unchanged dimensions. A cleared+resized rendition re-emits `displayed`, so any
+`displayed` listener that stamps attributes on the EPUB iframe (e.g. the
+accessible title) must re-apply them — EPUB.js replaces the iframe element.
+
 ### Sanitization Guard
 
 Every rendition MUST register `createEpubSanitizerHook` before display (from `packages/reader-core/src/epub-loader.ts` + `sanitizer.ts`):
@@ -76,6 +92,10 @@ rendition.hooks.content.register(createEpubSanitizerHook());
 
 // sanitizeEpubDocument uses EPUB_ALLOWED_TAGS (allowlist, not FORBID_TAGS-only)
 // and enforces href-scheme + event-attribute rules via sanitizeDom().
+// It splices the sanitized clone's children into the live <head>/<body>
+// instead of replacing them: epub.js captured that body in `Contents` before
+// the hook ran, and a detached body makes `Contents.textSize()` report 0×0
+// (the view reframes to zero) and `Contents.range()` unable to anchor.
 // Never bypass this hook — iframe sandbox is allow-same-origin only.
 ```
 
@@ -84,6 +104,7 @@ rendition.hooks.content.register(createEpubSanitizerHook());
 | Rationalization | Reality |
 |-----------------|---------|
 | "A CFI is stable — persisting it alone is enough to re-anchor a highlight." | ADR-006 requires multi-signal locators. Persist `{ cfi, selectedText, chapterRef, elementIndex, charOffset }` together; CFIs shift on re-pagination and font changes. |
+| "`rendition.resize(w, h)` is enough to re-layout a live preview." | The default manager reuses existing views. Clear them first (`EpubRenditionHandle.resize` does this) or the iframe keeps its old frame dimensions. |
 | "The sanitizer strips content the book needs, so I'll skip `createEpubSanitizerHook` here." | Every rendition MUST register the hook before display. `sanitizeEpubDocument` uses the `EPUB_ALLOWED_TAGS` allowlist and the iframe sandbox is `allow-same-origin` only — extend the allowlist instead of bypassing. |
 | "Fuzzy re-anchoring can split the excerpt on whitespace with a regex." | Use `matchAllBounded` from `@do-epub-studio/shared` for fuzzy word extraction; ad-hoc regex over book text is the unbounded-match failure mode. |
 | "`loader.setProgress` is the navigation API, so I'll call it from the component." | `setProgress` calls `rendition.display(cfi)` internally. Call the rendition handle directly, or you navigate twice. |
@@ -94,6 +115,7 @@ rendition.hooks.content.register(createEpubSanitizerHook());
 - [ ] A highlight record persists `cfi` without `selectedText` and `chapterRef` alongside it.
 - [ ] `rendition.hooks.content.register(createEpubSanitizerHook())` is absent before `rendition.display(...)`.
 - [ ] A new `createRendition` per re-render instead of reusing one rendition handle.
+- [ ] A container `ResizeObserver` that calls `rendition.resize()` without clearing stale views, or that reacts to zero dimensions.
 - [ ] `loader.on('relocated', ...)` handlers registered with no matching removal on unmount.
 - [ ] Chapter fallback fires with no user notice and no telemetry event carrying `traceId`.
 - [ ] Hand-rolled regex word extraction for fuzzy matching instead of `matchAllBounded`.

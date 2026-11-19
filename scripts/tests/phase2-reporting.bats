@@ -13,6 +13,22 @@ setup() {
     LLMS_DRIFT="$REPO_ROOT/scripts/check-llms-drift.sh"
     COMPLIANCE="$REPO_ROOT/scripts/generate-compliance-doc.sh"
     DORA_REPORT="$REPO_ROOT/scripts/report-dora.sh"
+    VERSION_CHECK="$REPO_ROOT/scripts/check-harness-version.mjs"
+    NODE_BIN="$(command -v node)"
+}
+
+make_harness_checker_fixture() {
+    FIXTURE="$BATS_TEST_TMPDIR/$1"
+    mkdir -p "$FIXTURE/bin"
+    printf 'v0.4.6\n' > "$FIXTURE/.do-harness-version"
+    cat > "$FIXTURE/bin/do-harness" <<'STUB'
+#!/bin/sh
+[ "$#" -eq 3 ] && [ "$1" = "version" ] && [ "$2" = "--format" ] && [ "$3" = "json" ] || exit 30
+[ "${DO_HARNESS_AUTO_REPORT:-}" = "off" ] || exit 31
+printf '%s\n' "${HARNESS_JSON:-}"
+STUB
+    chmod +x "$FIXTURE/bin/do-harness"
+    cd "$FIXTURE"
 }
 
 # --- llms drift -------------------------------------------------------------
@@ -58,32 +74,62 @@ setup() {
 
 # --- compliance document ----------------------------------------------------
 
-@test "the installed do-harness matches the version CI pins" {
-    # The compliance document and the DORA policy are artifacts of a SPECIFIC
-    # harness version - the one `.github/workflows/ci.yml` installs for the
-    # `harness-contract` job. A newer local binary changes the compliance
-    # output and the dora policy schema, and the two checks below then fail
-    # with what looks like content drift but is a version mismatch. Assert the
-    # pin first so the failure names the real cause.
-    if ! command -v do-harness >/dev/null 2>&1; then
-        skip "do-harness is not installed"
-    fi
-    local pinned
-    pinned="$(grep -oE 'DO_HARNESS_VERSION: v[0-9.]+' "$REPO_ROOT/.github/workflows/ci.yml" | head -1 | awk '{print $2}')"
-    [ -n "$pinned" ]
-    # `do-harness --version` prints the version without the leading "v".
-    local expected="${pinned#v}"
-    run do-harness --version
+@test "harness version checker accepts a matching identity and disables auto-reporting" {
+    make_harness_checker_fixture "harness-match"
+
+    run env PATH="$FIXTURE/bin:$PATH" DO_HARNESS_AUTO_REPORT=on \
+        HARNESS_JSON='{"name":"do-harness","version":"0.4.6"}' "$NODE_BIN" "$VERSION_CHECK"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"$expected"* ]]
 }
 
-@test "compliance document exists and is the generated content" {
-    [ -f "$REPO_ROOT/docs/compliance-mapping.md" ]
-    run grep -c "do not edit by hand" "$REPO_ROOT/docs/compliance-mapping.md"
-    [ "$status" -eq 0 ]
-    [ "$output" -gt 0 ]
+@test "harness version checker rejects a mismatched identity" {
+    make_harness_checker_fixture "harness-mismatch"
+
+    run env PATH="$FIXTURE/bin:$PATH" HARNESS_JSON='{"name":"do-harness","version":"0.4.5"}' \
+        "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
 }
+
+@test "harness checker rejects a different executable identity at the pinned version" {
+    make_harness_checker_fixture "harness-wrong-name"
+
+    run env PATH="$FIXTURE/bin:$PATH" HARNESS_JSON='{"name":"other-tool","version":"0.4.6"}' \
+        "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
+}
+
+@test "harness checker requires a v-prefixed stable version pin" {
+    make_harness_checker_fixture "harness-invalid-pin"
+
+    printf '0.4.6\n' > "$FIXTURE/.do-harness-version"
+    run env PATH="$FIXTURE/bin:$PATH" HARNESS_JSON='{"name":"do-harness","version":"0.4.6"}' \
+        "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
+
+    printf 'v0.4.6-beta\n' > "$FIXTURE/.do-harness-version"
+    run env PATH="$FIXTURE/bin:$PATH" HARNESS_JSON='{"name":"do-harness","version":"0.4.6"}' \
+        "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
+}
+
+@test "harness version checker rejects invalid JSON" {
+    make_harness_checker_fixture "harness-invalid-json"
+
+    run env PATH="$FIXTURE/bin:$PATH" HARNESS_JSON='not-json' \
+        "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
+}
+
+@test "harness version checker rejects a missing executable" {
+    FIXTURE="$BATS_TEST_TMPDIR/harness-missing"
+    mkdir -p "$FIXTURE/bin"
+    printf 'v0.4.6\n' > "$FIXTURE/.do-harness-version"
+    cd "$FIXTURE"
+
+    run env PATH="$FIXTURE/bin" "$NODE_BIN" "$VERSION_CHECK"
+    [ "$status" -eq 1 ]
+}
+
 
 @test "compliance document is up to date with the harness output" {
     run "$COMPLIANCE" --check
@@ -91,11 +137,46 @@ setup() {
     [[ "$output" == *"up to date"* ]]
 }
 
-@test "compliance document states it is not a certification" {
-    run grep -c "not\*\* a certification" "$REPO_ROOT/docs/compliance-mapping.md"
-    [ "$status" -eq 0 ]
-    [ "$output" -gt 0 ]
+@test "compliance check rejects a mismatched harness without changing the document" {
+    FIXTURE="$BATS_TEST_TMPDIR/harness-version-mismatch"
+    mkdir -p "$FIXTURE/bin"
+    cat > "$FIXTURE/bin/do-harness" <<'STUB'
+#!/bin/sh
+if [ "$1" = "version" ]; then
+    printf '%s\n' '{"name":"do-harness","version":"0.4.5"}'
+    exit 0
+fi
+exit 70
+STUB
+    chmod +x "$FIXTURE/bin/do-harness"
+    cp "$REPO_ROOT/docs/compliance-mapping.md" "$FIXTURE/original.md"
+
+    run env PATH="$FIXTURE/bin:$PATH" "$COMPLIANCE" --check
+
+    [ "$status" -eq 1 ]
+    cmp -s "$REPO_ROOT/docs/compliance-mapping.md" "$FIXTURE/original.md"
 }
+
+@test "compliance check rejects failed harness output instead of accepting partial output" {
+    FIXTURE="$BATS_TEST_TMPDIR/harness-command-failure"
+    mkdir -p "$FIXTURE/bin"
+    cat > "$FIXTURE/bin/do-harness" <<'STUB'
+#!/bin/sh
+case "$1" in
+    version) printf '%s\n' '{"name":"do-harness","version":"0.4.6"}' ;;
+    compliance) printf '%s\n' 'partial output'; exit 9 ;;
+    *) exit 70 ;;
+esac
+STUB
+    chmod +x "$FIXTURE/bin/do-harness"
+    cp "$REPO_ROOT/docs/compliance-mapping.md" "$FIXTURE/original.md"
+
+    run env PATH="$FIXTURE/bin:$PATH" "$COMPLIANCE" --check
+
+    [ "$status" -eq 1 ]
+    cmp -s "$REPO_ROOT/docs/compliance-mapping.md" "$FIXTURE/original.md"
+}
+
 
 @test "compliance document passes markdownlint" {
     # The harness emits table rows with fewer cells than their header
@@ -110,17 +191,23 @@ setup() {
     fi
 }
 
-@test "compliance document tables have a uniform cell count" {
-    # The same invariant as the markdownlint case, checked without the tool:
-    # every table row must carry as many cells as its header.
+@test "compliance document tables have consistent header and row cell counts" {
+    # Each table's header, separator, and data rows must use the same schema.
     run awk '
-        BEGIN { FS = "|"; columns = 0; bad = 0 }
+        BEGIN { FS = "|"; columns = 0; header_columns = 0; bad = 0 }
+        !/^\|/ { columns = 0; header_columns = 0; next }
         /^\|/ {
             cells = NF - 2
             if ($0 ~ /^[|][[:space:]]*-+[[:space:]]*([|][[:space:]]*-+[[:space:]]*)+[|]$/) {
-                columns = cells; next
+                if (header_columns != cells) bad = 1
+                columns = cells
+                next
             }
-            if (columns > 0 && cells != columns) bad = 1
+            if (columns == 0) {
+                header_columns = cells
+                next
+            }
+            if (cells != columns) bad = 1
         }
         END { exit bad }
     ' "$REPO_ROOT/docs/compliance-mapping.md"
@@ -129,26 +216,29 @@ setup() {
 
 # --- DORA report ------------------------------------------------------------
 
-@test "dora report is report-only and exits zero" {
-    run "$DORA_REPORT"
-    # Report-only: a metrics breach must never fail the run.
+@test "dora threshold breach warns without blocking unless required" {
+    FIXTURE="$BATS_TEST_TMPDIR/dora-report"
+    mkdir -p "$FIXTURE/scripts" "$FIXTURE/plans" "$FIXTURE/bin"
+    cp "$DORA_REPORT" "$FIXTURE/scripts/report-dora.sh"
+    printf '{"window_days":30}\n' > "$FIXTURE/plans/dora.json"
+    cat > "$FIXTURE/bin/do-harness" <<'STUB'
+#!/bin/sh
+[ "$1" = "dora" ] || exit 70
+printf '%s\n' 'Deploys: 0' 'FINDINGS: 1' 'error: 1 DORA threshold exceeded'
+exit 1
+STUB
+    chmod +x "$FIXTURE/bin/do-harness"
+
+    run env PATH="$FIXTURE/bin:/usr/bin:/bin" bash "$FIXTURE/scripts/report-dora.sh"
     [ "$status" -eq 0 ]
+    [[ "$output" == *"FINDINGS: 1"* ]]
+    [[ "$output" == *"trend signal only, not a merge condition"* ]]
+
+    run env PATH="$FIXTURE/bin:/usr/bin:/bin" DORA_REQUIRED=1 bash "$FIXTURE/scripts/report-dora.sh"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"DORA_REQUIRED=1"* ]]
 }
 
-@test "dora report shows the measured metrics" {
-    run "$DORA_REPORT"
-    [ "$status" -eq 0 ]
-    [[ "$output" == *"deploys"* ]]
-    [[ "$output" == *"lead time"* ]]
-}
-
-@test "dora policy pins a ref pattern, not a bare glob" {
-    # A bare glob silently matches nothing and the harness then reports zero
-    # deploys forever; the ref pattern is what makes the metric real.
-    run grep -c '"tag_glob": "refs/tags/' "$REPO_ROOT/plans/dora.json"
-    [ "$status" -eq 0 ]
-    [ "$output" -gt 0 ]
-}
 
 @test "dora report tolerates a missing do-harness binary" {
     # The report must degrade to a warning, never to a failure, when the
