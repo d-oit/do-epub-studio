@@ -74,6 +74,17 @@ interface CentralDirectory {
 
 const UTF8_DECODER = new TextDecoder('utf-8', { fatal: false });
 const LATIN1_DECODER = new TextDecoder('latin1', { fatal: false });
+const XML_TEXT_DECODER = new TextDecoder('utf-8', { fatal: false });
+
+function mergeChunks(chunks: Uint8Array[], totalBytes: number): Uint8Array {
+  const merged = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const part of chunks) {
+    merged.set(part, offset);
+    offset += part.byteLength;
+  }
+  return merged;
+}
 
 function readU16(bytes: Uint8Array, offset: number): number {
   return (bytes[offset] as number) | ((bytes[offset + 1] as number) << 8);
@@ -352,13 +363,10 @@ function runStreamingValidation(
         xmlBytes += chunkBytes;
         xmlChunks.push(chunk);
         if (final) {
-          const merged = new Uint8Array(xmlBytes);
-          let offset = 0;
-          for (const part of xmlChunks) {
-            merged.set(part, offset);
-            offset += part.byteLength;
-          }
-          const text = new TextDecoder('utf-8', { fatal: false }).decode(merged);
+          const single = xmlChunks[0];
+          const merged =
+            single && xmlChunks.length === 1 ? single : mergeChunks(xmlChunks, xmlBytes);
+          const text = XML_TEXT_DECODER.decode(merged);
           const budgetRejection = checkXmlDocumentBudget(text, limits);
           if (budgetRejection) {
             state.fail({ ...budgetRejection, entry: file.name });
