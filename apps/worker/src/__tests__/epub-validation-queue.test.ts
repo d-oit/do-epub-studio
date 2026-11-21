@@ -63,7 +63,13 @@ describe('processEpubValidationQueue', () => {
       body: new ReadableStream(),
     });
     env.BOOKS_BUCKET.get = mockGet;
-
+    const specRef = {
+      spec: 'EPUB Accessibility',
+      specUrl: 'https://www.w3.org/TR/epub-a11y-11/',
+      version: '1.1',
+      status: 'W3C Recommendation',
+      statusDate: '2024-10-17',
+    };
     const mockResult = {
       validatorVersion: EPUBCHECK_VERSION,
       sha256: 'a'.repeat(64),
@@ -77,11 +83,14 @@ describe('processEpubValidationQueue', () => {
         advisories: [],
         manualReviewRequired: true,
         certification: 'not-certified',
+        profiles: {
+          '1.1': { spec: specRef, experimental: false, certification: 'not-certified', findings: [], evidence: [] },
+          '1.2-draft': { spec: specRef, experimental: true, certification: 'not-certified', findings: [], evidence: [] },
+        },
       },
       safetyStatus: 'accepted',
       conformanceStatus: 'completed',
     };
-
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(JSON.stringify(mockResult)),

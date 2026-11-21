@@ -111,6 +111,12 @@ importers:
 
   apps/epubcheck-runner:
     dependencies:
+      '@do-epub-studio/reader-core':
+        specifier: workspace:*
+        version: link:../../packages/reader-core
+      '@do-epub-studio/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       fflate:
         specifier: ^0.8.2
         version: 0.8.3

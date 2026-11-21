@@ -6,8 +6,10 @@ import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validateArchive } from '../../../packages/shared/src/archive-validator';
+import { assessAccessibility } from '@do-epub-studio/reader-core/accessibility';
 import {
   EpubExtractionError,
+  extractEpubContainerContext,
   extractEpubVersion,
   extractOpfFromZip,
   metadataFromOpf,
@@ -140,10 +142,9 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
       });
     }
     const result = await executeEpubcheck(inputPath, workDir);
-    let opf: string | null = null;
-    let epubVersion: string | null = null;
+    let extraction: { opf: string | null; opfPath: string | null } | null = null;
     try {
-      const extraction = extractOpfFromZip(bytes);
+      extraction = extractOpfFromZip(bytes);
       opf = extraction.opf;
       if (opf) {
         epubVersion = extractEpubVersion(opf);
@@ -172,17 +173,68 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     } catch {
       /* EPUBCheck stdout remains the bounded fallback source. */
     }
+
+    let accessibility;
+    if (opf && extraction) {
+      const context = extractEpubContainerContext(bytes, opf, extraction.opfPath ?? '');
+      const a11y11 = assessAccessibility({ opfXml: opf, context }, { specProfile: '1.1' });
+      const a11y12 = assessAccessibility(
+        { opfXml: opf, context },
+        { specProfile: '1.2-draft' },
+      );
+      accessibility = {
+        metadata: metadataFromOpf(opf),
+        advisories: [...ADVISORIES],
+        manualReviewRequired: true,
+        certification: a11y11.certification,
+        profiles: {
+          '1.1': {
+            spec: a11y11.spec,
+            experimental: false,
+            certification: a11y11.certification,
+            findings: a11y11.findings,
+            evidence: a11y11.evidence,
+          },
+          '1.2-draft': {
+            spec: a11y12.spec,
+            experimental: true,
+            certification: 'not-certified',
+            findings: a11y12.findings,
+            evidence: a11y12.evidence,
+          },
+        },
+      };
+    } else {
+      accessibility = {
+        metadata: [],
+        advisories: [...ADVISORIES],
+        manualReviewRequired: true,
+        certification: 'not-certified',
+        profiles: {
+          '1.1': {
+            spec: null,
+            experimental: false,
+            certification: 'not-certified',
+            findings: [],
+            evidence: [],
+          },
+          '1.2-draft': {
+            spec: null,
+            experimental: true,
+            certification: 'not-certified',
+            findings: [],
+            evidence: [],
+          },
+        },
+      };
+    }
+
     send(response, 200, {
       validatorVersion: VERSION,
       sha256,
       epubVersion,
       findings,
-      accessibility: {
-        metadata: opf ? metadataFromOpf(opf) : [],
-        advisories: [...ADVISORIES],
-        manualReviewRequired: true,
-        certification: 'not-certified',
-      },
+      accessibility,
       safetyStatus: 'accepted',
       conformanceStatus: result.code === 0 ? 'completed' : 'failed',
     });
@@ -194,7 +246,6 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     await rm(workDir, { recursive: true, force: true, maxRetries: 2 });
   }
 }
-
 const server = createServer((request, response) => {
   if (request.method === 'GET' && request.url === '/health')
     return send(response, 200, { validatorVersion: VERSION });
@@ -214,6 +265,7 @@ export { server, validate };
 
 export {
   EpubExtractionError,
+  extractEpubContainerContext,
   extractEpubVersion,
   extractOpfFromZip,
   extractRootfilePath,

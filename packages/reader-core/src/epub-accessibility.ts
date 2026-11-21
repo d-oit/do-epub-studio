@@ -4,6 +4,39 @@ import {
   checkDeadline,
   createDeadline,
 } from '@do-epub-studio/shared';
+import {
+  assessAccessibilityRules,
+  type AccessibilityRuleContext,
+} from './epub-accessibility-rules';
+
+export type AccessibilitySpecProfile = '1.1' | '1.2-draft';
+
+/** Machine-readable reference to the target EPUB Accessibility specification. */
+export interface AccessibilitySpecRef {
+  spec: string;
+  specUrl: string;
+  version: string;
+  status: string;
+  statusDate: string;
+}
+
+/** Registered spec references, keyed by profile selector. */
+export const ACCESSIBILITY_SPEC_REFS: Record<AccessibilitySpecProfile, AccessibilitySpecRef> = {
+  '1.1': {
+    spec: 'EPUB Accessibility',
+    specUrl: 'https://www.w3.org/TR/epub-a11y-11/',
+    version: '1.1',
+    status: 'W3C Recommendation',
+    statusDate: '2024-10-17',
+  },
+  '1.2-draft': {
+    spec: 'EPUB Accessibility',
+    specUrl: 'https://www.w3.org/TR/epub-a11y-12/',
+    version: '1.2',
+    status: 'W3C Candidate Recommendation Draft',
+    statusDate: '2026-11-11',
+  },
+};
 
 export interface AccessibilityMetadata {
   summary?: string;
@@ -15,6 +48,76 @@ export interface AccessibilityMetadata {
   certifiedBy?: string;
   certifierCredential?: string;
   certifierReport?: string;
+  /** `schema:accessMode` values (human perceptual systems needed to process content). */
+  accessModes?: string[];
+  /** `schema:accessModeSufficient` sets (each value may list modes separated by `;`). */
+  sufficientAccessModes?: string[];
+  /** Every `dcterms:conformsTo` value, for multi-claim analysis. */
+  conformanceClaims?: string[];
+  /** `a11y:contactEmail` — added in EPUB Accessibility 1.2 (issue 2702). */
+  contactEmail?: string;
+  /** `dcterms:date` evaluation dates (EPUB 3 meta form). */
+  evaluationDates?: string[];
+  /** `a11y:certifierReport` link hrefs (`<link rel="a11y:certifierReport" href="..."/>`). */
+  certifierReportHrefs?: string[];
+}
+
+export interface AccessibilityFinding {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  location: string | null;
+  path: string | null;
+  message: string;
+}
+
+/** Machine-readable evidence record per requirement check (see issue #1487). */
+export interface AccessibilityEvidenceRecord {
+  spec: string;
+  specUrl: string;
+  version: string;
+  status: string;
+  statusDate: string;
+  clause: string;
+  checkId: string;
+  result: 'pass' | 'fail' | 'informational';
+  evidence: string;
+  limitation: string;
+}
+
+/** Content-side context used to verify declared claims against actual content. */
+export interface AccessibilityContentContext {
+  /** Navigation document XML (EPUB 3 nav), when extractable. */
+  navXml?: string;
+  /** Navigation document path inside the container, for finding locations. */
+  navPath?: string;
+  /** Manifest item paths (normalized, without leading `/`). */
+  resources?: string[];
+  /** Spine item paths (normalized, without leading `/`). */
+  spinePaths?: string[];
+  /** Sampled content by path (bounded by the caller) for cheap content checks. */
+  contentSample?: Readonly<Record<string, string>>;
+}
+
+export interface AccessibilityAssessmentInput {
+  opfXml: string;
+  context?: AccessibilityContentContext;
+}
+
+export interface AccessibilityAssessmentOptions {
+  specProfile?: AccessibilitySpecProfile;
+  timeoutMs?: number;
+  traceId?: string;
+}
+
+export interface AccessibilityAssessment {
+  profile: AccessibilitySpecProfile;
+  spec: AccessibilitySpecRef;
+  metadata: AccessibilityMetadata;
+  findings: AccessibilityFinding[];
+  evidence: AccessibilityEvidenceRecord[];
+  /** Draft profiles are experimental and never certification. */
+  experimental: boolean;
+  certification: 'declared' | 'not-certified';
 }
 
 const OPF_META_MAX_LEN = 1048576;
@@ -66,7 +169,50 @@ function extractMetaName(opfXml: string, name: string): string[] {
   return results;
 }
 
+function extractLinkHrefs(opfXml: string, rel: string): string[] {
+  const results: string[] = [];
+  const escaped = escapeRegex(rel);
+  const re = new RegExp(`<link[^>]*?rel\\s*=\\s*"${escaped}"[^>]*?>`, 'gi');
+  for (const m of matchAllBounded(re, opfXml, OPF_META_MAX_LEN)) {
+    const hrefMatch = m[0].match(/href\s*=\s*"([^"]*)"/);
+    const value = hrefMatch?.[1]?.trim();
+    if (value && value.length <= 2048) {
+      results.push(value);
+    }
+  }
+  return results;
+}
+
+function dedupe(values: string[], maxLen: number): string[] {
+  return [...new Set(values)].filter((v) => v.length > 0 && v.length <= maxLen);
+}
+
+function optionalValue(values: string[]): string | undefined {
+  const first = values[0];
+  return first && first.length > 0 ? first : undefined;
+}
+
+/** Parse the legacy base metadata surface (used by reader UI and older callers). */
 export function parseAccessibilityFromOpf(
+  opfXml: string,
+  options?: { timeoutMs?: number; traceId?: string },
+): AccessibilityMetadata {
+  const claims = extractAccessibilityClaims(opfXml, options);
+  return {
+    summary: claims.summary,
+    features: claims.features,
+    hazards: claims.hazards,
+    controls: claims.controls,
+    api: claims.api,
+    conformsTo: claims.conformsTo,
+    certifiedBy: claims.certifiedBy,
+    certifierCredential: claims.certifierCredential,
+    certifierReport: claims.certifierReport,
+  };
+}
+
+/** Extract every accessibility claim the package document declares (profile-neutral). */
+export function extractAccessibilityClaims(
   opfXml: string,
   options?: { timeoutMs?: number; traceId?: string },
 ): AccessibilityMetadata {
@@ -78,75 +224,170 @@ export function parseAccessibilityFromOpf(
   const traceId = options?.traceId;
   const deadline = createDeadline(timeoutMs);
 
-  const summary =
-    extractMetaProperty(opfXml, 'schema:accessibilitySummary')[0] ??
-    extractMetaName(opfXml, 'schema:accessibilitySummary')[0] ??
-    undefined;
+  const summary = optionalValue([
+    ...extractMetaProperty(opfXml, 'schema:accessibilitySummary'),
+    ...extractMetaName(opfXml, 'schema:accessibilitySummary'),
+  ]);
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const features = [
-    ...new Set([
+  const features = dedupe(
+    [
       ...extractMetaProperty(opfXml, 'schema:accessibilityFeature'),
       ...extractMetaName(opfXml, 'schema:accessibilityFeature'),
-    ]),
-  ].filter((f) => f.length > 0 && f.length <= 256);
+    ],
+    256,
+  );
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const hazards = [
-    ...new Set([
+  const hazards = dedupe(
+    [
       ...extractMetaProperty(opfXml, 'schema:accessibilityHazard'),
       ...extractMetaName(opfXml, 'schema:accessibilityHazard'),
-    ]),
-  ].filter((h) => h.length > 0 && h.length <= 256);
+    ],
+    256,
+  );
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const controls = [
-    ...new Set([
+  const controls = dedupe(
+    [
       ...extractMetaProperty(opfXml, 'schema:accessibilityControl'),
       ...extractMetaName(opfXml, 'schema:accessibilityControl'),
-    ]),
-  ].filter((c) => c.length > 0 && c.length <= 256);
+    ],
+    256,
+  );
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const api =
-    extractMetaProperty(opfXml, 'schema:accessibilityAPI')[0] ??
-    extractMetaName(opfXml, 'schema:accessibilityAPI')[0] ??
-    undefined;
+  const api = optionalValue([
+    ...extractMetaProperty(opfXml, 'schema:accessibilityAPI'),
+    ...extractMetaName(opfXml, 'schema:accessibilityAPI'),
+  ]);
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const conformsTo =
-    extractMetaProperty(opfXml, 'dcterms:conformsTo')[0] ??
-    extractMetaName(opfXml, 'dcterms:conformsTo')[0] ??
-    undefined;
+  const conformanceClaims = dedupe(
+    [
+      ...extractMetaProperty(opfXml, 'dcterms:conformsTo'),
+      ...extractMetaName(opfXml, 'dcterms:conformsTo'),
+    ],
+    256,
+  );
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const certifiedBy =
-    extractMetaProperty(opfXml, 'a11y:certifiedBy')[0] ??
-    extractMetaName(opfXml, 'a11y:certifiedBy')[0] ??
-    undefined;
+  const certifiedBy = optionalValue([
+    ...extractMetaProperty(opfXml, 'a11y:certifiedBy'),
+    ...extractMetaName(opfXml, 'a11y:certifiedBy'),
+  ]);
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const certifierCredential =
-    extractMetaProperty(opfXml, 'a11y:certifierCredential')[0] ??
-    extractMetaName(opfXml, 'a11y:certifierCredential')[0] ??
-    undefined;
+  const certifierCredential = optionalValue([
+    ...extractMetaProperty(opfXml, 'a11y:certifierCredential'),
+    ...extractMetaName(opfXml, 'a11y:certifierCredential'),
+  ]);
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
-  const certifierReport =
-    extractMetaProperty(opfXml, 'a11y:certifierReport')[0] ??
-    extractMetaName(opfXml, 'a11y:certifierReport')[0] ??
-    undefined;
+  const certifierReport = optionalValue([
+    ...extractMetaProperty(opfXml, 'a11y:certifierReport'),
+    ...extractMetaName(opfXml, 'a11y:certifierReport'),
+  ]);
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
+
+  const accessModes = dedupe(
+    [
+      ...extractMetaProperty(opfXml, 'schema:accessMode'),
+      ...extractMetaName(opfXml, 'schema:accessMode'),
+    ],
+    256,
+  );
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
+
+  const sufficientAccessModes = dedupe(
+    [
+      ...extractMetaProperty(opfXml, 'schema:accessModeSufficient'),
+      ...extractMetaName(opfXml, 'schema:accessModeSufficient'),
+    ],
+    256,
+  );
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
+
+  const contactEmail = optionalValue([
+    ...extractMetaProperty(opfXml, 'a11y:contactEmail'),
+    ...extractMetaName(opfXml, 'a11y:contactEmail'),
+  ]);
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
+
+  const evaluationDates = dedupe(
+    [
+      ...extractMetaProperty(opfXml, 'dcterms:date'),
+      ...extractMetaName(opfXml, 'dcterms:date'),
+    ],
+    256,
+  );
+  checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
+
+  const certifierReportHrefs = dedupe(extractLinkHrefs(opfXml, 'a11y:certifierReport'), 2048);
 
   return {
-    summary: summary && summary.length > 0 ? summary : undefined,
+    summary,
     features,
     hazards,
     controls,
-    api: api && api.length > 0 ? api : undefined,
-    conformsTo: conformsTo && conformsTo.length > 0 ? conformsTo : undefined,
-    certifiedBy: certifiedBy && certifiedBy.length > 0 ? certifiedBy : undefined,
-    certifierCredential:
-      certifierCredential && certifierCredential.length > 0 ? certifierCredential : undefined,
-    certifierReport: certifierReport && certifierReport.length > 0 ? certifierReport : undefined,
+    api,
+    conformsTo: conformanceClaims[0],
+    certifiedBy,
+    certifierCredential,
+    certifierReport,
+    accessModes,
+    sufficientAccessModes,
+    conformanceClaims,
+    contactEmail,
+    evaluationDates,
+    certifierReportHrefs,
+  };
+}
+
+/**
+ * Assess a package document against one EPUB Accessibility profile.
+ *
+ * The draft `1.2-draft` profile is experimental: its findings are labeled as
+ * such, and it never emits certification claims. Stable `1.1` verdicts are
+ * identical regardless of whether draft rules are also run (draft rules are
+ * only applied when `specProfile` selects the draft).
+ */
+export function assessAccessibility(
+  input: AccessibilityAssessmentInput,
+  options?: AccessibilityAssessmentOptions,
+): AccessibilityAssessment {
+  const profile = options?.specProfile ?? '1.1';
+  const spec = ACCESSIBILITY_SPEC_REFS[profile];
+  const timeoutMs = options?.timeoutMs ?? ACCESSIBILITY_TIMEOUT_MS;
+  const traceId = options?.traceId;
+  const deadline = createDeadline(timeoutMs);
+
+  const metadata = extractAccessibilityClaims(input.opfXml, { timeoutMs, traceId });
+  checkDeadline(deadline, 'accessibility-assess', timeoutMs, traceId);
+
+  const context: AccessibilityRuleContext = {
+    ...(input.context ?? {}),
+    deadline,
+    timeoutMs,
+    traceId,
+  };
+  const { findings, evidence } = assessAccessibilityRules(profile, spec, metadata, context);
+
+  const fullClaimPass = evidence.some(
+    (record) => record.checkId === 'claim.conformsTo.pattern' && record.result === 'pass',
+  );
+  const certification: 'declared' | 'not-certified' =
+    profile === '1.1' && fullClaimPass && metadata.certifiedBy
+      ? 'declared'
+      : 'not-certified';
+
+  return {
+    profile,
+    spec,
+    metadata,
+    findings,
+    evidence,
+    experimental: profile === '1.2-draft',
+    certification,
   };
 }

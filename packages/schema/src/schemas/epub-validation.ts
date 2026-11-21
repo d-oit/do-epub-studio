@@ -24,6 +24,34 @@ export const EpubAccessibilityMetadataItemSchema = z.object({
   present: z.boolean().optional(),
   provenance: z.literal('opf'),
 });
+export const EpubAccessibilitySpecRefSchema = z.object({
+  spec: z.string().max(80),
+  specUrl: z.string().max(300),
+  version: z.string().max(20),
+  status: z.string().max(80),
+  statusDate: z.string().max(20),
+});
+
+export const EpubAccessibilityEvidenceRecordSchema = z.object({
+  spec: z.string().max(80),
+  specUrl: z.string().max(300),
+  version: z.string().max(20),
+  status: z.string().max(80),
+  statusDate: z.string().max(20),
+  clause: z.string().max(60),
+  checkId: z.string().max(80),
+  result: z.enum(['pass', 'fail', 'informational']),
+  evidence: z.string().max(500),
+  limitation: z.string().max(300),
+});
+
+export const EpubAccessibilityProfileSchema = z.object({
+  spec: EpubAccessibilitySpecRefSchema.nullable(),
+  experimental: z.boolean(),
+  certification: z.enum(['declared', 'not-certified']),
+  findings: z.array(EpubFindingSchema).max(200),
+  evidence: z.array(EpubAccessibilityEvidenceRecordSchema).max(300),
+});
 
 export const EpubRunnerResultSchema = z.object({
   validatorVersion: z.literal(EPUBCHECK_VERSION),
@@ -51,7 +79,11 @@ export const EpubRunnerResultSchema = z.object({
       )
       .max(100),
     manualReviewRequired: z.boolean(),
-    certification: z.literal('not-certified'),
+    certification: z.enum(['declared', 'not-certified']),
+    profiles: z.object({
+      '1.1': EpubAccessibilityProfileSchema,
+      '1.2-draft': EpubAccessibilityProfileSchema,
+    }),
   }),
 });
 export const AccessibilityRemediationSchema = z.object({
@@ -59,6 +91,10 @@ export const AccessibilityRemediationSchema = z.object({
   notes: z.string().max(1000).nullable().optional(),
   checklist: z.record(z.string().max(100), z.boolean()).optional(),
 });
+
+export type EpubAccessibilitySpecRef = z.infer<typeof EpubAccessibilitySpecRefSchema>;
+export type EpubAccessibilityEvidenceRecord = z.infer<typeof EpubAccessibilityEvidenceRecordSchema>;
+export type EpubAccessibilityProfile = z.infer<typeof EpubAccessibilityProfileSchema>;
 
 export type EpubFinding = z.infer<typeof EpubFindingSchema>;
 export type EpubAccessibilityMetadataItem = z.infer<typeof EpubAccessibilityMetadataItemSchema>;
