@@ -397,7 +397,11 @@ function runStreamingValidation(
   let localOffset = 0;
   try {
     for (let index = 0; index < cd.entries.length; index += 1) {
-      const entry = cd.entries[index]!;
+      const entry = cd.entries[index];
+      if (!entry) {
+        state.fail(archiveRejection('invalid-archive'));
+        break;
+      }
       if (state.finished) break;
       if (signal.aborted) {
         state.fail(archiveRejection('timeout'));
