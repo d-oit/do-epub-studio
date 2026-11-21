@@ -59,7 +59,9 @@ test.describe('epub corpus layer 2: reader-engine browser rendering', () => {
       if (entry.category === 'security') {
         const scriptCount = await frame.locator('script').count();
         expect(scriptCount).toBe(0);
-        const dangerousAttrs = await frame.locator('[onclick], [onload], [onmouseover], [onerror]').count();
+        const dangerousAttrs = await frame
+          .locator('[onclick], [onload], [onmouseover], [onerror]')
+          .count();
         expect(dangerousAttrs).toBe(0);
       }
     });

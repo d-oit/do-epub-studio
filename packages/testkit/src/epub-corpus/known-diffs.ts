@@ -70,8 +70,7 @@ export const KNOWN_DIFFS: readonly KnownDiff[] = [
     epubcheckCode: 'SCRIPT-001',
     scope: 'fixture',
     expectation: 'SVG script/event/foreignObject payloads are stripped before render.',
-    rationale:
-      'Same policy difference as script-event-handlers, applied within SVG content.',
+    rationale: 'Same policy difference as script-event-handlers, applied within SVG content.',
     verified: false,
   },
   {
@@ -97,7 +96,8 @@ export const KNOWN_DIFFS: readonly KnownDiff[] = [
     fixtureId: 'remote-resources',
     epubcheckCode: 'RSC-012',
     scope: 'fixture',
-    expectation: 'Absolute remote resource references are stripped by the sanitizer; nothing is fetched.',
+    expectation:
+      'Absolute remote resource references are stripped by the sanitizer; nothing is fetched.',
     rationale:
       'EPUBCheck expects remote references to resolve or else warning (RSC-012) — it does not treat them as unsafe. Our default policy blocks all external resource loads.',
     verified: false,
@@ -152,7 +152,8 @@ export const KNOWN_DIFFS: readonly KnownDiff[] = [
     fixtureId: 'oversized-resource',
     epubcheckCode: 'RSC-017',
     scope: 'fixture-hidden',
-    expectation: 'Size-limit gate rejects oversized archives; the corpus exercises it with a reduced limit deterministically.',
+    expectation:
+      'Size-limit gate rejects oversized archives; the corpus exercises it with a reduced limit deterministically.',
     rationale:
       'EPUBCheck has its own size heuristics; our bounds differ. The fixture documents the limit path without shipping a >100 MiB artifact.',
     verified: false,

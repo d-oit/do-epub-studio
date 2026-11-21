@@ -40,10 +40,13 @@ async function archiveOutcomeOf(
     return { outcome: { kind: 'ok' } };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (/traversal/i.test(msg)) return { outcome: { kind: 'reject', reason: 'traversal' }, error: msg };
+    if (/traversal/i.test(msg))
+      return { outcome: { kind: 'reject', reason: 'traversal' }, error: msg };
     if (/ratio/i.test(msg)) return { outcome: { kind: 'reject', reason: 'ratio' }, error: msg };
-    if (/size|byte/i.test(msg)) return { outcome: { kind: 'reject', reason: 'oversize' }, error: msg };
-    if (/too many/i.test(msg)) return { outcome: { kind: 'reject', reason: 'too-many' }, error: msg };
+    if (/size|byte/i.test(msg))
+      return { outcome: { kind: 'reject', reason: 'oversize' }, error: msg };
+    if (/too many/i.test(msg))
+      return { outcome: { kind: 'reject', reason: 'too-many' }, error: msg };
     return { outcome: { kind: 'reject', reason: 'corrupt' }, error: msg };
   }
 }
@@ -129,7 +132,9 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
     'https://invalid.example/vector.svg',
   ]);
   if (entry.id === 'remote-resources') {
-    const quotedUrls = [...env.chapterRaw.matchAll(/["'](https:\/\/invalid\.example[^"']*)["']/g)].map((m) => m[1] ?? '');
+    const quotedUrls = [
+      ...env.chapterRaw.matchAll(/["'](https:\/\/invalid\.example[^"']*)["']/g),
+    ].map((m) => m[1] ?? '');
     if (quotedUrls.some((v) => REMOTE_RESOURCE_URLS.has(v))) seen.add('REMOTE_RESOURCE_DECLARED');
     const egress = attrValues(env.chapterDoc, ['src', 'href', 'xlink:href']).filter((v) =>
       /^https?:\/\//i.test(v.trim()),
@@ -147,7 +152,8 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
   const allAttrs = (() => {
     const out: { name: string; value: string }[] = [];
     for (const el of Array.from(env.chapterDoc.querySelectorAll('*'))) {
-      for (const attr of Array.from(el.attributes)) out.push({ name: attr.name, value: attr.value });
+      for (const attr of Array.from(el.attributes))
+        out.push({ name: attr.name, value: attr.value });
     }
     return out;
   })();
@@ -159,11 +165,14 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
   );
   const hasScriptElement = env.chapterDoc.querySelector('script') !== null;
   const hasSvgScript =
-    env.chapterDoc.querySelector('svg script, svg[onload], svg[onclick], svg foreignObject') !== null;
+    env.chapterDoc.querySelector('svg script, svg[onload], svg[onclick], svg foreignObject') !==
+    null;
   const unsafeSchemeAttrs = allAttrs.filter((a) => isUnsafeSchemeValue(a.value));
   const rawHasScript = /<script[\s>]/i.test(env.chapterRaw);
   const rawHasEvent = /\son[a-z]+\s*=/i.test(env.chapterRaw);
-  const rawHasSvgScript = /<svg[\s>][\s\S]*?(?:<script|onload=|onclick=|<foreignObject)/i.test(env.chapterRaw);
+  const rawHasSvgScript = /<svg[\s>][\s\S]*?(?:<script|onload=|onclick=|<foreignObject)/i.test(
+    env.chapterRaw,
+  );
   const rawHasUnsafeScheme = /(?:javascript|vbscript|file|data)\s*:/i.test(env.chapterRaw);
   if (rawHasScript && !hasScriptElement) seen.add('SCRIPT_REMOVED');
   if (rawHasEvent && !hasEventAttr) seen.add('EVENT_HANDLER_REMOVED');
@@ -172,7 +181,8 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
     seen.add('UNSAFE_SCHEME_REMOVED');
   }
   if (entry.id === 'url-edge-cases') {
-    const obfuscated = allAttrs.filter((a) => /java%63|java\nscript|\\javascript/i.test(a.value)).length > 0;
+    const obfuscated =
+      allAttrs.filter((a) => /java%63|java\nscript|\\javascript/i.test(a.value)).length > 0;
     if (obfuscated) seen.add('OBFUSCATED_SCHEME_RETAINED_INERT');
     if (attrValues(env.chapterDoc, ['src']).some((v) => v.startsWith('//'))) {
       seen.add('SCHEME_RELATIVE_RETAINED');
@@ -203,10 +213,14 @@ function extractMetadata(entry: CorpusEntry, env: CorpusEnv): ExtractedMetadata 
 }
 
 function assertMetadata(entry: CorpusEntry, actual: ExtractedMetadata): void {
-  if (entry.expectedMetadata.title !== undefined) expect(actual.title).toBe(entry.expectedMetadata.title);
-  if (entry.expectedMetadata.language !== undefined) expect(actual.language).toBe(entry.expectedMetadata.language);
-  if (entry.expectedMetadata.epubVersion !== undefined) expect(actual.epubVersion).toBe(entry.expectedMetadata.epubVersion);
-  if (entry.expectedMetadata.direction !== undefined) expect(actual.direction).toBe(entry.expectedMetadata.direction);
+  if (entry.expectedMetadata.title !== undefined)
+    expect(actual.title).toBe(entry.expectedMetadata.title);
+  if (entry.expectedMetadata.language !== undefined)
+    expect(actual.language).toBe(entry.expectedMetadata.language);
+  if (entry.expectedMetadata.epubVersion !== undefined)
+    expect(actual.epubVersion).toBe(entry.expectedMetadata.epubVersion);
+  if (entry.expectedMetadata.direction !== undefined)
+    expect(actual.direction).toBe(entry.expectedMetadata.direction);
 }
 
 describe('epub corpus layer 1: archive + parse + sanitize + metadata', () => {
@@ -250,11 +264,17 @@ describe('epub corpus layer 1: archive + parse + sanitize + metadata', () => {
     for (const entry of CORPUS_ENTRIES) {
       const data = generateCorpusEntry(entry.id);
       const env = await buildEnv(entry, data);
-      if (entry.securityVerdict.kind === 'graceful-reject' && entry.securityVerdict.at === 'archive') {
+      if (
+        entry.securityVerdict.kind === 'graceful-reject' &&
+        entry.securityVerdict.at === 'archive'
+      ) {
         expect(env.archiveOutcome.kind).toBe('reject');
         expect(entry.expectedParses).toBe(false);
       }
-      if (entry.securityVerdict.kind === 'graceful-reject' && entry.securityVerdict.at === 'render') {
+      if (
+        entry.securityVerdict.kind === 'graceful-reject' &&
+        entry.securityVerdict.at === 'render'
+      ) {
         expect(env.archiveOutcome.kind).toBe('ok');
         expect(entry.expectedParses).toBe(true);
       }

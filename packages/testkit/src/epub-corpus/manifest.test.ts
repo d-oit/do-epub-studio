@@ -8,7 +8,9 @@ describe('corpus manifest invariants', () => {
     for (const entry of CORPUS_ENTRIES) {
       expect(ids.has(entry.id)).toBe(false);
       ids.add(entry.id);
-      expect(entry.category).toMatch(/standards|layout-i18n|embedded-resources|media-annotation|malformed|security/);
+      expect(entry.category).toMatch(
+        /standards|layout-i18n|embedded-resources|media-annotation|malformed|security/,
+      );
       for (const d of entry.expectedDiagnostics) {
         expect(d.severity).toMatch(/error|warning|info/);
         expect(typeof d.code).toBe('string');
