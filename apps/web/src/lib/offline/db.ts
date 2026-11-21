@@ -1,4 +1,7 @@
-import { openDB, type IDBPDatabase } from 'idb';
+import type { IDBPDatabase } from 'idb';
+import { openOfflineDb, USER_DATA_STORES } from './idb-schema';
+import { getCacheStorage } from './cache';
+import { listManifests, removeManifest } from './manifest-store';
 import { encryptJSON, decryptJSON } from './crypto';
 import { useAuthStore } from '@/stores/auth';
 import type {
@@ -14,8 +17,7 @@ import type {
 // so the 30+ modules importing them from `./db` keep working unchanged.
 export * from './types';
 
-const DB_NAME = 'do-epub-studio';
-const DB_VERSION = 5;
+
 
 let dbInstance: IDBPDatabase | null = null;
 let tokenOverride: string | null = null;
@@ -135,73 +137,7 @@ export function closeDb(): void {
 
 export async function getDB(): Promise<IDBPDatabase> {
   if (dbInstance) return dbInstance;
-
-  dbInstance = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion) {
-      if (oldVersion < 1) {
-        if (!db.objectStoreNames.contains('progress')) {
-          const progressStore = db.createObjectStore('progress', { keyPath: 'id' });
-          progressStore.createIndex('bookId', 'bookId');
-          progressStore.createIndex('synced', 'synced');
-        }
-
-        if (!db.objectStoreNames.contains('annotations')) {
-          const annotationStore = db.createObjectStore('annotations', { keyPath: 'id' });
-          annotationStore.createIndex('bookId', 'bookId');
-          annotationStore.createIndex('synced', 'synced');
-        }
-
-        if (!db.objectStoreNames.contains('syncQueue')) {
-          const queueStore = db.createObjectStore('syncQueue', { keyPath: 'id' });
-          queueStore.createIndex('createdAt', 'createdAt');
-        }
-
-        if (!db.objectStoreNames.contains('permissions')) {
-          db.createObjectStore('permissions', { keyPath: 'bookId' });
-        }
-
-        if (!db.objectStoreNames.contains('readingInsights')) {
-          const insightsStore = db.createObjectStore('readingInsights', {
-            keyPath: ['bookId', 'date'],
-          });
-          insightsStore.createIndex('bookId', 'bookId');
-        }
-      }
-
-      // v1→v2: AnnotationEntry gains optional status/visibility fields.
-      // No structural migration needed — existing records simply have
-      // undefined for the new fields, which the mapper defaults to
-      // 'open'/'shared' (Plan 998).
-
-      // v2→v3: durable offline-sync conflict store (Plan 228 F2). The store
-      // mirrors the in-memory pendingConflicts Map; local/remote entity
-      // versions are encrypted like the sync queue / reading-insights stores.
-      if (oldVersion < 3) {
-        if (!db.objectStoreNames.contains('conflicts')) {
-          db.createObjectStore('conflicts', { keyPath: 'id' });
-        }
-      }
-
-      // v3→v4: durable private-feedback drafts (GOAP-999 Wave 2, REL-02).
-      // Owner-scoped compound index keeps one account's drafts invisible
-      // to every other account sharing the device.
-      if (oldVersion < 4) {
-        if (!db.objectStoreNames.contains('feedbackDrafts')) {
-          const draftsStore = db.createObjectStore('feedbackDrafts', { keyPath: 'id' });
-          draftsStore.createIndex('ownerBook', ['ownerEmail', 'bookId']);
-        }
-      }
-
-      // v4→v5: cached signed book-file URL enabling offline reading (A5,
-      // GOAP-300). Keyed by bookId; the URL is encrypted at rest.
-      if (oldVersion < 5) {
-        if (!db.objectStoreNames.contains('bookFiles')) {
-          db.createObjectStore('bookFiles', { keyPath: 'bookId' });
-        }
-      }
-    },
-  });
-
+  dbInstance = await openOfflineDb();
   return dbInstance;
 }
 
@@ -338,21 +274,38 @@ export async function getBookFile(bookId: string): Promise<BookFileEntry | undef
   return entry ?? undefined;
 }
 
+/**
+ * Wipe every on-device store tied to the authenticated session: user data
+ * and also downloaded book packages (serving/staging caches + manifests), so
+ * a signed-out device does not retain a granted book's content (issue #1485).
+ */
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
-  const stores = [
-    'progress',
-    'annotations',
-    'syncQueue',
-    'permissions',
-    'readingInsights',
-    'conflicts',
-    'bookFiles',
-    'feedbackDrafts',
-  ];
+  const stores = [...USER_DATA_STORES];
+
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
+
+  const manifests = await listManifests();
+  const cacheStorage = getCacheStorage();
+  for (const manifest of manifests) {
+    if (cacheStorage) {
+      try {
+        await cacheStorage.delete(manifest.cacheName);
+      } catch {
+        // In use; recovery will remove leftovers on next start.
+      }
+      if (manifest.stagingCacheName) {
+        try {
+          await cacheStorage.delete(manifest.stagingCacheName);
+        } catch {
+          // Best-effort.
+        }
+      }
+    }
+    await removeManifest(manifest.bookId);
+  }
 }
 
 export async function saveReadingInsight(entry: ReadingInsightEntry): Promise<void> {

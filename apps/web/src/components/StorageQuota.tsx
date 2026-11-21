@@ -2,16 +2,32 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { ConfirmDialog } from './ui';
 import { formatBytes } from '../lib/formatBytes';
+import { getPersistentStorageStatus, requestPersistentStorage } from '../lib/offline/storage-policy';
+import { getOfflineStorageSummary } from '../lib/offline/offline-state';
 
 interface StorageEstimate {
   usage: number;
   quota: number;
 }
 
+interface PersistentStatus {
+  supported: boolean;
+  persisted: boolean;
+  denied: boolean;
+}
+
+interface OfflineSummary {
+  bookCount: number;
+  readyCount: number;
+  totalBytes: number;
+}
+
+const EMPTY_SUMMARY: OfflineSummary = { bookCount: 0, readyCount: 0, totalBytes: 0 };
+
 /**
- * Storage quota panel using the Storage API.
- * Shows usage/quota with a progress bar and provides a "clear cache" action
- * that purges IndexedDB databases and Cache Storage entries created by the SW.
+ * Storage quota panel using the Storage API (issue #1485).
+ * Shows usage/quota with a progress bar, persistent-storage status, an offline
+ * book summary, and a "clear cache" action.
  */
 export function StorageQuota() {
   const { t } = useTranslation();
@@ -21,8 +37,16 @@ export function StorageQuota() {
   const [error, setError] = useState<string | null>(null);
   const [cleared, setCleared] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [persistStatus, setPersistStatus] = useState<PersistentStatus>({
+    supported: false,
+    persisted: false,
+    denied: false,
+  });
+  const [isRequestingPersist, setIsRequestingPersist] = useState(false);
+  const [summary, setSummary] = useState<OfflineSummary>(EMPTY_SUMMARY);
 
+
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -35,24 +59,41 @@ export function StorageQuota() {
       }
     } catch {
       setError(t('storage.unsupported'));
-    } finally {
-      setIsLoading(false);
     }
+
+    const [persist, offline] = await Promise.all([
+      getPersistentStorageStatus(),
+      getOfflineStorageSummary(),
+    ]);
+    setPersistStatus(persist);
+    setSummary(offline);
+    setIsLoading(false);
   }, [t]);
 
   useEffect(() => {
     void refresh();
     return () => {
-      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+      clearTimeout(clearTimerRef.current);
     };
   }, [refresh]);
+
+  const requestPersist = useCallback(async () => {
+    setIsRequestingPersist(true);
+    try {
+      const status = await requestPersistentStorage();
+      setPersistStatus(status);
+    } finally {
+      setIsRequestingPersist(false);
+    }
+  }, []);
 
   const executeClear = useCallback(async () => {
     setIsClearing(true);
     setError(null);
     setCleared(false);
     try {
-      // Clear all Cache Storage entries
+      // Clear all Cache Storage entries (includes verified offline books;
+      // recovery will reconcile manifests on next start).
       if ('caches' in window) {
         const keys = await caches.keys();
         await Promise.all(keys.map((k) => caches.delete(k)));
@@ -63,28 +104,26 @@ export function StorageQuota() {
         await Promise.all(
           dbs
             .filter((db) => db.name && db.name !== 'do-epub-auth')
-            .map(
-              (db) =>
-                new Promise<void>((resolve) => {
-                  const dbName = db.name;
-                  if (!dbName) {
-                    resolve();
-                    return;
-                  }
-                  const req = indexedDB.deleteDatabase(dbName);
-                  req.onsuccess = () => {
-                    resolve();
-                  };
-                  req.onerror = () => {
-                    resolve();
-                  };
-                }),
-            ),
+            .map((db) => {
+              const dbName = db.name;
+              if (!dbName) {
+                return Promise.resolve();
+              }
+              const { promise, resolve } = Promise.withResolvers<void>();
+              const req = indexedDB.deleteDatabase(dbName);
+              req.onsuccess = () => {
+                resolve();
+              };
+              req.onerror = () => {
+                resolve();
+              };
+              return promise;
+            }),
         );
       }
       setCleared(true);
       // Auto-dismiss the cleared message after 3 seconds
-      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+      clearTimeout(clearTimerRef.current);
       clearTimerRef.current = setTimeout(() => {
         setCleared(false);
       }, 3000);
@@ -100,7 +139,6 @@ export function StorageQuota() {
   const handleClearClick = useCallback(() => {
     setShowConfirm(true);
   }, []);
-
   const handleConfirmClear = useCallback(() => {
     setShowConfirm(false);
     void executeClear();
@@ -192,6 +230,57 @@ export function StorageQuota() {
               {t('storage.highUsage')}
             </p>
           )}
+
+          {/* Persistent storage status */}
+          <div className="mt-4 rounded-lg border border-border bg-background p-3 text-xs text-foreground-muted">
+            {persistStatus.persisted ? (
+              <p className="flex items-center gap-1.5 text-semantic-success">
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {t('storage.persistence.persisted')}
+              </p>
+            ) : persistStatus.denied ? (
+              <p className="text-semantic-warning">{t('storage.persistence.denied')}</p>
+            ) : !persistStatus.supported ? (
+              <p>{t('storage.persistence.unsupported')}</p>
+            ) : (
+              <div className="flex items-center justify-between gap-2">
+                <p>{t('storage.persistence.requested')}</p>
+                <button
+                  type="button"
+                  onClick={() => void requestPersist()}
+                  disabled={isRequestingPersist}
+                  className="shrink-0 rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-background-tertiary disabled:opacity-50"
+                >
+                  {isRequestingPersist ? t('storage.persistence.requesting') : t('storage.persistence.requestButton')}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Offline book summary */}
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-foreground-muted">
+            {summary.bookCount > 0 ? (
+              <>
+                <span>{t('storage.offlineBooks', { books: String(summary.bookCount) })}</span>
+                <span>{t('storage.offlineBytes', { bytes: formatBytes(summary.totalBytes) })}</span>
+              </>
+            ) : (
+              <span>{t('storage.offlineEmpty')}</span>
+            )}
+          </div>
 
           {cleared && (
             <p className="mt-3 text-xs text-semantic-success flex items-center gap-1.5">

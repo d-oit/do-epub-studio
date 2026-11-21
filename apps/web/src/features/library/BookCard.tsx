@@ -3,6 +3,65 @@ import { ProgressBar } from '../../components/ui';
 import { useTranslation } from '../../hooks/useTranslation';
 import { formatDate } from '../../lib/i18n-format';
 import type { LibraryBookResponse } from '@do-epub-studio/shared';
+import { useOfflineBook } from './hooks/useOfflineBook';
+
+function OfflineControl({ bookId }: { bookId: string }) {
+  const { t } = useTranslation();
+  const { status, busy, download, remove } = useOfflineBook(bookId);
+
+  if (status.kind === 'ready') {
+    return (
+      <span className="mt-3 flex items-center gap-2 text-xs text-semantic-success">
+        <svg
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        {t('library.offline.ready')}
+        <button
+          type="button"
+          onClick={() => void remove()}
+          disabled={busy}
+          className="text-foreground-muted underline-offset-2 hover:text-foreground hover:underline disabled:opacity-50"
+        >
+          {t('library.offline.remove')}
+        </button>
+      </span>
+    );
+  }
+
+  if (status.kind === 'downloading') {
+    return (
+      <span className="mt-3 flex items-center gap-2 text-xs text-foreground-muted">
+        <span className="size-3 animate-spin rounded-full border border-current border-t-transparent" />
+        {t('library.offline.downloading')}
+        {status.percent !== null ? ` ${status.percent}%` : ''}
+      </span>
+    );
+  }
+
+  const label =
+    status.kind === 'failed' ? t('library.offline.retry') : t('library.offline.download');
+  return (
+    <button
+      type="button"
+      onClick={() => void download()}
+      disabled={busy}
+      className="mt-3 rounded-md border border-border px-2.5 py-1 text-xs text-foreground hover:bg-background-tertiary disabled:opacity-50"
+    >
+      {label}
+    </button>
+  );
+}
 
 export function BookCard({ book }: { book: LibraryBookResponse }) {
   const { t } = useTranslation();
@@ -70,6 +129,8 @@ export function BookCard({ book }: { book: LibraryBookResponse }) {
             className="mt-3 max-w-44"
           />
         )}
+
+        <OfflineControl bookId={book.id} />
 
         <div className="eyebrow mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
           {finished && <span>{t('library.finished')}</span>}
