@@ -5,7 +5,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { validateArchive } from '../../../packages/shared/src/archive-validator';
+import { validateArchive, ArchiveRejectionError } from '../../../packages/shared/src/archive-validator';
 import { assessAccessibility } from '@do-epub-studio/reader-core/accessibility';
 import {
   EpubExtractionError,
@@ -181,10 +181,11 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     const bytes = await readFile(inputPath);
     try {
       await validateArchive(bytes);
-    } catch {
+    } catch (error) {
+      const code = error instanceof ArchiveRejectionError ? error.code : 'invalid-archive';
       return send(response, 422, {
         safetyStatus: 'rejected',
-        failureCode: 'ARCHIVE_SAFETY_REJECTED',
+        failureCode: `ARCHIVE_${code.toUpperCase().replace('-', '_')}`,
         validatorVersion: VERSION,
         sha256,
       });

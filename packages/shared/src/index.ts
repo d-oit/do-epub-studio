@@ -6,6 +6,7 @@ export * from './redact';
 export * from './safe-regex';
 export * from './timeout';
 export * from './reanchor-migration';
+export * from './ingest-limits';
 // Archive validation imports fflate, so keep it off the shared barrel.
 // Import it directly from '@do-epub-studio/shared/src/archive-validator'.
 // NOTE: './epub-validator' is intentionally NOT re-exported here. It pulls in

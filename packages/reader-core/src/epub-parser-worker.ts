@@ -1,8 +1,14 @@
-import { createTraceId } from '@do-epub-studio/shared';
+import {
+  createTraceId,
+  archiveRejectionFromError,
+  ArchiveRejectionError,
+} from '@do-epub-studio/shared';
 
 export interface EpubParseResult {
   valid: boolean;
   error?: string;
+  /** Stable archive-rejection code (see shared ingest-limits taxonomy). */
+  code?: string;
   data?: ArrayBuffer;
 }
 
@@ -142,7 +148,9 @@ class EpubParserWorkerPool {
 
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new Error('EPUB parse timeout'));
+        const error = new Error('EPUB parse timeout');
+        Object.assign(error, { code: 'timeout' });
+        reject(error);
       }, PARSE_TIMEOUT_MS);
 
       const msg: MainToWorkerMessage = {
@@ -174,8 +182,17 @@ class EpubParserWorkerPool {
 
       return { valid: true, data: data.buffer as ArrayBuffer };
     } catch (error) {
+      if (error instanceof ArchiveRejectionError || (error instanceof Error && error.name === 'TimeoutError')) {
+        const rejection = archiveRejectionFromError(error);
+        return {
+          valid: false,
+          code: rejection.code,
+          error: rejection.message,
+        };
+      }
       return {
         valid: false,
+        code: 'invalid-archive',
         error: error instanceof Error ? error.message : String(error),
       };
     }
