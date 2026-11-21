@@ -15,4 +15,8 @@ export * from './invitations';
 export * from './epub-validation';
 export * from './annotation-interchange';
 export * from './manuscript';
+<<<<<<< HEAD
 export * from './api';
+=======
+export * from './portability';
+>>>>>>> 33108251 (feat(portability): versioned library data export/import)

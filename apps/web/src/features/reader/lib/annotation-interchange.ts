@@ -24,11 +24,20 @@ export function buildAnnotationInterchange(params: {
   bookTitle: string;
   state: InterchangeState;
   extensions?: Record<string, unknown>;
+  /**
+   * Per-item extension factory. Called with the source record kind and id so
+   * internal bookkeeping (color, status, anchor signals, …) can be carried
+   * losslessly as HTTPS-namespaced extension keys on each annotation.
+   */
+  extensionsFor?: (item: {
+    kind: 'highlight' | 'bookmark' | 'comment';
+    id: string;
+  }) => Record<string, unknown> | undefined;
 }): AnnotationInterchangeDocument {
   const source = publicationIdentity(params.bookId);
   const items: InterchangeAnnotation[] = [
-    ...params.state.highlights.map((item) =>
-      makeAnnotation(
+    ...params.state.highlights.map((item) => {
+      const annotation = makeAnnotation(
         item.id,
         'highlighting',
         source,
@@ -38,10 +47,11 @@ export function buildAnnotationInterchange(params: {
         item.note ?? '',
         item.createdAt,
         item.updatedAt,
-      ),
-    ),
-    ...params.state.bookmarks.map((item) =>
-      makeAnnotation(
+      );
+      return withExtensions(annotation, params.extensionsFor?.({ kind: 'highlight', id: item.id }));
+    }),
+    ...params.state.bookmarks.map((item) => {
+      const annotation = makeAnnotation(
         item.id,
         'bookmarking',
         source,
@@ -51,12 +61,13 @@ export function buildAnnotationInterchange(params: {
         item.label ?? '',
         item.createdAt,
         item.createdAt,
-      ),
-    ),
+      );
+      return withExtensions(annotation, params.extensionsFor?.({ kind: 'bookmark', id: item.id }));
+    }),
     ...params.state.comments
       .filter((item) => item.status !== 'deleted')
-      .map((item) =>
-        makeAnnotation(
+      .map((item) => {
+        const annotation = makeAnnotation(
           item.id,
           'commenting',
           source,
@@ -66,8 +77,9 @@ export function buildAnnotationInterchange(params: {
           item.body,
           item.createdAt,
           item.updatedAt,
-        ),
-      ),
+        );
+        return withExtensions(annotation, params.extensionsFor?.({ kind: 'comment', id: item.id }));
+      }),
   ];
   if (params.extensions) {
     for (const item of items) item.extensions = params.extensions;
@@ -84,6 +96,15 @@ export function buildAnnotationInterchange(params: {
   checkSize(document);
   rejectDuplicateIds(document);
   return document;
+}
+function withExtensions(
+  annotation: InterchangeAnnotation,
+  extensions: Record<string, unknown> | undefined,
+): InterchangeAnnotation {
+  if (extensions && Object.keys(extensions).length > 0) {
+    annotation.extensions = { ...annotation.extensions, ...extensions };
+  }
+  return annotation;
 }
 
 function makeAnnotation(
@@ -152,6 +173,11 @@ export function parseAnnotationInterchange(
   rejectDuplicateIds(document);
   if (document.source !== publicationIdentity(expectedBookId))
     throw new Error('Publication identity does not match this book');
+  const state = interchangeDocumentToState(document);
+  return { document, state };
+}
+
+export function interchangeDocumentToState(document: AnnotationInterchangeDocument): InterchangeState {
   const state: InterchangeState = { highlights: [], comments: [], bookmarks: [] };
   for (const item of document.items) {
     if (
@@ -203,7 +229,7 @@ export function parseAnnotationInterchange(
         resolvedAt: null,
       });
   }
-  return { document, state };
+  return state;
 }
 export function mergeAnnotationInterchangeDocuments(
   existing: AnnotationInterchangeDocument | null,

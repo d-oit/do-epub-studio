@@ -5,7 +5,7 @@ import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
 import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
-import { CommentCreateSchema, CommentUpdateSchema } from '@do-epub-studio/shared';
+import { CommentCreateSchema, CommentUpdateSchema, PaginationQuerySchema } from '@do-epub-studio/shared';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
 import { readerAuth } from '../middleware/auth';
@@ -70,7 +70,11 @@ function toCommentDTO(row: CommentRow, viewerEmail: string) {
   };
 }
 
-commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
+commentsRouter.get(
+  '/books/:bookId/comments',
+  readerAuth,
+  zValidator('query', PaginationQuerySchema),
+  async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
@@ -82,6 +86,7 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
     getRequestTraceId(c),
   );
   if (mismatch) return mismatch.response;
+  const { limit, offset } = c.req.valid('query');
 
   const anchorStatus = c.req.query('anchorStatus');
   let query = `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?)`;
@@ -92,8 +97,8 @@ commentsRouter.get('/books/:bookId/comments', readerAuth, async (c) => {
     params.push(anchorStatus);
   }
 
-  query += ` ORDER BY created_at ASC LIMIT 1000`;
-
+  query += ` ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
   const comments = await queryAll<CommentRow>(c.env, query, params);
 
   return c.json({

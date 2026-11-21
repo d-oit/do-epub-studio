@@ -145,3 +145,14 @@ export const RevisionMigrateSchema = z.object({
     .optional(),
 });
 export type RevisionMigrate = z.infer<typeof RevisionMigrateSchema>;
+/**
+ * Pagination for reader-state list endpoints (highlights, bookmarks,
+ * comments). Defaults reproduce the legacy single-page behavior (first 1000
+ * rows) so existing callers keep working without changes.
+ */
+export const PaginationQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(1000).default(1000),
+  offset: z.coerce.number().int().nonnegative().default(0),
+});
+
+export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;

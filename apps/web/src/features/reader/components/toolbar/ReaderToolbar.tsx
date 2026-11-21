@@ -30,6 +30,7 @@ interface ReaderToolbarProps {
   onToggleInfo: () => void;
   onToggleFixedLayoutControls?: () => void;
   onExportNotes: () => void;
+  onOpenPortability?: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
   hasMediaOverlays?: boolean;
@@ -202,6 +203,7 @@ export function ReaderToolbar({
   onToggleInfo,
   onToggleFixedLayoutControls,
   onExportNotes,
+  onOpenPortability,
   onLogout,
   onToggleNotifications,
   hasMediaOverlays,
@@ -249,6 +251,7 @@ export function ReaderToolbar({
     onToggleInfo,
     onToggleFixedLayoutControls,
     onExportNotes: openExportDialog,
+    onOpenPortability,
     onToggleSettings,
     onLogout,
     onToggleNotifications,

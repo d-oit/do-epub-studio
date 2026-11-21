@@ -1,4 +1,5 @@
 import { InstallPwaSection } from '../../components/InstallPwaSection';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../hooks/useTranslation';
 import type { TranslationKeys } from '../../i18n';
@@ -13,7 +14,7 @@ import {
 import { StorageQuota } from '../../components/StorageQuota';
 import { LocaleSwitcher } from '../../components/LocaleSwitcher';
 import { useAuthStore } from '../../stores/auth';
-
+import { PortabilityDialog } from '../../components/portability/PortabilityDialog';
 function SettingRow({ label, children }: { label: string; children: ReactNode }) {
   return (
     <fieldset className="min-w-0 border-b border-border py-4 last:border-0">
@@ -63,6 +64,7 @@ function SegmentedButton<T extends string | number>({
 
 export function SettingsPage() {
   const { t } = useTranslation();
+  const [isPortabilityOpen, setIsPortabilityOpen] = useState(false);
   const {
     reader,
     setTheme,
@@ -195,6 +197,32 @@ export function SettingsPage() {
             </div>
           )}
         </section>
+        {/* Data portability */}
+        <section className="bg-background-secondary rounded-xl border border-border p-4 sm:p-6 shadow-sm min-w-0">
+          <h2 className="text-lg font-semibold text-foreground mb-2">
+            {t('portability.title')}
+          </h2>
+          <p className="text-sm text-foreground-muted mb-4">{t('portability.subtitle')}</p>
+          <button
+            type="button"
+            onClick={() => setIsPortabilityOpen(true)}
+            className="min-h-11 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors"
+          >
+            {t('portability.exportAll')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPortabilityOpen(true)}
+            className="ms-2 min-h-11 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors"
+          >
+            {t('portability.importTitle')}
+          </button>
+        </section>
+        <PortabilityDialog
+          isOpen={isPortabilityOpen}
+          scope="account"
+          onClose={() => setIsPortabilityOpen(false)}
+        />
       </div>
     </div>
   );

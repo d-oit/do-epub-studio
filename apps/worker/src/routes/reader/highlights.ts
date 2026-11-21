@@ -4,7 +4,7 @@ import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
 import { queryFirst, queryAll, execute } from '../../db/client';
 import { logAudit } from '../../audit';
-import { HighlightCreateSchema, HighlightUpdateSchema } from '@do-epub-studio/schema';
+import { HighlightCreateSchema, HighlightUpdateSchema, PaginationQuerySchema } from '@do-epub-studio/schema';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
 import { getRequestTraceId } from '../../lib/api-error';
@@ -53,7 +53,11 @@ function toHighlightDTO(row: HighlightRow) {
     originalSelectedText: row.original_selected_text ?? null,
   };
 }
-highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
+highlightsRouter.get(
+  '/:bookId/highlights',
+  readerAuth,
+  zValidator('query', PaginationQuerySchema),
+  async (c) => {
   const bookId = c.req.param('bookId');
   const auth = c.get('auth');
 
@@ -66,6 +70,7 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
   );
   if (mismatch) return mismatch.response;
 
+  const { limit, offset } = c.req.valid('query');
   const anchorStatus = c.req.query('anchorStatus');
   let query = `SELECT * FROM highlights WHERE book_id = ? AND user_email = ?`;
   const params: (string | number | null)[] = [bookId, auth.email];
@@ -73,7 +78,8 @@ highlightsRouter.get('/:bookId/highlights', readerAuth, async (c) => {
     query += ` AND anchor_status = ?`;
     params.push(anchorStatus);
   }
-  query += ` ORDER BY created_at DESC LIMIT 1000`;
+  query += ` ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
   const highlights = await queryAll<HighlightRow>(c.env, query, params);
 
   return c.json({
