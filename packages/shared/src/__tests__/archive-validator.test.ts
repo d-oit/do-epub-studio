@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { deflateSync, strToU8, zipSync, UnzipInflate } from 'fflate';
+import { deflateSync, strToU8, zipSync } from 'fflate';
+import * as Fflate from 'fflate';
 import fc from 'fast-check';
 import {
   validateArchive,
@@ -13,7 +14,7 @@ import { type ArchiveRejectionCode, ARCHIVE_REJECTION_CODES } from '../ingest-li
 // monkey-patching prototypes: a preflight rejection must never construct a
 // decompressor, i.e. no expansion begins.
 vi.mock('fflate', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('fflate')>();
+  const actual = await importOriginal<typeof Fflate>();
   class UnzipInflateSpy extends actual.UnzipInflate {
     static constructionCount = 0;
     constructor(...args: ConstructorParameters<typeof actual.UnzipInflate>) {
@@ -28,6 +29,7 @@ interface InflateSpyCtor {
   constructionCount: number;
 }
 
+const UnzipInflate = Fflate.UnzipInflate;
 const InflateSpy = UnzipInflate as unknown as InflateSpyCtor;
 
 function resetInflateCount(): void {
