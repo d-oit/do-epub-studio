@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useTranslation } from '../hooks/useTranslation';
+import { useOfflineRecovery } from '../hooks/useOfflineRecovery';
 import { AppLogo } from './ui';
 import { BottomTabBar, Sidebar, Drawer } from './navigation';
 import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
@@ -10,6 +11,7 @@ import { APP_NAME, APP_VERSION_LABEL } from '../config/app-identity';
 // the shell never redirects and owns the single `main#main-content` landmark;
 // nested pages own presentation only.
 export function AppShell() {
+  useOfflineRecovery();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { t } = useTranslation();
   const toggleDrawer = useCallback(() => {

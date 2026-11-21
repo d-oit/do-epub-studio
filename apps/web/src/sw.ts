@@ -6,11 +6,14 @@ import { registerRoute, NavigationRoute } from 'workbox-routing';
 import { CacheFirst, NetworkFirst, NetworkOnly, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
-import { RangeRequestsPlugin } from 'workbox-range-requests';
+
 import { createHandlerBoundToURL } from 'workbox-precaching';
 import { enable as enableNavigationPreload } from 'workbox-navigation-preload';
 import { createTraceId } from '@do-epub-studio/shared';
 import { swLogEvent } from './sw-logger';
+import { evictToThreshold } from './lib/offline/eviction';
+import { recoverOfflineStorage } from './lib/offline/recovery';
+import { serveBookResource } from './lib/offline/serving';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -48,6 +51,14 @@ precacheAndRoute(precacheEntries);
 // Updates still wait for the user's refresh prompt (no `skipWaiting`).
 self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(self.clients.claim());
+  // Reconcile offline storage (interrupted staging, orphan caches, stale or
+  // corrupt manifests) on every activation; never blocking activation.
+  void recoverOfflineStorage().catch((error: unknown) => {
+    swLogEvent('error', 'sw.storage.recovery_failed', {
+      traceId: createTraceId(),
+      error: error instanceof Error ? error.message : String(error),
+    });
+  });
 });
 
 // Enable navigation preload for faster SPA navigations when SW is active
@@ -84,38 +95,10 @@ const BACKOFF_MS = 300_000;
 let lastEstimateAt = 0;
 let lastFailedAt = 0;
 
-// Caches we are willing to evict, in descending priority order.
-// Caches NOT listed here (e.g. precache / app shell) are never touched.
-const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'book-content'] as const;
+// Eviction is handled by lib/offline/eviction (byte-estimate + tier-aware
+// LRU). Old entry-count-based cache eviction is gone; user data is never a
+// candidate (see EVICTION / ownership modules).
 
-async function evictLargestCache(): Promise<void> {
-  const cacheNames = await caches.keys();
-  let targetName: string | null = null;
-  let targetSize = -1;
-
-  for (const name of cacheNames) {
-    // Skip caches that must never be evicted (precache / app shell).
-    if (name.startsWith('workbox-precache')) continue;
-
-    // Only consider caches that match an evictable prefix, or the fallback.
-    const matchesPrefix = EVICTABLE_PREFIXES.some((p) => name.startsWith(p) || name === p);
-    if (!matchesPrefix && name !== 'external-assets') continue;
-
-    const cache = await caches.open(name);
-    const keys = await cache.keys();
-    if (keys.length > targetSize) {
-      targetSize = keys.length;
-      targetName = name;
-    }
-  }
-
-  if (targetName) {
-    await caches.delete(targetName);
-  } else {
-    // Fallback when nothing matched — keep old behaviour.
-    await caches.delete('external-assets');
-  }
-}
 
 const quotaGuardPlugin = {
   cacheWillUpdate: async ({ request, response }: { request: Request; response: Response }) => {
@@ -143,7 +126,18 @@ const quotaGuardPlugin = {
           { traceId, usage, quota, usageRatio },
           { request },
         );
-        await evictLargestCache();
+        const eviction = await evictToThreshold();
+        swLogEvent(
+          'info',
+          'sw.storage.evicted',
+          {
+            traceId,
+            evictedBooks: eviction.evictedBooks.length,
+            removedCaches: eviction.removedCaches.length,
+            freedBytes: eviction.freedBytes,
+          },
+          { request },
+        );
       }
     } catch (err) {
       lastFailedAt = Date.now();
@@ -171,19 +165,36 @@ registerRoute(
   }),
 );
 
-// Cache EPUB and other book content (covers, media) with StaleWhileRevalidate
-registerRoute(
-  /^https?:.*\/api\/files\/.*/i,
-  new StaleWhileRevalidate({
-    cacheName: 'book-content',
-    plugins: [
-      new RangeRequestsPlugin(),
-      new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 }), // 7 days
-      new CacheableResponsePlugin({ statuses: [0, 200, 206] }),
-      quotaGuardPlugin,
-    ],
-  }),
-);
+/**
+ * Book-file route (issue #1485): prefers a verified offline copy (manifest
+ * gated), then network with a stale 'book-content' fallback. Replaces the old
+ * StaleWhileRevalidate route so a single handler owns /api/files/* and
+ * CacheStorage/IndexedDB cannot disagree about availability.
+ */
+async function handleBookFileRequest(request: Request): Promise<Response> {
+  const offline = await serveBookResource(request);
+  if (offline) return offline;
+
+  if (request.method !== 'GET') {
+    return fetch(request);
+  }
+
+  try {
+    const response = await fetch(request);
+    if (response.status === 200) {
+      const cache = await caches.open('book-content');
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cache = await caches.open('book-content');
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    return new Response('Book unavailable offline', { status: 503 });
+  }
+}
+
+registerRoute(/^https?:.*\/api\/files\/.*/i, ({ request }) => handleBookFileRequest(request));
 
 // Sensitive API requests - Never cache (handles with or without trailing slash)
 registerRoute(/^https?:.*\/api\/(?:admin|access)(\/.*)?$/i, new NetworkOnly());
