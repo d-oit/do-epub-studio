@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
-import { deflateSync, strToU8, zipSync, Unzip } from 'fflate';
+import { describe, expect, it, vi, afterEach } from 'vitest';
+import { deflateSync, strToU8, zipSync, UnzipInflate } from 'fflate';
 import fc from 'fast-check';
 import {
   validateArchive,
@@ -8,6 +8,39 @@ import {
   archiveRejectionStatusCode,
 } from '../archive-validator';
 import { type ArchiveRejectionCode, ARCHIVE_REJECTION_CODES } from '../ingest-limits';
+
+// Instrument the deflate decoder *constructor* (module-level mock) instead of
+// monkey-patching prototypes: a preflight rejection must never construct a
+// decompressor, i.e. no expansion begins.
+vi.mock('fflate', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fflate')>();
+  class UnzipInflateSpy extends actual.UnzipInflate {
+    static constructionCount = 0;
+    constructor(...args: ConstructorParameters<typeof actual.UnzipInflate>) {
+      super(...args);
+      (this.constructor as typeof UnzipInflateSpy).constructionCount += 1;
+    }
+  }
+  return { ...actual, UnzipInflate: UnzipInflateSpy };
+});
+
+interface InflateSpyCtor {
+  constructionCount: number;
+}
+
+const InflateSpy = UnzipInflate as unknown as InflateSpyCtor;
+
+function resetInflateCount(): void {
+  InflateSpy.constructionCount = 0;
+}
+
+function inflateCount(): number {
+  return InflateSpy.constructionCount;
+}
+
+afterEach(() => {
+  resetInflateCount();
+});
 
 // CRC-32 (IEEE 802.3) — table-based, deterministic; fflate does not export it.
 const CRC_TABLE = (() => {
@@ -381,41 +414,31 @@ describe('archive validation: central-directory preflight rejects before decompr
     expect(rejection.value).toBeLessThanOrEqual(4 * 1024 * 1024);
   });
 
-  it('preflight rejections happen before any decompression (Unzip.push never called)', async () => {
-    const originalPush = Unzip.prototype.push.bind(Unzip.prototype);
-    const pushSpy = vi.fn();
-    Unzip.prototype.push = (...args: Parameters<Unzip['push']>) => {
-      pushSpy();
-      originalPush(...args);
-    };
-    try {
-      const cases: Uint8Array[] = [
-        buildRawZip([{ name: 'secret.txt', flags: 0x801, data: strToU8('x') }]),
-        buildRawZip([
-          { name: 'link', externalAttrs: (0xa000 << 16) | 0o777, data: strToU8('t') },
-        ]),
-        buildRawZip([
-          {
-            name: 'bomb.txt',
-            data: new Uint8Array(1024 * 1024),
-            declaredCompressedSize: 10,
-            declaredUncompressedSize: 1024 * 1024,
-          },
-        ]),
-        buildRawZip([
-          { name: 'a.txt', data: strToU8('a') },
-          { name: 'a.txt', data: strToU8('b') },
-        ]),
-        buildRawZip([{ name: 'lzma.bin', method: 14, data: strToU8('x') }]),
-        strToU8('garbage'),
-      ];
-      for (const bytes of cases) {
-        pushSpy.mockClear();
-        await expect(validateArchive(bytes)).rejects.toBeInstanceOf(ArchiveRejectionError);
-        expect(pushSpy).not.toHaveBeenCalled();
-      }
-    } finally {
-      Unzip.prototype.push = originalPush;
+  it('preflight rejections happen before any decompression (no inflate decoder constructed)', async () => {
+    const cases: Uint8Array[] = [
+      buildRawZip([{ name: 'secret.txt', flags: 0x801, data: strToU8('x') }]),
+      buildRawZip([
+        { name: 'link', externalAttrs: (0xa000 << 16) | 0o777, data: strToU8('t') },
+      ]),
+      buildRawZip([
+        {
+          name: 'bomb.txt',
+          data: new Uint8Array(1024 * 1024),
+          declaredCompressedSize: 10,
+          declaredUncompressedSize: 1024 * 1024,
+        },
+      ]),
+      buildRawZip([
+        { name: 'a.txt', data: strToU8('a') },
+        { name: 'a.txt', data: strToU8('b') },
+      ]),
+      buildRawZip([{ name: 'lzma.bin', method: 14, data: strToU8('x') }]),
+      strToU8('garbage'),
+    ];
+    for (const bytes of cases) {
+      resetInflateCount();
+      await expect(validateArchive(bytes)).rejects.toBeInstanceOf(ArchiveRejectionError);
+      expect(inflateCount()).toBe(0);
     }
   });
 });

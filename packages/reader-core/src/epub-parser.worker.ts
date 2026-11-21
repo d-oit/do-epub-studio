@@ -1,6 +1,10 @@
 /// <reference lib="WebWorker" />
 
-import { createTraceId, archiveRejectionFromError, ArchiveRejectionError } from '@do-epub-studio/shared';
+import { createTraceId } from '@do-epub-studio/shared';
+import {
+  archiveRejectionFromError,
+  ArchiveRejectionError,
+} from '@do-epub-studio/shared/src/ingest-limits';
 import { validateArchive } from './archive-validator';
 
 const PARSE_VALIDATION_TIMEOUT_MS = 10_000;
