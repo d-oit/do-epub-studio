@@ -25,6 +25,54 @@ const MAX_RUNTIME_MS = 120_000;
 const VERSION = '5.4.0';
 const TOKEN = process.env.EPUBCHECK_RUNNER_TOKEN ?? '';
 
+interface RunnerAccessibilityFinding {
+  severity: string;
+  code: string;
+  location: string | null;
+  path: string | null;
+  message: string;
+}
+
+interface RunnerAccessibilityEvidence {
+  spec: string;
+  specUrl: string;
+  version: string;
+  status: string;
+  statusDate: string;
+  clause: string;
+  checkId: string;
+  result: string;
+  evidence: string;
+  limitation: string;
+}
+
+interface RunnerAccessibilitySpecRef {
+  spec: string;
+  specUrl: string;
+  version: string;
+  status: string;
+  statusDate: string;
+}
+
+interface RunnerAccessibilityProfile {
+  spec: RunnerAccessibilitySpecRef | null;
+  experimental: boolean;
+  certification: 'declared' | 'not-certified';
+  findings: RunnerAccessibilityFinding[];
+  evidence: RunnerAccessibilityEvidence[];
+}
+
+interface RunnerAccessibilityReport {
+  metadata: Array<{ key: string; value: string; provenance: 'opf' }>;
+  advisories: Array<{ category: string; message: string; source: string }>;
+  manualReviewRequired: boolean;
+  certification: 'declared' | 'not-certified';
+  profiles: {
+    '1.1': RunnerAccessibilityProfile;
+    '1.2-draft': RunnerAccessibilityProfile;
+  };
+}
+
 function safeEqual(left: string, right: string): boolean {
   const a = Buffer.from(left);
   const b = Buffer.from(right);
@@ -174,7 +222,7 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
       /* EPUBCheck stdout remains the bounded fallback source. */
     }
 
-    let accessibility;
+    let accessibility: RunnerAccessibilityReport;
     if (opf && extraction) {
       const context = extractEpubContainerContext(bytes, opf, extraction.opfPath ?? '');
       const a11y11 = assessAccessibility({ opfXml: opf, context }, { specProfile: '1.1' });

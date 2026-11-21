@@ -271,6 +271,22 @@ describe('epubcheck runner helper functions', () => {
         ],
         manualReviewRequired: true,
         certification: 'not-certified' as const,
+        profiles: {
+          '1.1': {
+            spec: null,
+            experimental: false,
+            certification: 'not-certified',
+            findings: [],
+            evidence: [],
+          },
+          '1.2-draft': {
+            spec: null,
+            experimental: true,
+            certification: 'not-certified',
+            findings: [],
+            evidence: [],
+          },
+        },
       },
     };
 
