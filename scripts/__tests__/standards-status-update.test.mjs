@@ -60,6 +60,18 @@ describe('parseSpecPage', () => {
     ]);
   });
 
+  it('removes embedded script markup from heading titles', () => {
+    const html =
+      '<html><body>' +
+      '<h2 id="x1-introduction">1. Intro <script>window.evil()</script> heading</h2>' +
+      '<h3 id="x1-1-overview">1.1 Overview <script src="https://evil.example/x.js"></script></h3>' +
+      '</body></html>';
+    const record = parseSpecPage(html, 'epub-34');
+    expect(record.headings[0].title.toLowerCase()).not.toContain('<script');
+    expect(record.headings[0].title).toBe('1. Intro heading');
+    expect(record.headings[1].title.toLowerCase()).not.toContain('<script');
+    expect(record.headings[1].title).toBe('1.1 Overview');
+  });
   it('produces a deterministic text fingerprint that changes with content', () => {
     const a = parseSpecPage(
       CONFIG_HTML(

@@ -91,10 +91,7 @@ export function parseSpecPage(html, shortName) {
 
   for (const match of html.matchAll(/<h([23])[^>]*id="([^"]+)"[^>]*>(.*?)<\/h\1>/gs)) {
     const [, level, id, titleHtml] = match;
-    const title = titleHtml
-      .replace(/<[^>]+>/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const title = sanitizeFingerprintText(titleHtml);
     record.headings.push({ level: Number(level), id, title });
   }
 
@@ -131,7 +128,22 @@ export function sanitizeFingerprintText(source) {
       break;
     }
     out += `${source.slice(cursor, earliest)} `;
-    cursor = earliest + chosen.length;
+    const closeToken = chosen.startsWith('</') ? null : `</${chosen.slice(1)}`;
+    if (closeToken) {
+      const nextAny = STRIP_TOKENS.map((token) => [
+        lower.indexOf(token, earliest + chosen.length),
+        token,
+      ])
+        .filter(([pos]) => pos !== -1)
+        .sort((a, b) => a[0] - b[0])[0];
+      if (nextAny && nextAny[1] === closeToken) {
+        const closeGt = source.indexOf('>', nextAny[0]);
+        cursor = closeGt === -1 ? nextAny[0] + closeToken.length : closeGt + 1;
+        continue;
+      }
+    }
+    const gt = source.indexOf('>', earliest);
+    cursor = gt === -1 ? earliest + chosen.length : gt + 1;
   }
   return out
     .replace(/<[^>]+>/g, ' ')

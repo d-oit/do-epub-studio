@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-21T16:39:58.584Z",
+  "generatedAt": "2026-11-21T16:54:51.307Z",
   "specs": {
     "epub-33": {
       "shortName": "epub-33",
@@ -520,7 +520,7 @@
           "title": "M.2 Informative references"
         }
       ],
-      "textHash": "308499d21c9bd435561b64ff2fc12bcdf464e823395b372f618b3e6dc97a6c05",
+      "textHash": "94bab97260b0378a7be23e7708ea13a25a48e85ba99cddc17451e423bc89d894",
       "specStatus": "REC",
       "publishDate": "2026-01-13",
       "generatedSubtitle": "W3C Recommendation 13 January 2026"
@@ -994,7 +994,7 @@
           "title": "K.2 Informative references"
         }
       ],
-      "textHash": "e94771b9c77eb7872d7e617f04c71abf4c49eea309a7f4c01bd1754683a60463",
+      "textHash": "fda7211e091b075ed329d505c7f9bf1d674eeb0ee6bb94730d1e5b2bf4e3aa89",
       "specStatus": "CRD",
       "publishDate": "2026-11-19",
       "generatedSubtitle": "W3C Candidate Recommendation Draft 19 November 2026",
@@ -1355,7 +1355,7 @@
           "title": "F.2 Informative references"
         }
       ],
-      "textHash": "43baa78b62dd8d6544f0754bb10cdc616d0fc174c19adc2d76028d44df8f1c14",
+      "textHash": "93ef6cf4e86c4e85e12aec07c7b1c59c793f23987755b1afa91f93b2c5e2093d",
       "specStatus": "CRD",
       "publishDate": "2026-07-21",
       "generatedSubtitle": "W3C Candidate Recommendation Draft 21 July 2026",
