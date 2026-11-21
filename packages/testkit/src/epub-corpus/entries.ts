@@ -399,4 +399,3 @@ export function buildCorpus(ids: readonly string[]): Map<string, Uint8Array> {
   for (const id of ids) out.set(id, generateCorpusEntry(id));
   return out;
 }
-
