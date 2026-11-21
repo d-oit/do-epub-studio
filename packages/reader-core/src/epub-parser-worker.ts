@@ -1,8 +1,8 @@
+import { createTraceId } from '@do-epub-studio/shared';
 import {
-  createTraceId,
   archiveRejectionFromError,
   ArchiveRejectionError,
-} from '@do-epub-studio/shared';
+} from '@do-epub-studio/shared/src/ingest-limits';
 
 export interface EpubParseResult {
   valid: boolean;
