@@ -13,7 +13,7 @@ import rootPackage from '../../package.json' with { type: 'json' };
 // single source of truth in .performance-budgets.json (Plan 214 R5), shared
 // with scripts/check-bundle-budget.mjs.
 import performanceBudgets from '../../.performance-budgets.json' with { type: 'json' };
-import { validateApiOrigin } from './src/config/api-origin';
+import { validateApiOrigin } from './src/config/api-origin.ts';
 
 const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
