@@ -12,6 +12,7 @@
   "dependencies": {},
   "devDependencies": {
     "@do-epub-studio/shared": "workspace:*",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "@do-epub-studio/testkit": "workspace:*"
   }
 }
