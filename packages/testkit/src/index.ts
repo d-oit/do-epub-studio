@@ -7,3 +7,8 @@ export {
   createBookmarkBuilder,
 } from './annotation-builder';
 export { createProgressBuilder } from './progress-builder';
+export {
+  buildMultilingualEpub,
+  MULTILINGUAL_FIXTURES,
+  type MultilingualFixtureId,
+} from './multilingual-epub-factory';
