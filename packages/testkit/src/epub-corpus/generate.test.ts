@@ -23,9 +23,12 @@ describe('corpus generators', () => {
     });
     const entries = unzipSync(zip);
     expect(entries['mimetype']).toBeDefined();
-    const opf = strFromU8(entries['OEBPS/content.opf']!);
+    const opfBytes = entries['OEBPS/content.opf'];
+    expect(opfBytes).toBeDefined();
+    const opf = strFromU8(opfBytes ?? new Uint8Array());
     expect(opf).toContain('version="3.0"');
     expect(opf).toContain('<dc:title>T</dc:title>');
+    expect(opf).toBeTruthy();
   });
 
   it('generates seeded chapter bodies that are bounded in size', () => {
@@ -41,7 +44,7 @@ describe('corpus generators', () => {
     const ttf = generateMinimalTtf();
     // SFNT version tag at offset 0; table count at offset 4.
     expect(ttf.subarray(0, 4)).toEqual(Uint8Array.from([0, 1, 0, 0]));
-    expect((ttf[4]! << 8) | (ttf[5] ?? 0)).toBe(9); // number of tables
+    expect((ttf[4] ?? 0) << 8 | (ttf[5] ?? 0)).toBe(9); // number of tables
     const wav = generateWav(200);
     expect(strFromU8(wav.subarray(0, 4))).toBe('RIFF');
     expect(strFromU8(wav.subarray(8, 12))).toBe('WAVE');
