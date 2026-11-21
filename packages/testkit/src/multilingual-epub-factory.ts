@@ -9,13 +9,7 @@ import { deflateRawSync } from 'node:zlib';
  */
 
 export type MultilingualFixtureId =
-  | 'ar-rtl'
-  | 'he-rtl'
-  | 'ja-vertical'
-  | 'zh-ruby'
-  | 'ko'
-  | 'mixed-bidi'
-  | 'inbook-lang-switch';
+  'ar-rtl' | 'he-rtl' | 'ja-vertical' | 'zh-ruby' | 'ko' | 'mixed-bidi' | 'inbook-lang-switch';
 
 export const MULTILINGUAL_FIXTURES: readonly MultilingualFixtureId[] = [
   'ar-rtl',
@@ -168,8 +162,7 @@ const SPECS: Record<MultilingualFixtureId, BookSpec> = {
         href: 'chapter1.xhtml',
         title: '첫 번째 장',
         lang: 'ko',
-        bodyHtml:
-          '<p>한국어 텍스트입니다. 문장 부호 “큰따옴표”와 「낫표」를 포함합니다.</p>',
+        bodyHtml: '<p>한국어 텍스트입니다. 문장 부호 “큰따옴표”와 「낫표」를 포함합니다.</p>',
       },
       {
         id: 'c2',
