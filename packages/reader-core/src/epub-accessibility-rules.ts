@@ -5,7 +5,7 @@ import type {
   AccessibilityMetadata,
   AccessibilitySpecRef,
   AccessibilitySpecProfile,
-} from './epub-accessibility';
+} from './epub-accessibility-types';
 
 export interface AccessibilityRuleContext {
   navXml?: string;
