@@ -21,10 +21,7 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://do-epub-studio.pages.dev/api/:path*"
-    }
+  "routes": [
+    { "src": "/api/(.*)", "status": 404 }
   ]
 }

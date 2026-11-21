@@ -4,7 +4,7 @@ This runbook documents the steps to set up production infrastructure for
 d.o.EPUB Studio. It is intended for operators with access to the
 Cloudflare dashboard.
 
-## Deployment model (GOAP-252)
+## Deployment model (GOAP-252 / issue #1482)
 
 The app is served entirely by **Cloudflare Pages** — the build runs on
 Cloudflare directly (Pages Git integration, see root `wrangler.toml`):
@@ -17,7 +17,36 @@ Cloudflare directly (Pages Git integration, see root `wrangler.toml`):
 Because the API shares the frontend's origin, production needs **no separate
 Worker deployment, no `VITE_API_BASE_URL`, and no CORS** — the web app's
 production default (`window.location.origin`) already targets same-origin
-`/api/*`.
+`/api/*`. This is the **only canonical production topology**.
+
+### Supported / unsupported hosts
+
+- **Supported:** Cloudflare Pages (frontend + Pages Functions for `/api/*`).
+  The API is deployed by the same Pages deployment; nothing else may serve it.
+- **Unsupported: Render, Vercel, Netlify, GitHub Pages** — static SPA hosts
+  whose catch-all fallback serves `index.html` at `/api/*`. Incident **#1014**
+  hit exactly this: Render returned `200` HTML at `/api/*`, breaking catalog,
+  authentication, and reader loading. These hosts are rejected by the
+  build-time API-origin guard (apps/web/src/config/api-origin.ts) and by the
+  deploy-smoke origin validation; `vercel.json` now 404s `/api/*` instead of
+  rewriting it to the SPA or a proxy.
+
+### API-origin rule (build-time)
+
+Builds resolve the API origin as follows (`apps/web/src/config/api-origin.ts`,
+enforced by the `api-origin-build-guard` plugin in `apps/web/vite.config.ts`):
+
+1. `VITE_API_BASE_URL` set and valid → the frontend calls that origin.
+   Valid means: absolute http(s) URL, no path/query/fragment/credentials, no
+   placeholder (`example.com`, `*.workers.dev`, `*.worker.dev`, angle
+   brackets), and in production `https` and not a known SPA-only host
+   (`onrender.com`, `vercel.app`, `netlify.app`, `github.io`).
+2. Missing/empty → same-origin `/api/*` (Pages Functions assumed). This
+   fallback is only sound on the canonical topology; on any other host it must
+   fail the deployment gate, never silently ship.
+3. Anything else → the build fails with a clear diagnostic. The release
+   workflow applies the identical validation to the deploy target before and
+   after deploying.
 
 Cloudflare resources (D1, R2, KV) are bound to the Pages project by the **root
 `wrangler.toml`** — bindings set through the dashboard/API
@@ -184,6 +213,24 @@ WEBAUTHN_RP_ID                # do-epub-studio.pages.dev
 WEBAUTHN_ORIGIN               # https://do-epub-studio.pages.dev
 ```
 
+`VITE_API_BASE_URL` is **not required** for the canonical deployment (the web
+app uses same-origin `/api/*`). Set it only to point at a standalone API host
+(e.g. a separately deployed Worker); it must be a valid https origin with no
+placeholder and no SPA-only host — otherwise the build fails. The release
+workflow reads `VITE_API_BASE_URL` and `PAGES_URL` from repository variables
+(Settings → General → Variables), so they are reviewable in the workflow.
+
+> **CORS / allowed origins:** the canonical topology is same-origin — no CORS
+> is required, and the API does not emit permissive CORS headers. If a
+> separate API origin is configured via `VITE_API_BASE_URL`, the Worker's
+> CORS handling (see the Worker source) must allowlist exactly the frontend
+> origin deployed; never `*`.
+> **DNS / routing:** `do-epub-studio.pages.dev` is the production origin
+> (`APP_BASE_URL`, `WEBAUTHN_ORIGIN`, `PAGES_URL`). Preview deployments get a
+> `*.pages.dev` preview URL; the Pages Function wrapper derives the preview
+> origin per deployment (see `apps/web/functions/api/[[path]].ts`), so demo
+> links and WebAuthn ceremonies stay on the preview origin.
+The demo login policy below also applies to every deployment:
 > **Demo Login Policy (ADR-1014):** `ENVIRONMENT=production` always rejects demo
 > login; adding an allowlist never overrides it. Use an isolated preview for
 > public demonstrations. Root `wrangler.toml` sets its runtime demo flags;
@@ -223,9 +270,43 @@ curl -s https://do-epub-studio.pages.dev/api/health
 # → {"ok":true,"service":"do-epub-studio-worker"}
 ```
 
-> The release workflow (`.github/workflows/release.yml`) runs a fail-closed
-> post-deploy health check against `https://do-epub-studio.pages.dev/api/health`
-> (asserts `200` + `{"ok":true}`).
+### Release workflow gates (issue #1482)
+
+`.github/workflows/release.yml` runs two API-routing gates:
+
+1. **Smoke preview before promotion:** after building, the workflow deploys a
+   release-`vX.Y.Z` branch deployment to Cloudflare Pages and runs
+   `scripts/deploy-smoke.mjs --base-url <preview-url>` — health JSON, catalog
+   JSON envelope, unauthenticated `401` JSON, and a non-HTML file endpoint.
+   The `release` job depends on this gate.
+2. **Smoke production after deploy:** the `release` job runs the same script
+   against `PAGES_URL` (default `https://do-epub-studio.pages.dev`).
+
+Both gates validate the API origin (placeholder/SPA-only/malformed origins
+fail) and treat HTML-with-200 from any `/api/*` route as a hard failure
+(incident #1014). Run the smoke locally against any deployment:
+
+```bash
+node scripts/deploy-smoke.mjs --base-url https://do-epub-studio.pages.dev
+```
+
+### Rollback
+
+Cloudflare Pages deployments are immutable; rollback = redeploy the previous
+release tag. Tag `vX.Y.Z` → deploy a branch `release-vX.Y.Z` if the tag is
+not yet on the production branch, or use the Pages dashboard's "Rollback to
+this deployment" on the previous successful deployment (the smoke gate ran on
+it, so it is a known-good artifact).
+
+### Preview / production separation
+
+- Preview bindings (`[env.preview.*]` in `wrangler.toml`) pin preview builds
+  to the `do-epub-studio-preview` D1 and `do-epub-studio-books-preview` R2 —
+  production's database and bucket are never reachable from previews.
+- Preview is the only environment with demo gates
+  (`DEMO_LOGIN_ENABLED=1`, `DEMO_ACCOUNTS_PROD_ALLOWLIST=demo-preview`).
+- Always smoke the preview URL before promoting; never promote on "it worked
+  locally".
 
 ---
 

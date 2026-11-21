@@ -13,6 +13,7 @@ import rootPackage from '../../package.json' with { type: 'json' };
 // single source of truth in .performance-budgets.json (Plan 214 R5), shared
 // with scripts/check-bundle-budget.mjs.
 import performanceBudgets from '../../.performance-budgets.json' with { type: 'json' };
+import { validateApiOrigin } from './src/config/api-origin';
 
 const isAnalyze = process.env.ANALYZE === 'true';
 const appVersion = rootPackage.version;
@@ -114,6 +115,37 @@ function dropOversizedAssets(): PluginOption {
     },
   };
 }
+/**
+ * Build-time API origin guard (issue #1482). The production frontend must
+ * reach the API at a valid https origin: `VITE_API_BASE_URL` when set, or
+ * the same-origin `/api/*` route served by Cloudflare Pages Functions. An
+ * invalid value (placeholder, SPA-only host like Render's `onrender.com`,
+ * malformed URL, or a leaked dev/localhost origin) fails the build with a
+ * clear diagnostic instead of shipping an app whose API calls silently return
+ * SPA HTML (incident #1014).
+ */
+function apiOriginBuildGuard(): PluginOption {
+  return {
+    name: 'api-origin-build-guard',
+    apply: 'build',
+    configResolved(config) {
+      const raw = config.env.VITE_API_BASE_URL;
+      const result = validateApiOrigin({
+        raw: typeof raw === 'string' ? raw : undefined,
+        isProduction: config.mode === 'production',
+      });
+      if (!result.ok) {
+        throw new Error(
+          [
+            `[api-origin] VITE_API_BASE_URL is invalid for a ${config.mode} build: ${result.reason}.`,
+            'Set a valid https origin (no placeholders, no SPA-only host) or omit the',
+            'variable to use same-origin /api/* (Cloudflare Pages Functions).',
+          ].join(' '),
+        );
+      }
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
@@ -137,6 +169,7 @@ export default defineConfig({
       },
     },
     react(),
+    apiOriginBuildGuard(),
     tailwindcss(),
     restoreStandardBackdropFilter(),
     dropOversizedAssets(),
