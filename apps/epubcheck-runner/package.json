@@ -8,6 +8,8 @@
     "test": "tsx --test test/*.test.ts"
   },
   "dependencies": {
+    "@do-epub-studio/reader-core": "workspace:*",
+    "@do-epub-studio/shared": "workspace:*",
     "fflate": "^0.8.2",
     "tsx": "^4.20.6"
   }

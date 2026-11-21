@@ -37,17 +37,46 @@ export interface AccessibilityAdvisory {
   source: string;
 }
 
-export interface AccessibilityEvidence {
-  metadata: AccessibilityMetadataItem[];
-  advisories: AccessibilityAdvisory[];
-  manualReviewRequired: boolean;
-  certification: string;
+export interface AccessibilityProfile {
+  spec: {
+    spec: string;
+    specUrl: string;
+    version: string;
+    status: string;
+    statusDate: string;
+  } | null;
+  experimental: boolean;
+  certification: 'declared' | 'not-certified';
+  findings: EpubFindingItem[];
+  evidence: Array<{
+    spec: string;
+    specUrl: string;
+    version: string;
+    status: string;
+    statusDate: string;
+    clause: string;
+    checkId: string;
+    result: 'pass' | 'fail' | 'informational';
+    evidence: string;
+    limitation: string;
+  }>;
 }
 
 export interface AccessibilityRemediationState {
   status?: 'not_started' | 'in_progress' | 'remediated' | 'accepted_risk';
   notes?: string | null;
   checklist?: Record<string, boolean>;
+}
+
+export interface AccessibilityEvidence {
+  metadata: AccessibilityMetadataItem[];
+  advisories: AccessibilityAdvisory[];
+  manualReviewRequired: boolean;
+  certification: 'declared' | 'not-certified';
+  profiles: {
+    '1.1': AccessibilityProfile;
+    '1.2-draft': AccessibilityProfile;
+  };
 }
 
 export interface RevisionValidationDetail {

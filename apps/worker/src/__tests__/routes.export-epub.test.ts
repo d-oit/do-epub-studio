@@ -69,6 +69,22 @@ function runnerPayload(sha256: string, overrides: Record<string, unknown> = {}) 
       advisories: [],
       manualReviewRequired: true,
       certification: 'not-certified',
+      profiles: {
+        '1.1': {
+          spec: null,
+          experimental: false,
+          certification: 'not-certified',
+          findings: [],
+          evidence: [],
+        },
+        '1.2-draft': {
+          spec: null,
+          experimental: true,
+          certification: 'not-certified',
+          findings: [],
+          evidence: [],
+        },
+      },
     },
     safetyStatus: 'accepted',
     conformanceStatus: 'completed',

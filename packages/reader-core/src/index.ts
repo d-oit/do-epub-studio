@@ -10,5 +10,6 @@ export * from './toc';
 export * from './epub-types';
 export * from './sanitizer';
 export * from './epub-accessibility';
+export * from './epub-accessibility-rules';
 export * from './fixed-layout';
 export * from './ai';

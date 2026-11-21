@@ -1,4 +1,5 @@
 import { unzipSync, strFromU8 } from 'fflate';
+import { matchAllBounded } from '@do-epub-studio/shared';
 
 const MAX_CONTAINER_BYTES = 64 * 1024;
 const MAX_OPF_BYTES = 2 * 1024 * 1024;
@@ -234,6 +235,106 @@ export function extractOpfFromZip(bytes: Uint8Array): {
   if (opfBytes.byteLength > MAX_OPF_BYTES)
     throw new EpubExtractionError('OPF_TOO_LARGE', 'OPF too large');
   return { opf: strFromU8(opfBytes), opfPath: normalizedOpfPath };
+}
+
+export interface EpubContainerContext {
+  navXml: string | null;
+  navPath: string | null;
+  resources: string[];
+  spinePaths: string[];
+}
+
+const MANIFEST_ITEM_REGEX = /<item\b([^>]*)>/gi;
+const SPINE_ITEMREF_REGEX = /<itemref\b([^>]*)>/gi;
+const HREF_REGEX = /\bhref\s*=\s*["']([^"']+)["']/i;
+const ID_REGEX = /\bid\s*=\s*["']([^"']+)["']/i;
+const IDREF_REGEX = /\bidref\s*=\s*["']([^"']+)["']/i;
+const PROPERTIES_REGEX = /\bproperties\s*=\s*["']([^"']+)["']/i;
+
+function resolveToContainer(opfPath: string, href: string): string {
+  const opfDir = opfPath.includes('/') ? opfPath.slice(0, opfPath.lastIndexOf('/') + 1) : '';
+  let decoded = href;
+  try {
+    decoded = decodeURIComponent(href);
+  } catch {
+    // keep raw href when percent-decoding fails
+  }
+  const normalized = decoded.split('#')[0]?.replace(/^\/+/, '') ?? '';
+  if (!normalized) return '';
+  const segments = (opfDir + normalized).split('/');
+  const out: string[] = [];
+  for (const segment of segments) {
+    if (segment === '' || segment === '.') continue;
+    if (segment === '..') {
+      if (out.length > 0) out.pop();
+      continue;
+    }
+    out.push(segment);
+  }
+  return out.join('/');
+}
+
+export function extractEpubContainerContext(
+  bytes: Uint8Array,
+  opf: string,
+  opfPath: string,
+): EpubContainerContext {
+  if (!opf || opf.length > MAX_OPF_BYTES) {
+    return { navXml: null, navPath: null, resources: [], spinePaths: [] };
+  }
+
+  const items = new Map<string, { href: string; properties: string }>();
+  const resources: string[] = [];
+  for (const m of matchAllBounded(MANIFEST_ITEM_REGEX, opf, MAX_OPF_BYTES)) {
+    const attrs = m[1] ?? '';
+    const id = attrs.match(ID_REGEX)?.[1];
+    const href = attrs.match(HREF_REGEX)?.[1];
+    if (!id || !href) continue;
+    const resolved = resolveToContainer(opfPath, href);
+    if (!resolved) continue;
+    items.set(id, { href: resolved, properties: attrs.match(PROPERTIES_REGEX)?.[1] ?? '' });
+    resources.push(resolved);
+  }
+
+  let navPath: string | null = null;
+  for (const item of items.values()) {
+    if (item.properties.split(/\s+/).includes('nav')) {
+      navPath = item.href;
+      break;
+    }
+  }
+
+  const spinePaths: string[] = [];
+  for (const m of matchAllBounded(SPINE_ITEMREF_REGEX, opf, MAX_OPF_BYTES)) {
+    const idref = (m[1] ?? '').match(IDREF_REGEX)?.[1];
+    if (idref) {
+      const item = items.get(idref);
+      if (item) spinePaths.push(item.href);
+    }
+  }
+
+  let navXml: string | null = null;
+  if (navPath) {
+    try {
+      const unzippedNav = unzipSync(bytes, {
+        filter: (f) => {
+          if (f.name === navPath) {
+            if (f.originalSize && f.originalSize > MAX_OPF_BYTES) return false;
+            return true;
+          }
+          return false;
+        },
+      });
+      const navBytes = unzippedNav[navPath];
+      if (navBytes && navBytes.byteLength <= MAX_OPF_BYTES) {
+        navXml = strFromU8(navBytes);
+      }
+    } catch {
+      navXml = null;
+    }
+  }
+
+  return { navXml, navPath, resources, spinePaths };
 }
 
 export function extractEpubVersion(opf: string): string | null {

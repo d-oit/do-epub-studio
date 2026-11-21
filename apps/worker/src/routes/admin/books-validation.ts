@@ -82,28 +82,42 @@ export async function handleGetRevisionReport(c: AdminContext): Promise<Response
         advisories: [],
         manualReviewRequired: true,
         certification: 'not-certified',
+        profiles: {
+          '1.1': {
+            spec: null,
+            experimental: false,
+            certification: 'not-certified',
+            findings: [],
+            evidence: [],
+          },
+          '1.2-draft': {
+            spec: null,
+            experimental: true,
+            certification: 'not-certified',
+            findings: [],
+          },
+        },
       }),
       remediation: decode(remediation?.state_json ?? '{}', {}),
-      failureCode: report.failure_code,
-      updatedAt: report.updated_at,
     },
   });
 }
-
 export async function handleDownloadRevisionReport(c: AdminContext): Promise<Response> {
   const report = await reportFor(c);
+  const decodedAccessibility = decode<{ profiles?: unknown }>(report.accessibility_json, {});
+  const profiles = decodedAccessibility.profiles ?? null;
   const body = {
     revisionId: report.revision_id,
     bytesSha256: report.bytes_sha256,
     validatorVersion: report.validator_version,
     status: report.status,
     safetyStatus: report.safety_status,
-    epubVersion: report.epub_version,
     findings: decode(report.findings_json, []),
     accessibility: decode(report.accessibility_json, {}),
     failureCode: report.failure_code,
     updatedAt: report.updated_at,
     certification: 'not-certified',
+    profiles,
   };
   return c.body(JSON.stringify(body, null, 2), 200, {
     'content-type': 'application/json; charset=utf-8',
@@ -111,7 +125,6 @@ export async function handleDownloadRevisionReport(c: AdminContext): Promise<Res
     'cache-control': 'no-store',
   });
 }
-
 export async function handleRetryRevisionValidation(c: AdminContext): Promise<Response> {
   const report = await reportFor(c);
   await execute(

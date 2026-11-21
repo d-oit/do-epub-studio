@@ -11,6 +11,7 @@
     "./author-styles": "./src/author-styles.ts",
     "./packager": "./src/packager/index.ts",
     "./media-overlay": "./src/media-overlay.ts",
+    "./accessibility": "./src/epub-accessibility.ts",
     "./rendition-container": "./src/rendition-container.ts"
   },
   "scripts": {
