@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@do-epub-studio/shared": "workspace:*",
+    "@do-epub-studio/testkit": "workspace:*",
     "@huggingface/transformers": "^4.3.2",
     "@intity/epub-js": "0.3.96",
     "dompurify": "^3.4.17",
