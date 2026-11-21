@@ -17,10 +17,16 @@ describe('validateApiOrigin', () => {
   });
 
   it('normalizes a trailing slash to the bare origin', () => {
-    const result = validateApiOrigin({ raw: 'https://api.do-epub-studio.test/', isProduction: true });
+    const result = validateApiOrigin({
+      raw: 'https://api.do-epub-studio.test/',
+      isProduction: true,
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.resolution).toEqual({ kind: 'configured', url: 'https://api.do-epub-studio.test' });
+      expect(result.resolution).toEqual({
+        kind: 'configured',
+        url: 'https://api.do-epub-studio.test',
+      });
     }
   });
 
@@ -100,7 +106,10 @@ describe('validateApiOrigin', () => {
   });
 
   it('allows SPA-only hosts in dev (local experimentation)', () => {
-    const result = validateApiOrigin({ raw: 'https://do-epub-studio.onrender.com', isProduction: false });
+    const result = validateApiOrigin({
+      raw: 'https://do-epub-studio.onrender.com',
+      isProduction: false,
+    });
     expect(result.ok).toBe(true);
   });
 
@@ -119,7 +128,9 @@ describe('validateApiOrigin', () => {
 
 describe('resolveApiBaseUrl', () => {
   it('returns the configured origin when valid', () => {
-    expect(resolveApiBaseUrl({ raw: 'https://api.do-epub-studio.test', isProduction: true })).toEqual({
+    expect(
+      resolveApiBaseUrl({ raw: 'https://api.do-epub-studio.test', isProduction: true }),
+    ).toEqual({
       kind: 'configured',
       url: 'https://api.do-epub-studio.test',
     });

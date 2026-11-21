@@ -230,7 +230,7 @@ workflow reads `VITE_API_BASE_URL` and `PAGES_URL` from repository variables
 > `*.pages.dev` preview URL; the Pages Function wrapper derives the preview
 > origin per deployment (see `apps/web/functions/api/[[path]].ts`), so demo
 > links and WebAuthn ceremonies stay on the preview origin.
-The demo login policy below also applies to every deployment:
+> The demo login policy below also applies to every deployment:
 > **Demo Login Policy (ADR-1014):** `ENVIRONMENT=production` always rejects demo
 > login; adding an allowlist never overrides it. Use an isolated preview for
 > public demonstrations. Root `wrangler.toml` sets its runtime demo flags;

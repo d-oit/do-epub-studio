@@ -45,7 +45,9 @@ function validJsonFetch() {
 
 describe('validateApiOriginValue', () => {
   it('accepts a valid https origin', () => {
-    const result = validateApiOriginValue('https://do-epub-studio.pages.dev', { allowMissing: false });
+    const result = validateApiOriginValue('https://do-epub-studio.pages.dev', {
+      allowMissing: false,
+    });
     expect(result.ok).toBe(true);
   });
 
@@ -126,9 +128,19 @@ describe('deploy-smoke CLI', () => {
   });
 
   it('exits non-zero when --expect-origin is a placeholder', () => {
-    const result = spawnSync('node', [scriptPath, '--base-url', 'https://do-epub-studio.pages.dev', '--expect-origin', 'https://example.com'], {
-      encoding: 'utf8',
-    });
+    const result = spawnSync(
+      'node',
+      [
+        scriptPath,
+        '--base-url',
+        'https://do-epub-studio.pages.dev',
+        '--expect-origin',
+        'https://example.com',
+      ],
+      {
+        encoding: 'utf8',
+      },
+    );
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/expect-origin is invalid/);
   });

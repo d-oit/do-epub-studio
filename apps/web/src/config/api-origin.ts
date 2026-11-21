@@ -22,8 +22,7 @@ export interface ApiOriginInput {
 }
 
 export type ApiOriginResolution =
-  | { readonly kind: 'configured'; readonly url: string }
-  | { readonly kind: 'same-origin' };
+  { readonly kind: 'configured'; readonly url: string } | { readonly kind: 'same-origin' };
 
 export type ApiOriginValidationResult =
   | { readonly ok: true; readonly resolution: ApiOriginResolution }
@@ -57,7 +56,11 @@ function findPlaceholderReason(raw: string, hostname: string): string | null {
   if (raw.includes('<') || raw.includes('>')) {
     return `"${raw}" contains angle-bracket placeholder markers`;
   }
-  if (lowered.includes('placeholder') || lowered.includes('replaceme') || lowered.includes('replace-me')) {
+  if (
+    lowered.includes('placeholder') ||
+    lowered.includes('replaceme') ||
+    lowered.includes('replace-me')
+  ) {
     return `"${raw}" contains a placeholder marker`;
   }
   return null;

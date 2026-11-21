@@ -21,7 +21,5 @@
       ]
     }
   ],
-  "routes": [
-    { "src": "/api/(.*)", "status": 404 }
-  ]
+  "routes": [{ "src": "/api/(.*)", "status": 404 }]
 }
