@@ -1,11 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  buildZip,
-  crc32,
-  findLocalEntryOffset,
-  listLocalEntryNames,
-  type ZipEntry,
-} from './zip';
+import { buildZip, crc32, findLocalEntryOffset, listLocalEntryNames, type ZipEntry } from './zip';
 
 const utf8 = (s: string) => new TextEncoder().encode(s);
 
@@ -38,7 +32,9 @@ describe('corpus zip builder', () => {
   it('supports truncation and forged declared sizes', () => {
     const truncated = buildZip(sampleFiles(), { truncateCentralDirectory: true });
     expect(findLocalEntryOffset(truncated, 'mimetype')).toBe(0);
-    const forged = buildZip(sampleFiles(), { forgeDeclaredSizes: { 'OEBPS/chapter1.xhtml': { usz: 0x7fffffff } } });
+    const forged = buildZip(sampleFiles(), {
+      forgeDeclaredSizes: { 'OEBPS/chapter1.xhtml': { usz: 0x7fffffff } },
+    });
     // The forged size lives in both local and central headers; the local one
     // is readable at the entry offset.
     const offset = findLocalEntryOffset(forged, 'OEBPS/chapter1.xhtml');

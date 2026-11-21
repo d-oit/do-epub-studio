@@ -114,7 +114,10 @@ export function generateMinimalTtf(): Uint8Array {
     u16(1), // caretSlopeRise
     u16(0), // caretSlopeRun
     u16(0), // caretOffset
-    u16(0), u16(0), u16(0), u16(0), // reserved
+    u16(0),
+    u16(0),
+    u16(0),
+    u16(0), // reserved
     u16(0), // metricDataFormat
     u16(1), // numberOfHMetrics
   ]);
@@ -122,10 +125,19 @@ export function generateMinimalTtf(): Uint8Array {
   const maxp = Buffer.concat([
     u32(0x00010000),
     u16(2), // numGlyphs
-    u16(0), u16(0), u16(0), u16(0), // maxPoints/Contours/CompositePoints/CompositeContours
+    u16(0),
+    u16(0),
+    u16(0),
+    u16(0), // maxPoints/Contours/CompositePoints/CompositeContours
     u16(1), // maxZones
-    u16(0), u16(0), u16(0), u16(0), // TwilightPoints/Storage/FunctionDefs/InstructionDefs
-    u16(0), u16(0), u16(0), u16(0), // StackElements/SizeOfInstructions/ComponentElements/ComponentDepth
+    u16(0),
+    u16(0),
+    u16(0),
+    u16(0), // TwilightPoints/Storage/FunctionDefs/InstructionDefs
+    u16(0),
+    u16(0),
+    u16(0),
+    u16(0), // StackElements/SizeOfInstructions/ComponentElements/ComponentDepth
   ]);
 
   const cmapFormat4 = Buffer.concat([
@@ -136,11 +148,15 @@ export function generateMinimalTtf(): Uint8Array {
     u16(4), // searchRange
     u16(1), // entrySelector
     u16(0), // rangeShift
-    u16(0x0020), u16(0xffff), // endCode
+    u16(0x0020),
+    u16(0xffff), // endCode
     u16(0), // reservedPad
-    u16(0x0020), u16(0xffff), // startCode
-    u16(0xffe1), u16(0x0001), // idDelta
-    u16(0), u16(0), // idRangeOffset
+    u16(0x0020),
+    u16(0xffff), // startCode
+    u16(0xffe1),
+    u16(0x0001), // idDelta
+    u16(0),
+    u16(0), // idRangeOffset
   ]);
   const cmap = Buffer.concat([
     u16(0), // version
@@ -175,7 +191,10 @@ export function generateMinimalTtf(): Uint8Array {
     u16(0), // underlinePosition
     u16(0), // underlineThickness
     u32(0), // isFixedPitch
-    u32(0), u32(0), u32(0), u32(0), // memory minimums/maximums
+    u32(0),
+    u32(0),
+    u32(0),
+    u32(0), // memory minimums/maximums
   ]);
 
   const tables: Array<{ tag: string; data: Uint8Array }> = [
@@ -215,7 +234,13 @@ export function generateMinimalTtf(): Uint8Array {
 
   const parts: Uint8Array[] = [dir];
   tables.forEach((t, i) => {
-    dir.writeUInt32BE((t.tag.charCodeAt(0) << 24) | (t.tag.charCodeAt(1) << 16) | (t.tag.charCodeAt(2) << 8) | t.tag.charCodeAt(3), 12 + i * entrySize);
+    dir.writeUInt32BE(
+      (t.tag.charCodeAt(0) << 24) |
+        (t.tag.charCodeAt(1) << 16) |
+        (t.tag.charCodeAt(2) << 8) |
+        t.tag.charCodeAt(3),
+      12 + i * entrySize,
+    );
     dir.writeUInt32BE(tableChecksum(t.data), 12 + i * entrySize + 4);
     dir.writeUInt32BE(offset, 12 + i * entrySize + 8);
     dir.writeUInt32BE(t.data.length, 12 + i * entrySize + 12);

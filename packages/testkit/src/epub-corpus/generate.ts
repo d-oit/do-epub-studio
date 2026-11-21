@@ -66,10 +66,7 @@ export const CONTAINER_NAMESPACE = 'urn:oasis:names:tc:opendocument:xmlns:contai
 
 export function containerXml(rootfiles: Array<{ fullPath: string; mediaType: string }>): string {
   const rfs = rootfiles
-    .map(
-      (r) =>
-        `    <rootfile full-path="${r.fullPath}" media-type="${r.mediaType}"/>`,
-    )
+    .map((r) => `    <rootfile full-path="${r.fullPath}" media-type="${r.mediaType}"/>`)
     .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<container version="1.0" xmlns="${CONTAINER_NAMESPACE}">\n  <rootfiles>\n${rfs}\n  </rootfiles>\n</container>`;
 }
@@ -80,11 +77,15 @@ export function opfXml(spec: EpubSpec, _opfPath: string): string {
     ? `urn:uuid:00000000-0000-0000-0000-${spec.uniqueId}`
     : 'urn:uuid:00000000-0000-0000-0000-000000000000';
   const items = spec.chapters
-    .map((ch, i) => `    <item id="ch${i + 1}" href="${ch.href}" media-type="application/xhtml+xml"/>`)
+    .map(
+      (ch, i) => `    <item id="ch${i + 1}" href="${ch.href}" media-type="application/xhtml+xml"/>`,
+    )
     .join('\n');
   const autoItems: string[] = [];
   if (spec.includeNavDoc) {
-    autoItems.push('    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>');
+    autoItems.push(
+      '    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>',
+    );
   }
   if (spec.includeNcx) {
     autoItems.push('    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>');
@@ -132,11 +133,11 @@ export function navDocXml(spec: EpubSpec): string {
   );
 }
 
-
 /** Assemble a complete EPUB archive from a spec. Deterministic file order. */
 export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
-  const rootfiles =
-    spec.rootfiles ?? [{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }];
+  const rootfiles = spec.rootfiles ?? [
+    { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
+  ];
 
   const files: ZipEntry[] = [
     { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip'), method: 0 },
@@ -144,10 +145,16 @@ export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
   ];
 
   if (spec.encryptionXml !== undefined && spec.encryptionXml !== null) {
-    files.push({ name: 'META-INF/encryption.xml', data: new TextEncoder().encode(spec.encryptionXml) });
+    files.push({
+      name: 'META-INF/encryption.xml',
+      data: new TextEncoder().encode(spec.encryptionXml),
+    });
   }
 
-  const primaryRoot = rootfiles[0] ?? { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' };
+  const primaryRoot = rootfiles[0] ?? {
+    fullPath: 'OEBPS/content.opf',
+    mediaType: 'application/oebps-package+xml',
+  };
   if (primaryRoot.fullPath === 'OEBPS/content.opf') {
     files.push({
       name: 'OEBPS/content.opf',
@@ -173,7 +180,12 @@ export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
         name: 'OEBPS/content.opf',
         data: new TextEncoder().encode(opfXml(spec, 'OEBPS/content.opf')),
       });
-      files.push({ name: 'OEBPS/alt.opf', data: new TextEncoder().encode(opfXml({ ...spec, title: `${spec.title} (alternate)`, uniqueId: 'alt' }, 'OEBPS/alt.opf')) });
+      files.push({
+        name: 'OEBPS/alt.opf',
+        data: new TextEncoder().encode(
+          opfXml({ ...spec, title: `${spec.title} (alternate)`, uniqueId: 'alt' }, 'OEBPS/alt.opf'),
+        ),
+      });
       for (const ch of spec.chapters) {
         files.push({ name: `OEBPS/${ch.href}`, data: new TextEncoder().encode(ch.body) });
       }
@@ -197,7 +209,20 @@ export function chapterBody(seed: number, paragraphs = 3): string {
   for (let i = 0; i < paragraphs; i++) {
     const words = Array.from({ length: 24 }, () => {
       const n = Math.floor(rng() * 12);
-      return ['the', 'corpus', 'of', 'epub', 'books', 'tests', 'reader', 'engine', 'and', 'a', 'fixture', 'specimen'][n];
+      return [
+        'the',
+        'corpus',
+        'of',
+        'epub',
+        'books',
+        'tests',
+        'reader',
+        'engine',
+        'and',
+        'a',
+        'fixture',
+        'specimen',
+      ][n];
     }).join(' ');
     // Deterministic pseudo-random tail per paragraph keeps deflate ratios low
     // (the archive validator rejects entries compressing above 10:1), so

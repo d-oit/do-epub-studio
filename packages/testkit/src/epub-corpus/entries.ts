@@ -32,7 +32,10 @@ function standardSpec(overrides: Omit<Partial<EpubSpec>, 'title'> & { title: str
   };
 }
 
-function specWithBody(body: string, overrides: Omit<Partial<EpubSpec>, 'title'> & { title: string }): EpubSpec {
+function specWithBody(
+  body: string,
+  overrides: Omit<Partial<EpubSpec>, 'title'> & { title: string },
+): EpubSpec {
   return {
     version: '3.0',
     language: 'en',
@@ -162,7 +165,10 @@ function rtlVerticalSpec(): EpubSpec {
       {
         href: 'chapter1.xhtml',
         title: 'Chapter 1',
-        body: xhtmlDoc(`<h1>RTL Vertical</h1>\n${body}`, `<style>${style}</style><title>Chapter</title>`),
+        body: xhtmlDoc(
+          `<h1>RTL Vertical</h1>\n${body}`,
+          `<style>${style}</style><title>Chapter</title>`,
+        ),
       },
     ],
   };
@@ -177,7 +183,13 @@ function svgContentSpec(): EpubSpec {
     version: '3.0',
     title: 'SVG Content',
     language: 'en',
-    chapters: [{ href: 'chapter1.xhtml', title: 'Chapter 1', body: xhtmlDoc(body, '<title>Chapter</title>') }],
+    chapters: [
+      {
+        href: 'chapter1.xhtml',
+        title: 'Chapter 1',
+        body: xhtmlDoc(body, '<title>Chapter</title>'),
+      },
+    ],
     items: [
       {
         id: 'vector-svg',
@@ -200,7 +212,13 @@ function fontSpec(): EpubSpec {
     version: '3.0',
     title: 'Embedded Font',
     language: 'en',
-    chapters: [{ href: 'chapter1.xhtml', title: 'Chapter 1', body: xhtmlDoc(body, `<style>${style}</style><title>Chapter</title>`) }],
+    chapters: [
+      {
+        href: 'chapter1.xhtml',
+        title: 'Chapter 1',
+        body: xhtmlDoc(body, `<style>${style}</style><title>Chapter</title>`),
+      },
+    ],
     items: [
       { id: 'corpus-font', href: 'fonts/corpus.ttf', mediaType: 'font/ttf', data: TTF_CORPUS },
     ],
@@ -216,21 +234,37 @@ function remoteResourcesSpec(): EpubSpec {
     version: '3.0',
     title: 'Remote Resources',
     language: 'en',
-    chapters: [{ href: 'chapter1.xhtml', title: 'Chapter 1', body: xhtmlDoc(body, '<title>Chapter</title>') }],
+    chapters: [
+      {
+        href: 'chapter1.xhtml',
+        title: 'Chapter 1',
+        body: xhtmlDoc(body, '<title>Chapter</title>'),
+      },
+    ],
   };
 }
 
 function mediaOverlaySpec(): EpubSpec {
-  const body =
-    '<p id="p1">First overlay paragraph.</p>\n<p id="p2">Second overlay paragraph.</p>';
+  const body = '<p id="p1">First overlay paragraph.</p>\n<p id="p2">Second overlay paragraph.</p>';
   return {
     version: '3.0',
     title: 'Media Overlay',
     language: 'en',
     metadataExtras: ['    <meta property="media:duration" content="0:00:02"/>'],
-    chapters: [{ href: 'chapter1.xhtml', title: 'Chapter 1', body: xhtmlDoc(body, '<title>Chapter</title>') }],
+    chapters: [
+      {
+        href: 'chapter1.xhtml',
+        title: 'Chapter 1',
+        body: xhtmlDoc(body, '<title>Chapter</title>'),
+      },
+    ],
     items: [
-      { id: 'overlay-smil', href: 'media/overlay.smil', mediaType: 'application/smil+xml', data: new TextEncoder().encode(MEDIA_OVERLAY_SMIL) },
+      {
+        id: 'overlay-smil',
+        href: 'media/overlay.smil',
+        mediaType: 'application/smil+xml',
+        data: new TextEncoder().encode(MEDIA_OVERLAY_SMIL),
+      },
       { id: 'audio-wav', href: 'media/audio.wav', mediaType: 'audio/wav', data: WAV_CLIP },
     ],
     spineProperties: { ch1: 'media-overlay' },
@@ -248,7 +282,13 @@ function annotationsSpec(): EpubSpec {
     version: '3.0',
     title: 'Annotations',
     language: 'en',
-    chapters: [{ href: 'chapter1.xhtml', title: 'Chapter 1', body: xhtmlDoc(`<p>${spans}</p>`, '<title>Chapter</title>') }],
+    chapters: [
+      {
+        href: 'chapter1.xhtml',
+        title: 'Chapter 1',
+        body: xhtmlDoc(`<p>${spans}</p>`, '<title>Chapter</title>'),
+      },
+    ],
   };
 }
 
@@ -266,7 +306,10 @@ function fixedLayoutSpec(): EpubSpec {
       title: `Chapter ${i}`,
       body: xhtmlDoc(`<h1>Fixed ${i}</h1>\n${chapterBody(i + 4)}`, '<title>Chapter</title>'),
     })),
-    spineProperties: { ch1: 'rendition:layout-pre-paginated', ch2: 'rendition:layout-pre-paginated' },
+    spineProperties: {
+      ch1: 'rendition:layout-pre-paginated',
+      ch2: 'rendition:layout-pre-paginated',
+    },
   };
 }
 
@@ -277,9 +320,7 @@ export function generateCorpusEntry(id: string): Uint8Array {
         standardSpec({ title: 'Epub Two NCX', version: '2.0', includeNcx: true }),
       );
     case 'epub3-nav':
-      return buildEpubFromSpec(
-        standardSpec({ title: 'Epub Three Nav', includeNavDoc: true }),
-      );
+      return buildEpubFromSpec(standardSpec({ title: 'Epub Three Nav', includeNavDoc: true }));
     case 'multiple-rootfiles':
       return buildEpubFromSpec(
         standardSpec({
@@ -314,8 +355,18 @@ export function generateCorpusEntry(id: string): Uint8Array {
       const data = buildZip(
         [
           { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip'), method: 0 },
-          { name: 'META-INF/container.xml', data: new TextEncoder().encode(containerXml([{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }])) },
-          { name: 'OEBPS/chapter1.xhtml', data: new TextEncoder().encode('<html><body>cut</body></html>') },
+          {
+            name: 'META-INF/container.xml',
+            data: new TextEncoder().encode(
+              containerXml([
+                { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
+              ]),
+            ),
+          },
+          {
+            name: 'OEBPS/chapter1.xhtml',
+            data: new TextEncoder().encode('<html><body>cut</body></html>'),
+          },
         ],
         { truncateCentralDirectory: true },
       );
@@ -333,24 +384,59 @@ export function generateCorpusEntry(id: string): Uint8Array {
       );
     case 'missing-mimetype':
       return buildZip([
-        { name: 'META-INF/container.xml', data: new TextEncoder().encode(containerXml([{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }])) },
-        { name: 'OEBPS/content.opf', data: new TextEncoder().encode(opfXml(standardSpec({ title: 'Missing Mimetype', version: '2.0', includeNcx: true }), 'OEBPS/content.opf')) },
+        {
+          name: 'META-INF/container.xml',
+          data: new TextEncoder().encode(
+            containerXml([
+              { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
+            ]),
+          ),
+        },
+        {
+          name: 'OEBPS/content.opf',
+          data: new TextEncoder().encode(
+            opfXml(
+              standardSpec({ title: 'Missing Mimetype', version: '2.0', includeNcx: true }),
+              'OEBPS/content.opf',
+            ),
+          ),
+        },
       ]);
     case 'mimetype-not-first':
       return buildZip([
-        { name: 'META-INF/container.xml', data: new TextEncoder().encode(containerXml([{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }])) },
+        {
+          name: 'META-INF/container.xml',
+          data: new TextEncoder().encode(
+            containerXml([
+              { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
+            ]),
+          ),
+        },
         { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip'), method: 0 },
-        { name: 'OEBPS/content.opf', data: new TextEncoder().encode(opfXml(standardSpec({ title: 'Mimetype Not First' }), 'OEBPS/content.opf')) },
+        {
+          name: 'OEBPS/content.opf',
+          data: new TextEncoder().encode(
+            opfXml(standardSpec({ title: 'Mimetype Not First' }), 'OEBPS/content.opf'),
+          ),
+        },
       ]);
     case 'xxe-external-entity':
-      return buildEpubFromSpec(
-        specWithBody(xxeBody(), { title: 'XXE' }),
-      );
+      return buildEpubFromSpec(specWithBody(xxeBody(), { title: 'XXE' }));
     case 'malformed-zip-traversal':
       return buildZip([
         { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip'), method: 0 },
-        { name: 'META-INF/container.xml', data: new TextEncoder().encode(containerXml([{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }])) },
-        { name: '../../evil.xhtml', data: new TextEncoder().encode('<html><body>evil</body></html>') },
+        {
+          name: 'META-INF/container.xml',
+          data: new TextEncoder().encode(
+            containerXml([
+              { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
+            ]),
+          ),
+        },
+        {
+          name: '../../evil.xhtml',
+          data: new TextEncoder().encode('<html><body>evil</body></html>'),
+        },
       ]);
     case 'zip-bomb-ratio': {
       const bomb = Buffer.alloc(64 * 1024 * 1024);
@@ -368,26 +454,20 @@ export function generateCorpusEntry(id: string): Uint8Array {
       return buildEpubFromSpec(
         standardSpec({
           title: 'Oversized Resource',
-          items: [{ id: 'big-blob', href: 'blob.bin', mediaType: 'application/octet-stream', data: blob }],
+          items: [
+            { id: 'big-blob', href: 'blob.bin', mediaType: 'application/octet-stream', data: blob },
+          ],
         }),
       );
     }
     case 'script-event-handlers':
-      return buildEpubFromSpec(
-        specWithBody(scriptedBody(), { title: 'Script Event Handlers' }),
-      );
+      return buildEpubFromSpec(specWithBody(scriptedBody(), { title: 'Script Event Handlers' }));
     case 'svg-script':
-      return buildEpubFromSpec(
-        specWithBody(svgScriptBody(), { title: 'SVG Script' }),
-      );
+      return buildEpubFromSpec(specWithBody(svgScriptBody(), { title: 'SVG Script' }));
     case 'unsafe-schemes':
-      return buildEpubFromSpec(
-        specWithBody(unsafeSchemesBody(), { title: 'Unsafe Schemes' }),
-      );
+      return buildEpubFromSpec(specWithBody(unsafeSchemesBody(), { title: 'Unsafe Schemes' }));
     case 'url-edge-cases':
-      return buildEpubFromSpec(
-        specWithBody(urlEdgeCasesBody(), { title: 'URL Edge Cases' }),
-      );
+      return buildEpubFromSpec(specWithBody(urlEdgeCasesBody(), { title: 'URL Edge Cases' }));
     default:
       throw new Error(`No generator for corpus fixture: ${id}`);
   }

@@ -30,4 +30,11 @@ export {
 } from './generate';
 export { buildCorpus, generateCorpusEntry } from './entries';
 export { prng, generatePng, generateMinimalTtf, generateWav } from './resources';
-export { buildZip, crc32, findLocalEntryOffset, listLocalEntryNames, type ZipEntry, type BuildZipOptions } from './zip';
+export {
+  buildZip,
+  crc32,
+  findLocalEntryOffset,
+  listLocalEntryNames,
+  type ZipEntry,
+  type BuildZipOptions,
+} from './zip';

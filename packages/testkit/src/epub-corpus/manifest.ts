@@ -85,7 +85,12 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
     expectedParses: true,
     expectedArchive: { kind: 'ok' },
     expectedDiagnostics: [],
-    expectedMetadata: { title: 'RTL Vertical', language: 'ar', direction: 'rtl', epubVersion: '3.0' },
+    expectedMetadata: {
+      title: 'RTL Vertical',
+      language: 'ar',
+      direction: 'rtl',
+      epubVersion: '3.0',
+    },
     securityVerdict: { kind: 'none' },
     browserable: true,
   },
@@ -286,7 +291,10 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
       { code: 'ENTITY_REF_UNRESOLVED', severity: 'warning', path: 'OEBPS/chapter1.xhtml' },
     ],
     expectedMetadata: { title: 'XXE', language: 'en', epubVersion: '3.0' },
-    securityVerdict: { kind: 'sanitized', what: 'external entity left unexpanded; no host-file exfiltration' },
+    securityVerdict: {
+      kind: 'sanitized',
+      what: 'external entity left unexpanded; no host-file exfiltration',
+    },
     browserable: false,
   },
   {
@@ -326,9 +334,7 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
     featureTags: ['oversized-resource', 'size-limits'],
     expectedParses: true,
     expectedArchive: { kind: 'ok' },
-    expectedDiagnostics: [
-      { code: 'OVERSIZE_GATE', severity: 'warning', path: 'OEBPS/blob.bin' },
-    ],
+    expectedDiagnostics: [{ code: 'OVERSIZE_GATE', severity: 'warning', path: 'OEBPS/blob.bin' }],
     expectedMetadata: { title: 'Oversized Resource', language: 'en', epubVersion: '3.0' },
     securityVerdict: { kind: 'none' },
     browserable: false,
@@ -347,7 +353,10 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
       { code: 'EVENT_HANDLER_REMOVED', severity: 'error', path: 'OEBPS/chapter1.xhtml' },
     ],
     expectedMetadata: { title: 'Script Event Handlers', language: 'en', epubVersion: '3.0' },
-    securityVerdict: { kind: 'sanitized', what: 'script elements and event-handler attributes removed' },
+    securityVerdict: {
+      kind: 'sanitized',
+      what: 'script elements and event-handler attributes removed',
+    },
     browserable: true,
   },
   {
@@ -363,7 +372,10 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
       { code: 'SVG_SCRIPT_REMOVED', severity: 'error', path: 'OEBPS/chapter1.xhtml' },
     ],
     expectedMetadata: { title: 'SVG Script', language: 'en', epubVersion: '3.0' },
-    securityVerdict: { kind: 'sanitized', what: 'SVG script/event/foreignObject payloads stripped' },
+    securityVerdict: {
+      kind: 'sanitized',
+      what: 'SVG script/event/foreignObject payloads stripped',
+    },
     browserable: true,
   },
   {
@@ -393,11 +405,18 @@ export const CORPUS_ENTRIES: readonly CorpusEntry[] = [
     expectedArchive: { kind: 'ok' },
     expectedDiagnostics: [
       { code: 'UNSAFE_SCHEME_REMOVED', severity: 'error', path: 'OEBPS/chapter1.xhtml' },
-      { code: 'OBFUSCATED_SCHEME_RETAINED_INERT', severity: 'warning', path: 'OEBPS/chapter1.xhtml' },
+      {
+        code: 'OBFUSCATED_SCHEME_RETAINED_INERT',
+        severity: 'warning',
+        path: 'OEBPS/chapter1.xhtml',
+      },
       { code: 'SCHEME_RELATIVE_RETAINED', severity: 'warning', path: 'OEBPS/chapter1.xhtml' },
     ],
     expectedMetadata: { title: 'URL Edge Cases', language: 'en', epubVersion: '3.0' },
-    securityVerdict: { kind: 'sanitized', what: 'executable schemes stripped; obfuscated/scheme-relative forms retained but guarded at the network egress' },
+    securityVerdict: {
+      kind: 'sanitized',
+      what: 'executable schemes stripped; obfuscated/scheme-relative forms retained but guarded at the network egress',
+    },
     browserable: true,
   },
 ];

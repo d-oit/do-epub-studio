@@ -18,11 +18,7 @@ import { spawn } from 'node:child_process';
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import {
-  CORPUS_ENTRIES,
-  generateCorpusEntry,
-  KNOWN_DIFFS,
-} from '@do-epub-studio/testkit';
+import { CORPUS_ENTRIES, generateCorpusEntry, KNOWN_DIFFS } from '@do-epub-studio/testkit';
 
 interface RunnerFinding {
   severity: string;
@@ -53,11 +49,13 @@ async function runViaJar(bytes: Uint8Array, jar: string): Promise<RunnerResult> 
       });
     });
     const report = JSON.parse(await readFile(reportPath, 'utf8'));
-    const findings: RunnerFinding[] = (report.messages ?? []).map((m: { id?: string; severity?: string; message?: string }) => ({
-      severity: (m.severity ?? '').toUpperCase(),
-      code: m.id ?? 'EPUBCHECK',
-      message: m.message ?? '',
-    }));
+    const findings: RunnerFinding[] = (report.messages ?? []).map(
+      (m: { id?: string; severity?: string; message?: string }) => ({
+        severity: (m.severity ?? '').toUpperCase(),
+        code: m.id ?? 'EPUBCHECK',
+        message: m.message ?? '',
+      }),
+    );
     return { safetyStatus: 'accepted', conformanceStatus: 'completed', findings };
   } finally {
     await rm(workDir, { recursive: true, force: true });
@@ -72,7 +70,11 @@ async function runViaHttp(bytes: Uint8Array, url: string): Promise<RunnerResult>
   });
   if (response.status === 422) {
     const body = (await response.json()) as { safetyStatus?: string; failureCode?: string };
-    return { safetyStatus: body.safetyStatus ?? 'rejected', conformanceStatus: 'rejected', findings: [] };
+    return {
+      safetyStatus: body.safetyStatus ?? 'rejected',
+      conformanceStatus: 'rejected',
+      findings: [],
+    };
   }
   if (!response.ok) {
     throw new Error(`runner returned ${response.status}`);
@@ -104,7 +106,9 @@ async function main(): Promise<number> {
     try {
       result = jar ? await runViaJar(bytes, jar) : await runViaHttp(bytes, runnerUrl!);
     } catch (error) {
-      console.error(`  [RUNNER FAILURE] ${entry.id}: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `  [RUNNER FAILURE] ${entry.id}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       failures += 1;
       continue;
     }
@@ -118,7 +122,9 @@ async function main(): Promise<number> {
         verdict: expectsReject ? 'rejected-as-expected' : 'REJECTED-UNEXPECTED',
         triaged: [],
         epubcheckErrors: [],
-        expectedErrors: entry.expectedDiagnostics.filter((d) => d.severity === 'error').map((d) => d.code),
+        expectedErrors: entry.expectedDiagnostics
+          .filter((d) => d.severity === 'error')
+          .map((d) => d.code),
       });
       if (!expectsReject) failures += 1;
       continue;
