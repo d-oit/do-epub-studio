@@ -70,6 +70,8 @@ interface CdEntry {
 
 interface CentralDirectory {
   entries: CdEntry[];
+  /** Byte offset just past the central directory (start of EOCD). */
+  end: number;
 }
 
 const UTF8_DECODER = new TextDecoder('utf-8', { fatal: false });
@@ -171,7 +173,7 @@ function parseCentralDirectory(data: Uint8Array): CentralDirectory | ArchiveReje
     pos = headerEnd;
   }
   if (entries.length !== declaredCount) return invalid();
-  return { entries };
+  return { entries, end: cdOffset + cdSize };
 }
 
 // ---------------------------------------------------------------------------
@@ -394,28 +396,43 @@ function runStreamingValidation(
 
   let localOffset = 0;
   try {
-    for (const entry of cd.entries) {
+    for (let index = 0; index < cd.entries.length; index += 1) {
+      const entry = cd.entries[index]!;
       if (state.finished) break;
       if (signal.aborted) {
         state.fail(archiveRejection('timeout'));
         break;
       }
-      if (entry.isDirectory) continue;
-
-      if (localOffset + 30 > data.byteLength || readU32(data, localOffset) !== LOCAL_HEADER_SIG) {
+      if (localOffset + 30 > cd.end || readU32(data, localOffset) !== LOCAL_HEADER_SIG) {
         state.fail(archiveRejection('invalid-archive'));
         break;
       }
       const localNameLen = readU16(data, localOffset + 26);
       const localExtraLen = readU16(data, localOffset + 28);
       const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+      if (entry.isDirectory) {
+        localOffset = dataStart;
+        continue;
+      }
       const dataEnd = dataStart + entry.compressedSize;
-      if (dataEnd > data.byteLength) {
+      if (dataEnd > cd.end) {
         state.fail(archiveRejection('invalid-archive'));
         break;
       }
       streamEntry(entry, data, dataStart, dataEnd, state, limits, signal);
-      localOffset = dataEnd;
+      if (index === cd.entries.length - 1) break;
+      // Streaming ZIP writers append a data-descriptor after the compressed
+      // bytes (local header sizes are zero). Scan forward to the next local
+      // header signature instead of assuming a fixed offset.
+      let next = dataEnd;
+      while (next < cd.end - 4 && readU32(data, next) !== LOCAL_HEADER_SIG) {
+        next += 1;
+      }
+      if (readU32(data, next) !== LOCAL_HEADER_SIG) {
+        state.fail(archiveRejection('invalid-archive'));
+        break;
+      }
+      localOffset = next;
     }
     if (!state.finished) resolve();
   } catch {
