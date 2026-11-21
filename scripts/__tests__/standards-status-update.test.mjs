@@ -101,16 +101,16 @@ describe('parseSpecPage', () => {
       '<SCRIPT>window.evil()</SCRIPT>' +
       '<script>window.evil2()</script>' +
       '<script src="https://evil.example/x.js">' +
+      '<script type="x" data-a="<script">' +
       '<style>body{color:red}</style>' +
-      '<p>clean text</p>';
+      '<p>clean text</p>' +
+      '<p>closing with attrs</script \n bar></p>';
     const record = parseSpecPage(html, 'epub-34');
     expect(record.textHash).toMatch(/^[0-9a-f]{64}$/);
     const visibleText = html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ')
-      .replace(/<script\b[^>]*>/gi, ' ')
-      .replace(/<script\b/gi, '')
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ')
-      .replace(/<style\b[^>]*>/gi, ' ')
+      .replace(/<(?:style|script)\b[^>]*>[\s\S]*?<\/(?:style|script)[^>]*>/gi, ' ')
+      .replace(/<(?:style|script)\b[^>]*>/gi, ' ')
+      .replace(/<(?:\/)?(?:style|script)\b/gi, '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
