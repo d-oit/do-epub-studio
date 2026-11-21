@@ -12,7 +12,6 @@ import {
   resolveIngestLimits,
 } from './ingest-limits';
 
-
 /**
  * One end-to-end resource budget for untrusted EPUB/ZIP ingestion, enforced
  * consistently at upload, validation, and reader import. See
@@ -121,11 +120,7 @@ function parseCentralDirectory(data: Uint8Array): CentralDirectory | ArchiveReje
   const declaredCount = readU16(data, eocdOffset + 10);
   const cdSize = readU32(data, eocdOffset + 12);
   const cdOffset = readU32(data, eocdOffset + 16);
-  if (
-    declaredCount === ZIP64_SENTINEL ||
-    cdSize === 0xffffffff ||
-    cdOffset === 0xffffffff
-  ) {
+  if (declaredCount === ZIP64_SENTINEL || cdSize === 0xffffffff || cdOffset === 0xffffffff) {
     return invalid(); // ZIP64 uses 64-bit fields we deliberately do not parse
   }
   if (cdOffset + cdSize > data.byteLength) return invalid(); // truncated CD
@@ -202,7 +197,7 @@ function checkEntryType(entry: CdEntry): ArchiveRejection | null {
   if (entry.method !== 0 && entry.method !== 8) {
     return archiveRejection('unsupported-entry', { entry: entry.name });
   }
-  const madeByUnix = (entry.versionMadeBy >>> 8) === 3;
+  const madeByUnix = entry.versionMadeBy >>> 8 === 3;
   if (madeByUnix) {
     const mode = entry.externalAttrs >>> 16;
     const type = mode & 0xf000;
@@ -251,9 +246,7 @@ function preflightCentralDirectory(
     if (type) return type;
     const ratio = checkRatioPreflight(entry, limits.maxCompressionRatio);
     if (ratio) return ratio;
-    const canonical = (entry.isDirectory ? entry.name.slice(0, -1) : entry.name).normalize(
-      'NFC',
-    );
+    const canonical = (entry.isDirectory ? entry.name.slice(0, -1) : entry.name).normalize('NFC');
     if (seenCanonical.has(canonical)) {
       return archiveRejection('duplicate-path', { entry: entry.name });
     }
@@ -417,14 +410,11 @@ export async function validateArchive(
   const limits = resolveIngestLimits(options?.limits);
   const traceId = options?.traceId ?? createTraceId();
   try {
-    await withTimeout(
-      (signal) => validateArchiveInner(data, limits, signal),
-      {
-        timeoutMs: options?.timeoutMs ?? limits.maxParseDurationMs,
-        operation: 'archive-ingest',
-        traceId,
-      },
-    );
+    await withTimeout((signal) => validateArchiveInner(data, limits, signal), {
+      timeoutMs: options?.timeoutMs ?? limits.maxParseDurationMs,
+      operation: 'archive-ingest',
+      traceId,
+    });
   } catch (error) {
     if (error instanceof ArchiveRejectionError) throw error;
     throw archiveRejectionFromError(error);
