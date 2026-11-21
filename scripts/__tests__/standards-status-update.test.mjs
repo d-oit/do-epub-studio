@@ -4,8 +4,9 @@ import {
   latestSnapshotPath,
   parseSpecPage,
   renderReport,
+  sanitizeFingerprintText,
 } from '../standards-status-update.mjs';
-import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -107,16 +108,11 @@ describe('parseSpecPage', () => {
       '<p>closing with attrs</script \n bar></p>';
     const record = parseSpecPage(html, 'epub-34');
     expect(record.textHash).toMatch(/^[0-9a-f]{64}$/);
-    const visibleText = html
-      .replace(/<(?:style|script)\b[^>]*>[\s\S]*?<\/(?:style|script)[^>]*>/gi, ' ')
-      .replace(/<(?:style|script)\b[^>]*>/gi, ' ')
-      .replace(/<(?:\/)?(?:style|script)\b/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const visibleText = sanitizeFingerprintText(html);
     expect(visibleText.toLowerCase()).not.toContain('<script');
     expect(visibleText.toLowerCase()).not.toContain('</script');
     expect(visibleText.toLowerCase()).not.toContain('<style');
+    expect(visibleText.toLowerCase()).not.toContain('</style');
     expect(visibleText).toContain('clean text');
   });
 });

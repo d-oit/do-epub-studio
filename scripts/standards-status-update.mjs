@@ -98,18 +98,46 @@ export function parseSpecPage(html, shortName) {
     record.headings.push({ level: Number(level), id, title });
   }
 
-  const text = html
-    .replace(/<(?:style|script)\b[^>]*>[\s\S]*?<\/(?:style|script)[^>]*>/gi, ' ')
-    .replace(/<(?:style|script)\b[^>]*>/gi, ' ')
-    .replace(/<(?:\/)?(?:style|script)\b/gi, '')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const text = sanitizeFingerprintText(html);
   record.textHash = createHash('sha256').update(text).digest('hex');
   return record;
 }
 
-/** Fetch one TR page. */
+const STRIP_TOKENS = ['<script', '</script', '<style', '</style'];
+
+/**
+ * Normalize visible text for fingerprinting: drop script/style markup tokens
+ * (case-insensitively, including unclosed or attribute-bearing forms), then
+ * strip remaining tags and collapse whitespace. Used only for the content
+ * fingerprint; the raw page source is never returned.
+ * @param {string} source raw page source
+ */
+export function sanitizeFingerprintText(source) {
+  const lower = source.toLowerCase();
+  let out = '';
+  let cursor = 0;
+  while (cursor < source.length) {
+    let earliest = -1;
+    let chosen = '';
+    for (const token of STRIP_TOKENS) {
+      const pos = lower.indexOf(token, cursor);
+      if (pos !== -1 && (earliest === -1 || pos < earliest)) {
+        earliest = pos;
+        chosen = token;
+      }
+    }
+    if (earliest === -1) {
+      out += source.slice(cursor);
+      break;
+    }
+    out += `${source.slice(cursor, earliest)} `;
+    cursor = earliest + chosen.length;
+  }
+  return out
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 export async function fetchSpecPage(url) {
   const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!response.ok) {
