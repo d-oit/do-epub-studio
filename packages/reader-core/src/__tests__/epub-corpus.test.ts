@@ -124,8 +124,13 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
   if (!has('mimetype')) seen.add('MIMETYPE_ABSENT');
   if (has('mimetype') && env.localNames[0] !== 'mimetype') seen.add('MIMETYPE_NOT_FIRST');
 
+  const REMOTE_RESOURCE_URLS = new Set([
+    'https://invalid.example/never-request.png',
+    'https://invalid.example/vector.svg',
+  ]);
   if (entry.id === 'remote-resources') {
-    if (env.chapterRaw.includes('https://invalid.example')) seen.add('REMOTE_RESOURCE_DECLARED');
+    const quotedUrls = [...env.chapterRaw.matchAll(/["'](https:\/\/invalid\.example[^"']*)["']/g)].map((m) => m[1] ?? '');
+    if (quotedUrls.some((v) => REMOTE_RESOURCE_URLS.has(v))) seen.add('REMOTE_RESOURCE_DECLARED');
     const egress = attrValues(env.chapterDoc, ['src', 'href', 'xlink:href']).filter((v) =>
       /^https?:\/\//i.test(v.trim()),
     );

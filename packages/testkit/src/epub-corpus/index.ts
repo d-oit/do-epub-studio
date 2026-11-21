@@ -17,8 +17,6 @@ export {
 } from './manifest';
 export { KNOWN_DIFFS, type KnownDiff } from './known-diffs';
 export {
-  buildCorpus,
-  generateCorpusEntry,
   buildEpubFromSpec,
   xhtmlDoc,
   containerXml,
@@ -26,12 +24,10 @@ export {
   ncxXml,
   navDocXml,
   chapterBody,
-  prng,
-  generatePng,
-  generateMinimalTtf,
-  generateWav,
   type EpubSpec,
   type Chapter,
   type ExtraItem,
 } from './generate';
+export { buildCorpus, generateCorpusEntry } from './entries';
+export { prng, generatePng, generateMinimalTtf, generateWav } from './resources';
 export { buildZip, crc32, findLocalEntryOffset, listLocalEntryNames, type ZipEntry, type BuildZipOptions } from './zip';
