@@ -62,6 +62,34 @@ describe('epub-validation schemas', () => {
         ],
         manualReviewRequired: true,
         certification: 'not-certified' as const,
+        profiles: {
+          '1.1': {
+            spec: {
+              spec: 'EPUB Accessibility',
+              specUrl: 'https://www.w3.org/TR/epub-a11y-11/',
+              version: '1.1',
+              status: 'W3C Recommendation',
+              statusDate: '2024-10-17',
+            },
+            experimental: false,
+            certification: 'not-certified' as const,
+            findings: [],
+            evidence: [],
+          },
+          '1.2-draft': {
+            spec: {
+              spec: 'EPUB Accessibility',
+              specUrl: 'https://www.w3.org/TR/epub-a11y-12/',
+              version: '1.2',
+              status: 'W3C Candidate Recommendation Draft',
+              statusDate: '2026-11-11',
+            },
+            experimental: true,
+            certification: 'not-certified' as const,
+            findings: [],
+            evidence: [],
+          },
+        },
       },
     };
     expect(EpubRunnerResultSchema.parse(valid)).toEqual(valid);
