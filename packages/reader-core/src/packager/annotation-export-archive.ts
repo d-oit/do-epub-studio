@@ -1,5 +1,5 @@
 import { Unzip, UnzipInflate, UnzipPassThrough, type UnzipFile } from 'fflate';
-import { ArchiveValidationError, validateArchive } from '../archive-validator';
+import { ArchiveRejectionError, validateArchive } from '../archive-validator';
 import type { ZipEntry } from './zip';
 
 const MIMETYPE = 'application/epub+zip';
@@ -85,21 +85,23 @@ function safeArchiveName(name: string): boolean {
 
 export function archiveFailure(error: unknown): EpubAnnotationExportError {
   if (error instanceof EpubAnnotationExportError) return error;
-  if (error instanceof ArchiveValidationError) {
-    if (
-      error.message.includes('maximum compressed size') ||
-      error.message.includes('Total uncompressed size') ||
-      error.message.includes('too many entries')
-    ) {
-      return new EpubAnnotationExportError('SOURCE_TOO_LARGE', error.message);
+  if (error instanceof ArchiveRejectionError) {
+    switch (error.code) {
+      case 'compressed-size':
+      case 'expanded-size':
+      case 'entry-count':
+      case 'per-entry-size':
+        return new EpubAnnotationExportError('SOURCE_TOO_LARGE', error.message);
+      case 'unsafe-path':
+      case 'ratio':
+      case 'duplicate-path':
+      case 'symlink-entry':
+      case 'unsupported-entry':
+      case 'encrypted-entry':
+        return new EpubAnnotationExportError('SOURCE_UNSAFE', error.message);
+      default:
+        return new EpubAnnotationExportError('SOURCE_INVALID', error.message);
     }
-    if (
-      error.message.includes('Potential path traversal') ||
-      error.message.includes('Compression ratio too high')
-    ) {
-      return new EpubAnnotationExportError('SOURCE_UNSAFE', error.message);
-    }
-    return new EpubAnnotationExportError('SOURCE_INVALID', error.message);
   }
   return new EpubAnnotationExportError(
     'SOURCE_INVALID',
@@ -116,10 +118,12 @@ export async function validateSourceArchive(bytes: Uint8Array): Promise<void> {
   }
   try {
     await validateArchive(bytes, {
-      maxCompressedSize: SOURCE_MAX_COMPRESSED_BYTES,
-      maxUncompressedSize: SOURCE_MAX_UNCOMPRESSED_BYTES,
-      maxEntryCount: MAX_ARCHIVE_ENTRIES,
-      maxCompressionRatio: 10,
+      limits: {
+        maxCompressedBytes: SOURCE_MAX_COMPRESSED_BYTES,
+        maxExpandedBytes: SOURCE_MAX_UNCOMPRESSED_BYTES,
+        maxEntryCount: MAX_ARCHIVE_ENTRIES,
+        maxCompressionRatio: 10,
+      },
     });
   } catch (error) {
     throw archiveFailure(error);

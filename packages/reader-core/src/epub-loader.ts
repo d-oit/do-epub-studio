@@ -37,6 +37,18 @@ export interface EpubRenditionHandle {
   registerRenderHook(fn: (contents: Contents) => void): void;
 }
 
+/**
+ * Error thrown by the reader loader when an import is rejected by the ingest
+ * budget policy. `code` is the stable archive-rejection code from the shared
+ * taxonomy (e.g. `unsafe-path`, `ratio`, `expanded-size`, `timeout`).
+ */
+export class EpubLoadError extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+    this.name = 'EpubLoadError';
+  }
+}
+
 export interface EpubLoader {
   load(url: string | Uint8Array, options?: { rootfile?: string }): Promise<void>;
   createRendition(container: HTMLElement): EpubRenditionHandle;
@@ -146,7 +158,13 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
           error: formatted,
         }),
       );
-      throw new Error(`Failed to load EPUB: ${formatted.message}`, { cause: error });
+      const wrapped = new Error(`Failed to load EPUB: ${formatted.message}`, {
+        cause: error,
+      });
+      if (error instanceof EpubLoadError && error.code) {
+        Object.assign(wrapped, { code: error.code });
+      }
+      throw wrapped;
     }
   }
 
@@ -162,7 +180,7 @@ export function createEpubLoader(options?: EpubLoaderOptions): EpubLoader {
     // destroyed loader cannot keep mutating `book`/raws after teardown.
     if (destroyed) return;
     if (!result.valid || !result.data) {
-      throw new Error(result.error ?? 'Failed to parse EPUB');
+      throw new EpubLoadError(result.error ?? 'Failed to parse EPUB', result.code);
     }
     markLoaderPhase(perf, 'epub-fetch-end');
     measureLoaderPhase(perf, 'epub-fetch', 'epub-fetch-start', 'epub-fetch-end');
