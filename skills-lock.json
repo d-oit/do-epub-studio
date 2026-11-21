@@ -10,6 +10,36 @@
       "source": "vercel-labs/agent-browser",
       "sourceType": "github",
       "computedHash": "c1b1133e43d087a9f97de44c2b8abdd4b6c59364d3ac9c0456b01916d58a55b2"
+    },
+    "epub-authoring-export": {
+      "source": ".agents/skills/epub-authoring-export",
+      "sourceType": "local",
+      "computedHash": "97bbe82a83fa4e4d2c2222432b2cea85d4ffe7da1f273e994f450593a899cafd"
+    },
+    "epub-validation": {
+      "source": ".agents/skills/epub-validation",
+      "sourceType": "local",
+      "computedHash": "195c79dff1ecad8757cf41d3b1d0d4ced3b9719fc9b116d72490f550083647d1"
+    },
+    "epub-security-ingest": {
+      "source": ".agents/skills/epub-security-ingest",
+      "sourceType": "local",
+      "computedHash": "61527ca86aa71b6494344bc22f2f00538ec0a82e4df49719f7092ecefe6e7fd1"
+    },
+    "epub-accessibility": {
+      "source": ".agents/skills/epub-accessibility",
+      "sourceType": "local",
+      "computedHash": "493a1e0727f0131cae72fb61170abee3335737c4b47527cb2640191c86c39402"
+    },
+    "epub-reader-regression": {
+      "source": ".agents/skills/epub-reader-regression",
+      "sourceType": "local",
+      "computedHash": "3578df1cec3d550ba899fcf49021873ad119ba707c7d7c1e83e9531bda5f1382"
+    },
+    "offline-data-integrity": {
+      "source": ".agents/skills/offline-data-integrity",
+      "sourceType": "local",
+      "computedHash": "c34717f892a63e0e212012d1baddf3439e02c02c9ec32c4a13c62d950c2ab947"
     }
   }
 }
