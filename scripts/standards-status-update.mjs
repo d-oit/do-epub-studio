@@ -99,13 +99,14 @@ export function parseSpecPage(html, shortName) {
   }
 
   const text = html
-    .replace(/<script[^>]*>.*?<\/script>/gs, ' ')
-    .replace(/<style[^>]*>.*?<\/style>/gs, ' ')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<script\b[^>]*>/gi, ' ')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<style\b[^>]*>/gi, ' ')
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
   record.textHash = createHash('sha256').update(text).digest('hex');
-
   return record;
 }
 

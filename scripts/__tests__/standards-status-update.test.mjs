@@ -90,8 +90,35 @@ describe('parseSpecPage', () => {
     expect(a.textHash).toBe(b.textHash);
     expect(a.textHash).not.toBe(c.textHash);
   });
+  it('strips script/style blocks case-insensitively and removes unclosed script tags', () => {
+    const html =
+      CONFIG_HTML(
+        'epub-34',
+        'CRD',
+        '2026-11-16',
+        'W3C Candidate Recommendation Draft 16 November 2026',
+      ) +
+      '<SCRIPT>window.evil()</SCRIPT>' +
+      '<script>window.evil2()</script>' +
+      '<script src="https://evil.example/x.js">' +
+      '<style>body{color:red}</style>' +
+      '<p>clean text</p>';
+    const record = parseSpecPage(html, 'epub-34');
+    expect(record.textHash).toMatch(/^[0-9a-f]{64}$/);
+    const visibleText = html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<script\b[^>]*>/gi, ' ')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<style\b[^>]*>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    expect(visibleText.toLowerCase()).not.toContain('<script');
+    expect(visibleText.toLowerCase()).not.toContain('</script');
+    expect(visibleText.toLowerCase()).not.toContain('<style');
+    expect(visibleText).toContain('clean text');
+  });
 });
-
 const snapshot = (specs) => ({ generatedAt: '2026-11-19T00:00:00.000Z', specs });
 
 describe('compareSnapshots', () => {
