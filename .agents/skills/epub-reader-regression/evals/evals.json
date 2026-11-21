@@ -1,0 +1,49 @@
+{
+  "skill_name": "epub-reader-regression",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Reader regression: in an RTL book, chapter 3 renders left-to-right. Triage and fix.",
+      "expected_output": "The agent reproduces against the corpus, checks whether an RTL fixture exists (adding one if not), verifies resolveBookDirection and page-direction handling, runs the targeted reader vitest set, and updates the capability matrix with fixture evidence if behavior changed.",
+      "assertions": [
+        "Reproduction tied to a corpus fixture or new fixture",
+        "resolveBookDirection path covered by test",
+        "Capability matrix updated if claim changed",
+        "Vitest run under the repo flock"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We should claim pagination support in the matrix — I saw it work in the demo.",
+      "expected_output": "Refused as insufficient: matrix claims require evidence (status, observed behavior, fixture, engine/version). The agent identifies/creates a deterministic pagination fixture, records observed behavior with the engine version, and only then updates the matrix row.",
+      "assertions": [
+        "No unverified matrix claim is added",
+        "Fixture + engine/version evidence required",
+        "Matrix row updated only with evidence",
+        "Observed behavior recorded precisely"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a test that launches Playwright chromium to verify the chapter renders correctly.",
+      "expected_output": "Local unit verification must not launch browsers; the agent instead adds a Vitest fixture-based test in reader-core (pool forks) and notes the Playwright project for CI-only cross-browser coverage.",
+      "assertions": [
+        "No browser launch in unit tests",
+        "Fixture-based Vitest test added",
+        "Playwright stays CI-only",
+        "Test path is in reader-core __tests__"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The media overlay test corpus is missing a SMIL file with a malformed clock. Add one and confirm safe handling.",
+      "expected_output": "A deterministic SMIL fixture with malformed clock values is added to the corpus; parseSmilClock returns a safe default (no throw); media-overlay.test.ts covers it; corpus conformance still passes.",
+      "assertions": [
+        "Fixture added under capability-corpus",
+        "parseSmilClock handles malformed values safely",
+        "media-overlay.test.ts has coverage",
+        "scripts/check-epub-fixtures.mjs still passes"
+      ]
+    }
+  ]
+}

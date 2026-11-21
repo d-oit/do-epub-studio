@@ -1,0 +1,49 @@
+{
+  "skill_name": "epub-validation",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "EPUBCheck output includes a path like 'OEBPS\\chapter1.xhtml' (backslashes) and the stored finding path should be normalized to forward slashes under the revision's root. Fix the normalization.",
+      "expected_output": "normalizeFindingPath converts backslashes and strips duplicated OEBPS/ prefixes deterministically; epubcheck-parsing tests cover the new case; the stored report path is clean and bounded.",
+      "assertions": [
+        "Normalization happens in apps/epubcheck-runner/src/epubcheck-parsing.ts",
+        "Backslash and duplicate-prefix cases have unit coverage",
+        "Stored finding path is normalized and relative",
+        "No raw untrusted path is persisted"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A book revision failed EPUBCheck with 3 errors. Can we block the book from being read because of it?",
+      "expected_output": "No — conformance findings are advisory evidence and do not discard an accepted revision; archive-safety rejection (validateArchive) is the only hard block. The agent explains the ADR-1017 separation and keeps the book readable while surfacing the report.",
+      "assertions": [
+        "Distinguishes safety rejection from conformance findings",
+        "Keeps the revision readable despite EPUBCheck errors",
+        "Cites ADR-1017 separation of concerns",
+        "Does not delete or hide the validation report"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "To speed up uploads, skip EPUBCheck for EPUBs smaller than 1 MB — they are obviously fine.",
+      "expected_output": "Refused: skipping validation based on size violates the durable revision-bound evidence model and idempotency contract; every accepted revision must have a validation result (pending/error is visible, not skipped). If latency is the concern, keep the async queue — uploads never wait on EPUBCheck anyway.",
+      "assertions": [
+        "Does not add a size-based skip",
+        "Explains the async queue already keeps uploads fast",
+        "Preserves revision-bound evidence for all revisions",
+        "No silent gaps in validation status"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "A user asks: 'Does this EPUB pass EPUB Accessibility 1.2?'",
+      "expected_output": "The agent reports only what evidence supports: EPUB Accessibility 1.1 is the stable baseline; 1.2 is a Candidate Recommendation Draft signal, not normative (ADR-1017). The report states it is evidence, not certification, and routes detailed claim wording to epub-accessibility.",
+      "assertions": [
+        "No certification claim is made",
+        "1.1 stable baseline vs 1.2 draft distinction is stated",
+        "References ADR-1017 section on evidence scoping",
+        "Defers claim wording to epub-accessibility"
+      ]
+    }
+  ]
+}

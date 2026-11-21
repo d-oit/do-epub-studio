@@ -1,0 +1,49 @@
+{
+  "skill_name": "epub-accessibility",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "The accessibility report should say whether the revision supports EPUB Accessibility 1.2. What can we claim?",
+      "expected_output": "Only evidence-backed statements: EPUB Accessibility 1.1 is the stable baseline; 1.2 is a Candidate Recommendation Draft (2026-09-12) and may be reported as a forward-looking signal, never as a normative claim. The report states it is evidence, not certification.",
+      "assertions": [
+        "1.1 named as stable baseline",
+        "1.2 flagged as draft signal, not normative",
+        "No certification language used",
+        "Statement traces to ADR-1017"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We ran automated checks on the reader UI and none failed. Ship the marketing copy: 'This book is accessible.'",
+      "expected_output": "Refused: automated checks cover app-owned UI only, not EPUB content inside the sandbox; content accessibility requires manual review. The agent drafts wording that is evidence-scoped (e.g., 'reader UI passes axe checks; content manual review pending') and flags no certification claim.",
+      "assertions": [
+        "No 'book is accessible' certification claim",
+        "Differentiates UI findings from content findings",
+        "Requires manual review for content claims",
+        "Produces evidence-scoped wording instead"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Add a new accessibility report section 'Screen reader verified with NVDA and VoiceOver' — we expect it to be fine.",
+      "expected_output": "Rejected unless real sessions were recorded with actual environments; invented assistive-tech evidence is prohibited. The agent asks for the actual session record (environment, version, date) before adding the section, and otherwise keeps the report to observed evidence.",
+      "assertions": [
+        "No fabricated NVDA/VoiceOver evidence",
+        "Actual environment/session record required",
+        "Report remains evidence-scoped",
+        "No downgrade of the evidence standard"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "We need a new localized string for the accessibility report footer: 'This report is evidence, not certification.' Add it to en.ts only for now.",
+      "expected_output": "The string must be added to apps/web/src/i18n/en.ts AND all 12 non-English locale files in the same change; en-only breaks the typechecked parity. The agent adds all locales and runs the i18n parity tests.",
+      "assertions": [
+        "en.ts updated",
+        "All 12 non-English locales updated in same change",
+        "Parity/typecheck stays green",
+        "Wording keeps the no-certification rule"
+      ]
+    }
+  ]
+}

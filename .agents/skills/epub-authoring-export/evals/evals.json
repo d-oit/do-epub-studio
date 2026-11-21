@@ -1,0 +1,50 @@
+{
+  "skill_name": "epub-authoring-export",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add an EPUB3 'page-list' navigation element to the authoring packager so the generated nav.xhtml includes a page-list nav and the OPF manifest references it.",
+      "expected_output": "The packager emits nav.xhtml containing a <nav epub:type=\"page-list\"> element and the OPF manifest includes the nav document; packager.test.ts gains a fixture asserting the page-list nav appears in nav and manifest; the package still loads round-trip through createEpubLoader.",
+      "assertions": [
+        "Implementation lives in packages/reader-core/src/packager/",
+        "nav.xhtml contains epub:type=\"page-list\"",
+        "OPF manifest includes the nav document",
+        "A fixture was added to packager.test.ts",
+        "Package round-trips through createEpubLoader without errors"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "A user uploaded a large EPUB and wants the authoring workspace to 'clean it up' and re-export it with better metadata.",
+      "expected_output": "The agent routes the request to epub-security-ingest (hostile/unknown input) and epub-validation (conformance) rather than epub-authoring-export: authoring exports structured AuthorPublication manuscripts, it does not ingest or rewrite arbitrary uploaded EPUBs; the task is refused for this skill with a pointer to the correct skills.",
+      "assertions": [
+        "Agent identifies that uploaded EPUBs are untrusted and out of scope for authoring-export",
+        "Routes to epub-security-ingest and epub-validation",
+        "Does not propose mutating the upload through the authoring packager",
+        "Does not claim EPUB3.3 conformance without running validation"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you make the exported EPUB include interactive JavaScript like a quiz page?",
+      "expected_output": "Refused: ADR-1020 forbids active content/scripts in packaged EPUBs; the agent explains the schema constraint and suggests authoring the quiz as static content or an interactive web feature instead. No code change is made to allow scripts.",
+      "assertions": [
+        "No scripts are added to the packaged EPUB",
+        "The refusal cites ADR-1020's semantic tag vocabulary",
+        "An alternative static/interactive-by-design approach is offered",
+        "No validation or sanitizer bypass is proposed"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The publisher wants the exported package to have the same byte hash across two runs for identical manuscript input. Is that guaranteed?",
+      "expected_output": "Yes — the packager is deterministic: fixed entry order, mimetype first uncompressed at offset 0, fixed timestamps and compression level. Verify with packager.test.ts determinism assertions; any byte difference indicates a regression that must be fixed, not ignored.",
+      "assertions": [
+        "Confirms determinism as a tested contract",
+        "Points to packager.test.ts",
+        "Mentions mimetype-first Store-method requirement",
+        "Treats byte drift as a regression to fix"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "skill_name": "epub-security-ingest",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A user uploaded an EPUB that inflates to 1.2 GiB from a small compressed file. Add a fixture and ensure ingestion rejects it.",
+      "expected_output": "A new zip-bomb fixture is added and archive-validator.test.ts asserts rejection via ArchiveValidationError (uncompressed-size and/or ratio); the ingest path is verified to call validateArchive before parsing; no content from the archive is rendered.",
+      "assertions": [
+        "Fixture exercises >1 GiB uncompressed or ratio >10",
+        "validateArchive throws ArchiveValidationError",
+        "Ingest calls validateArchive before any parse/render",
+        "Rejection is hard (not a warning)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We need to display a chapter with <script> tags and data: URLs. Please render it as-is so it matches the original.",
+      "expected_output": "Refused: content is sanitized via createEpubSanitizerHook (allowlist), external/data URLs are blocked by default policy, and the iframe sandbox is allow-same-origin only. The agent explains the security boundary and does not bypass the sanitizer or loosen the sandbox.",
+      "assertions": [
+        "No sanitizer bypass is proposed",
+        "Iframe sandbox not loosened",
+        "External URL default policy stays block-all",
+        "Explanation references the reader sanitizer hook"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Tell me if this book has a valid OPF and passes EPUB 3.3 — but don't spend time on size limits; it's from a trusted publisher.",
+      "expected_output": "Routed: conformance/OPF questions go to epub-validation, and archive-safety limits still apply regardless of trust — validateArchive is never skipped. The agent does not drop size/timeout checks for 'trusted' sources.",
+      "assertions": [
+        "Routes conformance to epub-validation",
+        "Keeps validateArchive on all uploads",
+        "No trusted-source exemption is created",
+        "Distinguishes safety from conformance"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I need to parse <smil> files from uploaded EPUBs to drive media overlays. Add a regex to extract attribute values.",
+      "expected_output": "The agent uses parseSmilDocument within SMIL bounds (1 MiB, 5,000 clips, 14,400s) and bounded regex via matchBounded/testBounded; no unbounded regex over SMIL text is added; media-overlay tests cover malformed clocks.",
+      "assertions": [
+        "SMIL parsing respects MAX_SMIL_BYTES and clip limits",
+        "Regex uses matchBounded/testBounded",
+        "Malformed clock values fail safe",
+        "Tests added in media-overlay.test.ts"
+      ]
+    }
+  ]
+}

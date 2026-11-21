@@ -15,11 +15,14 @@
 //
 // Also enforces a soft LOC cap on adapter files and a 200-LOC cap on
 // the canonical AGENTS.md so neither can grow silently.
+// Also verifies local `skills-lock.json` entries (sourceType "local") against
+// the sha256 of their canonical SKILL.md so locked skills cannot drift.
 //
 // Usage:  node scripts/check-agent-sync.mjs
 // Exit:   0 = clean, 1 = drift detected, 2 = missing canonical file
 
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -133,17 +136,46 @@ if (agentsLines > CANONICAL_LOC_CAP) {
   err('AGENTS.md', `exceeds ${CANONICAL_LOC_CAP} LOC cap (currently ${agentsLines})`);
 }
 
+// 3. Local skill-lock audit — `sourceType: "local"` entries pin the sha256
+// of the canonical SKILL.md; drift or a missing source fails the check.
+const SKILLS_LOCK = resolve(REPO_ROOT, 'skills-lock.json');
+if (existsSync(SKILLS_LOCK)) {
+  let lock;
+  try {
+    lock = JSON.parse(readFileSync(SKILLS_LOCK, 'utf8'));
+  } catch (error) {
+    err('skills-lock.json', 'unreadable or invalid JSON');
+    lock = null;
+  }
+  for (const [name, entry] of Object.entries(lock?.skills ?? {})) {
+    if (entry.sourceType !== 'local') continue;
+    const skillMd = resolve(REPO_ROOT, entry.source, 'SKILL.md');
+    if (!existsSync(skillMd)) {
+      err('skills-lock.json', `${name}: missing local source SKILL.md (${entry.source})`);
+      continue;
+    }
+    const hash = createHash('sha256').update(readFileSync(skillMd, 'utf8')).digest('hex');
+    if (hash !== entry.computedHash) {
+      err(
+        'skills-lock.json',
+        `${name}: hash mismatch (locked ${entry.computedHash}, found ${hash})`,
+      );
+    }
+  }
+}
+
 // 1. Adapter drift guard — ADAPTERS is the single source of enforcement.
 for (const relPath of ADAPTERS) {
   checkAdapter(relPath);
 }
 
 if (failed > 0) {
-  console.error('✗ Agent-adapter drift detected:');
+  console.error('✗ Agent-adapter/skill-lock drift detected:');
   for (const line of errors) console.error(`  ${line}`);
   process.exit(1);
 }
 
 console.log('✓ All agent adapters are thin and reference AGENTS.md.');
+console.log('✓ Local skills-lock entries match their SKILL.md hashes.');
 console.log(`  AGENTS.md: ${agentsLines} LOC (cap ${CANONICAL_LOC_CAP})`);
 console.log(`  ${ADAPTERS.length} adapter files checked (cap ${SOFT_LOC_CAP} LOC each)`);

@@ -1,0 +1,49 @@
+{
+  "skill_name": "offline-data-integrity",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Add an offline 'downloadedMedia' store for book downloads, bumping the IDB schema. Keep existing v5 data intact.",
+      "expected_output": "DB_VERSION bumped to 6 with an idempotent case in upgrade(db, oldVersion) creating downloadedMedia; v5 stores untouched and migrated losslessly; tests cover v5→v6 migration and the new store's reads/writes; quota-aware eviction added for the new downloads.",
+      "assertions": [
+        "DB_VERSION incremented with upgrade case",
+        "v5 data preserved through migration",
+        "Migration covered by tests",
+        "Eviction/quota handling for downloadedMedia"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The sync queue replayed twice and annotations were duplicated. Fix the sync endpoint instead of deduping locally.",
+      "expected_output": "The agent treats duplicate application as a sync correctness bug: verifies queue idempotency (keyed by id, intent-preserving retry), checks conflict-resolution policy, and fixes the sync/server contract end-to-end with tests — not a local dedupe patch that hides the root cause.",
+      "assertions": [
+        "Root cause fixed in sync contract, not local dedupe",
+        "Idempotency covered by tests",
+        "Conflict policy preserved",
+        "Annotation sync tests updated"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A user's session expires mid-download. It's fine to finish writing the local copy anyway.",
+      "expected_output": "Refused: sensitive writes must capture the session token before the await and assert it immediately before the IDB write; an expired session aborts the write with 401 (S1). The agent implements the abort and does not weaken session checks.",
+      "assertions": [
+        "Session assertion retained before write",
+        "Write aborts on expired session",
+        "No weakening of S1 behavior",
+        "session.test.ts covers the case"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Local storage is full. Just let the download fail with an error.",
+      "expected_output": "Insufficient: quota must be handled gracefully — surface storage use (StorageQuota), evict/clear eligible cached data, and retry; a half-written download is never left behind. The agent implements the eviction path and tests the quota error flow.",
+      "assertions": [
+        "QuotaExceededError handled gracefully",
+        "Eviction path exists and is tested",
+        "Retry after eviction",
+        "No half-written download state"
+      ]
+    }
+  ]
+}
