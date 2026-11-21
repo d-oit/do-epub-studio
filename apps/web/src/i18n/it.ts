@@ -867,7 +867,8 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'admin.validation.limitation': 'Limitazione',
   'admin.validation.certification': 'Certificazione',
   'admin.validation.certificationDeclared': 'Dichiarata dai metadati dell’evaluatore',
-  'admin.validation.certificationNone': 'Nessuna — i controlli automatizzati non sono certificazione',
+  'admin.validation.certificationNone':
+    'Nessuna — i controlli automatizzati non sono certificazione',
   'admin.validation.evidenceLabel': 'Record di evidenza',
   'admin.validation.retryValidation': 'Riprova validazione',
   'admin.validation.retrying': 'Tentativo in corso...',

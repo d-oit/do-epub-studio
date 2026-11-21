@@ -229,10 +229,7 @@ export function extractAccessibilityClaims(
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
 
   const evaluationDates = dedupe(
-    [
-      ...extractMetaProperty(opfXml, 'dcterms:date'),
-      ...extractMetaName(opfXml, 'dcterms:date'),
-    ],
+    [...extractMetaProperty(opfXml, 'dcterms:date'), ...extractMetaName(opfXml, 'dcterms:date')],
     256,
   );
   checkDeadline(deadline, 'accessibility-parse', timeoutMs, traceId);
@@ -291,9 +288,7 @@ export function assessAccessibility(
     (record) => record.checkId === 'claim.conformsTo.pattern' && record.result === 'pass',
   );
   const certification: 'declared' | 'not-certified' =
-    profile === '1.1' && fullClaimPass && metadata.certifiedBy
-      ? 'declared'
-      : 'not-certified';
+    profile === '1.1' && fullClaimPass && metadata.certifiedBy ? 'declared' : 'not-certified';
 
   return {
     profile,

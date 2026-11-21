@@ -178,10 +178,7 @@ async function validate(request: IncomingMessage, response: ServerResponse): Pro
     if (opf && extraction) {
       const context = extractEpubContainerContext(bytes, opf, extraction.opfPath ?? '');
       const a11y11 = assessAccessibility({ opfXml: opf, context }, { specProfile: '1.1' });
-      const a11y12 = assessAccessibility(
-        { opfXml: opf, context },
-        { specProfile: '1.2-draft' },
-      );
+      const a11y12 = assessAccessibility({ opfXml: opf, context }, { specProfile: '1.2-draft' });
       accessibility = {
         metadata: metadataFromOpf(opf),
         advisories: [...ADVISORIES],

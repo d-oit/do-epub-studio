@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  assessAccessibility,
-  type AccessibilityAssessment,
-} from '../epub-accessibility';
+import { assessAccessibility, type AccessibilityAssessment } from '../epub-accessibility';
 import { METADATA_FIXTURES } from './fixtures/a11y-12.metadata.fixtures';
 
 const EVIDENCE_KEYS = [
@@ -36,10 +33,17 @@ describe('claim discovery', () => {
     expect(assessment.metadata.accessModes).toEqual(['textual', 'visual']);
     expect(assessment.metadata.sufficientAccessModes).toEqual(['textual', 'visual']);
     expect(assessment.metadata.features).toEqual(
-      expect.arrayContaining(['structuralNavigation', 'tableOfContents', 'pageNavigation', 'alternativeText']),
+      expect.arrayContaining([
+        'structuralNavigation',
+        'tableOfContents',
+        'pageNavigation',
+        'alternativeText',
+      ]),
     );
     expect(assessment.metadata.hazards).toEqual(['none']);
-    expect(assessment.metadata.conformanceClaims).toEqual(['EPUB Accessibility 1.2 - WCAG 2.2 Level AA']);
+    expect(assessment.metadata.conformanceClaims).toEqual([
+      'EPUB Accessibility 1.2 - WCAG 2.2 Level AA',
+    ]);
     expect(assessment.metadata.certifiedBy).toBe('Accessibility Testers Group');
     expect(assessment.metadata.evaluationDates).toEqual(['2026-11-01']);
     expect(assessment.metadata.contactEmail).toBe('a11y@example.com');
@@ -52,9 +56,7 @@ describe('claim discovery', () => {
 describe('consistency checks vs actual content', () => {
   it('reports the missing page-list nav when pageNavigation is declared', () => {
     const assessment = assess('contradictory');
-    const finding = assessment.findings.find(
-      (item) => item.code === 'feature.pageNavigation.nav',
-    );
+    const finding = assessment.findings.find((item) => item.code === 'feature.pageNavigation.nav');
     expect(finding).toBeDefined();
     expect(finding?.severity).toBe('error');
     expect(finding?.path).toBe('OEBPS/nav.xhtml');
@@ -71,26 +73,20 @@ describe('consistency checks vs actual content', () => {
 
   it('reports sufficient-mode sets that reference no declared mode', () => {
     const assessment = assess('contradictory');
-    const finding = assessment.findings.find(
-      (item) => item.code === 'modes.sufficient.coverage',
-    );
+    const finding = assessment.findings.find((item) => item.code === 'modes.sufficient.coverage');
     expect(finding?.severity).toBe('warning');
     expect(finding?.message).toContain('visual');
   });
 
   it('reports conflicting conformance claims', () => {
     const assessment = assess('contradictory');
-    const finding = assessment.findings.find(
-      (item) => item.code === 'claim.conformsTo.conflict',
-    );
+    const finding = assessment.findings.find((item) => item.code === 'claim.conformsTo.conflict');
     expect(finding?.severity).toBe('warning');
   });
 
   it('reports a local evaluator report that does not resolve to a resource', () => {
     const assessment = assess('contradictory');
-    const finding = assessment.findings.find(
-      (item) => item.code === 'evaluator.report.resource',
-    );
+    const finding = assessment.findings.find((item) => item.code === 'evaluator.report.resource');
     expect(finding?.severity).toBe('warning');
     expect(finding?.path).toBe('reports/missing.xhtml');
   });
@@ -99,7 +95,8 @@ describe('consistency checks vs actual content', () => {
     const assessment = assess('positive');
     const alternativeText = assessment.evidence.find(
       (record) =>
-        record.checkId === 'feature.content.unsupported' && record.evidence.includes('alternativeText'),
+        record.checkId === 'feature.content.unsupported' &&
+        record.evidence.includes('alternativeText'),
     );
     expect(alternativeText?.result).toBe('informational');
     expect(alternativeText?.limitation).toMatch(/cannot confirm/i);

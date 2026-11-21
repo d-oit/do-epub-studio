@@ -980,7 +980,8 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'admin.validation.limitation': 'Einschränkung',
   'admin.validation.certification': 'Zertifizierung',
   'admin.validation.certificationDeclared': 'Durch Evaluator-Metadaten deklariert',
-  'admin.validation.certificationNone': 'Keine — automatisierte Prüfungen sind keine Zertifizierung',
+  'admin.validation.certificationNone':
+    'Keine — automatisierte Prüfungen sind keine Zertifizierung',
   'admin.validation.evidenceLabel': 'Nachweis-Datensätze',
   'admin.validation.retryValidation': 'Validierung wiederholen',
   'admin.validation.retrying': 'Wiederholung läuft...',

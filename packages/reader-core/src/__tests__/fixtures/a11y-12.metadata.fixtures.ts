@@ -74,9 +74,10 @@ const OPF_WRAPPER_END = `  </metadata>
   </spine>
 </package>`;
 
-export const METADATA_FIXTURES: Record<'positive' | 'negative' | 'contradictory', MetadataFixture> = {
-  positive: {
-    opfXml: `${OPF_WRAPPER_START}
+export const METADATA_FIXTURES: Record<'positive' | 'negative' | 'contradictory', MetadataFixture> =
+  {
+    positive: {
+      opfXml: `${OPF_WRAPPER_START}
     <meta property="schema:accessMode">textual</meta>
     <meta property="schema:accessMode">visual</meta>
     <meta property="schema:accessModeSufficient">textual</meta>
@@ -94,17 +95,17 @@ export const METADATA_FIXTURES: Record<'positive' | 'negative' | 'contradictory'
     <meta property="a11y:contactEmail">a11y@example.com</meta>
     <link rel="a11y:certifierReport" href="https://example.com/reports/9780000000001"/>
 ${OPF_WRAPPER_END}`,
-    context: CONTEXT_POSITIVE,
-  },
-  negative: {
-    opfXml: `${OPF_WRAPPER_START}
+      context: CONTEXT_POSITIVE,
+    },
+    negative: {
+      opfXml: `${OPF_WRAPPER_START}
     <meta property="schema:accessMode">textual</meta>
     <meta property="schema:accessibilityFeature">structuralNavigation</meta>
 ${OPF_WRAPPER_END}`,
-    context: { navXml: NAV_FULL, navPath: 'OEBPS/nav.xhtml', resources: RESOURCES },
-  },
-  contradictory: {
-    opfXml: `${OPF_WRAPPER_START}
+      context: { navXml: NAV_FULL, navPath: 'OEBPS/nav.xhtml', resources: RESOURCES },
+    },
+    contradictory: {
+      opfXml: `${OPF_WRAPPER_START}
     <meta property="schema:accessMode">textual</meta>
     <meta property="schema:accessModeSufficient">visual</meta>
     <meta property="schema:accessibilityFeature">structuralNavigation</meta>
@@ -119,11 +120,11 @@ ${OPF_WRAPPER_END}`,
     <meta property="a11y:contactEmail">not-an-email</meta>
     <link rel="a11y:certifierReport" href="reports/missing.xhtml"/>
 ${OPF_WRAPPER_END}`,
-    context: {
-      navXml: NAV_NO_PAGE_LIST,
-      navPath: 'OEBPS/nav.xhtml',
-      resources: RESOURCES,
-      spinePaths: ['OEBPS/ch1.xhtml', 'OEBPS/ch2.xhtml'],
+      context: {
+        navXml: NAV_NO_PAGE_LIST,
+        navPath: 'OEBPS/nav.xhtml',
+        resources: RESOURCES,
+        spinePaths: ['OEBPS/ch1.xhtml', 'OEBPS/ch2.xhtml'],
+      },
     },
-  },
-};
+  };

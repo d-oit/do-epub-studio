@@ -1,5 +1,8 @@
 import { useTranslation } from '../../../hooks/useTranslation';
-import type { AccessibilityEvidence, AccessibilityProfile } from '../../../lib/api/admin-validation';
+import type {
+  AccessibilityEvidence,
+  AccessibilityProfile,
+} from '../../../lib/api/admin-validation';
 
 function ProfileSpecBadge({ profile }: { profile: AccessibilityProfile }) {
   const { t } = useTranslation();
@@ -179,9 +182,7 @@ export function ValidationAccessibilitySection({
                 className="p-2 rounded border border-border bg-surface flex justify-between gap-2"
               >
                 <span className="text-foreground">{adv.message}</span>
-                <span className="uppercase text-[10px] text-foreground-muted">
-                  {adv.category}
-                </span>
+                <span className="uppercase text-[10px] text-foreground-muted">{adv.category}</span>
               </li>
             ))}
           </ul>
