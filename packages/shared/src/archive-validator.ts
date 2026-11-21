@@ -1,4 +1,4 @@
-import { Unzip, UnzipInflate } from 'fflate';
+import { UnzipInflate } from 'fflate';
 import { withTimeout } from './timeout';
 import { createTraceId } from './telemetry';
 import {
@@ -270,11 +270,109 @@ function preflightCentralDirectory(
 // Streaming enforcement (measured expanded bytes; never trust headers)
 // ---------------------------------------------------------------------------
 
+const LOCAL_HEADER_SIG = 0x04034b50;
+const STREAM_CHUNK_SIZE = 64 * 1024;
+
 interface StreamState {
   finished: boolean;
   totalExpanded: number;
-  seenEntries: Set<string>;
   fail: (rejection: ArchiveRejection) => void;
+}
+
+/**
+ * Decode one entry directly from its local-header slice, measuring *actual*
+ * decompressed bytes. Uses a fresh sync `UnzipInflate` per entry (no shared
+ * streaming-unzip machinery), which keeps per-archive overhead low while
+ * still aborting the moment any budget is crossed.
+ */
+function streamEntry(
+  entry: CdEntry,
+  data: Uint8Array,
+  dataStart: number,
+  dataEnd: number,
+  state: StreamState,
+  limits: IngestLimits,
+  signal: AbortSignal,
+): void {
+  let entryBytes = 0;
+  const isXml = isXmlDocumentName(entry.name);
+  const xmlChunks: Uint8Array[] = [];
+  let xmlBytes = 0;
+
+  const account = (chunk: Uint8Array, final: boolean): boolean => {
+    entryBytes += chunk.byteLength;
+    state.totalExpanded += chunk.byteLength;
+    if (entryBytes > limits.maxExpandedEntryBytes) {
+      state.fail(
+        archiveRejection('per-entry-size', {
+          entry: entry.name,
+          limit: limits.maxExpandedEntryBytes,
+          value: entryBytes,
+        }),
+      );
+      return false;
+    }
+    if (state.totalExpanded > limits.maxExpandedBytes) {
+      state.fail(
+        archiveRejection('expanded-size', {
+          limit: limits.maxExpandedBytes,
+          value: state.totalExpanded,
+        }),
+      );
+      return false;
+    }
+    if (isXml) {
+      const chunkBytes = chunk.byteLength;
+      if (xmlBytes + chunkBytes > limits.maxXmlDocumentBytes) {
+        state.fail(
+          archiveRejection('xml-budget', {
+            entry: entry.name,
+            limit: limits.maxXmlDocumentBytes,
+            value: xmlBytes + chunkBytes,
+          }),
+        );
+        return false;
+      }
+      xmlBytes += chunkBytes;
+      xmlChunks.push(chunk);
+      if (final) {
+        const single = xmlChunks[0];
+        const merged = single && xmlChunks.length === 1 ? single : mergeChunks(xmlChunks, xmlBytes);
+        const text = XML_TEXT_DECODER.decode(merged);
+        const budgetRejection = checkXmlDocumentBudget(text, limits);
+        if (budgetRejection) {
+          state.fail({ ...budgetRejection, entry: entry.name });
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  if (entry.method === 0) {
+    // Stored entry: the compressed bytes ARE the expanded bytes.
+    if (!account(data.subarray(dataStart, dataEnd), true)) return;
+    return;
+  }
+
+  const decoder = new UnzipInflate();
+  decoder.ondata = (err, chunk, final) => {
+    if (state.finished) return;
+    if (err) {
+      state.fail(archiveRejection('invalid-archive'));
+      return;
+    }
+    if (!account(chunk, final)) return;
+  };
+  try {
+    for (let offset = dataStart; offset < dataEnd; offset += STREAM_CHUNK_SIZE) {
+      if (state.finished || signal.aborted) break;
+      const end = offset + STREAM_CHUNK_SIZE >= dataEnd;
+      decoder.push(data.subarray(offset, Math.min(offset + STREAM_CHUNK_SIZE, dataEnd)), end);
+    }
+  } catch {
+    state.fail(archiveRejection('invalid-archive'));
+  }
 }
 
 function runStreamingValidation(
@@ -284,16 +382,9 @@ function runStreamingValidation(
   signal: AbortSignal,
 ): Promise<void> {
   const { promise, resolve, reject } = Promise.withResolvers<void>();
-  const expectedNames = new Set(
-    cd.entries.filter((entry) => !entry.isDirectory).map((entry) => entry.name),
-  );
-  const dirNames = new Set(
-    cd.entries.filter((entry) => entry.isDirectory).map((entry) => entry.name),
-  );
   const state: StreamState = {
     finished: false,
     totalExpanded: 0,
-    seenEntries: new Set(),
     fail: (rejection) => {
       if (state.finished) return;
       state.finished = true;
@@ -301,101 +392,32 @@ function runStreamingValidation(
     },
   };
 
-  const unzip = new Unzip();
-  unzip.register(UnzipInflate);
-  unzip.onfile = (file) => {
-    if (state.finished) return;
-    if (signal.aborted) {
-      state.fail(archiveRejection('timeout'));
-      return;
-    }
-    if (dirNames.has(file.name)) return; // directory entry: nothing to extract
-    state.seenEntries.add(file.name);
-    if (!expectedNames.has(file.name)) {
-      state.fail(archiveRejection('invalid-archive'));
-      return;
-    }
-
-    let entryBytes = 0;
-    const isXml = isXmlDocumentName(file.name);
-    const xmlChunks: Uint8Array[] = [];
-    let xmlBytes = 0;
-
-    file.ondata = (err, chunk, final) => {
-      if (state.finished) return;
-      if (err) {
-        state.fail(archiveRejection('invalid-archive'));
-        return;
-      }
-      entryBytes += chunk.byteLength;
-      state.totalExpanded += chunk.byteLength;
-      if (entryBytes > limits.maxExpandedEntryBytes) {
-        state.fail(
-          archiveRejection('per-entry-size', {
-            entry: file.name,
-            limit: limits.maxExpandedEntryBytes,
-            value: entryBytes,
-          }),
-        );
-        return;
-      }
-      if (state.totalExpanded > limits.maxExpandedBytes) {
-        state.fail(
-          archiveRejection('expanded-size', {
-            limit: limits.maxExpandedBytes,
-            value: state.totalExpanded,
-          }),
-        );
-        return;
-      }
-      if (isXml) {
-        const chunkBytes = chunk.byteLength;
-        if (xmlBytes + chunkBytes > limits.maxXmlDocumentBytes) {
-          state.fail(
-            archiveRejection('xml-budget', {
-              entry: file.name,
-              limit: limits.maxXmlDocumentBytes,
-              value: xmlBytes + chunkBytes,
-            }),
-          );
-          return;
-        }
-        xmlBytes += chunkBytes;
-        xmlChunks.push(chunk);
-        if (final) {
-          const single = xmlChunks[0];
-          const merged =
-            single && xmlChunks.length === 1 ? single : mergeChunks(xmlChunks, xmlBytes);
-          const text = XML_TEXT_DECODER.decode(merged);
-          const budgetRejection = checkXmlDocumentBudget(text, limits);
-          if (budgetRejection) {
-            state.fail({ ...budgetRejection, entry: file.name });
-            return;
-          }
-        }
-      }
-    };
-    file.start();
-  };
-
-  const CHUNK_SIZE = 64 * 1024;
+  let localOffset = 0;
   try {
-    for (let offset = 0; offset < data.byteLength; offset += CHUNK_SIZE) {
+    for (const entry of cd.entries) {
       if (state.finished) break;
-      const end = offset + CHUNK_SIZE >= data.byteLength;
-      unzip.push(data.subarray(offset, Math.min(offset + CHUNK_SIZE, data.byteLength)), end);
-    }
-    if (!state.finished) {
-      // Every expected entry must have been observed; a shortfall means the
-      // stream was truncated or the central directory lied.
-      for (const name of expectedNames) {
-        if (!state.seenEntries.has(name)) {
-          state.fail(archiveRejection('invalid-archive'));
-          return promise;
-        }
+      if (signal.aborted) {
+        state.fail(archiveRejection('timeout'));
+        break;
       }
-      resolve();
+      if (entry.isDirectory) continue;
+
+      if (localOffset + 30 > data.byteLength || readU32(data, localOffset) !== LOCAL_HEADER_SIG) {
+        state.fail(archiveRejection('invalid-archive'));
+        break;
+      }
+      const localNameLen = readU16(data, localOffset + 26);
+      const localExtraLen = readU16(data, localOffset + 28);
+      const dataStart = localOffset + 30 + localNameLen + localExtraLen;
+      const dataEnd = dataStart + entry.compressedSize;
+      if (dataEnd > data.byteLength) {
+        state.fail(archiveRejection('invalid-archive'));
+        break;
+      }
+      streamEntry(entry, data, dataStart, dataEnd, state, limits, signal);
+      localOffset = dataEnd;
     }
+    if (!state.finished) resolve();
   } catch {
     state.fail(archiveRejection('invalid-archive'));
   }
