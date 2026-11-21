@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   LOGIN_RESPONSE,
   mockReaderApi,
