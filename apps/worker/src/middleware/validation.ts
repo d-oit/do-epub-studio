@@ -31,6 +31,20 @@ export const validationErrorFormatter: MiddlewareHandler<{ Bindings: Env }> = as
       return;
     }
 
+    // Zod v4 serializes ZodError as { name: 'ZodError', message } rather than
+    // exposing `issues` on the wire (observed on every zValidator failure).
+    // Normalize that shape too, so the contract middleware only ever sees the
+    // app-standard error envelope.
+    if (
+      body.success === false &&
+      body.error &&
+      typeof body.error === 'object' &&
+      (body.error as Record<string, unknown>).name === 'ZodError'
+    ) {
+      const err = body.error as { message?: string };
+      c.res = apiError(c, 400, 'VALIDATION_ERROR', err.message ?? 'Invalid request');
+      return;
+    }
     // If it's already in our standard format, or not JSON, skip
     const contentType = c.res.headers.get('content-type');
     if (!contentType?.includes('application/json')) return;

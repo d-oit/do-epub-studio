@@ -100,3 +100,18 @@ export type EpubFinding = z.infer<typeof EpubFindingSchema>;
 export type EpubAccessibilityMetadataItem = z.infer<typeof EpubAccessibilityMetadataItemSchema>;
 export type EpubRunnerResult = z.infer<typeof EpubRunnerResultSchema>;
 export type AccessibilityRemediation = z.infer<typeof AccessibilityRemediationSchema>;
+
+/**
+ * Producer/consumer payload contract for the EPUB validation queue (issue
+ * #1489). The producer (`enqueueEpubValidation`) sends exactly this shape and
+ * the consumer (`processEpubValidationQueue`) validates incoming batches
+ * against it before touching the database. `bookId` / `revisionId` follow the
+ * UUID ids minted by `crypto.randomUUID()`; older producers sent opaque ids,
+ * so the consumer tolerates non-UUID ids rather than failing the batch.
+ */
+export const EpubValidationMessageSchema = z.object({
+  bookId: z.string().min(1).max(64),
+  revisionId: z.string().min(1).max(64),
+});
+
+export type EpubValidationMessage = z.infer<typeof EpubValidationMessageSchema>;

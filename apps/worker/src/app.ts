@@ -29,7 +29,8 @@ import {
   authorAssetsRouter,
 } from './routes';
 import { validationErrorFormatter } from './middleware/validation';
-
+import { apiError } from './lib/api-error';
+import { contractEnforcement } from './middleware/contract';
 export const app = new Hono<{ Bindings: Env; Variables: { requestContext: RequestContext } }>();
 
 app.use('*', observabilityMiddleware);
@@ -76,8 +77,8 @@ app.options('*', (_c) => {
 });
 
 // Reformat zValidator error responses to match app standard format
+app.use('*', contractEnforcement);
 app.use('*', validationErrorFormatter);
-
 app.route('/api', healthRouter);
 app.route('/api/access', accessRouter);
 app.route('/api', invitationsRouter);
@@ -97,6 +98,11 @@ app.route('/api/demo', demoRouter);
 app.route('/api', exportRouter);
 app.route('/api/author', authorRouter);
 app.route('/api/author', authorAssetsRouter);
+
+
+// Unknown paths return the standard JSON error envelope (with traceId) instead
+// of Hono's plain-text fallback, so every API response is machine-readable.
+app.notFound((c) => apiError(c, 404, 'NOT_FOUND', 'Route not found'));
 
 app.onError((err, c) => {
   const ctx = c.get('requestContext');

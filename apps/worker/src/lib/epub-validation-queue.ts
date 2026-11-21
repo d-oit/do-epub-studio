@@ -1,6 +1,6 @@
 import { execute, queryFirst } from '../db/client';
 import type { Env } from './env';
-import { EpubRunnerResultSchema, EPUBCHECK_VERSION } from '@do-epub-studio/schema';
+import { EpubValidationMessageSchema, EpubRunnerResultSchema, EPUBCHECK_VERSION } from '@do-epub-studio/schema';
 
 export interface EpubValidationMessage {
   bookId: string;
@@ -56,6 +56,12 @@ export async function processEpubValidationQueue(
 ): Promise<void> {
   for (const message of batch.messages) {
     try {
+      // Boundary contract: a producer that drifted from the shared schema must
+      // not be processed — fail it through the normal retry/dead-letter path.
+      const parsed = EpubValidationMessageSchema.safeParse(message.body);
+      if (!parsed.success) {
+        throw new Error('invalid_validation_message_shape');
+      }
       await validateRevision(env, message.body);
       message.ack();
     } catch {
