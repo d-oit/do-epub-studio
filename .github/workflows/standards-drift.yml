@@ -1,0 +1,53 @@
+name: Standards Drift Monitor
+run-name: Standards Drift Monitor - ${{ github.event_name }}
+
+on:
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Detect W3C standards drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: '22'
+
+      # Exit 0 = unchanged; exit 2 = status/content drift (report written).
+      # Any other exit = fetch/parse error. The workflow never modifies code
+      # and never opens pull requests — it only reports drift via an issue.
+      - name: Check W3C status vs committed snapshot
+        id: drift
+        continue-on-error: true
+        run: node scripts/standards-status-update.mjs --check --out-dir "$RUNNER_TEMP/w3c-drift"
+
+      - name: Open drift review issue
+        if: steps.drift.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPORT="$RUNNER_TEMP/w3c-drift/w3c-drift-report.md"
+          if [ ! -f "$REPORT" ]; then
+            echo "No drift report produced (likely a fetch error) — skipping issue."
+            exit 0
+          fi
+          gh issue create \
+            --title "W3C standards drift: EPUB 3.3 / 3.4 / Reading Systems 3.4" \
+            --body-file "$REPORT"
