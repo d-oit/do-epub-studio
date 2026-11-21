@@ -1,10 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import {
-  LOGIN_RESPONSE,
-  mockReaderApi,
-  loginAsReader,
-  suppressWorkboxErrors,
-} from './fixtures';
+import { LOGIN_RESPONSE, mockReaderApi, loginAsReader, suppressWorkboxErrors } from './fixtures';
 import { buildMultilingualEpub, type MultilingualFixtureId } from '@do-epub-studio/testkit';
 
 /**
@@ -15,7 +10,6 @@ import { buildMultilingualEpub, type MultilingualFixtureId } from '@do-epub-stud
  * parsing-level behavior is covered by
  * `packages/reader-core/src/__tests__/multilingual-conformance.test.ts`.
  */
-
 
 const FIXTURE_SLUGS: Record<MultilingualFixtureId, string> = {
   'ar-rtl': 'conformance-ar-rtl',
@@ -62,11 +56,7 @@ function getIframeHtmlLang(page: Page) {
   });
 }
 
-function getIframeComputedStyle(
-  page: Page,
-  selector: string,
-  property: string,
-) {
+function getIframeComputedStyle(page: Page, selector: string, property: string) {
   return page.evaluate(
     ({ sel, prop }) => {
       const iframe = document.querySelector('iframe');
@@ -168,7 +158,10 @@ for (const id of Object.keys(FIXTURE_SLUGS) as MultilingualFixtureId[]) {
       await expect(page.getByRole('heading', { name: 'Conformance Book' })).toBeVisible({
         timeout: 30000,
       });
-      await page.getByRole('button', { name: /Settings|Paramètres/i }).first().focus();
+      await page
+        .getByRole('button', { name: /Settings|Paramètres/i })
+        .first()
+        .focus();
       let reachedPanel = false;
       for (let i = 0; i < 12; i++) {
         await page.keyboard.press('Tab');
@@ -187,9 +180,7 @@ for (const id of Object.keys(FIXTURE_SLUGS) as MultilingualFixtureId[]) {
         timeout: 30000,
       });
       await page.waitForTimeout(2500);
-      await expect(page.locator('iframe')).toHaveScreenshot(
-        `${FIXTURE_SLUGS[id]}-desktop.png`,
-      );
+      await expect(page.locator('iframe')).toHaveScreenshot(`${FIXTURE_SLUGS[id]}-desktop.png`);
     });
 
     test('@mobile snapshot of the reader viewport', async ({ page }) => {

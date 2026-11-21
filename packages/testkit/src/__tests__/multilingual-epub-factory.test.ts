@@ -1,10 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Buffer } from 'node:buffer';
 import { inflateRawSync } from 'node:zlib';
-import {
-  buildMultilingualEpub,
-  MULTILINGUAL_FIXTURES,
-} from '../multilingual-epub-factory';
+import { buildMultilingualEpub, MULTILINGUAL_FIXTURES } from '../multilingual-epub-factory';
 
 /**
  * Structural verification of the deterministic multilingual fixture builder
@@ -72,18 +69,24 @@ describe('multilingual epub factory', () => {
 
   it('declares RTL page progression for the Arabic and Hebrew fixtures', () => {
     for (const id of ['ar-rtl', 'he-rtl'] as const) {
-      const opf = readZipEntries(buildMultilingualEpub(id)).get('content.opf')?.toString('utf8') ?? '';
+      const opf =
+        readZipEntries(buildMultilingualEpub(id)).get('content.opf')?.toString('utf8') ?? '';
       expect(opf).toContain('page-progression-direction="rtl"');
     }
   });
 
   it('embeds vertical writing CSS and ruby markup where expected', () => {
-    const ja = readZipEntries(buildMultilingualEpub('ja-vertical')).get('chapter1.xhtml')?.toString('utf8') ?? '';
+    const ja =
+      readZipEntries(buildMultilingualEpub('ja-vertical'))
+        .get('chapter1.xhtml')
+        ?.toString('utf8') ?? '';
     expect(ja).toContain('writing-mode: vertical-rl');
     expect(ja).toContain('<ruby>');
     expect(ja).toContain('<rt>');
 
-    const zh = readZipEntries(buildMultilingualEpub('zh-ruby')).get('chapter1.xhtml')?.toString('utf8') ?? '';
+    const zh =
+      readZipEntries(buildMultilingualEpub('zh-ruby')).get('chapter1.xhtml')?.toString('utf8') ??
+      '';
     expect(zh).toContain('<ruby>');
     expect(zh).toContain('<rt>');
   });

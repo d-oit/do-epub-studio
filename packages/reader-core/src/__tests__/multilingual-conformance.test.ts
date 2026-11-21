@@ -42,13 +42,7 @@ const EXPECTATIONS: Record<MultilingualFixtureId, FixtureExpectation> = {
     tocLabels: ['المقدمة', 'الفصل الأول', 'الفصل الأول'],
     tocNested: true,
     spineHrefs: ['chapter1.xhtml', 'chapter2.xhtml'],
-    sanitizedMarkers: [
-      'dir="rtl"',
-      'lang="en"',
-      'class="bidi-run"',
-      'unicode-bidi: isolate',
-      '،',
-    ],
+    sanitizedMarkers: ['dir="rtl"', 'lang="en"', 'class="bidi-run"', 'unicode-bidi: isolate', '،'],
   },
   'he-rtl': {
     title: 'ספר בעברית',
