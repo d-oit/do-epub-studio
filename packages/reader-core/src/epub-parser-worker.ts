@@ -182,7 +182,10 @@ class EpubParserWorkerPool {
 
       return { valid: true, data: data.buffer as ArrayBuffer };
     } catch (error) {
-      if (error instanceof ArchiveRejectionError || (error instanceof Error && error.name === 'TimeoutError')) {
+      if (
+        error instanceof ArchiveRejectionError ||
+        (error instanceof Error && error.name === 'TimeoutError')
+      ) {
         const rejection = archiveRejectionFromError(error);
         return {
           valid: false,

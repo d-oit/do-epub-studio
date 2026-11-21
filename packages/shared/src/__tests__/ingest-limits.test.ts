@@ -44,7 +44,16 @@ describe('ingest limits policy', () => {
     expect(archiveRejectionStatusCode('expanded-size')).toBe(413);
     expect(archiveRejectionStatusCode('per-entry-size')).toBe(413);
     expect(archiveRejectionStatusCode('timeout')).toBe(504);
-    for (const code of ['invalid-archive', 'ratio', 'unsafe-path', 'duplicate-path', 'symlink-entry', 'unsupported-entry', 'encrypted-entry', 'xml-budget']) {
+    for (const code of [
+      'invalid-archive',
+      'ratio',
+      'unsafe-path',
+      'duplicate-path',
+      'symlink-entry',
+      'unsupported-entry',
+      'encrypted-entry',
+      'xml-budget',
+    ]) {
       expect(archiveRejectionStatusCode(code as ArchiveRejectionCode)).toBe(422);
     }
   });

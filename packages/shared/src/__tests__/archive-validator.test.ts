@@ -357,9 +357,7 @@ describe('archive validation: central-directory preflight rejects before decompr
   });
 
   it('accepts extreme-but-stored entries (ratio exemption)', async () => {
-    const data = buildRawZip([
-      { name: 'big.bin', method: 0, data: new Uint8Array(64 * 1024) },
-    ]);
+    const data = buildRawZip([{ name: 'big.bin', method: 0, data: new Uint8Array(64 * 1024) }]);
     await expect(validateArchive(data)).resolves.toBeUndefined();
   });
 
@@ -419,9 +417,7 @@ describe('archive validation: central-directory preflight rejects before decompr
   it('preflight rejections happen before any decompression (no inflate decoder constructed)', async () => {
     const cases: Uint8Array[] = [
       buildRawZip([{ name: 'secret.txt', flags: 0x801, data: strToU8('x') }]),
-      buildRawZip([
-        { name: 'link', externalAttrs: (0xa000 << 16) | 0o777, data: strToU8('t') },
-      ]),
+      buildRawZip([{ name: 'link', externalAttrs: (0xa000 << 16) | 0o777, data: strToU8('t') }]),
       buildRawZip([
         {
           name: 'bomb.txt',
@@ -576,9 +572,7 @@ describe('archive validation: seeded property-style tests', () => {
           maxLength: 20,
         }),
         async (entries) => {
-          const data = buildRawZip(
-            entries.map(([name, body]) => ({ name, data: strToU8(body) })),
-          );
+          const data = buildRawZip(entries.map(([name, body]) => ({ name, data: strToU8(body) })));
           const outcome = await validateArchive(data).then(
             () => 'ok',
             (e: unknown) => (e instanceof ArchiveRejectionError ? e.code : 'other'),
@@ -624,9 +618,9 @@ describe('archive validation: seeded property-style tests', () => {
         () => 'ok' as const,
         (e: unknown) => (e instanceof ArchiveRejectionError ? e.code : ('other' as const)),
       );
-      expect(outcome === 'ok' || ARCHIVE_REJECTION_CODES.includes(outcome as ArchiveRejectionCode)).toBe(
-        true,
-      );
+      expect(
+        outcome === 'ok' || ARCHIVE_REJECTION_CODES.includes(outcome as ArchiveRejectionCode),
+      ).toBe(true);
     }
   });
 });

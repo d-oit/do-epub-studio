@@ -43,7 +43,10 @@ export interface EpubRenditionHandle {
  * taxonomy (e.g. `unsafe-path`, `ratio`, `expanded-size`, `timeout`).
  */
 export class EpubLoadError extends Error {
-  constructor(message: string, readonly code?: string) {
+  constructor(
+    message: string,
+    readonly code?: string,
+  ) {
     super(message);
     this.name = 'EpubLoadError';
   }
