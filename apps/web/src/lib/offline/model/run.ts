@@ -55,12 +55,14 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
       },
     }),
     () => {
-      const row = rng.pick(highlights);
-      return row ? { kind: 'editHighlight', id: row.id, body: { note: `remote-note-${seq}` } } : null;
+      if (highlights.length === 0) return null;
+      const row = highlights[rng.int(0, highlights.length - 1)]!;
+      return { kind: 'editHighlight', id: row.id, body: { note: `remote-note-${seq}` } };
     },
     () => {
-      const row = rng.pick(highlights);
-      return row ? { kind: 'deleteHighlight', id: row.id } : null;
+      if (highlights.length === 0) return null;
+      const row = highlights[rng.int(0, highlights.length - 1)]!;
+      return { kind: 'deleteHighlight', id: row.id };
     },
     () => ({
       kind: 'createComment',
@@ -72,12 +74,14 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
       },
     }),
     () => {
-      const row = rng.pick(comments);
-      return row ? { kind: 'editComment', id: row.id, body: { body: `remote-edit-${seq}` } } : null;
+      if (comments.length === 0) return null;
+      const row = comments[rng.int(0, comments.length - 1)]!;
+      return { kind: 'editComment', id: row.id, body: { body: `remote-edit-${seq}` } };
     },
     () => {
-      const row = rng.pick(comments);
-      return row ? { kind: 'deleteComment', id: row.id } : null;
+      if (comments.length === 0) return null;
+      const row = comments[rng.int(0, comments.length - 1)]!;
+      return { kind: 'deleteComment', id: row.id };
     },
     () => ({
       kind: 'createBookmark',
@@ -88,8 +92,9 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
       },
     }),
     () => {
-      const row = rng.pick(bookmarks);
-      return row ? { kind: 'deleteBookmark', id: row.id } : null;
+      if (bookmarks.length === 0) return null;
+      const row = bookmarks[rng.int(0, bookmarks.length - 1)]!;
+      return { kind: 'deleteBookmark', id: row.id };
     },
     () => {
       if (!haveProgress) return null;
@@ -100,7 +105,7 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
           mutationId: remoteMutationId(rng, seq),
           locator: { cfi: cfi(rng) },
           progressPercent: percent(rng),
-          baseRevision: stale ? 0 : snap.progress?.revision ?? 0,
+          baseRevision: stale ? 0 : snap.progress!.revision,
         },
       };
     },
