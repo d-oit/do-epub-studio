@@ -132,5 +132,3 @@ export function writeApiContractSnapshot(snapshot: ApiContractSnapshot): string 
   writeFileSync(SNAPSHOT_PATH, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
   return SNAPSHOT_PATH;
 }
-
-export const API_CONTRACT_SNAPSHOT_PATH = SNAPSHOT_PATH;
