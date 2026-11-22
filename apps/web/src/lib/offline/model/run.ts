@@ -22,7 +22,12 @@ export interface RunOutcome {
   trace: string[];
 }
 
-const CFI_POOL = ['epubcfi(/6/1)', 'epubcfi(/6/4!/4/2/1:0)', 'epubcfi(/8/2)', 'epubcfi(/4/3!/2/1:0)'];
+const CFI_POOL = [
+  'epubcfi(/6/1)',
+  'epubcfi(/6/4!/4/2/1:0)',
+  'epubcfi(/8/2)',
+  'epubcfi(/4/3!/2/1:0)',
+];
 const CHAPTER_POOL = ['c1.xhtml', 'c2.xhtml', ''];
 const COLOR_POOL = ['#ffff00', '#ff0000', '#00a0ff'];
 const PROGRESS_PATH = '/progress';
@@ -49,7 +54,11 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
       kind: 'createHighlight',
       body: {
         mutationId: remoteMutationId(rng, seq),
-        locator: { chapterRef: rng.pick(CHAPTER_POOL), cfi: cfi(rng), selectedText: `remote-text-${seq}` },
+        locator: {
+          chapterRef: rng.pick(CHAPTER_POOL),
+          cfi: cfi(rng),
+          selectedText: `remote-text-${seq}`,
+        },
         color: rng.pick(COLOR_POOL),
       },
     }),
@@ -69,7 +78,11 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
       kind: 'createComment',
       body: {
         mutationId: remoteMutationId(rng, seq),
-        locator: { chapterRef: rng.pick(CHAPTER_POOL), cfi: cfi(rng), selectedText: 'remote-selection' },
+        locator: {
+          chapterRef: rng.pick(CHAPTER_POOL),
+          cfi: cfi(rng),
+          selectedText: 'remote-selection',
+        },
         body: `remote-comment-${seq}`,
         visibility: 'shared',
       },
@@ -134,7 +147,13 @@ function pickDirective(rng: Rng): FailureDirective {
           : 'timeoutAfterCommit';
   const pathRoll = rng.next();
   const path =
-    pathRoll < 0.4 ? PROGRESS_PATH : pathRoll < 0.65 ? '/highlights' : pathRoll < 0.9 ? '/comments' : '/bookmarks';
+    pathRoll < 0.4
+      ? PROGRESS_PATH
+      : pathRoll < 0.65
+        ? '/highlights'
+        : pathRoll < 0.9
+          ? '/comments'
+          : '/bookmarks';
   return { kind, path, times: rng.chance(0.3) ? 2 : 1 };
 }
 
@@ -167,7 +186,8 @@ export async function runSeed(seed: number, opts: RunOptions): Promise<RunOutcom
   await h.resetScenario();
   try {
     const rng = new Rng(seed);
-    const auditSpacing = opts.audits > 0 ? Math.max(1, Math.floor(opts.steps / (opts.audits + 1))) : Infinity;
+    const auditSpacing =
+      opts.audits > 0 ? Math.max(1, Math.floor(opts.steps / (opts.audits + 1))) : Infinity;
     let remoteSeq = 0;
 
     for (let step = 0; step < opts.steps; step++) {
