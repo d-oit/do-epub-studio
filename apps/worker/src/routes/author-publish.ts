@@ -1,11 +1,11 @@
 import type { Context } from 'hono';
 import { AuthorPublicationSchema, type AuthorPublication } from '@do-epub-studio/shared';
 import { packageEpub3 } from '@do-epub-studio/reader-core/packager';
+import { validateArchive } from '@do-epub-studio/shared/src/archive-validator';
 import {
-  validateArchive,
   ArchiveRejectionError,
   archiveRejectionStatusCode,
-} from '@do-epub-studio/shared/src/archive-validator';
+} from '@do-epub-studio/shared/src/ingest-limits';
 import type { Env, JsonRow } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
 import { ConflictError, NotFoundError, ValidationError, AppError } from '../lib/http-errors';

@@ -8,12 +8,5 @@
 export {
   validateArchive,
   ArchiveRejectionError,
-  archiveRejection,
-  archiveRejectionFromError,
-  archiveRejectionStatusCode,
   DEFAULT_INGEST_LIMITS,
-  type ArchiveRejection,
-  type ArchiveRejectionCode,
-  type ArchiveValidationOptions,
-  type IngestLimits,
 } from '@do-epub-studio/shared/src/archive-validator';
