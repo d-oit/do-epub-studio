@@ -137,3 +137,12 @@ echo ""
 printf '%sReporting DORA deployment metrics...%s\n' "${BLUE}" "${NC}"
 "$REPO_ROOT/scripts/report-dora.sh" || true
 echo ""
+
+# standards-matrix (issue #1488): every `implemented` conformance row must
+# reference a real test file; partial/not-implemented rows need exception
+# notes. Pure Node, no network, fast relative to the rest of the gate.
+printf '%sValidating standards conformance matrix...%s\n' "${BLUE}" "${NC}"
+if ! node "$REPO_ROOT/scripts/validate-standards-matrix.mjs"; then
+    FAILED=1
+fi
+echo ""

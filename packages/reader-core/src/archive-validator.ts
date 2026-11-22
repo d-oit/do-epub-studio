@@ -1,5 +1,19 @@
+/**
+ * Reader-side archive validation. This is the same ingestion boundary as the
+ * worker upload/validation paths: the documented limits policy in
+ * `@do-epub-studio/shared/src/ingest-limits.ts` is enforced by the shared
+ * validator, and rejections surface as typed {@link ArchiveRejectionError}s
+ * with stable codes.
+ */
 export {
   validateArchive,
-  ArchiveValidationError,
-  MAX_COMPRESSED_SIZE,
+  ArchiveRejectionError,
+  archiveRejection,
+  archiveRejectionFromError,
+  archiveRejectionStatusCode,
+  DEFAULT_INGEST_LIMITS,
+  type ArchiveRejection,
+  type ArchiveRejectionCode,
+  type ArchiveValidationOptions,
+  type IngestLimits,
 } from '@do-epub-studio/shared/src/archive-validator';

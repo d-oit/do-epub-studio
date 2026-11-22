@@ -6,6 +6,7 @@ import {
   fetchRevisionReports,
   fetchRevisionValidationDetail,
 } from '../../../lib/api/admin-validation';
+import type { RevisionValidationDetail } from '../../../lib/api/admin-validation';
 import type { BookResponse } from '@do-epub-studio/shared';
 
 vi.mock('../../../hooks/useTranslation', () => ({
@@ -50,7 +51,7 @@ const mockSummaryReports = [
   },
 ];
 
-const mockDetailReport = {
+const mockDetailReport: RevisionValidationDetail = {
   revisionId: 'rev-1',
   bytesSha256: 'a'.repeat(64),
   validatorVersion: '5.4.0',
@@ -101,6 +102,34 @@ const mockDetailReport = {
     ],
     manualReviewRequired: true,
     certification: 'not-certified',
+    profiles: {
+      '1.1': {
+        spec: {
+          spec: 'EPUB Accessibility',
+          specUrl: 'https://www.w3.org/TR/epub-a11y-11/',
+          version: '1.1',
+          status: 'W3C Recommendation',
+          statusDate: '2024-10-17',
+        },
+        experimental: false,
+        certification: 'not-certified',
+        findings: [],
+        evidence: [],
+      },
+      '1.2-draft': {
+        spec: {
+          spec: 'EPUB Accessibility',
+          specUrl: 'https://www.w3.org/TR/epub-a11y-12/',
+          version: '1.2',
+          status: 'W3C Candidate Recommendation Draft',
+          statusDate: '2026-11-11',
+        },
+        experimental: true,
+        certification: 'not-certified',
+        findings: [],
+        evidence: [],
+      },
+    },
   },
   remediation: {
     status: 'in_progress' as const,

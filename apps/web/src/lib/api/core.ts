@@ -2,12 +2,16 @@ import { createSpanId, createTraceId } from '@do-epub-studio/shared';
 import { logClientEvent } from '../client-logger';
 import { getCurrentLocale } from '../../stores/locale';
 import { useAuthStore } from '../../stores/auth';
+import { resolveApiBaseUrl } from '../../config/api-origin';
 
 /**
- * API base URL. Production builds must reach the Worker via a configured
- * `VITE_API_BASE_URL` or a same-origin `/api` route — never a hardcoded
- * localhost (banned in docs/banned-patterns.md). Dev builds fall back to the
- * local Wrangler instance for `pnpm dev` without a `.env.local`.
+ * API base URL (issue #1482). Production builds must reach the Worker via a
+ * configured `VITE_API_BASE_URL` or the same-origin `/api/*` route served by
+ * Cloudflare Pages Functions — never a hardcoded localhost (banned in
+ * docs/banned-patterns.md). `VITE_API_BASE_URL` is validated at build time
+ * in `vite.config.ts` (https, no placeholders, no SPA-only host); an invalid
+ * production value fails the build. Dev builds fall back to the local
+ * Wrangler instance for `pnpm dev` without a `.env.local`.
  */
 function getOrigin(): string {
   if (typeof window !== 'undefined' && window.location?.origin) {
@@ -19,9 +23,17 @@ function getOrigin(): string {
   return '';
 }
 
+const apiOrigin = resolveApiBaseUrl({
+  raw: import.meta.env.VITE_API_BASE_URL,
+  isProduction: import.meta.env.PROD,
+});
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.PROD ? getOrigin() : 'http://localhost:8787');
+  apiOrigin.kind === 'configured'
+    ? apiOrigin.url
+    : import.meta.env.PROD
+      ? getOrigin()
+      : 'http://localhost:8787';
 
 interface ApiResponse<T> {
   ok: boolean;

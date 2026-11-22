@@ -1,0 +1,161 @@
+{
+  "$comment": "Canonical do-harness sensor profiles. Commands are NEVER declared inline: `sensors` ids resolve to argv in do-harness.toml, `gateChecks` ids resolve to scripts/harness/gate-commands.mjs and MUST exist in scripts/gate-manifest.json local.checks, and `skills` ids MUST exist under .agents/skills/. Drift in any direction fails scripts/harness/check-profiles-consistency.mjs (registered as the profiles-consistency gate check).",
+  "version": 1,
+  "profiles": [
+    {
+      "id": "reader-core",
+      "label": "Reader core / EPUB parsing",
+      "description": "EPUB parsing, archive validation, reader engine and shared epub/archive validators.",
+      "paths": [
+        "packages/reader-core/**",
+        "packages/shared/src/epub-validator.ts",
+        "packages/shared/src/archive-validator.ts",
+        "packages/shared/src/safe-regex.ts"
+      ],
+      "sensors": ["typecheck", "lint", "test-unit"],
+      "gateChecks": ["typecheck", "lint", "test:coverage"],
+      "skills": [
+        { "id": "epub-rendering-and-cfi", "why": "rendering / annotation anchoring work" },
+        { "id": "safe-regex-authoring", "why": "parsing and sanitizer regexes" }
+      ]
+    },
+    {
+      "id": "worker-api",
+      "label": "Worker / API",
+      "description": "Cloudflare Pages Functions, worker runtime, D1/R2/KV bindings, auth/access endpoints.",
+      "paths": ["apps/worker/**", "wrangler.toml", ".github/workflows/worker-*.yml"],
+      "sensors": ["typecheck", "lint", "test-unit", "app-identity"],
+      "gateChecks": ["typecheck", "lint", "test:coverage", "build"],
+      "skills": [
+        { "id": "cloudflare-worker-api", "why": "route definitions / runtime work" },
+        { "id": "secure-invite-and-access", "why": "auth / access / permission changes" }
+      ]
+    },
+    {
+      "id": "pwa-offline",
+      "label": "PWA / offline / web UI",
+      "description": "Service worker, offline sync, web UI, UI package and bundle/performance budgets.",
+      "paths": [
+        "apps/web/src/**",
+        "apps/web/vite.config.*",
+        "apps/web/tailwind.config.*",
+        "packages/ui/**",
+        ".performance-budgets.json",
+        "scripts/bundle-baseline.json"
+      ],
+      "sensors": ["typecheck", "lint", "test-unit", "bundle", "web-ui-tests"],
+      "gateChecks": ["typecheck", "lint", "test:coverage", "build", "design"],
+      "skills": [
+        { "id": "pwa-offline-sync", "why": "service worker / cache / offline behavior" },
+        { "id": "frontend-design", "why": "responsive layout / tokens / architecture" },
+        { "id": "anti-ai-slop", "why": "UI copy and UX polish" }
+      ]
+    },
+    {
+      "id": "authoring-export",
+      "label": "Authoring / export / demo journeys",
+      "description": "Author workspace, EPUB/notes export, demo seeds and preview provisioning.",
+      "paths": [
+        "scripts/seed-*.mjs",
+        "scripts/lib/demo-*.mjs",
+        "packages/reader-core/src/packager/**",
+        "packages/reader-core/src/author-*.ts",
+        "apps/web/src/features/author/**",
+        "apps/web/src/features/reader/lib/export-*.ts",
+        "apps/web/src/features/reader/hooks/useExport*.ts"
+      ],
+      "sensors": ["typecheck", "lint", "test-unit"],
+      "gateChecks": ["typecheck", "lint", "test:coverage"],
+      "skills": [
+        { "id": "dogfood", "why": "demo journey / end-to-end QA" },
+        { "id": "testdata-builders", "why": "seed data and fixture authoring" }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "label": "Accessibility / audit",
+      "description": "WCAG / a11y, viewport UX, console, i18n and web-ui audit library coverage.",
+      "paths": [
+        "apps/web/src/**/*.tsx",
+        "packages/ui/src/**/*.tsx",
+        "apps/web/src/**/*.css",
+        "packages/ui/tailwind.config.*",
+        "apps/web/src/i18n/**"
+      ],
+      "sensors": ["a11y", "viewport-ux", "console", "i18n", "web-ui-tests"],
+      "gateChecks": ["typecheck", "lint", "test:coverage"],
+      "skills": [
+        { "id": "accessibility-auditor", "why": "WCAG compliance audit" },
+        { "id": "reader-ui-ux", "why": "accessible reader / admin UI" }
+      ]
+    },
+    {
+      "id": "docs-skills",
+      "label": "Docs / skills / agent context",
+      "description": "Repository docs, agent context files, skill packs, plans and governance lists.",
+      "paths": [
+        "agents-docs/**",
+        "docs/**",
+        "AGENTS.md",
+        "README.md",
+        "CONTRIBUTING.md",
+        "SECURITY.md",
+        "CHANGELOG.md",
+        "VERSION",
+        "llms.txt",
+        "llms-full.txt",
+        "plans/**",
+        ".agents/**",
+        ".claude/**",
+        "scripts/harness/**"
+      ],
+      "sensors": [
+        "skills",
+        "agent-sync",
+        "adr-index",
+        "plan-references",
+        "llms-drift",
+        "compliance-drift",
+        "release-notes",
+        "workflows"
+      ],
+      "gateChecks": ["check-loc", "format:check", "llms-drift", "compliance-drift", "gate-parity"],
+      "skills": [
+        { "id": "agents-md", "why": "AGENTS.md / quality-gate docs" },
+        { "id": "skill-creator", "why": "skill authoring / structure / format" }
+      ]
+    },
+    {
+      "id": "integration-e2e",
+      "label": "Integration / E2E",
+      "description": "End-to-end suite, cross-app integration and smoke coverage.",
+      "paths": ["apps/tests/**", ".github/workflows/*e2e*"],
+      "sensors": ["typecheck", "test-unit"],
+      "gateChecks": ["smoke"],
+      "skills": [
+        { "id": "dogfood", "why": "end-to-end QA" },
+        { "id": "testing-strategy", "why": "test pyramid / coverage planning" }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "schema",
+      "description": "Shared schema changes reach every consumer: worker API, web/PWA and E2E.",
+      "from": ["packages/schema/**"],
+      "to": ["worker-api", "pwa-offline", "integration-e2e"]
+    },
+    {
+      "id": "reader-core",
+      "description": "Reader-core changes reach the web/PWA consumer, the worker and E2E.",
+      "from": ["packages/reader-core/**"],
+      "to": ["pwa-offline", "worker-api", "integration-e2e"]
+    },
+    {
+      "id": "shared",
+      "description": "Shared (non-reader) library changes reach every workspace consumer.",
+      "from": ["packages/shared/**"],
+      "to": ["reader-core", "worker-api", "pwa-offline", "authoring-export", "integration-e2e"]
+    }
+  ]
+}

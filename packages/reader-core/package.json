@@ -11,6 +11,7 @@
     "./author-styles": "./src/author-styles.ts",
     "./packager": "./src/packager/index.ts",
     "./media-overlay": "./src/media-overlay.ts",
+    "./accessibility": "./src/epub-accessibility.ts",
     "./rendition-container": "./src/rendition-container.ts"
   },
   "scripts": {
@@ -36,6 +37,7 @@
     "@types/node": "^26",
     "fast-check": "^4.10.2",
     "typescript": "^6.0.3",
-    "vitest": "4.1.12"
+    "vitest": "4.1.12",
+    "@do-epub-studio/testkit": "workspace:*"
   }
 }

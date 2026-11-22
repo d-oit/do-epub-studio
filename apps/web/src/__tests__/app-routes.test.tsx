@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { ComponentType } from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -230,5 +233,51 @@ describe('App routes', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText('Not Found')).toBeInTheDocument();
+  });
+});
+describe('API routing is never SPA page navigation (issue #1482)', () => {
+  it('renders the 404 page, never a feature page, for /api/* paths', () => {
+    render(
+      <MemoryRouter initialEntries={['/api/catalog?limit=24&offset=0']}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Not Found')).toBeInTheDocument();
+    expect(screen.queryByText('Catalog Page')).not.toBeInTheDocument();
+    expect(screen.queryByText('App Shell')).not.toBeInTheDocument();
+  });
+
+  it('does not register any client route under /api', () => {
+    // The route table lives in App.tsx; the observable contract is that a
+    // /api/* location hits the "*" catch-all (Not Found) and never a page.
+    for (const entry of ['/api/health', '/api/admin/books', '/api/files/a/b']) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[entry]}>
+          <App />
+        </MemoryRouter>,
+      );
+      expect(screen.getByText('Not Found')).toBeInTheDocument();
+      unmount();
+    }
+  });
+
+  it('Pages _routes.json sends every /api/* path to Functions, never the SPA', () => {
+    const testDir = dirname(fileURLToPath(import.meta.url));
+    const routes = JSON.parse(readFileSync(resolve(testDir, '../../public/_routes.json'), 'utf8'));
+    expect(routes.version).toBe(1);
+    expect(routes.include).toContain('/api/*');
+    expect(routes.exclude).toEqual([]);
+  });
+
+  it('vercel.json 404s /api/* instead of rewriting it to the SPA or a proxy', () => {
+    const testDir = dirname(fileURLToPath(import.meta.url));
+    const vercel = JSON.parse(readFileSync(resolve(testDir, '../../../../vercel.json'), 'utf8'));
+    expect(vercel.rewrites ?? []).toEqual([]);
+    const apiRoute = (vercel.routes ?? []).find(
+      (route: { src?: string; status?: number }) =>
+        route.src === '/api/(.*)' || route.src === '/api/:path*',
+    );
+    expect(apiRoute).toBeDefined();
+    expect(apiRoute.status).toBe(404);
   });
 });

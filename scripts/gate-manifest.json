@@ -17,6 +17,8 @@
       "llms-drift",
       "compliance-drift",
       "dora-report",
+      "profiles-consistency",
+      "standards-matrix",
       "gate-parity"
     ]
   },

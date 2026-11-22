@@ -1,6 +1,10 @@
 /// <reference lib="WebWorker" />
 
 import { createTraceId } from '@do-epub-studio/shared';
+import {
+  archiveRejectionFromError,
+  ArchiveRejectionError,
+} from '@do-epub-studio/shared/src/ingest-limits';
 import { validateArchive } from './archive-validator';
 
 const PARSE_VALIDATION_TIMEOUT_MS = 10_000;
@@ -17,6 +21,8 @@ interface ResultMessage {
   result: {
     valid: boolean;
     error?: string;
+    /** Stable archive-rejection code (see shared ingest-limits taxonomy). */
+    code?: string;
     data?: ArrayBuffer;
   };
 }
@@ -59,11 +65,29 @@ self.onmessage = async (event: MessageEvent<ParseRequest>) => {
       };
       self.postMessage(msg, [data.buffer]);
     } catch (error) {
+      if (
+        error instanceof ArchiveRejectionError ||
+        (error instanceof Error && error.name === 'TimeoutError')
+      ) {
+        const rejection = archiveRejectionFromError(error);
+        const msg: ResultMessage = {
+          type: 'result',
+          id,
+          result: {
+            valid: false,
+            code: rejection.code,
+            error: rejection.message,
+          },
+        };
+        self.postMessage(msg);
+        return;
+      }
       const msg: ResultMessage = {
         type: 'result',
         id,
         result: {
           valid: false,
+          code: 'invalid-archive',
           error: error instanceof Error ? error.message : String(error),
         },
       };

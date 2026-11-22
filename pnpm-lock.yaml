@@ -111,6 +111,12 @@ importers:
 
   apps/epubcheck-runner:
     dependencies:
+      '@do-epub-studio/reader-core':
+        specifier: workspace:*
+        version: link:../../packages/reader-core
+      '@do-epub-studio/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
@@ -123,6 +129,9 @@ importers:
       '@do-epub-studio/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@do-epub-studio/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -351,6 +360,9 @@ importers:
         specifier: 6.0.0
         version: 6.0.0
     devDependencies:
+      '@do-epub-studio/testkit':
+        specifier: workspace:*
+        version: link:../testkit
       '@types/jsdom':
         specifier: ^30.0.0
         version: 30.0.0
@@ -410,6 +422,9 @@ importers:
 
   packages/testkit:
     devDependencies:
+      '@types/node':
+        specifier: ^26
+        version: 26.6.6
       typescript:
         specifier: ^6.0.3
         version: 6.0.3

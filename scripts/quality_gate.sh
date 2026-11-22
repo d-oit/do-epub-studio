@@ -333,6 +333,16 @@ if [[ " ${DETECTED_LANGUAGES[*]} " =~ " typescript " ]]; then
     fi
     echo ""
 fi
+#
+# Validate harness sensor profiles (issue #1492): every profile sensor id
+# must resolve in do-harness.toml, every gate check id must resolve in
+# gate-manifest.json local.checks via gate-commands.mjs, and every skill id
+# must exist. Uses "profiles-consistency" as the gate-parity check name.
+printf '%sValidating profiles-consistency (harness sensor profiles)...%s\n' "${BLUE}" "${NC}"
+if ! node "$REPO_ROOT/scripts/harness/check-profiles-consistency.mjs"; then
+    FAILED=1
+fi
+echo ""
 
 # Python and shell phases live in scripts/lib/quality_gate_secondary.sh so this
 # file stays under the 500-line cap (ADR-278) — the gate is itself a live demo
