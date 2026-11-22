@@ -61,14 +61,14 @@ export function anchorIdentityKey(params: {
   chapterRef: string | null | undefined;
   body?: string | null;
 }): string {
-  const text = (params.selectedText ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const text = normalizeAnchorText(params.selectedText ?? '');
   const cfi = (params.cfi ?? '').replace(/\s+/g, '').toLowerCase();
   const chapter = (params.chapterRef ?? '').replace(/\s+/g, '').toLowerCase();
-  const body = (params.body ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const body = normalizeAnchorText(params.body ?? '');
   return `${params.kind}|${cfi}|${chapter}|${text}|${body}`;
 }
 
 /** Normalize a short text for locator comparison. */
-export function normalizeAnchorText(text: string): string {
+function normalizeAnchorText(text: string): string {
   return text.replace(/\s+/g, ' ').trim().toLowerCase();
 }

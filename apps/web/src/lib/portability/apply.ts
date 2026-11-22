@@ -17,8 +17,6 @@ export interface ApplyOptions {
   dryRun?: boolean;
 }
 
-const AUTHORIZATION_HEADER = 'Authorization';
-
 /**
  * Execute a confirmed import plan against the worker API. Every entity is
  * created with a deterministic `mutationId` derived from the envelope, so the
@@ -65,5 +63,3 @@ export async function applyImportPlan(options: ApplyOptions): Promise<ApplyResul
 
   return result;
 }
-
-export { AUTHORIZATION_HEADER };

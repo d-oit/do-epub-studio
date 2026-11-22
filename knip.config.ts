@@ -46,8 +46,7 @@ const config: KnipConfig = {
 
     // ---- apps/web --------------------------------------------------------
     'apps/web': {
-      // jszip is listed in web deps but only used in worker tests (baseline).
-      ignoreDependencies: ['jszip'],
+      // jszip is imported by the portability export/import service.
       // Barrel index not imported by any consumer — pre-existing baseline
       ignoreFiles: ['src/lib/index.ts'],
       // Pages Function entry point — bundled by Cloudflare at deploy time,
