@@ -44,7 +44,6 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
   const highlights = snap.highlights;
   const comments = snap.comments.filter((c) => c.status !== 'deleted');
   const bookmarks = snap.bookmarks;
-  const haveProgress = snap.progress !== null;
   const options: (() => RemoteAction | null)[] = [
     () => ({
       kind: 'createHighlight',
@@ -56,12 +55,14 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
     }),
     () => {
       if (highlights.length === 0) return null;
-      const row = highlights[rng.int(0, highlights.length - 1)]!;
+      const row = highlights[rng.int(0, highlights.length - 1)];
+      if (!row) return null;
       return { kind: 'editHighlight', id: row.id, body: { note: `remote-note-${seq}` } };
     },
     () => {
       if (highlights.length === 0) return null;
-      const row = highlights[rng.int(0, highlights.length - 1)]!;
+      const row = highlights[rng.int(0, highlights.length - 1)];
+      if (!row) return null;
       return { kind: 'deleteHighlight', id: row.id };
     },
     () => ({
@@ -75,12 +76,14 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
     }),
     () => {
       if (comments.length === 0) return null;
-      const row = comments[rng.int(0, comments.length - 1)]!;
+      const row = comments[rng.int(0, comments.length - 1)];
+      if (!row) return null;
       return { kind: 'editComment', id: row.id, body: { body: `remote-edit-${seq}` } };
     },
     () => {
       if (comments.length === 0) return null;
-      const row = comments[rng.int(0, comments.length - 1)]!;
+      const row = comments[rng.int(0, comments.length - 1)];
+      if (!row) return null;
       return { kind: 'deleteComment', id: row.id };
     },
     () => ({
@@ -93,11 +96,13 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
     }),
     () => {
       if (bookmarks.length === 0) return null;
-      const row = bookmarks[rng.int(0, bookmarks.length - 1)]!;
+      const row = bookmarks[rng.int(0, bookmarks.length - 1)];
+      if (!row) return null;
       return { kind: 'deleteBookmark', id: row.id };
     },
     () => {
-      if (!haveProgress) return null;
+      const progress = snap.progress;
+      if (!progress) return null;
       const stale = rng.chance(0.5);
       return {
         kind: 'putProgress',
@@ -105,7 +110,7 @@ function pickRemoteAction(h: Harness, rng: Rng, seq: number): RemoteAction | nul
           mutationId: remoteMutationId(rng, seq),
           locator: { cfi: cfi(rng) },
           progressPercent: percent(rng),
-          baseRevision: stale ? 0 : snap.progress!.revision,
+          baseRevision: stale ? 0 : progress.revision,
         },
       };
     },
