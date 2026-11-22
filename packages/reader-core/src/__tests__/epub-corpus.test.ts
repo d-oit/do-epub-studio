@@ -48,11 +48,7 @@ async function archiveOutcomeOf(
     if (code === 'unsafe-path')
       return { outcome: { kind: 'reject', reason: 'traversal' }, error: msg };
     if (code === 'ratio') return { outcome: { kind: 'reject', reason: 'ratio' }, error: msg };
-    if (
-      code === 'compressed-size' ||
-      code === 'expanded-size' ||
-      code === 'per-entry-size'
-    ) {
+    if (code === 'compressed-size' || code === 'expanded-size' || code === 'per-entry-size') {
       return { outcome: { kind: 'reject', reason: 'oversize' }, error: msg };
     }
     if (code === 'entry-count')
@@ -274,34 +270,34 @@ describe('epub corpus layer 1: archive + parse + sanitize + metadata', () => {
         expect(observed.has('ZIP_TRAVERSAL_PATH')).toBe(false);
         expect(observed.has('ZIP_COMPRESSION_RATIO')).toBe(false);
       }
-  }, 30_000);
-
-  it('security verdicts are internally consistent with archive/parse outcomes', async () => {
-      for (const entry of CORPUS_ENTRIES) {
-        const data = generateCorpusEntry(entry.id);
-        const env = await buildEnv(entry, data);
-        if (
-          entry.securityVerdict.kind === 'graceful-reject' &&
-          entry.securityVerdict.at === 'archive'
-        ) {
-          expect(env.archiveOutcome.kind).toBe('reject');
-          expect(entry.expectedParses).toBe(false);
-        }
-        if (
-          entry.securityVerdict.kind === 'graceful-reject' &&
-          entry.securityVerdict.at === 'render'
-        ) {
-          expect(env.archiveOutcome.kind).toBe('ok');
-          expect(entry.expectedParses).toBe(true);
-        }
-        if (entry.securityVerdict.kind === 'none') {
-          expect(env.archiveOutcome.kind).toBe('ok');
-          expect(entry.expectedParses).toBe(true);
-        }
-      }
     },
     30_000,
   );
+
+  it('security verdicts are internally consistent with archive/parse outcomes', async () => {
+    for (const entry of CORPUS_ENTRIES) {
+      const data = generateCorpusEntry(entry.id);
+      const env = await buildEnv(entry, data);
+      if (
+        entry.securityVerdict.kind === 'graceful-reject' &&
+        entry.securityVerdict.at === 'archive'
+      ) {
+        expect(env.archiveOutcome.kind).toBe('reject');
+        expect(entry.expectedParses).toBe(false);
+      }
+      if (
+        entry.securityVerdict.kind === 'graceful-reject' &&
+        entry.securityVerdict.at === 'render'
+      ) {
+        expect(env.archiveOutcome.kind).toBe('ok');
+        expect(entry.expectedParses).toBe(true);
+      }
+      if (entry.securityVerdict.kind === 'none') {
+        expect(env.archiveOutcome.kind).toBe('ok');
+        expect(entry.expectedParses).toBe(true);
+      }
+    }
+  }, 30_000);
 
   it('every fixture declares a provenance with a license', () => {
     for (const entry of CORPUS_ENTRIES) {
