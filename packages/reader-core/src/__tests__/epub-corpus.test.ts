@@ -128,7 +128,8 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
   if (has('OEBPS/nav.xhtml')) seen.add('NAV_EPUB3');
   const rootfilePaths = Array.from(
     env.containerText?.matchAll(/<rootfile\b[^>]*\bfull-path="([^"]+)"/g) ?? [],
-  ).map((match) => match[1])
+  )
+    .map((match) => match[1])
     .filter((path): path is string => Boolean(path));
   if (rootfilePaths.length > 1 && rootfilePaths.every((path) => has(path))) {
     seen.add('MULTIPLE_ROOTFILES');
