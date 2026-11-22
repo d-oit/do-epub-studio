@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import type { Page, Route, Request } from '@playwright/test';
 import { decryptJSON } from '../web/src/lib/offline/crypto';
+import { OFFLINE_DB_NAME, OFFLINE_DB_VERSION } from '../web/src/lib/offline/idb-schema';
 import {
   createMinimalEpub,
   loginAsReader,
@@ -57,29 +58,32 @@ type StoredOfflineDatabase = {
 };
 
 async function readOfflineDatabase(page: Page): Promise<StoredOfflineDatabase> {
-  return page.evaluate(async () => {
-    const request = indexedDB.open('do-epub-studio', 5);
-    return new Promise<StoredOfflineDatabase>((resolve, reject) => {
-      request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
-      request.onsuccess = () => {
-        const db = request.result;
-        const tx = db.transaction(['annotations', 'syncQueue'], 'readonly');
-        const annotations = tx.objectStore('annotations').getAll();
-        const queue = tx.objectStore('syncQueue').getAll();
-        tx.oncomplete = () => {
-          db.close();
-          resolve({
-            annotations: annotations.result as Record<string, unknown>[],
-            queue: queue.result as Record<string, unknown>[],
-          });
+  return page.evaluate(
+    async ({ dbName, dbVersion }) => {
+      const request = indexedDB.open(dbName, dbVersion);
+      return new Promise<StoredOfflineDatabase>((resolve, reject) => {
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+        request.onsuccess = () => {
+          const db = request.result;
+          const tx = db.transaction(['annotations', 'syncQueue'], 'readonly');
+          const annotations = tx.objectStore('annotations').getAll();
+          const queue = tx.objectStore('syncQueue').getAll();
+          tx.oncomplete = () => {
+            db.close();
+            resolve({
+              annotations: annotations.result as Record<string, unknown>[],
+              queue: queue.result as Record<string, unknown>[],
+            });
+          };
+          tx.onerror = () => {
+            db.close();
+            reject(tx.error ?? new Error('IndexedDB transaction failed'));
+          };
         };
-        tx.onerror = () => {
-          db.close();
-          reject(tx.error ?? new Error('IndexedDB transaction failed'));
-        };
-      };
-    });
-  });
+      });
+    },
+    { dbName: OFFLINE_DB_NAME, dbVersion: OFFLINE_DB_VERSION },
+  );
 }
 
 async function decryptQueueItems(

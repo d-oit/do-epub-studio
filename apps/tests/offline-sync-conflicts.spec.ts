@@ -1,5 +1,6 @@
 import { test, expect, type Page, type Route, type Request } from '@playwright/test';
 import { decryptJSON } from '../web/src/lib/offline/crypto';
+import { OFFLINE_DB_NAME, OFFLINE_DB_VERSION } from '../web/src/lib/offline/idb-schema';
 import {
   createMinimalEpub,
   loginAsReader,
@@ -68,45 +69,48 @@ function createLoginResponse(slug: string) {
 }
 
 async function readOfflineDatabase(page: Page): Promise<StoredOfflineDatabase> {
-  return page.evaluate(async () => {
-    const request = indexedDB.open('do-epub-studio', 5);
-    return new Promise<StoredOfflineDatabase>((resolve, reject) => {
-      request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
-      request.onsuccess = () => {
-        const db = request.result;
-        const stores = ['annotations', 'syncQueue', 'progress'];
-        const existingStores = stores.filter((s) => db.objectStoreNames.contains(s));
-        if (existingStores.length === 0) {
-          db.close();
-          resolve({ annotations: [], queue: [], progress: [] });
-          return;
-        }
-        const tx = db.transaction(existingStores, 'readonly');
-        const annotations = db.objectStoreNames.contains('annotations')
-          ? tx.objectStore('annotations').getAll()
-          : null;
-        const queue = db.objectStoreNames.contains('syncQueue')
-          ? tx.objectStore('syncQueue').getAll()
-          : null;
-        const progress = db.objectStoreNames.contains('progress')
-          ? tx.objectStore('progress').getAll()
-          : null;
+  return page.evaluate(
+    async ({ dbName, dbVersion }) => {
+      const request = indexedDB.open(dbName, dbVersion);
+      return new Promise<StoredOfflineDatabase>((resolve, reject) => {
+        request.onerror = () => reject(request.error ?? new Error('IndexedDB open failed'));
+        request.onsuccess = () => {
+          const db = request.result;
+          const stores = ['annotations', 'syncQueue', 'progress'];
+          const existingStores = stores.filter((s) => db.objectStoreNames.contains(s));
+          if (existingStores.length === 0) {
+            db.close();
+            resolve({ annotations: [], queue: [], progress: [] });
+            return;
+          }
+          const tx = db.transaction(existingStores, 'readonly');
+          const annotations = db.objectStoreNames.contains('annotations')
+            ? tx.objectStore('annotations').getAll()
+            : null;
+          const queue = db.objectStoreNames.contains('syncQueue')
+            ? tx.objectStore('syncQueue').getAll()
+            : null;
+          const progress = db.objectStoreNames.contains('progress')
+            ? tx.objectStore('progress').getAll()
+            : null;
 
-        tx.oncomplete = () => {
-          db.close();
-          resolve({
-            annotations: (annotations?.result as Record<string, unknown>[]) ?? [],
-            queue: (queue?.result as Record<string, unknown>[]) ?? [],
-            progress: (progress?.result as Record<string, unknown>[]) ?? [],
-          });
+          tx.oncomplete = () => {
+            db.close();
+            resolve({
+              annotations: (annotations?.result as Record<string, unknown>[]) ?? [],
+              queue: (queue?.result as Record<string, unknown>[]) ?? [],
+              progress: (progress?.result as Record<string, unknown>[]) ?? [],
+            });
+          };
+          tx.onerror = () => {
+            db.close();
+            reject(tx.error ?? new Error('IndexedDB transaction failed'));
+          };
         };
-        tx.onerror = () => {
-          db.close();
-          reject(tx.error ?? new Error('IndexedDB transaction failed'));
-        };
-      };
-    });
-  });
+      });
+    },
+    { dbName: OFFLINE_DB_NAME, dbVersion: OFFLINE_DB_VERSION },
+  );
 }
 
 async function decryptQueueItems(
@@ -523,7 +527,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
           async () =>
             pageA.evaluate(
               async () =>
-                (await navigator.locks.query()).pending.filter(
+                ((await navigator.locks.query()).pending ?? []).filter(
                   (lock) => lock.name === 'offline-sync-queue',
                 ).length,
             ),
