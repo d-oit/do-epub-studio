@@ -80,3 +80,16 @@ Fixture generation is deterministic and uses only Node built-ins. Run the reader
   1. W3C advances **EPUB 3.4**, **EPUB Accessibility 1.2**, or **EPUB Annotations 1.0** to a new maturity level (e.g., Candidate Recommendation Snapshot, Proposed Recommendation, or Recommendation).
   2. The pinned validator (`apps/epubcheck-runner` / `scripts/check-epub-fixtures.mjs` EPUBCheck `5.4.0`) or reading engine (`@intity/epub-js` `0.3.96`) is upgraded.
 - **Automated consistency check**: Run `node scripts/check-standards-status.mjs` to verify that standards-status statements, W3C status dates, pinned EPUBCheck version, and links remain consistent across the capability matrix and ADR-1017.
+
+- **Clause→capability matrix**: `docs/standards/epub-conformance-matrix.json` maps
+  EPUB 3.3 (stable baseline) plus EPUB 3.4 and EPUB Reading Systems 3.4
+  Candidate Recommendation Draft clauses to implementation modules, test files,
+  evidence, and status. EPUB 3.3 remains the stable compatibility baseline;
+  all 3.4 rows are experimental and non-certifying until promoted and tested.
+  Run `node scripts/validate-standards-matrix.mjs` (also wired into the local
+  quality gate) — it fails when an `implemented` row lacks a real test
+  reference or a `partial`/`not-implemented` row lacks a documented exception
+  note. The scheduled `standards-drift.yml` workflow and
+  `scripts/standards-status-update.mjs` monitor W3C status/content drift and
+  produce timestamped snapshots under `docs/standards/` for review; commits of
+  new snapshots are always manual.
