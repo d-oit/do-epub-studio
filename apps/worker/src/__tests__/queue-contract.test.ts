@@ -42,12 +42,25 @@ describe('EPUB validation queue contract', () => {
 
   it('runner result schema is pinned to the supported EPUBCHECK version', () => {
     expect(EPUBCHECK_VERSION).toBe('5.4.0');
+    const profile = {
+      spec: null,
+      experimental: false,
+      certification: 'not-certified',
+      findings: [],
+      evidence: [],
+    };
     const valid = {
       validatorVersion: EPUBCHECK_VERSION,
       sha256: 'a'.repeat(64),
       epubVersion: '3.0',
       findings: [],
-      accessibility: { metadata: [], advisories: [], manualReviewRequired: false, certification: 'not-certified' },
+      accessibility: {
+        metadata: [],
+        advisories: [],
+        manualReviewRequired: false,
+        certification: 'not-certified',
+        profiles: { '1.1': profile, '1.2-draft': profile },
+      },
     };
     expect(EpubRunnerResultSchema.safeParse(valid).success).toBe(true);
     const wrongVersion = { ...valid, validatorVersion: '9.9.9' };
