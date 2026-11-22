@@ -2,13 +2,14 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import { deflateSync, strToU8, zipSync } from 'fflate';
 import * as Fflate from 'fflate';
 import fc from 'fast-check';
+import { validateArchive } from '../archive-validator';
 import {
-  validateArchive,
   DEFAULT_INGEST_LIMITS,
   ArchiveRejectionError,
   archiveRejectionStatusCode,
-} from '../archive-validator';
-import { type ArchiveRejectionCode, ARCHIVE_REJECTION_CODES } from '../ingest-limits';
+  type ArchiveRejectionCode,
+  ARCHIVE_REJECTION_CODES,
+} from '../ingest-limits';
 
 // Instrument the deflate decoder *constructor* (module-level mock) instead of
 // monkey-patching prototypes: a preflight rejection must never construct a

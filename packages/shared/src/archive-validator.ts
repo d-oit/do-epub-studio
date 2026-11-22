@@ -38,17 +38,7 @@ export interface ArchiveValidationOptions {
   limits?: Partial<IngestLimits>;
 }
 
-export {
-  ArchiveRejectionError,
-  archiveRejection,
-  archiveRejectionFromError,
-  archiveRejectionStatusCode,
-  DEFAULT_INGEST_LIMITS,
-  ARCHIVE_REJECTION_CODES,
-  type IngestLimits,
-  type ArchiveRejection,
-  type ArchiveRejectionCode,
-} from './ingest-limits';
+export { ArchiveRejectionError, DEFAULT_INGEST_LIMITS } from './ingest-limits';
 // ---------------------------------------------------------------------------
 
 const EOCD_SIG = 0x06054b50;

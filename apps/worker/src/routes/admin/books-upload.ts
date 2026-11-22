@@ -6,11 +6,11 @@ import type { Context } from 'hono';
 import type { Env } from '../../lib/env';
 import { queryFirst } from '../../db/client';
 import { validateEpub, type ValidationResult } from '@do-epub-studio/shared/src/epub-validator';
+import { validateArchive } from '@do-epub-studio/shared/src/archive-validator';
 import {
-  validateArchive,
   ArchiveRejectionError,
   archiveRejectionStatusCode,
-} from '@do-epub-studio/shared/src/archive-validator';
+} from '@do-epub-studio/shared/src/ingest-limits';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
 import { logAppError } from '../../lib/observability';

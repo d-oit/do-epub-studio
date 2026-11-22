@@ -16,11 +16,8 @@ import {
   type CorpusEntry,
   type ExpectedArchiveOutcome,
 } from '@do-epub-studio/testkit';
-import {
-  ArchiveRejectionError,
-  validateArchive,
-  type ArchiveValidationOptions,
-} from '../archive-validator';
+import { ArchiveRejectionError, validateArchive } from '../archive-validator';
+import type { ArchiveValidationOptions } from '@do-epub-studio/shared/src/archive-validator';
 import { parseEpubInWorker } from '../epub-parser-worker';
 import { sanitizeEpubDocument } from '../sanitizer';
 
