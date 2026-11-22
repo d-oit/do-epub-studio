@@ -135,9 +135,9 @@ export function navDocXml(spec: EpubSpec): string {
 
 /** Assemble a complete EPUB archive from a spec. Deterministic file order. */
 export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
-  const rootfiles = spec.rootfiles ?? [
-    { fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' },
-  ];
+  const rootfiles = spec.rootfiles?.length
+    ? spec.rootfiles
+    : [{ fullPath: 'OEBPS/content.opf', mediaType: 'application/oebps-package+xml' }];
 
   const files: ZipEntry[] = [
     { name: 'mimetype', data: new TextEncoder().encode('application/epub+zip'), method: 0 },
@@ -151,46 +151,52 @@ export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
     });
   }
 
-  const primaryRoot = rootfiles[0] ?? {
-    fullPath: 'OEBPS/content.opf',
-    mediaType: 'application/oebps-package+xml',
+  const emittedPaths = new Set(files.map((file) => file.name));
+  const addFile = (file: ZipEntry): void => {
+    if (emittedPaths.has(file.name)) return;
+    emittedPaths.add(file.name);
+    files.push(file);
   };
-  if (primaryRoot.fullPath === 'OEBPS/content.opf') {
-    files.push({
-      name: 'OEBPS/content.opf',
-      data: new TextEncoder().encode(opfXml(spec, primaryRoot.fullPath)),
+
+  rootfiles.forEach((rootfile, index) => {
+    const slash = rootfile.fullPath.lastIndexOf('/');
+    const rootDirectory = slash >= 0 ? rootfile.fullPath.slice(0, slash + 1) : '';
+    const packageSpec =
+      index === 0
+        ? spec
+        : { ...spec, title: `${spec.title} (alternate)`, uniqueId: 'alt' };
+
+    addFile({
+      name: rootfile.fullPath,
+      data: new TextEncoder().encode(opfXml(packageSpec, rootfile.fullPath)),
     });
+
     if (spec.includeNcx) {
-      files.push({ name: 'OEBPS/toc.ncx', data: new TextEncoder().encode(ncxXml(spec)) });
+      addFile({
+        name: `${rootDirectory}toc.ncx`,
+        data: new TextEncoder().encode(ncxXml(packageSpec)),
+      });
     }
     if (spec.includeNavDoc) {
-      files.push({ name: 'OEBPS/nav.xhtml', data: new TextEncoder().encode(navDocXml(spec)) });
+      addFile({
+        name: `${rootDirectory}nav.xhtml`,
+        data: new TextEncoder().encode(navDocXml(packageSpec)),
+      });
     }
-    for (const ch of spec.chapters) {
-      files.push({ name: `OEBPS/${ch.href}`, data: new TextEncoder().encode(ch.body) });
+    for (const chapter of spec.chapters) {
+      addFile({
+        name: `${rootDirectory}${chapter.href}`,
+        data: new TextEncoder().encode(chapter.body),
+      });
     }
     for (const item of spec.items ?? []) {
-      files.push({ name: `OEBPS/${item.href}`, data: item.data, method: item.method });
-    }
-  } else {
-    // Alternate rootfile layout — currently only used by multiple-rootfiles.
-    const alt = rootfiles[1];
-    if (alt) {
-      files.push({
-        name: 'OEBPS/content.opf',
-        data: new TextEncoder().encode(opfXml(spec, 'OEBPS/content.opf')),
+      addFile({
+        name: `${rootDirectory}${item.href}`,
+        data: item.data,
+        method: item.method,
       });
-      files.push({
-        name: 'OEBPS/alt.opf',
-        data: new TextEncoder().encode(
-          opfXml({ ...spec, title: `${spec.title} (alternate)`, uniqueId: 'alt' }, 'OEBPS/alt.opf'),
-        ),
-      });
-      for (const ch of spec.chapters) {
-        files.push({ name: `OEBPS/${ch.href}`, data: new TextEncoder().encode(ch.body) });
-      }
     }
-  }
+  });
 
   for (const extra of spec.extraFiles ?? []) {
     files.push(extra);
