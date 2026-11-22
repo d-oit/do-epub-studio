@@ -119,10 +119,12 @@ async function validateRevision(env: Env, message: EpubValidationMessage): Promi
   const safetyStatus =
     raw && typeof raw === 'object' && 'safetyStatus' in raw ? raw.safetyStatus : null;
   if (safetyStatus === 'rejected') {
+    const rejectionRaw = raw as { failureCode?: string };
+    const failureCode = rejectionRaw.failureCode ?? 'ARCHIVE_SAFETY_REJECTED';
     await execute(
       env,
-      `UPDATE epub_validation_reports SET status = 'failed', safety_status = 'rejected', failure_code = 'ARCHIVE_SAFETY_REJECTED', updated_at = ? WHERE revision_id = ?`,
-      [new Date().toISOString(), message.revisionId],
+      `UPDATE epub_validation_reports SET status = 'failed', safety_status = 'rejected', failure_code = ?, updated_at = ? WHERE revision_id = ?`,
+      [failureCode, new Date().toISOString(), message.revisionId],
     );
     return;
   }

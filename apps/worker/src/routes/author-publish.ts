@@ -1,10 +1,14 @@
 import type { Context } from 'hono';
 import { AuthorPublicationSchema, type AuthorPublication } from '@do-epub-studio/shared';
 import { packageEpub3 } from '@do-epub-studio/reader-core/packager';
-import { validateArchive } from '@do-epub-studio/shared/src/archive-validator';
+import {
+  validateArchive,
+  ArchiveRejectionError,
+  archiveRejectionStatusCode,
+} from '@do-epub-studio/shared/src/archive-validator';
 import type { Env, JsonRow } from '../lib/env';
 import { execute, queryAll, queryFirst } from '../db/client';
-import { ConflictError, NotFoundError, ValidationError } from '../lib/http-errors';
+import { ConflictError, NotFoundError, ValidationError, AppError } from '../lib/http-errors';
 import { logAudit } from '../audit';
 import { bumpCacheVersion } from '../lib/edge-cache';
 import { finalizeBookEpubRevision } from '../lib/epub-revisions';
@@ -123,7 +127,18 @@ export async function handlePublishManuscript(c: AuthorContext): Promise<Respons
   });
 
   // Validate archive safety prior to R2 storage.
-  await validateArchive(epubBuffer);
+  try {
+    await validateArchive(epubBuffer);
+  } catch (error) {
+    if (error instanceof ArchiveRejectionError) {
+      throw new AppError(
+        error.message,
+        `ARCHIVE_${error.code.toUpperCase().replace('-', '_')}`,
+        archiveRejectionStatusCode(error.code),
+      );
+    }
+    throw error;
+  }
 
   const fileSizeBytes = epubBuffer.byteLength;
   const sha256 = await sha256Hex(epubBuffer);

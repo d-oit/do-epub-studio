@@ -6,6 +6,11 @@ import type { Context } from 'hono';
 import type { Env } from '../../lib/env';
 import { queryFirst } from '../../db/client';
 import { validateEpub, type ValidationResult } from '@do-epub-studio/shared/src/epub-validator';
+import {
+  validateArchive,
+  ArchiveRejectionError,
+  archiveRejectionStatusCode,
+} from '@do-epub-studio/shared/src/archive-validator';
 import { withByteCap, MaxBodySizeError, DEFAULT_MAX_BODY_BYTES } from '../../lib/stream-body';
 import { NotFoundError, ValidationError, AppError } from '../../lib/http-errors';
 import { logAppError } from '../../lib/observability';
@@ -157,6 +162,21 @@ export async function handleBookFileUpload(c: AdminBooksContext): Promise<Respon
       size: String(declaredSize),
     };
     if (validationArrayBuffer) {
+      // Archive-level budget checks (compressed/expanded/entry/ratio/path/
+      // structure) run before the EPUB-specific pass so hostile archives are
+      // rejected before expensive parsing.
+      try {
+        await validateArchive(new Uint8Array(validationArrayBuffer));
+      } catch (error) {
+        if (error instanceof ArchiveRejectionError) {
+          throw new AppError(
+            error.message,
+            `ARCHIVE_${error.code.toUpperCase().replace('-', '_')}`,
+            archiveRejectionStatusCode(error.code),
+          );
+        }
+        throw error;
+      }
       validationResults = await validateEpub(validationArrayBuffer);
       customMetadata.validationResults = JSON.stringify(validationResults);
       if (!validationResults.isValid) {
