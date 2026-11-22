@@ -19,30 +19,48 @@ export const API_CONTRACT_ROUTES: readonly ApiContractEntry[] = [
   ...adminAuthRoutes,
 ];
 
-/** Cache of compiled matchers (method + path pattern -> entry). */
-let matchers: Array<{ method: ContractMethod; regex: RegExp; entry: ApiContractEntry }> | null =
-  null;
+/** A compiled route matcher: literal prefix segments + param segment types. */
+interface RouteMatcher {
+  method: ContractMethod;
+  /** True when the segment matches any value (`:param` or `:param{.+}`). */
+  paramSegments: boolean[];
+  /** Literal segment values (only for non-param positions). */
+  literalSegments: (string | undefined)[];
+  entry: ApiContractEntry;
+}
 
-function compileMatchers() {
+let matchers: RouteMatcher[] | null = null;
+
+
+function compileMatchers(): RouteMatcher[] {
   if (matchers) return matchers;
   matchers = API_CONTRACT_ROUTES.map((entry) => {
-    // Convert Hono path syntax to a regex: `:param` and `:param{.+}` -> named capture.
-    const source = entry.path
-      .replace(/:[^/]+(\{\.\+\})?/g, (match) => (match.includes('{') ? '(.+)' : '([^/]+)'))
-      .replace(/\//g, '\\/');
-    return {
-      method: entry.method,
-      regex: new RegExp(`^${source}$`),
-      entry,
-    };
+    const segments = entry.path.split('/').filter(Boolean);
+    const paramSegments = segments.map((segment) => segment.startsWith(':'));
+    const literalSegments = segments.map((segment, index) =>
+      paramSegments[index] ? undefined : segment,
+    );
+    return { method: entry.method, paramSegments, literalSegments, entry };
   });
   return matchers;
 }
 
+/** Compare a request path (without query string) against a compiled matcher. */
+function matchesPath(requestPath: string, matcher: RouteMatcher): boolean {
+  const segments = requestPath.replace(/\/+$/, '').split('/').filter(Boolean);
+  if (segments.length !== matcher.paramSegments.length) return false;
+  for (let i = 0; i < segments.length; i++) {
+    if (matcher.paramSegments[i]) continue;
+    if (matcher.literalSegments[i] !== segments[i]) return false;
+  }
+  return true;
+}
+
 /** Look up the contract entry for a request method + path (if any). */
 export function matchContractRoute(method: string, path: string): ApiContractEntry | undefined {
+  const barePath = path.split('?')[0] ?? path;
   for (const matcher of compileMatchers()) {
-    if (matcher.method === method && matcher.regex.test(path)) {
+    if (matcher.method === method && matchesPath(barePath, matcher)) {
       return matcher.entry;
     }
   }
