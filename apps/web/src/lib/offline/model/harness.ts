@@ -14,39 +14,21 @@
  * - session/offline fences stop server writes.
  */
 
-import {
-  persistAnnotationCreation,
-  saveAnnotation,
-} from '../annotation-mutations';
-import {
-  getDB,
-  closeDb,
-  saveProgress,
-  decryptEntry,
-  SYNC_QUEUE_PLAINTEXT,
-  ANNOTATION_PLAINTEXT,
-  type SyncQueueItem,
-  type AnnotationEntry,
-} from '../db';
+import { persistAnnotationCreation, saveAnnotation } from '../annotation-mutations';
+import { saveProgress, type AnnotationEntry } from '../db';
 import { queueSync, syncAll, cancelPendingRetry, resetDrainPromise } from '../sync';
 import {
   __clearConflictCache,
   clearAllConflicts,
   flushConflictWrites,
-  getPendingConflicts,
-  ConflictType,
 } from '../conflict-resolution';
 import { useAuthStore } from '../../../stores/auth';
 import { useReaderStore } from '../../../stores/reader';
 import { Transport } from './transport';
-import type {
-  FailureDirective,
-  LedgerEntry,
-  LedgerKind,
-  RemoteAction,
-} from './types';
+import { fingerprint, resetLocalDb } from './harness-support';
+import { reconcileLedger } from './harness-audit';
+import type { FailureDirective, LedgerEntry, LedgerKind, RemoteAction } from './types';
 
-const DB_NAME = 'do-epub-studio';
 const BOOK_ID = 'book-1';
 const USER_EMAIL = 'reader@example.com';
 const TOKEN = 'model-session-token';
@@ -55,33 +37,6 @@ export class ModelSuiteError extends Error {}
 
 export function replayCommand(seed: number): string {
   return `REPLAY_SEED=${seed} pnpm --filter @do-epub-studio/web exec vitest run src/lib/offline/sync-model-targeted.test.ts`;
-}
-
-/** Deterministic JSON fingerprint (sorted keys) used to match conflict payloads. */
-function fingerprint(value: unknown): string {
-  return JSON.stringify(sortKeys(value));
-}
-
-function sortKeys(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(sortKeys);
-  if (typeof value === 'object' && value !== null) {
-    const out: Record<string, unknown> = {};
-    for (const key of Object.keys(value).sort()) {
-      out[key] = sortKeys((value as Record<string, unknown>)[key]);
-    }
-    return out;
-  }
-  return value;
-}
-
-async function resetLocalDb(): Promise<void> {
-  closeDb();
-  const { promise, resolve } = Promise.withResolvers<void>();
-  const req = indexedDB.deleteDatabase(DB_NAME);
-  req.onsuccess = () => resolve();
-  req.onerror = () => resolve();
-  req.onblocked = () => resolve();
-  await promise;
 }
 
 export class Harness {
@@ -142,7 +97,11 @@ export class Harness {
   }
 
   setOnline(online: boolean): void {
-    Object.defineProperty(navigator, 'onLine', { value: online, writable: true, configurable: true });
+    Object.defineProperty(navigator, 'onLine', {
+      value: online,
+      writable: true,
+      configurable: true,
+    });
   }
 
   login(): void {
@@ -195,14 +154,17 @@ export class Harness {
   }
 
   /** Local annotation create (offline path: persist + queue). */
-  async createAnnotation(kind: 'highlight' | 'comment' | 'bookmark', fields: {
-    cfi: string;
-    text: string;
-    chapter?: string;
-    color?: string;
-    body?: string;
-    label?: string;
-  }): Promise<string> {
+  async createAnnotation(
+    kind: 'highlight' | 'comment' | 'bookmark',
+    fields: {
+      cfi: string;
+      text: string;
+      chapter?: string;
+      color?: string;
+      body?: string;
+      label?: string;
+    },
+  ): Promise<string> {
     const mutationId = crypto.randomUUID();
     const now = Date.now();
     const entry: AnnotationEntry = {
@@ -229,12 +191,17 @@ export class Harness {
     }
     await persistAnnotationCreation(entry, TOKEN);
     this.addLedger(kind, mutationId);
-    this.traceOp(`create${kind[0]?.toUpperCase() ?? ''}${kind.slice(1)} mid=${mutationId.slice(0, 8)}`);
+    this.traceOp(
+      `create${kind[0]?.toUpperCase() ?? ''}${kind.slice(1)} mid=${mutationId.slice(0, 8)}`,
+    );
     return mutationId;
   }
 
   /** Offline comment resolve (Plan 998 action payload). */
-  async resolveComment(commentServerId: string, targetStatus: 'open' | 'resolved'): Promise<string> {
+  async resolveComment(
+    commentServerId: string,
+    targetStatus: 'open' | 'resolved',
+  ): Promise<string> {
     const mutationId = crypto.randomUUID();
     await saveAnnotation({
       id: commentServerId,
@@ -250,7 +217,11 @@ export class Harness {
     });
     await queueSync(
       'annotation',
-      { bookId: BOOK_ID, annotation: { id: commentServerId, status: targetStatus }, action: 'resolve' },
+      {
+        bookId: BOOK_ID,
+        annotation: { id: commentServerId, status: targetStatus },
+        action: 'resolve',
+      },
       mutationId,
     );
     this.addLedger('resolve', mutationId, targetStatus);
@@ -261,7 +232,11 @@ export class Harness {
   }
 
   /** Offline progress update (same payload shape as the reader hook). */
-  async updateProgress(cfi: string, percentage: number, dependsOnMutationId?: string): Promise<string> {
+  async updateProgress(
+    cfi: string,
+    percentage: number,
+    dependsOnMutationId?: string,
+  ): Promise<string> {
     const mutationId = crypto.randomUUID();
     const payload = {
       bookId: BOOK_ID,
@@ -303,7 +278,11 @@ export class Harness {
     this.requests.push({
       n: this.requests.length + 1,
       source: 'remote',
-      method: action.kind.startsWith('delete') ? 'DELETE' : action.kind.startsWith('edit') ? 'PATCH' : 'POST',
+      method: action.kind.startsWith('delete')
+        ? 'DELETE'
+        : action.kind.startsWith('edit')
+          ? 'PATCH'
+          : 'POST',
       path: `/remote/${action.kind}`,
       mutationId,
       status: result.status,
@@ -344,10 +323,10 @@ export class Harness {
     if (p && p.mutationId !== null) {
       this.progressBaseRevision = p.revision;
     }
-    const probeBefore = JSON.stringify(sortKeys(this.transport.server.snapshot()));
+    const probeBefore = fingerprint(this.transport.server.snapshot());
     await syncAll();
     await syncAll();
-    const probeAfter = JSON.stringify(sortKeys(this.transport.server.snapshot()));
+    const probeAfter = fingerprint(this.transport.server.snapshot());
     if (probeBefore !== probeAfter) {
       return ['repeated sync changed server state (not idempotent)'];
     }
@@ -364,7 +343,9 @@ export class Harness {
       for (const row of rows) {
         if (row.mutationId === null) continue;
         if (seen.has(row.mutationId)) {
-          violations.push(`server uniqueness violated: duplicate ${kind} row for mutation ${row.mutationId}`);
+          violations.push(
+            `server uniqueness violated: duplicate ${kind} row for mutation ${row.mutationId}`,
+          );
         }
         seen.add(row.mutationId);
         this.serverIdByMutationId.set(row.mutationId, row.id);
@@ -389,132 +370,15 @@ export class Harness {
 
   /** Deep audit: decrypts local stores, reconciles the ledger. */
   async deepAudit(): Promise<string[]> {
-    const violations = this.checkLightInvariants();
-    // While logged out the local encrypted stores are intentionally
-    // inaccessible (session key gone), so ledger reconciliation cannot read
-    // them; checks resume after the next login.
-    if (!this.authed) return violations;
-    const snap = this.transport.server.snapshot();
-    const db = await getDB();
-
-    const rawQueue = (await db.getAll('syncQueue')) as Record<string, unknown>[];
-    const queued = new Map<string, SyncQueueItem>();
-    for (const raw of rawQueue) {
-      const item = await decryptEntry<SyncQueueItem>(raw, SYNC_QUEUE_PLAINTEXT);
-      if (item) queued.set(item.mutationId, item);
-    }
-
-    const rawAnnotations = (await db.getAll('annotations')) as Record<string, unknown>[];
-    const annotations: AnnotationEntry[] = [];
-    for (const raw of rawAnnotations) {
-      const entry = await decryptEntry<AnnotationEntry>(raw, ANNOTATION_PLAINTEXT);
-      if (entry) annotations.push(entry);
-    }
-
-    const conflicts = getPendingConflicts(BOOK_ID);
-
-    for (const entry of this.ledger.values()) {
-      if (entry.settled) continue;
-      const mid = entry.mutationId;
-      const queuedItem = queued.get(mid);
-      const localAnnotation = annotations.find((a) => a.mutationId === mid);
-
-      if (entry.kind === 'progress') {
-        const applied = snap.progressMutations.some((m) => m.mutationId === mid);
-        const conflicted = conflicts.some(
-          (c) => c.type === ConflictType.ProgressUpdate && fingerprint(c.localVersion) === entry.fingerprint,
-        );
-        if (applied) {
-          entry.settled = true;
-          entry.stage = 'synced';
-          continue;
-        }
-        if (conflicted) {
-          entry.settled = true;
-          entry.stage = 'conflicted';
-          continue;
-        }
-        if (queuedItem) continue;
-        violations.push(`ledger: progress mutation ${mid} disappeared without trace (not applied, not conflicted, not queued)`);
-        continue;
-      }
-
-      if (entry.kind === 'resolve') {
-        const row = snap.comments.find((c) => c.id === entry.serverId);
-        if (row && row.status === entry.targetStatus) {
-          entry.settled = true;
-          entry.stage = 'synced';
-          continue;
-        }
-        // A later resolve on the same comment legitimately supersedes this one
-        // (open/resolved toggles); settle if the current row reflects it.
-        const superseding = [...this.ledger.values()].some(
-          (other) =>
-            other !== entry &&
-            other.kind === 'resolve' &&
-            other.serverId === entry.serverId &&
-            other.targetStatus === row?.status,
-        );
-        if (row && superseding) {
-          entry.settled = true;
-          entry.stage = 'synced';
-          continue;
-        }
-        if (queuedItem?.permanentError) {
-          entry.settled = true;
-          entry.stage = 'terminal';
-          continue;
-        }
-        if (queuedItem) continue;
-        violations.push(`ledger: resolve ${mid} target ${entry.serverId} not reflected on server and not queued`);
-        continue;
-      }
-
-      const row = snap[entry.kind === 'highlight' ? 'highlights' : entry.kind === 'comment' ? 'comments' : 'bookmarks']
-        .find((r) => r.mutationId === mid);
-      if (row) {
-        entry.serverId = row.id;
-        entry.settled = true;
-        entry.stage = 'synced';
-        continue;
-      }
-      const serverId = entry.serverId ?? this.serverIdByMutationId.get(mid);
-      if (serverId && this.observedDeletedEntityIds.has(serverId)) {
-        entry.settled = true;
-        entry.stage = 'purged';
-        entry.terminalReason = 'deleted_by_peer';
-        continue;
-      }
-      if (queuedItem?.permanentError) {
-        entry.settled = true;
-        entry.stage = 'terminal';
-        continue;
-      }
-      if (queuedItem) continue;
-      if (localAnnotation?.syncError) {
-        entry.settled = true;
-        entry.stage = 'terminal';
-        continue;
-      }
-      violations.push(`ledger: ${entry.kind} mutation ${mid} lost (no server row, no queue item, no failure marker)`);
-    }
-
-    // Tombstone stability: a deleted comment must never be resurrected by a
-    // stale create replay of the same mutation id. Explicit user resolves on
-    // the comment are allowed to revive it (the server contract permits the
-    // PATCH and the user acted deliberately).
-    for (const deletedId of this.observedDeletedCommentIds) {
-      const row = snap.comments.find((c) => c.id === deletedId);
-      if (row && row.status !== 'deleted') {
-        const revivedByResolve = [...this.ledger.values()].some(
-          (e) => e.kind === 'resolve' && e.serverId === deletedId && e.targetStatus === row.status,
-        );
-        if (!revivedByResolve) {
-          violations.push(`tombstone resurrected: comment ${deletedId} is ${row.status}`);
-        }
-      }
-    }
-
-    return violations;
+    return reconcileLedger({
+      authed: this.authed,
+      bookId: BOOK_ID,
+      snap: this.transport.server.snapshot(),
+      ledger: this.ledger,
+      serverIdByMutationId: this.serverIdByMutationId,
+      observedDeletedEntityIds: this.observedDeletedEntityIds,
+      observedDeletedCommentIds: this.observedDeletedCommentIds,
+      lightViolations: this.checkLightInvariants(),
+    });
   }
 }
