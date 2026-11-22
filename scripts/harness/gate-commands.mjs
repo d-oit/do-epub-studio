@@ -25,5 +25,6 @@ export const GATE_COMMANDS = Object.freeze({
   'llms-drift': ['bash', 'scripts/check-llms-drift.sh'],
   'compliance-drift': ['bash', 'scripts/generate-compliance-doc.sh', '--check'],
   'dora-report': ['bash', 'scripts/report-dora.sh'],
+  'standards-matrix': ['node', 'scripts/validate-standards-matrix.mjs'],
   'gate-parity': ['bash', 'scripts/validate-gate-parity.sh'],
 });
