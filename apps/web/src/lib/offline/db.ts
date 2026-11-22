@@ -1,7 +1,7 @@
 import type { IDBPDatabase } from 'idb';
 import { openOfflineDb, USER_DATA_STORES } from './idb-schema';
-import { getCacheStorage } from './cache';
-import { listManifests, removeManifest } from './manifest-store';
+
+
 import { encryptJSON, decryptJSON } from './crypto';
 import { useAuthStore } from '@/stores/auth';
 import type {
@@ -275,37 +275,17 @@ export async function getBookFile(bookId: string): Promise<BookFileEntry | undef
 }
 
 /**
- * Wipe every on-device store tied to the authenticated session: user data
- * and also downloaded book packages (serving/staging caches + manifests), so
- * a signed-out device does not retain a granted book's content (issue #1485).
+ * Wipe every on-device user-data store tied to the authenticated session.
+ * Downloaded book packages are removed separately by
+ * `clearEncryptedDataOnAuthLoss` (auth-loss-cleanup.ts) so this hot module
+ * never drags the manifest/cache layer into the reader bundle.
  */
 export async function clearAllEncryptedData(): Promise<void> {
   const db = await getDB();
   const stores = [...USER_DATA_STORES];
-
   const tx = db.transaction(stores, 'readwrite');
   await Promise.all(stores.map((name) => tx.objectStore(name).clear()));
   await tx.done;
-
-  const manifests = await listManifests();
-  const cacheStorage = getCacheStorage();
-  for (const manifest of manifests) {
-    if (cacheStorage) {
-      try {
-        await cacheStorage.delete(manifest.cacheName);
-      } catch {
-        // In use; recovery will remove leftovers on next start.
-      }
-      if (manifest.stagingCacheName) {
-        try {
-          await cacheStorage.delete(manifest.stagingCacheName);
-        } catch {
-          // Best-effort.
-        }
-      }
-    }
-    await removeManifest(manifest.bookId);
-  }
 }
 
 export async function saveReadingInsight(entry: ReadingInsightEntry): Promise<void> {

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { clearAllEncryptedData, saveProgress, getProgress } from '../db';
+import { clearEncryptedDataOnAuthLoss } from '../auth-loss-cleanup';
+import { saveProgress, getProgress } from '../db';
 import { beginDownload, commitDownload, getManifest } from '../manifest-store';
 import { InMemoryCacheStorage } from './mem-cache';
 import { resetIndexedDb } from './reset-idb';
@@ -49,7 +50,7 @@ describe('auth-loss cleanup (issue #1485)', () => {
     const serving = await caches.open(cacheName);
     await serving.put(URL, new Response('0123456789'));
 
-    await clearAllEncryptedData();
+    await clearEncryptedDataOnAuthLoss();
 
     expect(await getProgress('b1')).toBeUndefined();
     expect(await getManifest('book-1')).toBeUndefined();
