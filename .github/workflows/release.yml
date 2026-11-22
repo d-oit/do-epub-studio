@@ -412,6 +412,74 @@ jobs:
           path: .lighthouseci/
           retention-days: 30
 
+  smoke-preview:
+    name: Smoke Preview API Routing
+    needs: [release-readiness, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: ./.github/actions/setup-pnpm
+
+      - name: Validate configured API origin (fail on absent/placeholder/SPA-only)
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+        run: |
+          if [[ -n "${VITE_API_BASE_URL:-}" ]]; then
+            node scripts/deploy-smoke.mjs --expect-origin "$VITE_API_BASE_URL"
+          fi
+
+      - name: Build (API origin guard active)
+        run: pnpm build
+
+      # Release-candidate preview on Cloudflare Pages (branch deployment, never
+      # the production branch). Run from apps/web so Wrangler discovers the
+      # Pages Functions catch-all at apps/web/functions (the Pages project
+      # root, see #1023) while still walking up to the root wrangler.toml
+      # for bindings. The API rides the same deployment, so this is the exact
+      # artifact that would be promoted — smoke it before promotion.
+      - name: Deploy preview to Cloudflare Pages
+        id: preview-deploy
+        working-directory: apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RELEASE_BRANCH: release-${{ github.ref_name }}
+        run: |
+          OUTPUT=$(pnpm exec wrangler pages deploy dist \
+            --project-name=do-epub-studio \
+            --branch="$RELEASE_BRANCH" 2>&1)
+          echo "$OUTPUT"
+          PREVIEW_URL=$(printf '%s' "$OUTPUT" | grep -oE 'https://[a-z0-9-]+\.pages\.dev' | head -n 1)
+          if [[ -z "$PREVIEW_URL" ]]; then
+            echo "::error::Cloudflare Pages preview deployment produced no preview URL. Check the deployment output above."
+            exit 1
+          fi
+          echo "preview_url=$PREVIEW_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Fail closed when preview deployment failed
+        if: steps.preview-deploy.outcome != 'success'
+        run: |
+          echo "::error::Release preview deployment failed — refusing to promote."
+          exit 1
+
+      - name: Smoke preview before promotion
+        env:
+          PREVIEW_URL: ${{ steps.preview-deploy.outputs.url }}
+        run: |
+          if [[ -z "$PREVIEW_URL" ]]; then
+            echo "::error::No preview URL produced by the Pages deployment."
+            exit 1
+          fi
+          echo "Smoking preview API routing: $PREVIEW_URL"
+          node scripts/deploy-smoke.mjs --base-url "$PREVIEW_URL" --retries 12 --expect-origin "$PREVIEW_URL"
   release:
     name: Release
     needs:
@@ -423,6 +491,7 @@ jobs:
         coverage-gate,
         security-gate,
         cross-browser-gate,
+        smoke-preview,
       ]
     runs-on: ubuntu-latest
     environment: production
@@ -482,44 +551,14 @@ jobs:
             sbom.cyclonedx.json.sig
             SHA256SUMS
 
-      - name: Post-deploy health check
+      - name: Smoke production API routing (post-deploy gate)
+        env:
+          PAGES_URL: ${{ vars.PAGES_URL }}
         run: |
-          # GOAP-252: the frontend AND the API are deployed together by the
-          # Cloudflare Pages Git integration (the API rides the same Pages
-          # deployment via functions/ — no separate Worker deploy, no
-          # credentials). Assert the Pages-hosted API answers JSON at
-          # /api/health, /api/catalog?limit=1, and /api/access/request.
-          # A static SPA fallback with no Functions returns HTML/200 index.html
-          # instead. Fail closed (ADR-187: Unavailable must block readiness).
+          # Issue #1482: the deploy-smoke script asserts /api/* answers JSON
+          # (health, catalog envelope, unauthenticated 401, file endpoint) and
+          # never SPA HTML with 200 (incident #1014). Invalid API origins fail
+          # the gate with the same validation the build applies to
+          # VITE_API_BASE_URL.
           PAGES_URL="${PAGES_URL:-https://do-epub-studio.pages.dev}"
-          HEALTH_URL="$PAGES_URL/api/health"
-          CATALOG_URL="$PAGES_URL/api/catalog?limit=1"
-          LOGIN_URL="$PAGES_URL/api/access/request"
-
-          echo "Waiting for Pages API to serve JSON (up to 60s): $HEALTH_URL"
-          for i in $(seq 1 12); do
-            HEALTH_RESP=$(curl -s -w "\n%{http_code}" "$HEALTH_URL" --connect-timeout 5 --max-time 10 || true)
-            HEALTH_STATUS=$(printf '%s' "$HEALTH_RESP" | tail -n 1)
-            HEALTH_BODY=$(printf '%s' "$HEALTH_RESP" | sed '$d')
-
-            if [ "$HEALTH_STATUS" = "200" ] && printf '%s' "$HEALTH_BODY" | grep -q '"ok":true' && ! printf '%s' "$HEALTH_BODY" | grep -qi '<!DOCTYPE html'; then
-              # Additional contract verification: catalog & access request must return JSON, not SPA HTML, and catalog must be 200 (DB path healthy - GOAP-309 D2)
-              CATALOG_RESP=$(curl -s -w "\n%{http_code}" "$CATALOG_URL" --connect-timeout 5 --max-time 10 || true)
-              CATALOG_STATUS=$(printf '%s' "$CATALOG_RESP" | tail -n 1)
-              CATALOG_BODY=$(printf '%s' "$CATALOG_RESP" | sed '$d')
-
-              LOGIN_RESP=$(curl -s -w "\n%{http_code}" -X POST "$LOGIN_URL" -H "Content-Type: application/json" -d '{}' --connect-timeout 5 --max-time 10 || true)
-              LOGIN_BODY=$(printf '%s' "$LOGIN_RESP" | sed '$d')
-
-              if [ "$CATALOG_STATUS" = "200" ] && ! printf '%s' "$CATALOG_BODY" | grep -qi '<!DOCTYPE html' && ! printf '%s' "$LOGIN_BODY" | grep -qi '<!DOCTYPE html'; then
-                echo "Pages API healthy: HTTP $HEALTH_STATUS (attempt $i)"
-                exit 0
-              else
-                echo "Attempt $i: /api/* endpoints returned HTML SPA fallback — retrying in 5s..."
-              fi
-            fi
-            echo "Attempt $i: HTTP ${HEALTH_STATUS:-000} — retrying in 5s..."
-            sleep 5
-          done
-          echo "::error::Pages API not healthy after 60s (HTTP ${HEALTH_STATUS:-000}). Check that functions/ is deployed and the Pages project bindings (D1/KV/R2) are configured."
-          exit 1
+          node scripts/deploy-smoke.mjs --base-url "$PAGES_URL" --retries 12 --expect-origin "$PAGES_URL"
