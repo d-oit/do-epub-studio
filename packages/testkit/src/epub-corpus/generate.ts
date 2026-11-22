@@ -161,10 +161,11 @@ export function buildEpubFromSpec(spec: EpubSpec): Uint8Array {
   rootfiles.forEach((rootfile, index) => {
     const slash = rootfile.fullPath.lastIndexOf('/');
     const rootDirectory = slash >= 0 ? rootfile.fullPath.slice(0, slash + 1) : '';
-    const packageSpec =
-      index === 0
-        ? spec
-        : { ...spec, title: `${spec.title} (alternate)`, uniqueId: 'alt' };
+    const packageSpec: EpubSpec = { ...spec };
+    if (index > 0) {
+      packageSpec.title = `${spec.title} (alternate)`;
+      packageSpec.uniqueId = 'alt';
+    }
 
     addFile({
       name: rootfile.fullPath,
