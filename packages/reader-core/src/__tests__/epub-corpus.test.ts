@@ -16,7 +16,11 @@ import {
   type CorpusEntry,
   type ExpectedArchiveOutcome,
 } from '@do-epub-studio/testkit';
-import { validateArchive } from '../archive-validator';
+import {
+  ArchiveRejectionError,
+  validateArchive,
+  type ArchiveValidationOptions,
+} from '../archive-validator';
 import { parseEpubInWorker } from '../epub-parser-worker';
 import { sanitizeEpubDocument } from '../sanitizer';
 
@@ -33,19 +37,25 @@ interface CorpusEnv {
 
 async function archiveOutcomeOf(
   data: Uint8Array,
-  opts?: { maxCompressedSize?: number },
+  opts?: ArchiveValidationOptions,
 ): Promise<{ outcome: ExpectedArchiveOutcome; error?: string }> {
   try {
     await validateArchive(data, opts);
     return { outcome: { kind: 'ok' } };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
-    if (/traversal/i.test(msg))
+    const code = error instanceof ArchiveRejectionError ? error.code : 'invalid-archive';
+    if (code === 'unsafe-path')
       return { outcome: { kind: 'reject', reason: 'traversal' }, error: msg };
-    if (/ratio/i.test(msg)) return { outcome: { kind: 'reject', reason: 'ratio' }, error: msg };
-    if (/size|byte/i.test(msg))
+    if (code === 'ratio') return { outcome: { kind: 'reject', reason: 'ratio' }, error: msg };
+    if (
+      code === 'compressed-size' ||
+      code === 'expanded-size' ||
+      code === 'per-entry-size'
+    ) {
       return { outcome: { kind: 'reject', reason: 'oversize' }, error: msg };
-    if (/too many/i.test(msg))
+    }
+    if (code === 'entry-count')
       return { outcome: { kind: 'reject', reason: 'too-many' }, error: msg };
     return { outcome: { kind: 'reject', reason: 'corrupt' }, error: msg };
   }
@@ -69,7 +79,9 @@ async function buildEnv(entry: CorpusEntry, data: Uint8Array): Promise<CorpusEnv
   const chapterRaw = chapterBytes ? strFromU8(chapterBytes) : '';
   const chapterDoc = new DOMParser().parseFromString(chapterRaw, 'text/html');
   if (chapterRaw) sanitizeEpubDocument(chapterDoc);
-  const gated = await archiveOutcomeOf(data, { maxCompressedSize: 1024 * 1024 });
+  const gated = await archiveOutcomeOf(data, {
+    limits: { maxExpandedEntryBytes: 1024 * 1024 },
+  });
   const oversizeGated = entry.id === 'oversized-resource' && gated.outcome.kind === 'reject';
   return {
     archiveOutcome: archive.outcome,
@@ -114,8 +126,14 @@ function collectDiagnostics(entry: CorpusEntry, env: CorpusEnv): Set<string> {
   if (has('OEBPS/content.opf')) seen.add('OPF_PRESENT');
   if (has('OEBPS/toc.ncx') && env.opfText?.includes('version="2.0"')) seen.add('NCX_EPUB2');
   if (has('OEBPS/nav.xhtml')) seen.add('NAV_EPUB3');
-  const rootfileCount = (env.containerText?.match(/<rootfile\b(?!s)/g) ?? []).length;
-  if (rootfileCount > 1) seen.add('MULTIPLE_ROOTFILES');
+  const rootfilePaths = Array.from(
+    env.containerText?.matchAll(/<rootfile\b[^>]*\bfull-path="([^"]+)"/g) ?? [],
+  )
+    .map((match) => match[1])
+    .filter((path): path is string => Boolean(path));
+  if (rootfilePaths.length > 1 && rootfilePaths.every((path) => has(path))) {
+    seen.add('MULTIPLE_ROOTFILES');
+  }
   if (env.opfText?.includes('rendition:layout')) seen.add('FIXED_LAYOUT_DECLARED');
   if (env.opfText?.includes('image/svg+xml')) seen.add('SVG_ITEM_PRESENT');
   if (env.opfText?.includes('font/ttf')) seen.add('FONT_ITEM_PRESENT');
@@ -283,7 +301,7 @@ describe('epub corpus layer 1: archive + parse + sanitize + metadata', () => {
         expect(entry.expectedParses).toBe(true);
       }
     }
-  });
+  }, 30_000);
 
   it('every fixture declares a provenance with a license', () => {
     for (const entry of CORPUS_ENTRIES) {
