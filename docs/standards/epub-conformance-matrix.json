@@ -1,0 +1,601 @@
+{
+  "matrixVersion": 1,
+  "updatedAt": "2026-11-19",
+  "policy": {
+    "stableBaseline": "epub-33",
+    "experimentalSpecs": ["epub-34", "epub-rs-34"],
+    "certification": "Only epub-33 rows describe the stable compatibility baseline. epub-34 and epub-rs-34 rows are experimental, non-certifying coverage of W3C Candidate Recommendation Drafts; they do not shift the normative baseline until promoted to Recommendation and promoted features are tested.",
+    "implementedRequiresTest": "A row with status implemented MUST reference at least one real test file (path exists, carries test declarations, and is picked up by the repo's test runs).",
+    "nonImplementedRequiresExceptionNote": "Rows with status partial, not-implemented or not-applicable MUST carry a notes entry documenting the exception, boundary, or reason."
+  },
+  "rows": [
+    {
+      "spec": "epub-33",
+      "clauseId": "3.2",
+      "clauseTitle": "Core media types",
+      "requirement": "Core media type resources may be included without fallbacks; with the exception of XHTML and SVG content documents, core media type resources referenced directly from the spine MUST include manifest fallbacks (they then count as foreign content documents).",
+      "implementationModule": [
+        "packages/reader-core/src/archive-validator.ts",
+        "apps/epubcheck-runner/src/server.ts"
+      ],
+      "tests": [],
+      "evidence": ["scripts/check-epub-fixtures.mjs", "docs/epub-capability-matrix.md"],
+      "status": "partial",
+      "notes": "Media-type conformance is deferred to the isolated EPUBCheck 5.4.0 runner; reader-core does not enforce an exhaustive core-media-type table internally."
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "4.2",
+      "clauseTitle": "OCF abstract container",
+      "requirement": "All container resources live under a single root directory, and a mandatory META-INF/container.xml identifies one or more package documents (rootfiles) that define the EPUB publication.",
+      "implementationModule": ["packages/reader-core/src/rendition-container.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/rendition-container.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (multiple-renditions row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "4.3",
+      "clauseTitle": "OCF ZIP container",
+      "requirement": "An OCF ZIP container MUST store mimetype as the first file, uncompressed, and MUST NOT use ZIP encryption or split archives; ZIP64 is supported.",
+      "implementationModule": ["packages/reader-core/src/archive-validator.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/archive-validator.test.ts"
+      ],
+      "evidence": ["apps/epubcheck-runner (EPUBCheck 5.4.0 container checks)"],
+      "status": "partial",
+      "notes": "mimetype-first placement and archive safety nets (size caps, traversal rejection, corrupt-data rejection) are asserted; explicit split/encryption/ZIP64 rejection is not unit-tested."
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "5.4",
+      "clauseTitle": "The package element",
+      "requirement": "The package element is the required root element of the package document; its version attribute MUST be \"3.0\" to indicate EPUB 3 conformance, and unique-identifier is required.",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.3 Recommendation baseline row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "5.5",
+      "clauseTitle": "Metadata section",
+      "requirement": "The metadata element provides minimal catalog data (dc:identifier, dc:title, dc:language) and rendering metadata (meta/link, e.g. fixed-layout properties).",
+      "implementationModule": [
+        "packages/reader-core/src/parser/epub-parser.ts",
+        "packages/reader-core/src/accessibility.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/epub-accessibility.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (accessibility metadata row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "5.6",
+      "clauseTitle": "Manifest section",
+      "requirement": "The manifest element lists all publication resources (container and remote) except the package document itself, which MUST NOT be self-referenced; item properties such as media-overlay drive processing.",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/media-overlay.test.ts"
+      ],
+      "evidence": ["apps/epubcheck-runner (EPUBCheck 5.4.0 manifest checks)"],
+      "status": "partial",
+      "notes": "Manifest items including media-overlay attributes are parsed; exhaustiveness and the no-self-reference constraint are not enforced internally (delegated to EPUBCheck)."
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "5.7",
+      "clauseTitle": "Spine section",
+      "requirement": "The spine element defines an ordered list of manifest itemrefs representing the default reading order, with page-progression-direction for RTL/LTR flow.",
+      "implementationModule": [
+        "packages/reader-core/src/parser/epub-parser.ts",
+        "packages/reader-core/src/toc.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/toc.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.0 reflowable + nav row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "6.1",
+      "clauseTitle": "XHTML content documents",
+      "requirement": "XHTML content documents MUST conform to the XML syntax and to HTML conformance criteria as constrained by this specification.",
+      "implementationModule": ["packages/reader-core/src/sanitizer.ts", "@intity/epub-js@0.3.96"],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.0 reflowable + nav row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "6.2",
+      "clauseTitle": "SVG content documents",
+      "requirement": "SVG content documents are core media type resources that follow the SVG specification and EPUB constrained-content requirements.",
+      "implementationModule": ["packages/reader-core/src/sanitizer.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (inline SVG row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "7.2",
+      "clauseTitle": "Navigation document requirements",
+      "requirement": "A valid EPUB navigation document MUST conform to XHTML content-document constraints and to nav element restrictions, and MUST include exactly one toc nav element.",
+      "implementationModule": ["packages/reader-core/src/toc.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/toc.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (TOC and landmarks row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "7.4",
+      "clauseTitle": "The nav element: types",
+      "requirement": "toc, page-list and landmarks nav elements are distinguished by their epub:type value, with at most one navigation aid of each type.",
+      "implementationModule": ["packages/reader-core/src/toc.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/toc.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (TOC and landmarks row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "8.2",
+      "clauseTitle": "Fixed layouts",
+      "requirement": "Fixed-layout publications use rendition:layout=pre-paginated; each fixed-layout document represents one page, with spread/placement properties per viewport.",
+      "implementationModule": ["packages/reader-core/src/fixed-layout.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/fixed-layout.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (fixed layout row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "9.2",
+      "clauseTitle": "Media overlay documents",
+      "requirement": "Media overlay documents conform to the SMIL-based media overlays schema and reference EPUB content documents for synchronized audio narration.",
+      "implementationModule": ["packages/reader-core/src/media-overlay.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/media-overlay.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (media overlays row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "10",
+      "clauseTitle": "Accessibility",
+      "requirement": "EPUB 3 accessibility builds on WCAG 2 and on EPUB Accessibility metadata (EPUB Accessibility 1.1 Recommendation baseline).",
+      "implementationModule": ["packages/reader-core/src/accessibility.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-accessibility.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (accessibility metadata row)"],
+      "status": "partial",
+      "notes": "Accessibility metadata is parsed, preserved and asserted (schema:accessibilityFeature markers and explicit non-certification wording); it is descriptive only and not audited against the whole publication. No accessibility certification is implied."
+    },
+    {
+      "spec": "epub-33",
+      "clauseId": "11.3",
+      "clauseTitle": "Recommendations",
+      "requirement": "EPUB creators should use stable/secure links, avoid third-party and remote resources, and limit exfiltration vectors; reading systems mitigate the corresponding threats.",
+      "implementationModule": [
+        "packages/reader-core/src/sanitizer.ts",
+        "packages/reader-core/src/archive-validator.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/archive-validator.test.ts",
+        "packages/reader-core/src/__tests__/sanitizer-timeout.test.ts",
+        "packages/reader-core/src/__tests__/archive-validator-timeout.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (security and accessibility metadata section)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "3.2",
+      "clauseTitle": "Core media types",
+      "requirement": "The EPUB 3.4 core media type list adds AVIF and JPEG XL images, and Opus-in-MP4 and AAC LC audio codecs since EPUB 3.3.",
+      "implementationModule": ["browser engine (Chromium/WebKit)"],
+      "tests": [],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "partial",
+      "notes": "New codecs render through the host browser engines when natively supported; the app adds no internal codec enforcement. Experimental, non-certifying CRD coverage."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "6.3",
+      "clauseTitle": "Fixed layouts",
+      "requirement": "EPUB 3.4 restructures layouts into reflowable, pre-paginated and the new roll layout; spread placement properties apply only to pre-paginated documents.",
+      "implementationModule": ["packages/reader-core/src/fixed-layout.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/fixed-layout.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts"
+      ],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "partial",
+      "notes": "Pre-paginated support carries over from the 3.3 baseline; the new roll layout (continuous scroll) and its properties are not implemented. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "7.1",
+      "clauseTitle": "XHTML content documents",
+      "requirement": "XHTML content documents MUST use the XML syntax; support for the HTML syntax was removed in EPUB 3.4.",
+      "implementationModule": [
+        "packages/reader-core/src/parser/epub-parser.ts",
+        "packages/reader-core/src/sanitizer.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/sanitizer.test.ts"
+      ],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "partial",
+      "notes": "Content documents are parsed with XML-serialization expectations; an explicit rejection test for HTML-syntax documents is absent. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "9.2",
+      "clauseTitle": "Text-to-speech",
+      "requirement": "EPUB 3.4 retains SSML attributes, pronunciation lexicons and CSS Speech as valid but under-specified TTS technologies; no playback is mandated.",
+      "implementationModule": [],
+      "tests": [],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "not-implemented",
+      "notes": "No TTS engine is integrated; the reader does not consume SSML/pronunciation lexicon/CSS Speech markup. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "9.3",
+      "clauseTitle": "Media overlays",
+      "requirement": "Media overlays move under Aural rendering with the same SMIL document model as EPUB 3.3 section 9.",
+      "implementationModule": ["packages/reader-core/src/media-overlay.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/media-overlay.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "implemented",
+      "notes": "Experimental non-certifying CRD row; behavior matches the EPUB 3.3 media-overlay implementation."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "D.5",
+      "clauseTitle": "Custom rendering properties",
+      "requirement": "Custom rendering properties MUST NOT be defined with a rendition: prefix and MUST NOT conflict behaviorally with the package rendering vocabulary.",
+      "implementationModule": [],
+      "tests": [],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "not-applicable",
+      "notes": "The app defines no custom rendering properties and neither consumes nor emits them. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "E.1",
+      "clauseTitle": "Outdated features",
+      "requirement": "Content fallbacks, font obfuscation, the collection element and legacy package features are outdated (allowed but not recommended); SHA-1-based font obfuscation is being phased out.",
+      "implementationModule": ["apps/epubcheck-runner/src/server.ts"],
+      "tests": [],
+      "evidence": [
+        "https://www.w3.org/TR/epub-34/",
+        "docs/epub-capability-matrix.md (EPUB 3.4 CRD row)"
+      ],
+      "status": "not-implemented",
+      "notes": "The app does not rely on outdated features; font obfuscation is not supported; the pinned EPUBCheck 5.4.0 flags outdated-construct usage. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-34",
+      "clauseId": "11.3",
+      "clauseTitle": "Recommendations",
+      "requirement": "Security and privacy recommendations including watermarking considerations remain creator-side responsibilities; reading systems mitigate corresponding threats.",
+      "implementationModule": ["packages/reader-core/src/sanitizer.ts"],
+      "tests": ["packages/reader-core/src/__tests__/sanitizer.test.ts"],
+      "evidence": ["https://www.w3.org/TR/epub-34/"],
+      "status": "partial",
+      "notes": "The EPUB 3.3 sanitizer policies carry over verbatim; watermarking and additional 3.4 privacy considerations are informational only. Experimental, non-certifying."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "2.2",
+      "clauseTitle": "Error handling",
+      "requirement": "Reading systems do not have to load publications or resources that violate content authoring or processing requirements.",
+      "implementationModule": ["packages/reader-core/src/reader.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (malformed navigation row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "3.1",
+      "clauseTitle": "Core media types",
+      "requirement": "If a reading system has a viewport it MUST support image core media type resources; if it renders prerecorded audio it MUST support audio core media type resources.",
+      "implementationModule": [
+        "browser engine (Chromium/WebKit)",
+        "packages/reader-core/src/media-overlay.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (image alternative text row)"],
+      "status": "partial",
+      "notes": "Image core media types render in Chromium/WebKit; prerecorded audio support is limited to media-overlay clips (playback beyond SMIL timing is out of scope)."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "3.5",
+      "clauseTitle": "Data URLs",
+      "requirement": "Reading systems MUST prevent data URLs from opening in top-level browsing contexts.",
+      "implementationModule": ["packages/reader-core/src/sanitizer.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (remote resource security row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "3.6",
+      "clauseTitle": "File URLs",
+      "requirement": "Reading systems MUST prevent access to resources referenced via file URLs.",
+      "implementationModule": [
+        "packages/reader-core/src/sanitizer.ts",
+        "packages/reader-core/src/rendition-container.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/rendition-container.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (remote resource security row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "3.7",
+      "clauseTitle": "XML processing",
+      "requirement": "Reading systems MUST use a non-validating XML processor that does not read external DTD subsets and conforms to XML namespace rules.",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/archive-validator.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.3 Recommendation baseline row)"],
+      "status": "partial",
+      "notes": "Parsing uses the platform's non-validating XML/DOMParser; external DTD subset fetching is prevented by the no-network worker design and parser timeouts, but an explicit external-DTD unit assertion is absent."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "3.10",
+      "clauseTitle": "External links",
+      "requirement": "For http/https links, reading systems SHOULD obtain the user's consent and open the link in a new browser instance so browser security/privacy controls apply.",
+      "implementationModule": ["apps/web reader viewport"],
+      "tests": [],
+      "evidence": ["docs/epub-capability-matrix.md"],
+      "status": "partial",
+      "notes": "Outbound links open through the browser's standard navigation affordance; an explicit consent prompt is not implemented or asserted."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "4.1",
+      "clauseTitle": "OCF abstract container",
+      "requirement": "Reading systems MUST assign a container root URL to the OCF abstract container, with a unique origin per user-specific instance of a publication.",
+      "implementationModule": [
+        "packages/reader-core/src/rendition-container.ts",
+        "packages/reader-core/src/archive-validator.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/rendition-container.test.ts",
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (multiple renditions row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "4.2",
+      "clauseTitle": "OCF ZIP container",
+      "requirement": "Reading systems MUST treat split archives, non-Deflate compression and ZIP encryption as errors, and MUST support ZIP64 extensions.",
+      "implementationModule": ["packages/reader-core/src/archive-validator.ts"],
+      "tests": ["packages/reader-core/src/__tests__/archive-validator.test.ts"],
+      "evidence": ["apps/epubcheck-runner (EPUBCheck 5.4.0 container checks)"],
+      "status": "partial",
+      "notes": "Archive validation rejects corruption, path traversal, oversized and over-compressed content; explicit split/encryption/non-Deflate/ZIP64 handling is not independently asserted."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "5.3",
+      "clauseTitle": "Metadata",
+      "requirement": "Reading systems MUST strip and collapse ASCII whitespace in Dublin Core and meta values, MUST recognize the first dc:title as the main title, and MUST process language expectations.",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": ["packages/reader-core/src/__tests__/epub-parsing.test.ts"],
+      "evidence": ["docs/epub-capability-matrix.md (headings, document language row)"],
+      "status": "partial",
+      "notes": "Title/language extraction and presentation are asserted; explicit whitespace-collapse semantics are not unit-tested."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "5.4",
+      "clauseTitle": "Manifest",
+      "requirement": "Reading systems MUST ignore values of the properties attribute they do not recognize, and SHOULD NOT use linked resources in rendering.",
+      "implementationModule": [
+        "packages/reader-core/src/parser/epub-parser.ts",
+        "packages/reader-core/src/sanitizer.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/sanitizer.test.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (remote resource security row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "5.5",
+      "clauseTitle": "Spine",
+      "requirement": "Reading systems MUST render the publication in spine order, recognizing the first primary (linear) itemref as the beginning of the default reading order.",
+      "implementationModule": [
+        "packages/reader-core/src/parser/epub-parser.ts",
+        "packages/reader-core/src/toc.ts"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/epub-parsing.test.ts",
+        "packages/reader-core/src/__tests__/toc.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.0 reflowable + nav row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "6.1",
+      "clauseTitle": "Layout types",
+      "requirement": "Reading systems MUST support reflowable layouts (default) and pre-paginated layouts, producing exactly one page per spine itemref when rendering fixed layouts.",
+      "implementationModule": [
+        "packages/reader-core/src/fixed-layout.ts",
+        "@intity/epub-js@0.3.96"
+      ],
+      "tests": [
+        "packages/reader-core/src/__tests__/fixed-layout.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (fixed layout row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "7.4",
+      "clauseTitle": "Cascading Style Sheets (CSS)",
+      "requirement": "Reading systems with a viewport MUST render XHTML content documents via CSS and MUST support TrueType/OpenType/WOFF/WOFF2 font resources referenced from @font-face rules.",
+      "implementationModule": ["browser engine (Chromium/WebKit)"],
+      "tests": [
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (vertical writing and RTL rows)"],
+      "status": "partial",
+      "notes": "Visual CSS rendering and writing-mode/direction properties run on Chromium/WebKit; embedded font format coverage (@font-face WOFF/WOFF2) is not explicitly asserted."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "7.5",
+      "clauseTitle": "Scripting",
+      "requirement": "Reading systems SHOULD support scripting, including container-constrained scripting in reflowable content documents.",
+      "implementationModule": ["packages/reader-core/src/sanitizer.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/sanitizer.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (scripted content security row)"],
+      "status": "implemented",
+      "notes": "Implemented as an explicit security posture: scripts and inline handlers are stripped by the sanitizer and iframe-sandboxed; no script execution is offered."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "8",
+      "clauseTitle": "Navigation document processing",
+      "requirement": "Reading systems MUST process EPUB navigation documents: expose toc nav links and headings, and navigate to listed page breaks when a page-list nav element is present.",
+      "implementationModule": ["packages/reader-core/src/toc.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/toc.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (TOC and landmarks row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "9.2",
+      "clauseTitle": "Media overlays processing",
+      "requirement": "Reading systems with audio capability SHOULD support media overlays: discover them via manifest media-overlay attributes, start playback at the clip corresponding to the content start, and track reading progress.",
+      "implementationModule": ["packages/reader-core/src/media-overlay.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/media-overlay.test.ts",
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (media overlays row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "12",
+      "clauseTitle": "Backward compatibility",
+      "requirement": "Reading systems MUST attempt to process publications whose package version attribute is less than \"3.0\" and SHOULD support them per their own specifications.",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": [
+        "packages/reader-core/src/__tests__/capability-corpus.test.ts",
+        "apps/tests/epub-capability-smoke.spec.ts"
+      ],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 2 reflowable row)"],
+      "status": "implemented"
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "13",
+      "clauseTitle": "Forward compatibility",
+      "requirement": "Reading systems SHOULD attempt to process publications whose package version attribute is greater than \"3.0\".",
+      "implementationModule": ["packages/reader-core/src/parser/epub-parser.ts"],
+      "tests": ["packages/reader-core/src/__tests__/capability-corpus.test.ts"],
+      "evidence": ["docs/epub-capability-matrix.md (EPUB 3.4 CRD row)"],
+      "status": "partial",
+      "notes": "Unknown newer versions are tolerated structurally (the epub34-preview fixture asserts baseline rendering under a 3.0-versioned package, not a >3.0 version), but there is no dedicated forward-compat assertion."
+    },
+    {
+      "spec": "epub-rs-34",
+      "clauseId": "15.3",
+      "clauseTitle": "Recommendations",
+      "requirement": "Reading system developers SHOULD specify the data they collect, seek user consent, and treat persistent personal data as sensitive.",
+      "implementationModule": ["apps/web (offline-first storage)"],
+      "tests": [],
+      "evidence": ["docs/epub-capability-matrix.md"],
+      "status": "partial",
+      "notes": "The app is offline-first and stores reading data locally; explicit consent/collection documentation is not implemented."
+    }
+  ]
+}
