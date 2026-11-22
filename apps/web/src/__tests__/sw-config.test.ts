@@ -29,10 +29,12 @@ describe('Service Worker Configuration', () => {
     expect(swContent).toContain("cacheName: 'api-responses'");
   });
 
-  it('implements StaleWhileRevalidate for EPUB and book content with 7-day expiration', () => {
-    // 60 * 60 * 24 * 7 = 604800 seconds = 7 days
-    expect(swContent).toContain("cacheName: 'book-content'");
-    expect(swContent).toContain('maxAgeSeconds: 60 * 60 * 24 * 7');
+  it('serves book files manifest-first with a stale fallback cache (issue #1485)', () => {
+    // The /api/files/* route prefers a verified offline copy (manifest
+    // gated), then the network with a stale 'book-content' fallback.
+    expect(swContent).toContain('function handleBookFileRequest');
+    expect(swContent).toContain("caches.open('book-content')");
+    expect(swContent).toContain('serveBookResource(request)');
   });
 
   it('implements CacheFirst for images with 30-day expiration', () => {
