@@ -274,13 +274,9 @@ describe('epub corpus layer 1: archive + parse + sanitize + metadata', () => {
         expect(observed.has('ZIP_TRAVERSAL_PATH')).toBe(false);
         expect(observed.has('ZIP_COMPRESSION_RATIO')).toBe(false);
       }
-    },
-    30_000,
-  );
+  }, 30_000);
 
-  it(
-    'security verdicts are internally consistent with archive/parse outcomes',
-    async () => {
+  it('security verdicts are internally consistent with archive/parse outcomes', async () => {
       for (const entry of CORPUS_ENTRIES) {
         const data = generateCorpusEntry(entry.id);
         const env = await buildEnv(entry, data);
