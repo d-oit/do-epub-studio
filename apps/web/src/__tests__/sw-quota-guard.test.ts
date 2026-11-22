@@ -1,6 +1,12 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  tierOfCacheName,
+  TIER_BOOK_PACKAGE,
+  TIER_DERIVED,
+  TIER_TRANSIENT,
+} from '../lib/offline/ownership';
 
 const swPath = join(__dirname, '../sw.ts');
 const swContent = readFileSync(swPath, 'utf-8');
@@ -32,27 +38,14 @@ describe('quotaGuardPlugin – source-level invariants', () => {
     expect(swContent).toContain('usageRatio > QUOTA_THRESHOLD');
   });
 
-  it('calls evictLargestCache instead of directly deleting external-assets', () => {
-    expect(swContent).toContain('await evictLargestCache()');
-    // The direct delete inside cacheWillUpdate should be gone
-    expect(swContent).not.toMatch(
-      /cacheWillUpdate[\s\S]*?await caches\.delete\('external-assets'\)/,
-    );
+  it('delegates eviction to the tier-aware eviction module', () => {
+    expect(swContent).toContain("import { evictToThreshold } from './lib/offline/eviction'");
+    expect(swContent).toContain('await evictToThreshold()');
   });
 
-  it('has evictLargestCache function that enumerates caches.keys()', () => {
-    expect(swContent).toContain('async function evictLargestCache');
-    expect(swContent).toContain('const cacheNames = await caches.keys()');
-  });
-
-  it('skips workbox-precache caches during eviction', () => {
-    expect(swContent).toContain("if (name.startsWith('workbox-precache')) continue");
-  });
-
-  it('has EVICTABLE_PREFIXES with era-appropriate cache names', () => {
-    expect(swContent).toContain("'images'");
-    expect(swContent).toContain("'external-assets'");
-    expect(swContent).toContain("'book-content'");
+  it('runs offline storage recovery on activation', () => {
+    expect(swContent).toContain("import { recoverOfflineStorage } from './lib/offline/recovery'");
+    expect(swContent).toContain('recoverOfflineStorage()');
   });
 
   it('does not cache external font origins (ADR-123 self-hosted fonts)', () => {
@@ -63,11 +56,6 @@ describe('quotaGuardPlugin – source-level invariants', () => {
     expect(swContent).not.toContain('fonts.gstatic.com');
     expect(swContent).not.toContain('google-fonts-stylesheets');
     expect(swContent).not.toContain('google-fonts-webfonts');
-  });
-
-  it('measures cache size via cache.keys().length', () => {
-    expect(swContent).toContain('const keys = await cache.keys()');
-    expect(swContent).toContain('keys.length > targetSize');
   });
 
   it('returns original response on error path (never blocks fetch)', () => {
@@ -96,9 +84,28 @@ describe('quotaGuardPlugin – source-level invariants', () => {
   it('emits sw.storage.estimate_error on catch', () => {
     expect(swContent).toContain("'sw.storage.estimate_error'");
   });
+});
 
-  it('falls back to external-assets when no evictable cache is found', () => {
-    expect(swContent).toContain("await caches.delete('external-assets')");
+describe('storage ownership tiers (issue #1485)', () => {
+  it('never classifies workbox precache or unknown caches as evictable', () => {
+    expect(tierOfCacheName('workbox-precache-v2')).toBeNull();
+    expect(tierOfCacheName('some-random-cache')).toBeNull();
+  });
+
+  it('classifies derived render caches', () => {
+    expect(tierOfCacheName('images')).toBe(TIER_DERIVED);
+    expect(tierOfCacheName('book-content')).toBe(TIER_DERIVED);
+    expect(tierOfCacheName('epub')).toBe(TIER_DERIVED);
+    expect(tierOfCacheName('dl-staging/book-1/attempt-1')).toBe(TIER_DERIVED);
+  });
+
+  it('classifies transient HTTP caches', () => {
+    expect(tierOfCacheName('external-assets')).toBe(TIER_TRANSIENT);
+    expect(tierOfCacheName('api-responses')).toBe(TIER_TRANSIENT);
+  });
+
+  it('classifies verified book-package caches', () => {
+    expect(tierOfCacheName('dl/book-1')).toBe(TIER_BOOK_PACKAGE);
   });
 });
 
@@ -210,83 +217,5 @@ describe('quotaGuardPlugin – throttling logic (unit)', () => {
     vi.advanceTimersByTime(300_000);
     expect(await callEstimate()).toBe('ok');
     expect(failCount).toBe(3);
-  });
-});
-
-describe('quotaGuardPlugin – eviction logic (unit)', () => {
-  it('evicts cache with most entries among evictable prefixes', () => {
-    // Simulate the eviction decision logic
-    const EVICTABLE_PREFIXES = ['images', 'external-assets', 'epub', 'book-content'] as const;
-
-    const cacheEntries: Record<string, number> = {
-      'workbox-precache-v2': 5,
-      images: 42,
-      'external-assets': 10,
-      'book-content': 25,
-      'api-responses': 8,
-    };
-
-    let targetName: string | null = null;
-    let targetSize = -1;
-
-    for (const [name, size] of Object.entries(cacheEntries)) {
-      if (name.startsWith('workbox-precache')) continue;
-      const matchesPrefix = EVICTABLE_PREFIXES.some((p) => name.startsWith(p) || name === p);
-      if (!matchesPrefix && name !== 'external-assets') continue;
-      if (size > targetSize) {
-        targetSize = size;
-        targetName = name;
-      }
-    }
-
-    expect(targetName).toBe('images');
-    expect(targetSize).toBe(42);
-  });
-
-  it('skips precache caches', () => {
-    const EVICTABLE_PREFIXES = ['images', 'external-assets'] as const;
-    const cacheEntries: Record<string, number> = {
-      'workbox-precache-v2': 100,
-      images: 5,
-    };
-
-    let targetName: string | null = null;
-    let targetSize = -1;
-
-    for (const [name, size] of Object.entries(cacheEntries)) {
-      if (name.startsWith('workbox-precache')) continue;
-      const matchesPrefix = EVICTABLE_PREFIXES.some((p) => name.startsWith(p) || name === p);
-      if (!matchesPrefix && name !== 'external-assets') continue;
-      if (size > targetSize) {
-        targetSize = size;
-        targetName = name;
-      }
-    }
-
-    expect(targetName).toBe('images');
-  });
-
-  it('falls back to external-assets when no prefix matches', () => {
-    const EVICTABLE_PREFIXES = ['images'] as const;
-    const cacheEntries: Record<string, number> = {
-      'workbox-precache-v2': 100,
-      'some-random-cache': 50,
-    };
-
-    let targetName: string | null = null;
-    let targetSize = -1;
-
-    for (const [name, size] of Object.entries(cacheEntries)) {
-      if (name.startsWith('workbox-precache')) continue;
-      const matchesPrefix = EVICTABLE_PREFIXES.some((p) => name.startsWith(p) || name === p);
-      if (!matchesPrefix && name !== 'external-assets') continue;
-      if (size > targetSize) {
-        targetSize = size;
-        targetName = name;
-      }
-    }
-
-    // No match found, fallback should be external-assets
-    expect(targetName).toBeNull();
   });
 });
