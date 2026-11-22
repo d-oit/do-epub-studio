@@ -5,7 +5,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { mkdtemp, open, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { validateArchive, ArchiveRejectionError } from '../../../packages/shared/src/archive-validator';
+import {
+  validateArchive,
+  ArchiveRejectionError,
+} from '../../../packages/shared/src/archive-validator';
 import { assessAccessibility } from '@do-epub-studio/reader-core/accessibility';
 import {
   EpubExtractionError,
