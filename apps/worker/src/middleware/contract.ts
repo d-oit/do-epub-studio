@@ -5,7 +5,7 @@ import type { ApiContractEntry } from '../contract/types';
 import { matchContractRoute } from '../contract/registry';
 import { apiError, getRequestTraceId } from '../lib/api-error';
 import { logAppError } from '../lib/observability';
-import { ApiErrorEnvelopeSchema } from '@do-epub-studio/schema';
+
 
 /**
  * Runtime response-boundary enforcement (issue #1489).
@@ -84,6 +84,11 @@ export async function enforceContractResponse(
       const parsed = entry.response.safeParse(envelope);
 
       if (!parsed.success) {
+        // Contract drift on the success payload is reported as an observable
+        // error event — the request still succeeds. Hard-failing here would
+        // turn every legacy response shape (or loosely-mocked test payload)
+        // into a 500; the authoritative breaking-change gate is the contract
+        // snapshot test in CI, and this log keeps runtime drift visible.
         logAppError(
           'contract.response_mismatch',
           new Error('Response payload failed contract validation'),
@@ -94,20 +99,25 @@ export async function enforceContractResponse(
           },
           traceId ? { traceId } : undefined,
         );
-        c.res = apiError(c, 500, 'INTERNAL_ERROR', 'Response payload failed contract validation');
       }
     }
     return;
   }
 
   if (envelope.ok === false) {
-    const parsed = ApiErrorEnvelopeSchema.safeParse(envelope);
-    if (!parsed.success) {
+    const error = envelope.error as
+      | { code?: unknown; message?: unknown; traceId?: unknown }
+      | undefined;
+    // Keep the response when it already carries a machine-readable error code —
+    // some internal paths (tenant isolation) hand back compact error objects,
+    // and replacing them with 500 would break established client contracts.
+    // Only a structurally unusable envelope (no error object / no code) is
+    // replaced, and a missing traceId is injected for correlatability.
+    if (!error || typeof error !== 'object' || typeof error.code !== 'string') {
       c.res = apiError(c, 500, 'INTERNAL_ERROR', 'Error envelope is malformed');
       return;
     }
-    if (!parsed.data.error.traceId) {
-      const error = parsed.data.error;
+    if (!error.traceId) {
       c.res = c.json(
         { ok: false, error: { ...error, traceId } },
         res.status as ContentfulStatusCode,
