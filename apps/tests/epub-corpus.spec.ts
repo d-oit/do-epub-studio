@@ -14,6 +14,7 @@
  * network is exercised: every request is mocked and fixtures are generated
  * in-process, so no binaries are vendored.
  */
+import { test, expect } from '@playwright/test';
 import { CORPUS_ENTRIES, generateCorpusEntry } from '@do-epub-studio/testkit';
 import {
   EPUB_CONTENT_FRAME_SELECTOR,
