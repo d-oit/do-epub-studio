@@ -12,7 +12,7 @@ const baseEnvelope = () => ({
   version: PORTABILITY_VERSION,
   profile: PORTABILITY_PROFILE,
   id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
-  idempotencyKey: '00000000-0000-0000-0000-000000000001',
+  idempotencyKey: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb60',
   exportedAt: '2026-11-20T00:00:00.000Z',
   scope: 'account' as const,
   app: { name: 'do-epub-studio', version: '0.1.0' },
@@ -84,6 +84,9 @@ const baseEnvelope = () => ({
   ],
 });
 
+/** Schema-typed envelope: literals alone widen `version`/optional fields. */
+const parsedEnvelope = () => PortabilityEnvelopeSchema.parse(baseEnvelope());
+
 describe('portability envelope schema', () => {
   it('accepts a valid v1 envelope', () => {
     const parsed = PortabilityEnvelopeSchema.parse(baseEnvelope());
@@ -113,17 +116,21 @@ describe('portability envelope schema', () => {
   });
 
   it('rejects duplicate or non-uuid item ids and oversized item arrays', () => {
-    const dup = baseEnvelope();
-    dup.items[1].id = dup.items[0].id;
+    const dup = parsedEnvelope();
+    const [first, second] = dup.items;
+    if (!first || !second) throw new Error('fixture must contain two items');
+    second.id = first.id;
     expect(() => PortabilityEnvelopeSchema.parse(dup)).toThrow();
-    const badId = baseEnvelope();
-    badId.items[0].id = 'not-a-uuid';
+    const badId = parsedEnvelope();
+    const [item] = badId.items;
+    if (!item) throw new Error('fixture must contain an item');
+    item.id = 'not-a-uuid';
     expect(() => PortabilityEnvelopeSchema.parse(badId)).toThrow();
   });
 
   it('serializes deterministically and validates size bounds', () => {
-    const a = serializePortabilityEnvelope(baseEnvelope());
-    const b = serializePortabilityEnvelope(baseEnvelope());
+    const a = serializePortabilityEnvelope(parsedEnvelope());
+    const b = serializePortabilityEnvelope(parsedEnvelope());
     expect(a).toBe(b);
     expect(JSON.parse(a).id).toBe(baseEnvelope().id);
   });
