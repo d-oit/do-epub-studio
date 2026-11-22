@@ -38,6 +38,7 @@ export const adminRoutes: ApiContractEntry[] = [
     statusCodes: [200],
     response: AdminBookListResponseSchema,
   },
+
   {
     path: '/api/admin/books',
     method: 'POST',
@@ -92,6 +93,9 @@ export const adminRoutes: ApiContractEntry[] = [
     method: 'GET',
     auth: 'admin',
     statusCodes: [200],
+    // Raw JSON attachment download (content-disposition), not an API envelope:
+    // excluded from JSON-envelope enforcement like other file responses.
+    responseKind: 'binary',
   },
   {
     path: '/api/admin/books/:id/revisions/:revisionId/validation/retry',

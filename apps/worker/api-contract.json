@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-21T16:32:58.631Z",
+  "generatedAt": "2026-11-22T06:37:17.735Z",
   "routes": [
     {
       "path": "/api/admin/account/mfa/passkey/:id",
@@ -1020,7 +1020,7 @@
       "statusCodes": [
         200
       ],
-      "responseKind": "json",
+      "responseKind": "binary",
       "requestSchemaShape": {
         "query": null,
         "body": null
@@ -1281,7 +1281,7 @@
       "statusCodes": [
         200
       ],
-      "responseKind": "json",
+      "responseKind": "binary",
       "requestSchemaShape": {
         "query": null,
         "body": null

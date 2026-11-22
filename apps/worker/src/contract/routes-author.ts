@@ -58,6 +58,9 @@ export const authorRoutes: ApiContractEntry[] = [
     method: 'GET',
     auth: 'author',
     statusCodes: [200],
+    // Binary asset bytes (image/stylesheet) streamed with their own
+    // content-type — excluded from JSON-envelope enforcement.
+    responseKind: 'binary',
   },
   {
     path: '/api/author/books/:id/assets/:assetId',
