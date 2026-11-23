@@ -22,7 +22,7 @@ async function freshHarness(): Promise<Harness> {
 }
 
 describe('merge semantics (reference model)', () => {
-  it('semantic fields (body/quote/anchor) require explicit conflict when both sides changed', () => {
+  it('concurrent semantic field changes require explicit conflict', () => {
     const base = { body: 'a', quote: 'q', anchor: 'x' };
     const local = { body: 'b', quote: 'q', anchor: 'x' };
     const remote = { body: 'c', quote: 'q', anchor: 'x' };
@@ -162,7 +162,9 @@ describe('progress conflict explicitness', () => {
     await h.updateProgress('epubcfi(/8/2)', 60);
     expect(await h.quiesce()).toEqual([]);
 
-    const conflicts = getPendingConflicts(BOOK).filter((c) => c.type === ConflictType.ProgressUpdate);
+    const conflicts = getPendingConflicts(BOOK).filter(
+      (c) => c.type === ConflictType.ProgressUpdate,
+    );
     expect(conflicts.length).toBeGreaterThan(0);
     expect(conflicts.some((c) => !c.resolved)).toBe(true);
     expect(h.transport.server.snapshot().progress?.progressPercent).toBe(90);
@@ -192,7 +194,9 @@ describe('deletion tombstone beats stale create', () => {
     if (!row) throw new Error('expected comment row from create mutation');
 
     h.remoteWrite({ kind: 'deleteComment', id: row.id });
-    expect(h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status).toBe('deleted');
+    expect(
+      h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status,
+    ).toBe('deleted');
 
     const replay = h.transport.server.applyRequest({
       method: 'POST',
@@ -206,7 +210,9 @@ describe('deletion tombstone beats stale create', () => {
     });
     expect(replay.status).toBe(200);
     expect(replay.replay).toBe(true);
-    expect(h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status).toBe('deleted');
+    expect(
+      h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status,
+    ).toBe('deleted');
   });
 });
 
@@ -243,12 +249,18 @@ describe('legacy (pre-mutation-id) server behavior', () => {
     const first = h.transport.server.applyRequest({
       method: 'POST',
       path: '/api/books/book-1/highlights',
-      body: { locator: { cfi: 'epubcfi(/6/1)', selectedText: 's', chapterRef: 'c' }, color: '#ffff00' },
+      body: {
+        locator: { cfi: 'epubcfi(/6/1)', selectedText: 's', chapterRef: 'c' },
+        color: '#ffff00',
+      },
     });
     const second = h.transport.server.applyRequest({
       method: 'POST',
       path: '/api/books/book-1/highlights',
-      body: { locator: { cfi: 'epubcfi(/6/1)', selectedText: 's', chapterRef: 'c' }, color: '#ffff00' },
+      body: {
+        locator: { cfi: 'epubcfi(/6/1)', selectedText: 's', chapterRef: 'c' },
+        color: '#ffff00',
+      },
     });
     expect(first.status).toBe(201);
     expect(second.status).toBe(201);

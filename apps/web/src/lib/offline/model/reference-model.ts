@@ -61,10 +61,16 @@ export function mergeSemantics(
 ): MergeOutcome {
   const localChanged = fieldsChanged(base, local);
   const remoteChanged = fieldsChanged(base, remote);
-  if (localChanged.length === 0) return { autoMerge: true, winner: 'remote', reason: 'single_side_change' };
-  if (remoteChanged.length === 0) return { autoMerge: true, winner: 'local', reason: 'single_side_change' };
-  const semanticLocal = localChanged.filter((f) => (SEMANTIC_FIELDS as readonly string[]).includes(f));
-  const semanticRemote = remoteChanged.filter((f) => (SEMANTIC_FIELDS as readonly string[]).includes(f));
+  if (localChanged.length === 0)
+    return { autoMerge: true, winner: 'remote', reason: 'single_side_change' };
+  if (remoteChanged.length === 0)
+    return { autoMerge: true, winner: 'local', reason: 'single_side_change' };
+  const semanticLocal = localChanged.filter((f) =>
+    (SEMANTIC_FIELDS as readonly string[]).includes(f),
+  );
+  const semanticRemote = remoteChanged.filter((f) =>
+    (SEMANTIC_FIELDS as readonly string[]).includes(f),
+  );
   const overlap = semanticLocal.filter((f) => semanticRemote.includes(f));
   if (overlap.length > 0) {
     return { autoMerge: false, reason: 'semantic_conflict' };
@@ -77,9 +83,6 @@ export function mergeSemantics(
 export function tombstonePrecedes(tombstoned: boolean, mutationIsReplay: boolean): boolean {
   return tombstoned && mutationIsReplay;
 }
-
-/** Replay of a create with an idempotency key must return the existing row. */
-
 
 export interface LegacyEntity {
   serverId: string;
@@ -121,7 +124,10 @@ export class SchemaEraModel {
   }
 
   /** Create under the revisioned era: dedupe by mutation id. */
-  createRevised(mutationId: string, entity: LegacyEntity): { inserted: boolean; row: RevisedEntity } {
+  createRevised(
+    mutationId: string,
+    entity: LegacyEntity,
+  ): { inserted: boolean; row: RevisedEntity } {
     if (this.era !== 'revisioned') {
       return { inserted: false, row: { ...entity, mutationId, revision: 1 } };
     }
@@ -147,7 +153,9 @@ export class SchemaEraModel {
   assertMigrationPreserved(expectTotal: number): string[] {
     const violations: string[] = [];
     if (this.revised.size !== expectTotal) {
-      violations.push(`migration lost entities: expected ${expectTotal}, found ${this.revised.size}`);
+      violations.push(
+        `migration lost entities: expected ${expectTotal}, found ${this.revised.size}`,
+      );
     }
     for (const [id, row] of this.revised) {
       if (row.serverId !== id) violations.push(`entity identity changed for ${id}`);

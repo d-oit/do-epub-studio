@@ -56,12 +56,12 @@ export class Transport {
   }
 
   private dispatch(input: RequestInfo | URL, init?: RequestInit): Response {
-    const url = new URL(
-      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url,
-    );
-    const method = (
-      init?.method ?? (typeof input === 'string' ? 'GET' : (input as Request).method)
-    ).toUpperCase();
+    const inputUrl =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url = new URL(inputUrl);
+    const methodValue =
+      init?.method ?? (typeof input === 'string' ? 'GET' : (input as Request).method);
+    const method = methodValue.toUpperCase();
     const headers = new Headers(init?.headers);
     const token = headers.get('authorization');
     const rawBody = init?.body;
@@ -70,11 +70,7 @@ export class Transport {
       body = (JSON.parse(rawBody) as Record<string, unknown>) ?? null;
     }
     const path = url.pathname;
-    const mutationId = body
-      ? typeof body.mutationId === 'string'
-        ? body.mutationId
-        : null
-      : null;
+    const mutationId = typeof body?.mutationId === 'string' ? body.mutationId : null;
 
     if (this.authMode === 'enforce' && !token) {
       return this.response(401, {

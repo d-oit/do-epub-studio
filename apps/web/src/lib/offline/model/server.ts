@@ -131,7 +131,12 @@ export class InMemorySyncServer {
       if (method === 'GET') return this.getProgress();
       if (method === 'PUT') return this.putProgress(req.body);
     }
-    return { status: 404, body: errorBody('Not found', 'NOT_FOUND'), committed: false, replay: false };
+    return {
+      status: 404,
+      body: errorBody('Not found', 'NOT_FOUND'),
+      committed: false,
+      replay: false,
+    };
   }
 
   applyRemote(action: RemoteAction): ApplyResult {
@@ -170,9 +175,19 @@ export class InMemorySyncServer {
       }
       if (row) {
         if (row.bookId !== bookId) {
-          return { status: 403, body: errorBody('Access denied', 'FORBIDDEN'), committed: false, replay: true };
+          return {
+            status: 403,
+            body: errorBody('Access denied', 'FORBIDDEN'),
+            committed: false,
+            replay: true,
+          };
         }
-        return { status: 200, body: { ok: true, data: this.toHighlightDto(row) }, committed: false, replay: true };
+        return {
+          status: 200,
+          body: { ok: true, data: this.toHighlightDto(row) },
+          committed: false,
+          replay: true,
+        };
       }
     }
     const locator = (body?.locator as Record<string, unknown> | undefined) ?? {};
@@ -191,18 +206,34 @@ export class InMemorySyncServer {
       updatedAt: sleepNow(),
     };
     this.highlights.set(row.id, row);
-    return { status: 201, body: { ok: true, data: this.toHighlightDto(row) }, committed: true, replay: false };
+    return {
+      status: 201,
+      body: { ok: true, data: this.toHighlightDto(row) },
+      committed: true,
+      replay: false,
+    };
   }
 
   private patchHighlight(id: string, body: Record<string, unknown> | null): ApplyResult {
     const row = this.highlights.get(id);
-    if (!row) return { status: 404, body: errorBody('Highlight', 'NOT_FOUND'), committed: false, replay: false };
+    if (!row)
+      return {
+        status: 404,
+        body: errorBody('Highlight', 'NOT_FOUND'),
+        committed: false,
+        replay: false,
+      };
     const note = str(body, 'note');
     if (note !== undefined) row.note = note;
     const color = str(body, 'color');
     if (color !== undefined) row.color = color;
     row.updatedAt = sleepNow();
-    return { status: 200, body: { ok: true, data: { id, ...body } }, committed: true, replay: false };
+    return {
+      status: 200,
+      body: { ok: true, data: { id, ...body } },
+      committed: true,
+      replay: false,
+    };
   }
 
   private deleteHighlight(id: string): ApplyResult {
@@ -222,9 +253,19 @@ export class InMemorySyncServer {
       }
       if (row) {
         if (row.bookId !== bookId) {
-          return { status: 403, body: errorBody('Access denied', 'FORBIDDEN'), committed: false, replay: true };
+          return {
+            status: 403,
+            body: errorBody('Access denied', 'FORBIDDEN'),
+            committed: false,
+            replay: true,
+          };
         }
-        return { status: 200, body: { ok: true, data: this.toCommentDto(row) }, committed: false, replay: true };
+        return {
+          status: 200,
+          body: { ok: true, data: this.toCommentDto(row) },
+          committed: false,
+          replay: true,
+        };
       }
     }
     const locator = (body?.locator as Record<string, unknown> | undefined) ?? {};
@@ -246,12 +287,23 @@ export class InMemorySyncServer {
       resolvedAt: null,
     };
     this.comments.set(row.id, row);
-    return { status: 201, body: { ok: true, data: this.toCommentDto(row) }, committed: true, replay: false };
+    return {
+      status: 201,
+      body: { ok: true, data: this.toCommentDto(row) },
+      committed: true,
+      replay: false,
+    };
   }
 
   private patchComment(id: string, body: Record<string, unknown> | null): ApplyResult {
     const row = this.comments.get(id);
-    if (!row) return { status: 404, body: errorBody('Comment', 'NOT_FOUND'), committed: false, replay: false };
+    if (!row)
+      return {
+        status: 404,
+        body: errorBody('Comment', 'NOT_FOUND'),
+        committed: false,
+        replay: false,
+      };
     const nextBody = str(body, 'body');
     if (nextBody !== undefined) row.body = nextBody;
     const status = str(body, 'status');
@@ -260,12 +312,23 @@ export class InMemorySyncServer {
     if (visibility !== undefined) row.visibility = visibility;
     row.updatedAt = sleepNow();
     if (row.status === 'resolved' && !row.resolvedAt) row.resolvedAt = sleepNow();
-    return { status: 200, body: { ok: true, data: { id, ...body } }, committed: true, replay: false };
+    return {
+      status: 200,
+      body: { ok: true, data: { id, ...body } },
+      committed: true,
+      replay: false,
+    };
   }
 
   private deleteComment(id: string): ApplyResult {
     const row = this.comments.get(id);
-    if (!row) return { status: 404, body: errorBody('Comment', 'NOT_FOUND'), committed: false, replay: false };
+    if (!row)
+      return {
+        status: 404,
+        body: errorBody('Comment', 'NOT_FOUND'),
+        committed: false,
+        replay: false,
+      };
     row.status = 'deleted';
     row.updatedAt = sleepNow();
     return { status: 200, body: { ok: true }, committed: true, replay: false };
@@ -283,7 +346,12 @@ export class InMemorySyncServer {
       }
       if (row) {
         if (row.bookId !== bookId) {
-          return { status: 403, body: errorBody('Access denied', 'FORBIDDEN'), committed: false, replay: true };
+          return {
+            status: 403,
+            body: errorBody('Access denied', 'FORBIDDEN'),
+            committed: false,
+            replay: true,
+          };
         }
         return { status: 200, body: { ok: true, data: row }, committed: false, replay: true };
       }
@@ -325,17 +393,32 @@ export class InMemorySyncServer {
         replay: false,
       };
     }
-    return { status: 200, body: { ok: true, data: progressData(this.progress) }, committed: false, replay: false };
+    return {
+      status: 200,
+      body: { ok: true, data: progressData(this.progress) },
+      committed: false,
+      replay: false,
+    };
   }
 
   private putProgress(body: Record<string, unknown> | null): ApplyResult {
     const mutationId = str(body, 'mutationId') ?? '';
     const replaySnapshot = this.progressMutations.get(mutationId);
     if (replaySnapshot) {
-      return { status: 200, body: { ok: true, data: progressData(replaySnapshot) }, committed: false, replay: true };
+      return {
+        status: 200,
+        body: { ok: true, data: progressData(replaySnapshot) },
+        committed: false,
+        replay: true,
+      };
     }
     if (this.progress && this.progress.mutationId === mutationId) {
-      return { status: 200, body: { ok: true, data: progressData(this.progress) }, committed: false, replay: true };
+      return {
+        status: 200,
+        body: { ok: true, data: progressData(this.progress) },
+        committed: false,
+        replay: true,
+      };
     }
     const now = sleepNow();
     const baseRevision = num(body, 'baseRevision') ?? 0;
@@ -348,7 +431,9 @@ export class InMemorySyncServer {
     const existing = this.progress;
     if (existing) {
       const followsLocalMutation =
-        dependsOn !== undefined && dependsOn === existing.mutationId && existing.revision > baseRevision;
+        dependsOn !== undefined &&
+        dependsOn === existing.mutationId &&
+        existing.revision > baseRevision;
       if (existing.revision !== baseRevision && !followsLocalMutation) {
         return {
           status: 409,
@@ -396,7 +481,12 @@ export class InMemorySyncServer {
         errorCode: 'PROGRESS_CONFLICT',
       };
     }
-    return { status: 200, body: { ok: true, data: progressData(applied) }, committed: true, replay: false };
+    return {
+      status: 200,
+      body: { ok: true, data: progressData(applied) },
+      committed: true,
+      replay: false,
+    };
   }
 
   snapshot(): ServerSnapshot {
