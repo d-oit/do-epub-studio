@@ -150,6 +150,10 @@ ALLOWED_SHAS=(
     "chromaui/action@6ac4c49524e1b1358b8c593c5eea877604228268"
 # Appended 2026-11-16 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
     "chromaui/action@2b75e3340bcec86b4ae38c6a10f14831114e8137"
+# Appended 2026-11-23 by scripts/allowlist-dependabot-shas.sh — verified against upstream annotated tags (ADR-247)
+    "actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880"
+    "ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5"
+    "chromaui/action@9cb4d65a86fe1c4c67a76a8d90f35a51a118e55f"
 )
 
 # Function to check if an action@sha is allowed
