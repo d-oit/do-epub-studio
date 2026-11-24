@@ -473,5 +473,4 @@ export class InMemorySyncServer {
       })),
     };
   }
-
 }
