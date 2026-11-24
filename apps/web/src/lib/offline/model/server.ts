@@ -15,6 +15,16 @@
  * - IDs are deterministic counters instead of crypto.randomUUID().
  */
 
+import {
+  cfiLocator,
+  errorBody,
+  num,
+  progressData,
+  sleepNow,
+  str,
+  toCommentDto,
+  toHighlightDto,
+} from './server-utils';
 import type {
   RemoteAction,
   ServerBookmarkRow,
@@ -40,43 +50,6 @@ export interface ApplyResult {
   errorCode?: string;
 }
 
-/** Validated reads from an untrusted request body (JSON boundary). */
-function str(obj: Record<string, unknown> | null, key: string): string | undefined {
-  if (!obj) return undefined;
-  const value = obj[key];
-  return typeof value === 'string' ? value : undefined;
-}
-
-function num(obj: Record<string, unknown> | null, key: string): number | undefined {
-  if (!obj) return undefined;
-  const value = obj[key];
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function cfiLocator(obj: Record<string, unknown> | null): { cfi: string } | null {
-  if (!obj) return null;
-  const value = obj.locator;
-  if (typeof value !== 'object' || value === null) return null;
-  const cfi = (value as Record<string, unknown>).cfi;
-  return typeof cfi === 'string' ? { cfi } : null;
-}
-
-function errorBody(message: string, code: string): Record<string, unknown> {
-  return { ok: false, error: { message, code } };
-}
-
-function sleepNow(): string {
-  return new Date().toISOString();
-}
-
-function progressData(row: ServerProgressRow): Record<string, unknown> {
-  return {
-    locator: row.locator,
-    progressPercent: row.progressPercent,
-    updatedAt: row.updatedAt,
-    revision: row.revision,
-  };
-}
 
 export class InMemorySyncServer {
   highlights = new Map<string, ServerHighlightRow>();
@@ -184,7 +157,7 @@ export class InMemorySyncServer {
         }
         return {
           status: 200,
-          body: { ok: true, data: this.toHighlightDto(row) },
+          body: { ok: true, data: toHighlightDto(row) },
           committed: false,
           replay: true,
         };
@@ -208,7 +181,7 @@ export class InMemorySyncServer {
     this.highlights.set(row.id, row);
     return {
       status: 201,
-      body: { ok: true, data: this.toHighlightDto(row) },
+      body: { ok: true, data: toHighlightDto(row) },
       committed: true,
       replay: false,
     };
@@ -262,7 +235,7 @@ export class InMemorySyncServer {
         }
         return {
           status: 200,
-          body: { ok: true, data: this.toCommentDto(row) },
+          body: { ok: true, data: toCommentDto(row) },
           committed: false,
           replay: true,
         };
@@ -289,7 +262,7 @@ export class InMemorySyncServer {
     this.comments.set(row.id, row);
     return {
       status: 201,
-      body: { ok: true, data: this.toCommentDto(row) },
+      body: { ok: true, data: toCommentDto(row) },
       committed: true,
       replay: false,
     };
@@ -502,48 +475,5 @@ export class InMemorySyncServer {
     };
   }
 
-  private toHighlightDto(row: ServerHighlightRow): Record<string, unknown> {
-    return {
-      id: row.id,
-      chapterRef: row.chapterRef,
-      cfiRange: row.cfiRange,
-      selectedText: row.selectedText,
-      note: row.note,
-      color: row.color,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      anchorStatus: 'anchored',
-      confidence: 1.0,
-      migrationOutcome: null,
-      revisionId: null,
-      originalCfi: null,
-      originalChapterRef: null,
-      originalSelectedText: null,
-    };
-  }
 
-  private toCommentDto(row: ServerCommentRow): Record<string, unknown> {
-    return {
-      id: row.id,
-      displayName: 're***',
-      isOwn: true,
-      chapterRef: row.chapterRef,
-      cfiRange: row.cfiRange,
-      selectedText: row.selectedText,
-      body: row.body,
-      visibility: row.visibility,
-      status: row.status,
-      parentCommentId: row.parentCommentId,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      resolvedAt: row.resolvedAt,
-      anchorStatus: 'anchored',
-      confidence: 1.0,
-      migrationOutcome: null,
-      revisionId: null,
-      originalCfi: null,
-      originalChapterRef: null,
-      originalSelectedText: null,
-    };
-  }
 }
