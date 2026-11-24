@@ -50,7 +50,6 @@ export interface ApplyResult {
   errorCode?: string;
 }
 
-
 export class InMemorySyncServer {
   highlights = new Map<string, ServerHighlightRow>();
 
@@ -474,6 +473,5 @@ export class InMemorySyncServer {
       })),
     };
   }
-
 
 }
