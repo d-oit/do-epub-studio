@@ -12,9 +12,12 @@ permissions:
   contents: write
   pull-requests: write
 
+# pull_request_target uses the base branch for github.ref, so grouping only by
+# ref makes unrelated Dependabot PRs compete. Serialize mutations per PR and
+# let active runs finish; GitHub keeps the newest pending run in each group.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
 
 jobs:
   automerge:
