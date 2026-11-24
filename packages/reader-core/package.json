@@ -27,7 +27,7 @@
     "@do-epub-studio/testkit": "workspace:*",
     "@huggingface/transformers": "^4.3.2",
     "@intity/epub-js": "0.3.96",
-    "dompurify": "^3.4.17",
+    "dompurify": "^3.4.18",
     "fflate": "^0.8.3",
     "parse5": "8.1.1",
     "postcss": "8.5.33",
