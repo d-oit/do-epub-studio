@@ -137,51 +137,48 @@ describe('idempotency: duplicate delivery is exactly-once', () => {
 });
 
 describe('progress conflict explicitness', () => {
-  it(
-    'never applies blind LWW; records an explicit conflict and honors manual choice',
-    async () => {
-      await freshHarness();
-      await h.updateProgress('epubcfi(/6/1)', 40);
-      expect(await h.quiesce()).toEqual([]);
-      expect(h.transport.server.snapshot().progress?.revision).toBe(1);
+  it('never applies blind LWW; records an explicit conflict and honors manual choice', async () => {
+    await freshHarness();
+    await h.updateProgress('epubcfi(/6/1)', 40);
+    expect(await h.quiesce()).toEqual([]);
+    expect(h.transport.server.snapshot().progress?.revision).toBe(1);
 
-      let injected = false;
-      h.transport.server.beforeApply = () => {
-        const current = h.transport.server.snapshot().progress;
-        if (!injected && current?.revision === 1) {
-          injected = true;
-          h.transport.server.applyRemote({
-            kind: 'putProgress',
-            body: {
-              mutationId: 'remote-bump',
-              locator: { cfi: 'remote-cfi' },
-              progressPercent: 90,
-              baseRevision: 1,
-            },
-          });
-        }
-      };
-      await h.updateProgress('epubcfi(/8/2)', 60);
-      expect(await h.quiesce()).toEqual([]);
+    let injected = false;
+    h.transport.server.beforeApply = () => {
+      const current = h.transport.server.snapshot().progress;
+      if (!injected && current?.revision === 1) {
+        injected = true;
+        h.transport.server.applyRemote({
+          kind: 'putProgress',
+          body: {
+            mutationId: 'remote-bump',
+            locator: { cfi: 'remote-cfi' },
+            progressPercent: 90,
+            baseRevision: 1,
+          },
+        });
+      }
+    };
+    await h.updateProgress('epubcfi(/8/2)', 60);
+    expect(await h.quiesce()).toEqual([]);
 
-      const conflicts = getPendingConflicts(BOOK).filter(
-        (c) => c.type === ConflictType.ProgressUpdate,
-      );
-      expect(conflicts.length).toBeGreaterThan(0);
-      expect(conflicts.some((c) => !c.resolved)).toBe(true);
-      expect(h.transport.server.snapshot().progress?.progressPercent).toBe(90);
-      expect(h.transport.server.snapshot().progress?.revision).toBe(2);
+    const conflicts = getPendingConflicts(BOOK).filter(
+      (c) => c.type === ConflictType.ProgressUpdate,
+    );
+    expect(conflicts.length).toBeGreaterThan(0);
+    expect(conflicts.some((c) => !c.resolved)).toBe(true);
+    expect(h.transport.server.snapshot().progress?.progressPercent).toBe(90);
+    expect(h.transport.server.snapshot().progress?.revision).toBe(2);
 
-      const conflict = conflicts.find((c) => !c.resolved);
-      if (!conflict) throw new Error('expected an unresolved progress conflict');
-      await acceptRemoteProgressFromConflict(conflict);
+    const conflict = conflicts.find((c) => !c.resolved);
+    if (!conflict) throw new Error('expected an unresolved progress conflict');
+    await acceptRemoteProgressFromConflict(conflict);
 
-      await resendProgressFromConflict(conflict);
-      expect(await h.quiesce()).toEqual([]);
-      expect(h.transport.server.snapshot().progress?.progressPercent).toBe(60);
-      expect(h.transport.server.snapshot().progress?.revision).toBe(3);
-    },
-  );
+    await resendProgressFromConflict(conflict);
+    expect(await h.quiesce()).toEqual([]);
+    expect(h.transport.server.snapshot().progress?.progressPercent).toBe(60);
+    expect(h.transport.server.snapshot().progress?.revision).toBe(3);
+  });
 });
 
 describe('deletion tombstone beats stale create', () => {
@@ -197,9 +194,9 @@ describe('deletion tombstone beats stale create', () => {
     if (!row) throw new Error('expected comment row from create mutation');
 
     h.remoteWrite({ kind: 'deleteComment', id: row.id });
-    expect(
-      h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status,
-    ).toBe('deleted');
+    expect(h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status).toBe(
+      'deleted',
+    );
 
     const replay = h.transport.server.applyRequest({
       method: 'POST',
@@ -213,9 +210,9 @@ describe('deletion tombstone beats stale create', () => {
     });
     expect(replay.status).toBe(200);
     expect(replay.replay).toBe(true);
-    expect(
-      h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status,
-    ).toBe('deleted');
+    expect(h.transport.server.snapshot().comments.find((r) => r.id === row.id)?.status).toBe(
+      'deleted',
+    );
   });
 });
 
