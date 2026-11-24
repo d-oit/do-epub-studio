@@ -137,7 +137,9 @@ describe('idempotency: duplicate delivery is exactly-once', () => {
 });
 
 describe('progress conflict explicitness', () => {
-  it('never applies blind LWW; records an explicit conflict and honors manual choice', async () => {
+  it(
+    'never applies blind LWW; records an explicit conflict and honors manual choice',
+    async () => {
     await freshHarness();
     await h.updateProgress('epubcfi(/6/1)', 40);
     expect(await h.quiesce()).toEqual([]);
