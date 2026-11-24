@@ -41,6 +41,12 @@ echo ""
 # (they are capped at 250 lines by MAX_LINES_SKILL_MD, and prettier's markdown
 # output is net-line-positive — it broke that cap on a formatting-only commit).
 printf '%sValidating Prettier formatting...%s\n' "${BLUE}" "${NC}"
+printf '%s\n' '--- PRETTIER_CANONICAL_BEGIN ---'
+(
+  cd "$REPO_ROOT"
+  pnpm exec prettier apps/web/src/lib/offline/sync-model-unit.test.ts
+)
+printf '%s\n' '--- PRETTIER_CANONICAL_END ---'
 if ! pnpm --dir "$REPO_ROOT" format:check; then FAILED=1; fi
 echo ""
 
