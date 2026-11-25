@@ -210,8 +210,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'grants.error.loadGrants': 'अनुमतियां लोड करने में विफल',
   'grants.error.revoke': 'अनुमति रद्द करने में विफल',
   'grants.revokeTitle': 'पहुँच रद्द करें',
-  'grants.revokeMessage':
-    'क्या आप {email} की पहुँच रद्द करना चाहते हैं? यह तुरंत उनका सत्र समाप्त कर देगा।',
+  'grants.revokeMessage': 'क्या आप {email} की पहुँच रद्द करना चाहते हैं? यह तुरंत उनका सत्र समाप्त कर देगा।',
   'grants.never': 'कभी नहीं',
   'grants.table.email': 'ईमेल',
   'grants.table.mode': 'मोड',
@@ -312,8 +311,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'creator.assignedBooks': 'सौंपी गई पुस्तकें',
   'creator.emptyUnassigned':
     'कोई पुस्तक नहीं सौंपी गई। निर्माताओं को प्रति पुस्तक व्यवस्थापक द्वारा आमंत्रित किया जाता है।',
-  'creator.emptyNoFeedback':
-    'अभी कोई फ़ीडबैक नहीं। आमंत्रित पाठकों के भेजने के बाद यह यहाँ दिखेगा।',
+  'creator.emptyNoFeedback': 'अभी कोई फ़ीडबैक नहीं। आमंत्रित पाठकों के भेजने के बाद यह यहाँ दिखेगा।',
   'creator.filterStatus': 'स्थिति',
   'creator.filterCategory': 'श्रेणी',
   'creator.replyPlaceholder': 'उत्तर लिखें…',
@@ -345,8 +343,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'invitations.invalidDescription': 'यह आमंत्रण अमान्य, समाप्त या पहले ही उपयोग किया जा चुका है।',
   'invitations.backToLogin': 'लॉगिन पर वापस जाएँ',
   'invitations.adminTitle': 'किताब के आमंत्रण',
-  'invitations.adminDescription':
-    'पाठकों या रचनाओं को आमंत्रित करें और पहुँच भेजने का तरीका चुनें।',
+  'invitations.adminDescription': 'पाठकों या रचनाओं को आमंत्रित करें और पहुँच भेजने का तरीका चुनें।',
   'invitations.invitePerson': 'व्यक्ति को आमंत्रित करें',
   'invitations.closeForm': 'आमंत्रण फ़ॉर्म बंद करें',
   'invitations.emailLabel': 'ईमेल पता',
@@ -554,8 +551,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.grants.createGrantModal.close': 'बंद करें',
   'admin.grants.createGrantModal.submit': 'अनुमति बनाएं',
   'admin.grants.createGrantModal.submitting': 'बनाया जा रहा है...',
-  'admin.grants.selectBook':
-    'पहुँच अनुमतियां प्रबंधित करने के लिए कृपया पुस्तक पृष्ठ से एक पुस्तक चुनें।',
+  'admin.grants.selectBook': 'पहुँच अनुमतियां प्रबंधित करने के लिए कृपया पुस्तक पृष्ठ से एक पुस्तक चुनें।',
   'admin.recover.titleRequest': 'एडमिन पहुँच पुनर्प्राप्त करें',
   'admin.recover.titleVerify': 'नया पासवर्ड सेट करें',
   'admin.recover.requestDescription':
@@ -563,8 +559,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.recover.verifyDescription': 'एडमिन पहुँच पुनर्प्राप्त करने के लिए एक नया पासवर्ड चुनें।',
   'admin.recover.sendLink': 'पुनर्प्राप्ति लिंक भेजें',
   'admin.recover.sending': 'भेजा जा रहा है...',
-  'admin.recover.requestSent':
-    'यदि वह ईमेल एडमिन खाते से मेल खाता है, तो पुनर्प्राप्ति लिंक भेजा गया है।',
+  'admin.recover.requestSent': 'यदि वह ईमेल एडमिन खाते से मेल खाता है, तो पुनर्प्राप्ति लिंक भेजा गया है।',
   'admin.recover.requestFailed': 'पुनर्प्राप्ति ईमेल नहीं भेजा जा सका। कृपया पुनः प्रयास करें।',
   'admin.recover.newPassword': 'नया पासवर्ड',
   'admin.recover.resetPassword': 'पासवर्ड रीसेट करें',
@@ -683,8 +678,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'offline.pendingSync': { one: '{count} सिंक लंबित', other: '{count} सिंक लंबित' },
   'reader.bookmarks.title': 'बुकमार्क',
   'reader.bookmarks.addTitle': 'वर्तमान स्थिति पर बुकमार्क जोड़ें',
-  'reader.bookmarks.empty':
-    'अभी तक कोई बुकमार्क नहीं। अपना स्थान सहेजने के लिए बुकमार्क आइकन पर क्लिक करें।',
+  'reader.bookmarks.empty': 'अभी तक कोई बुकमार्क नहीं। अपना स्थान सहेजने के लिए बुकमार्क आइकन पर क्लिक करें।',
   'reader.bookmarks.untitled': 'शीर्षकहीन',
   'admin.audit.exportCsv': 'CSV निर्यात',
   'admin.audit.entityType': 'इकाई प्रकार',
@@ -709,8 +703,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.audit.tableLabel': 'ऑडिट लॉग तालिका',
   'admin.audit.systemActor': 'सिस्टम',
   'errors.notFound.title': 'पेज नहीं मिला',
-  'errors.notFound.description':
-    'आप जिस पेज को खोज रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।',
+  'errors.notFound.description': 'आप जिस पेज को खोज रहे हैं वह मौजूद नहीं है या स्थानांतरित कर दिया गया है।',
   'errors.notFound.backToHome': 'होम पर वापस जाएं',
   'comment.input.placeholder': 'टिप्पणी लिखें...',
   'comment.input.submitLabel': 'टिप्पणी',
@@ -759,8 +752,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'settings.account': 'खाता',
   'settings.adminBadge': 'व्यवस्थापक पहुंच सक्षम',
   'settings.install.title': 'ऐप इंस्टॉल करें',
-  'settings.install.description':
-    'ऑफ़लाइन पढ़ने के लिए {app} को होम स्क्रीन या डेस्कटॉप पर जोड़ें।',
+  'settings.install.description': 'ऑफ़लाइन पढ़ने के लिए {app} को होम स्क्रीन या डेस्कटॉप पर जोड़ें।',
   'settings.install.action': 'ऐप इंस्टॉल करें',
   'settings.install.installed': 'ऐप इंस्टॉल हो गया',
   'storage.title': 'स्टोरेज',
@@ -827,8 +819,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'reader.loadingSynced': 'सिंक किया गया इतिहास लोड हो रहा है…',
   'reader.syncedUnavailable': 'सिंक किया गया पठन इतिहास उपलब्ध नहीं है',
   'reader.noLocalActivity': 'इस डिवाइस पर अभी तक कोई स्थानीय पठन गतिविधि दर्ज नहीं हुई है।',
-  'reader.localInsightsUnavailable':
-    'स्थानीय पठन आँकड़े उपलब्ध नहीं हैं — डिवाइस स्टोरेज पढ़ा नहीं जा सका।',
+  'reader.localInsightsUnavailable': 'स्थानीय पठन आँकड़े उपलब्ध नहीं हैं — डिवाइस स्टोरेज पढ़ा नहीं जा सका।',
   'reader.noSyncedHistory': 'इस पुस्तक के लिए कोई सिंक किया गया पठन इतिहास नहीं है।',
   'reader.exportInsights': 'पठन आँकड़े निर्यात करें (JSON)',
   'reader.exportInsightsNote':
@@ -872,8 +863,7 @@ export const hi: Record<TranslationKeys, TranslationValue> = {
   'admin.validation.info': 'सूचनाएं',
   'admin.validation.path': 'पथ',
   'admin.validation.location': 'स्थान',
-  'admin.validation.accessibilityNotice':
-    'स्वचालित सत्यापन साक्ष्य कोई पहुंच-योग्यता प्रमाणीकरण नहीं है।',
+  'admin.validation.accessibilityNotice': 'स्वचालित सत्यापन साक्ष्य कोई पहुंच-योग्यता प्रमाणीकरण नहीं है।',
   'admin.validation.manualReviewRequired': 'मैनुअल पहुंच-योग्यता समीक्षा आवश्यक है।',
   'admin.validation.metadata': 'निकाले गए पैकेज मेटाडेटा',
   'admin.validation.noMetadata': 'पैकेज दस्तावेज़ में कोई पहुंच-योग्यता मेटाडेटा घोषित नहीं है।',
