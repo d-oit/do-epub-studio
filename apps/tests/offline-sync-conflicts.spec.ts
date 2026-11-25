@@ -642,7 +642,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     await context.setOffline(true);
 
     // Queue 5 offline annotations directly into IndexedDB syncQueue (sealed format)
-    await page.evaluate(async (slug) => {
+    await page.evaluate(async ({ slug, dbVersion }) => {
       const DB_NAME = 'do-epub-studio';
       const STORE_NAME = 'syncQueue';
       const authRaw = globalThis.localStorage.getItem('do-epub-auth');
