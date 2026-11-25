@@ -17,8 +17,8 @@ import { logAppError } from '../lib/observability';
  * - JSON bodies must parse and match the envelope shape
  *   (`{ ok: true, data }` / `{ ok: false, error: { code, message } }`).
  * - Success payloads are validated against the registry's response schema
- *   when one is pinned; a mismatch is surfaced as a 500 contract violation
- *   (never leaked internals — the client sees the standard envelope).
+ *   when one is pinned; a mismatch is logged (`contract.response_mismatch`)
+ *   without failing the request — the caller's response is passed through.
  * - Error envelopes missing a `traceId` get one injected so every failure is
  *   correlatable with server logs (Plan 228 / O7).
  *

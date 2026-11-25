@@ -70,11 +70,19 @@ export async function processEpubValidationQueue(
       message.ack();
     } catch {
       if (message.attempts >= 5) {
-        await execute(
-          env,
-          `UPDATE epub_validation_reports SET status = 'failed', failure_code = 'RUNNER_UNAVAILABLE', updated_at = ? WHERE revision_id = ? AND status = 'pending'`,
-          [new Date().toISOString(), message.body.revisionId],
-        );
+        // A malformed message never carries a usable revisionId, so guard the
+        // terminal-failure UPDATE against binding an undefined revision_id.
+        const revisionId =
+          typeof message.body?.revisionId === 'string' && message.body.revisionId
+            ? message.body.revisionId
+            : undefined;
+        if (revisionId) {
+          await execute(
+            env,
+            `UPDATE epub_validation_reports SET status = 'failed', failure_code = 'RUNNER_UNAVAILABLE', updated_at = ? WHERE revision_id = ? AND status = 'pending'`,
+            [new Date().toISOString(), revisionId],
+          );
+        }
         message.ack();
       } else {
         message.retry({ delaySeconds: Math.min(60 * 2 ** message.attempts, 3600) });
