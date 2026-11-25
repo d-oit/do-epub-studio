@@ -149,6 +149,8 @@ describe('offline download engine (issue #1485)', () => {
     const manifest = await getManifest('book-1');
     expect(manifest?.state).toBe('staging');
     expect(manifest?.packageVersion).toBe('file-new');
+    // The superseded attempt never leaves bytes in the serving cache.
+    await expect(caches.keys()).resolves.not.toContain('dl/book-1');
   });
 
   it('fails with network error on non-ok response and rolls back', async () => {

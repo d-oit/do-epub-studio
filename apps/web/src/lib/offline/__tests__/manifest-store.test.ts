@@ -46,6 +46,16 @@ describe('download manifest store (issue #1485)', () => {
     expect(manifest?.totalBytes).toBe(100);
   });
 
+  it('treats a manifest row without a string attemptId as corrupt', async () => {
+    await beginDownload('book-1', 'file-9', 100);
+    const opened = await openOfflineDb();
+    const row = await opened.get('downloadManifests', 'book-1');
+    await opened.put('downloadManifests', { ...row, attemptId: 42 });
+    opened.close();
+
+    await expect(getManifest('book-1')).resolves.toBeUndefined();
+  });
+
   it('commitDownload rejects stale attempts (superseded by a newer one)', async () => {
     const first = await beginDownload('book-1', 'file-9', 100);
     const second = await beginDownload('book-1', 'file-9', 100);

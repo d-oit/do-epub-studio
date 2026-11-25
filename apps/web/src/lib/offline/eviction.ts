@@ -169,7 +169,12 @@ export async function prepareSpaceFor(
   }
 
   const needed = -headroom;
-  const result = await evictWhile(({ freedBytes }) => freedBytes < needed, deps);
+  const targetRatio = Math.max(usage.ratio - needed / usage.quota, 0);
+  const result = await evictWhile(
+    ({ usageRatio, freedBytes }) =>
+      usageRatio === null ? freedBytes < needed : usageRatio > targetRatio,
+    deps,
+  );
   const after = await snapshotUsage(deps);
   return { ...result, usageRatioAfter: after ? after.ratio : null };
 }

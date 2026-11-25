@@ -181,8 +181,12 @@ async function handleBookFileRequest(request: Request): Promise<Response> {
   try {
     const response = await fetch(request);
     if (response.status === 200) {
-      const cache = await caches.open('book-content');
-      await cache.put(request, response.clone());
+      try {
+        const cache = await caches.open('book-content');
+        await cache.put(request, response.clone());
+      } catch {
+        // Quota/cache write failures must not discard the fetched response.
+      }
     }
     return response;
   } catch {

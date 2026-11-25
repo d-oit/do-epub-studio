@@ -35,8 +35,15 @@ async function sliceResponse(
 
   const buffer = await response.arrayBuffer();
   const total = buffer.byteLength;
-  const start = startRaw ? Number(startRaw) : 0;
-  let end = endRaw ? Number(endRaw) : total - 1;
+  let start: number;
+  let end: number;
+  if (!startRaw && endRaw) {
+    start = Math.max(0, total - Number(endRaw));
+    end = total - 1;
+  } else {
+    start = startRaw ? Number(startRaw) : 0;
+    end = endRaw ? Number(endRaw) : total - 1;
+  }
   if (Number.isNaN(start) || Number.isNaN(end) || start >= total || end < start) return undefined;
   end = Math.min(end, total - 1);
   const slice = buffer.slice(start, end + 1);
@@ -70,12 +77,12 @@ export async function serveBookResource(
     const cached = await cache.match(request.url);
     if (!cached) return undefined;
 
+    void touchManifest(manifest.bookId);
     const range = request.headers.get('range');
     if (range) {
       const partial = await sliceResponse(cached, range);
       if (partial) return partial;
     }
-    void touchManifest(manifest.bookId);
     return cached;
   } catch {
     return undefined;

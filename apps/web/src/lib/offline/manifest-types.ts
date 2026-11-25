@@ -87,6 +87,7 @@ function isFailure(value: unknown): value is DownloadManifestFailure {
 export function parseDownloadManifest(raw: unknown): DownloadManifest | null {
   if (!isRecord(raw)) return null;
   if (typeof raw.bookId !== 'string') return null;
+  if (typeof raw.attemptId !== 'string') return null;
   if (typeof raw.packageVersion !== 'string') return null;
   if (typeof raw.state !== 'string' || !VALID_STATES.has(raw.state as DownloadManifestState)) {
     return null;
@@ -104,7 +105,7 @@ export function parseDownloadManifest(raw: unknown): DownloadManifest | null {
   return {
     bookId: raw.bookId,
     packageVersion: raw.packageVersion,
-    attemptId: raw.attemptId as string,
+    attemptId: raw.attemptId,
     state: raw.state as DownloadManifestState,
     resources: raw.resources,
     totalBytes: raw.totalBytes,
