@@ -17,7 +17,11 @@ describe('download manifest store (issue #1485)', () => {
   });
 
   it('beginDownload creates a staging manifest with a dedicated namespace', async () => {
-    const { attemptId, cacheName, stagingCacheName } = await beginDownload('book-1', 'file-9', 1000);
+    const { attemptId, cacheName, stagingCacheName } = await beginDownload(
+      'book-1',
+      'file-9',
+      1000,
+    );
     expect(attemptId).toBeTruthy();
     expect(cacheName).toBe('dl/book-1');
     expect(stagingCacheName).toBe(`dl-staging/book-1/${attemptId}`);

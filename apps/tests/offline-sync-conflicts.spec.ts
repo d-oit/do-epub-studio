@@ -720,7 +720,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
       );
 
       await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, 5);
+        const req = indexedDB.open(DB_NAME, OFFLINE_DB_VERSION);
         req.onerror = () => reject(req.error ?? new Error('IDB open failed'));
         req.onsuccess = () => {
           const db = req.result;
@@ -954,7 +954,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
         );
 
         await new Promise<void>((resolve, reject) => {
-          const req = indexedDB.open(DB_NAME, 5);
+          const req = indexedDB.open(DB_NAME, OFFLINE_DB_VERSION);
           req.onerror = () => reject(req.error ?? new Error('IDB open failed'));
           req.onsuccess = () => {
             const db = req.result;

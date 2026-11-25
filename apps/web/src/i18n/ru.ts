@@ -790,7 +790,8 @@ export const ru: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Повторить загрузку',
   'storage.persistence.persisted': 'Постоянное хранилище предоставлено',
   'storage.persistence.requested': 'Постоянное хранилище ещё не предоставлено',
-  'storage.persistence.denied': 'В постоянном хранилище отказано — браузер может удалить офлайн-книги',
+  'storage.persistence.denied':
+    'В постоянном хранилище отказано — браузер может удалить офлайн-книги',
   'storage.persistence.unsupported': 'Постоянное хранилище не поддерживается этим браузером',
   'storage.persistence.requestButton': 'Запросить постоянное хранилище',
   'storage.persistence.requesting': 'Запрос…',

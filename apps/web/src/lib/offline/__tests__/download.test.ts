@@ -40,7 +40,8 @@ describe('offline download engine (issue #1485)', () => {
   ) {
     return {
       bookId: 'book-1',
-      resolveFileUrl: () => Promise.resolve({ url: URL, fileId: FILE_ID, fileSize: BODY.byteLength }),
+      resolveFileUrl: () =>
+        Promise.resolve({ url: URL, fileId: FILE_ID, fileSize: BODY.byteLength }),
       fetchImpl: makeFetch(new Response(BODY)),
       cacheStorage: caches,
       ...overrides,
@@ -69,7 +70,9 @@ describe('offline download engine (issue #1485)', () => {
   it('rolls back atomically when the fetch stage hits a quota error', async () => {
     const quota = new DOMException('quota', 'QuotaExceededError');
     await expect(
-      downloadBookForOffline(opts({ fetchImpl: makeFetch(new Response(BODY), { throwOnce: quota }) })),
+      downloadBookForOffline(
+        opts({ fetchImpl: makeFetch(new Response(BODY), { throwOnce: quota }) }),
+      ),
     ).rejects.toMatchObject({ code: 'quota' });
 
     const manifest = await getManifest('book-1');

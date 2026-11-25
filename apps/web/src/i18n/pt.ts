@@ -770,8 +770,10 @@ export const pt: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Tentar baixar novamente',
   'storage.persistence.persisted': 'Armazenamento persistente concedido',
   'storage.persistence.requested': 'Armazenamento persistente ainda não concedido',
-  'storage.persistence.denied': 'Armazenamento persistente negado — o navegador pode limpar os livros offline',
-  'storage.persistence.unsupported': 'O armazenamento persistente não é compatível com este navegador',
+  'storage.persistence.denied':
+    'Armazenamento persistente negado — o navegador pode limpar os livros offline',
+  'storage.persistence.unsupported':
+    'O armazenamento persistente não é compatível com este navegador',
   'storage.persistence.requestButton': 'Solicitar armazenamento persistente',
   'storage.persistence.requesting': 'Solicitando…',
   'storage.offlineBooks': 'Livros offline: {books}',

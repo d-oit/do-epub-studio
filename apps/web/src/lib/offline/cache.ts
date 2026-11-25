@@ -23,12 +23,15 @@ export function getCacheStorage(): CacheStorageLike | null {
   const cachesGlobal = (globalThis as { caches?: unknown }).caches;
   if (!cachesGlobal || typeof cachesGlobal !== 'object') return null;
   return cachesGlobal as CacheStorageLike;
-
 }
 
 /** True for the browser's quota error (also surfaced by fake-indexeddb). */
 export function isQuotaError(error: unknown): boolean {
   return (
-    error instanceof DOMException && error.name === 'QuotaExceededError'
-  ) || (typeof error === 'object' && error !== null && 'name' in error && error.name === 'QuotaExceededError');
+    (error instanceof DOMException && error.name === 'QuotaExceededError') ||
+    (typeof error === 'object' &&
+      error !== null &&
+      'name' in error &&
+      error.name === 'QuotaExceededError')
+  );
 }

@@ -93,8 +93,7 @@ export function useOfflineBook(bookId: string | undefined) {
       });
       await refresh();
     } catch (error) {
-      const message =
-        error instanceof OfflineDownloadError ? error.message : undefined;
+      const message = error instanceof OfflineDownloadError ? error.message : undefined;
       if (mountedRef.current) {
         setStatus({ kind: 'failed', message });
       }

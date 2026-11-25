@@ -59,9 +59,7 @@ async function verifyManifestResources(
   return results.every(Boolean);
 }
 
-export async function recoverOfflineStorage(
-  deps: RecoveryDeps = {},
-): Promise<RecoveryReport> {
+export async function recoverOfflineStorage(deps: RecoveryDeps = {}): Promise<RecoveryReport> {
   const cacheStorage = deps.cacheStorage ?? getCacheStorage();
   const report: RecoveryReport = {
     scannedManifests: 0,

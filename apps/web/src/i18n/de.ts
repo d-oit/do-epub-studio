@@ -882,8 +882,10 @@ export const de: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Download erneut versuchen',
   'storage.persistence.persisted': 'Dauerhafter Speicher gewährt',
   'storage.persistence.requested': 'Dauerhafter Speicher noch nicht gewährt',
-  'storage.persistence.denied': 'Dauerhafter Speicher verweigert – der Browser kann Offline-Bücher löschen',
-  'storage.persistence.unsupported': 'Dauerhafter Speicher wird in diesem Browser nicht unterstützt',
+  'storage.persistence.denied':
+    'Dauerhafter Speicher verweigert – der Browser kann Offline-Bücher löschen',
+  'storage.persistence.unsupported':
+    'Dauerhafter Speicher wird in diesem Browser nicht unterstützt',
   'storage.persistence.requestButton': 'Dauerhaften Speicher anfordern',
   'storage.persistence.requesting': 'Wird angefordert…',
   'storage.offlineBooks': 'Offline-Bücher: {books}',

@@ -769,8 +769,10 @@ export const it: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Riprova download',
   'storage.persistence.persisted': 'Archiviazione persistente concessa',
   'storage.persistence.requested': 'Archiviazione persistente non ancora concessa',
-  'storage.persistence.denied': 'Archiviazione persistente negata — il browser potrebbe eliminare i libri offline',
-  'storage.persistence.unsupported': 'L’archiviazione persistente non è supportata da questo browser',
+  'storage.persistence.denied':
+    'Archiviazione persistente negata — il browser potrebbe eliminare i libri offline',
+  'storage.persistence.unsupported':
+    'L’archiviazione persistente non è supportata da questo browser',
   'storage.persistence.requestButton': 'Richiedi archiviazione persistente',
   'storage.persistence.requesting': 'Richiesta in corso…',
   'storage.offlineBooks': 'Libri offline: {books}',
