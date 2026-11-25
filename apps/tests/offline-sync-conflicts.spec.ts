@@ -642,96 +642,99 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     await context.setOffline(true);
 
     // Queue 5 offline annotations directly into IndexedDB syncQueue (sealed format)
-    await page.evaluate(async ({ slug, dbVersion }) => {
-      const DB_NAME = 'do-epub-studio';
-      const STORE_NAME = 'syncQueue';
-      const authRaw = globalThis.localStorage.getItem('do-epub-auth');
-      const sessionToken: string | undefined = authRaw
-        ? (JSON.parse(authRaw) as { state?: { sessionToken?: string } }).state?.sessionToken
-        : undefined;
-      if (!sessionToken) throw new Error('Seeding needs session token');
+    await page.evaluate(
+      async ({ slug, dbVersion }) => {
+        const DB_NAME = 'do-epub-studio';
+        const STORE_NAME = 'syncQueue';
+        const authRaw = globalThis.localStorage.getItem('do-epub-auth');
+        const sessionToken: string | undefined = authRaw
+          ? (JSON.parse(authRaw) as { state?: { sessionToken?: string } }).state?.sessionToken
+          : undefined;
+        if (!sessionToken) throw new Error('Seeding needs session token');
 
-      function toBase64(bytes: Uint8Array): string {
-        let binary = '';
-        for (const byte of bytes) binary += String.fromCharCode(byte);
-        return btoa(binary);
-      }
+        function toBase64(bytes: Uint8Array): string {
+          let binary = '';
+          for (const byte of bytes) binary += String.fromCharCode(byte);
+          return btoa(binary);
+        }
 
-      async function encryptJSON(value: unknown, token: string): Promise<string> {
-        const subtle = globalThis.crypto.subtle;
-        const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
-        const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
-        const keyMaterial = await subtle.importKey(
-          'raw',
-          new TextEncoder().encode(token),
-          { name: 'PBKDF2' },
-          false,
-          ['deriveKey'],
-        );
-        const key = await subtle.deriveKey(
-          { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
-          keyMaterial,
-          { name: 'AES-GCM', length: 256 },
-          false,
-          ['encrypt'],
-        );
-        const sealed = new Uint8Array(
-          await subtle.encrypt(
-            { name: 'AES-GCM', iv },
-            key,
-            new TextEncoder().encode(JSON.stringify(value)),
-          ),
-        );
-        const combined = new Uint8Array(16 + 12 + sealed.length);
-        combined.set(salt, 0);
-        combined.set(iv, 16);
-        combined.set(sealed, 28);
-        return toBase64(combined);
-      }
+        async function encryptJSON(value: unknown, token: string): Promise<string> {
+          const subtle = globalThis.crypto.subtle;
+          const salt = globalThis.crypto.getRandomValues(new Uint8Array(16));
+          const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
+          const keyMaterial = await subtle.importKey(
+            'raw',
+            new TextEncoder().encode(token),
+            { name: 'PBKDF2' },
+            false,
+            ['deriveKey'],
+          );
+          const key = await subtle.deriveKey(
+            { name: 'PBKDF2', salt, iterations: 100_000, hash: 'SHA-256' },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt'],
+          );
+          const sealed = new Uint8Array(
+            await subtle.encrypt(
+              { name: 'AES-GCM', iv },
+              key,
+              new TextEncoder().encode(JSON.stringify(value)),
+            ),
+          );
+          const combined = new Uint8Array(16 + 12 + sealed.length);
+          combined.set(salt, 0);
+          combined.set(iv, 16);
+          combined.set(sealed, 28);
+          return toBase64(combined);
+        }
 
-      const items = Array.from({ length: 5 }, (_, i) => {
-        const mutationId = crypto.randomUUID();
-        return {
-          id: crypto.randomUUID(),
-          type: 'annotation',
-          payload: {
-            bookId: `book-${slug}`,
-            annotation: {
-              type: 'comment',
-              cfi: `epubcfi(/6/${(i + 1) * 2})`,
-              chapter: 'chapter1.xhtml',
-              text: 'INTERRUPTED SYNC TEST PASSAGE',
-              comment: `Queued comment ${i + 1}`,
+        const items = Array.from({ length: 5 }, (_, i) => {
+          const mutationId = crypto.randomUUID();
+          return {
+            id: crypto.randomUUID(),
+            type: 'annotation',
+            payload: {
+              bookId: `book-${slug}`,
+              annotation: {
+                type: 'comment',
+                cfi: `epubcfi(/6/${(i + 1) * 2})`,
+                chapter: 'chapter1.xhtml',
+                text: 'INTERRUPTED SYNC TEST PASSAGE',
+                comment: `Queued comment ${i + 1}`,
+              },
+              action: 'create',
             },
-            action: 'create',
-          },
-          mutationId,
-          createdAt: Date.now() + i,
-          attempts: 0,
-        };
-      });
+            mutationId,
+            createdAt: Date.now() + i,
+            attempts: 0,
+          };
+        });
 
-      const sealedItems = await Promise.all(
-        items.map(async ({ id, createdAt, ...rest }) => ({
-          id,
-          createdAt,
-          encryptedPayload: await encryptJSON(rest, sessionToken),
-        })),
-      );
+        const sealedItems = await Promise.all(
+          items.map(async ({ id, createdAt, ...rest }) => ({
+            id,
+            createdAt,
+            encryptedPayload: await encryptJSON(rest, sessionToken),
+          })),
+        );
 
-      await new Promise<void>((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, OFFLINE_DB_VERSION);
-        req.onerror = () => reject(req.error ?? new Error('IDB open failed'));
-        req.onsuccess = () => {
-          const db = req.result;
-          const tx = db.transaction(STORE_NAME, 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-          for (const item of sealedItems) store.put(item);
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error ?? new Error('IDB tx failed'));
-        };
-      });
-    }, bookSlug);
+        await new Promise<void>((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, dbVersion);
+          req.onerror = () => reject(req.error ?? new Error('IDB open failed'));
+          req.onsuccess = () => {
+            const db = req.result;
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            for (const item of sealedItems) store.put(item);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error ?? new Error('IDB tx failed'));
+          };
+        });
+      },
+      { slug: bookSlug, dbVersion: OFFLINE_DB_VERSION },
+    );
 
     const idbBefore = await readOfflineDatabase(page);
     expect(idbBefore.queue.length).toBeGreaterThanOrEqual(5);
@@ -888,7 +891,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
     // Store last-read CFI position in IndexedDB progress store pointing to Chapter 2
     const testCfi = 'epubcfi(/6/4!/4/2)';
     await page.evaluate(
-      async ({ slug, cfi }) => {
+      async ({ slug, cfi, dbVersion }) => {
         const DB_NAME = 'do-epub-studio';
         const STORE_NAME = 'progress';
         const authRaw = globalThis.localStorage.getItem('do-epub-auth');
@@ -954,7 +957,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
         );
 
         await new Promise<void>((resolve, reject) => {
-          const req = indexedDB.open(DB_NAME, OFFLINE_DB_VERSION);
+          const req = indexedDB.open(DB_NAME, dbVersion);
           req.onerror = () => reject(req.error ?? new Error('IDB open failed'));
           req.onsuccess = () => {
             const db = req.result;
@@ -970,7 +973,7 @@ test.describe('Offline Sync & Annotation Conflicts (@pwa)', () => {
           };
         });
       },
-      { slug: bookSlug, cfi: testCfi },
+      { slug: bookSlug, cfi: testCfi, dbVersion: OFFLINE_DB_VERSION },
     );
 
     // Hard-reload the page while offline
