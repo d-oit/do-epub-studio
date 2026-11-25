@@ -769,7 +769,8 @@ export const ja: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'ダウンロードを再試行',
   'storage.persistence.persisted': '永続ストレージが許可されました',
   'storage.persistence.requested': '永続ストレージはまだ許可されていません',
-  'storage.persistence.denied': '永続ストレージが拒否されました — ブラウザーがオフラインブックを消去する可能性があります',
+  'storage.persistence.denied':
+    '永続ストレージが拒否されました — ブラウザーがオフラインブックを消去する可能性があります',
   'storage.persistence.unsupported': 'このブラウザーは永続ストレージに対応していません',
   'storage.persistence.requestButton': '永続ストレージをリクエスト',
   'storage.persistence.requesting': 'リクエスト中…',

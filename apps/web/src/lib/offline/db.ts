@@ -1,7 +1,6 @@
 import type { IDBPDatabase } from 'idb';
 import { openOfflineDb, USER_DATA_STORES } from './idb-schema';
 
-
 import { encryptJSON, decryptJSON } from './crypto';
 import { useAuthStore } from '@/stores/auth';
 import type {
@@ -16,8 +15,6 @@ import type {
 // Persisted record shapes live in the leaf `./types` module; re-exported here
 // so the 30+ modules importing them from `./db` keep working unchanged.
 export * from './types';
-
-
 
 let dbInstance: IDBPDatabase | null = null;
 let tokenOverride: string | null = null;

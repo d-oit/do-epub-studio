@@ -16,12 +16,7 @@ import type { DownloadManifest, DownloadResourceSpec } from './manifest-types';
  */
 
 export type OfflineDownloadErrorCode =
-  | 'quota'
-  | 'integrity'
-  | 'network'
-  | 'race'
-  | 'canceled'
-  | 'unauthorized';
+  'quota' | 'integrity' | 'network' | 'race' | 'canceled' | 'unauthorized';
 
 export class OfflineDownloadError extends Error {
   readonly code: OfflineDownloadErrorCode;
@@ -63,9 +58,7 @@ function errorMessageOf(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-export async function downloadBookForOffline(
-  options: DownloadOptions,
-): Promise<DownloadManifest> {
+export async function downloadBookForOffline(options: DownloadOptions): Promise<DownloadManifest> {
   const cacheStorage = options.cacheStorage ?? getCacheStorage();
   if (!cacheStorage) {
     throw new OfflineDownloadError('network', 'CacheStorage is unavailable in this browser');
@@ -85,9 +78,16 @@ export async function downloadBookForOffline(
 
   let attempt: { attemptId: string; cacheName: string; stagingCacheName: string };
   try {
-    attempt = await beginDownload(bookId, options.packageVersion ?? resolved.fileId ?? bookId, expectedBytes);
+    attempt = await beginDownload(
+      bookId,
+      options.packageVersion ?? resolved.fileId ?? bookId,
+      expectedBytes,
+    );
   } catch (err) {
-    throw new OfflineDownloadError('quota', `Could not open a download attempt: ${errorMessageOf(err)}`);
+    throw new OfflineDownloadError(
+      'quota',
+      `Could not open a download attempt: ${errorMessageOf(err)}`,
+    );
   }
   const { attemptId, cacheName, stagingCacheName: staging } = attempt;
 

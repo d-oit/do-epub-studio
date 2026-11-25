@@ -882,8 +882,10 @@ export const fr: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Réessayer le téléchargement',
   'storage.persistence.persisted': 'Stockage persistant accordé',
   'storage.persistence.requested': 'Stockage persistant pas encore accordé',
-  'storage.persistence.denied': 'Stockage persistant refusé — le navigateur peut effacer les livres hors ligne',
-  'storage.persistence.unsupported': 'Le stockage persistant n’est pas pris en charge par ce navigateur',
+  'storage.persistence.denied':
+    'Stockage persistant refusé — le navigateur peut effacer les livres hors ligne',
+  'storage.persistence.unsupported':
+    'Le stockage persistant n’est pas pris en charge par ce navigateur',
   'storage.persistence.requestButton': 'Demander le stockage persistant',
   'storage.persistence.requesting': 'Demande en cours…',
   'storage.offlineBooks': 'Livres hors ligne : {books}',

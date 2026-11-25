@@ -23,7 +23,10 @@ async function loadCompleteManifests(deps: ServingDeps): Promise<DownloadManifes
 }
 
 /** Build a 206 partial response for a Range request over a cached body. */
-async function sliceResponse(response: Response, rangeHeader: string): Promise<Response | undefined> {
+async function sliceResponse(
+  response: Response,
+  rangeHeader: string,
+): Promise<Response | undefined> {
   const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
   if (!match) return undefined;
   const startRaw = match[1];

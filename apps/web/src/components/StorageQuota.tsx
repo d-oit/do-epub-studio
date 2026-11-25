@@ -2,7 +2,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from '../hooks/useTranslation';
 import { ConfirmDialog } from './ui';
 import { formatBytes } from '../lib/formatBytes';
-import { getPersistentStorageStatus, requestPersistentStorage } from '../lib/offline/storage-policy';
+import {
+  getPersistentStorageStatus,
+  requestPersistentStorage,
+} from '../lib/offline/storage-policy';
 import { getOfflineStorageSummary } from '../lib/offline/offline-state';
 
 interface StorageEstimate {
@@ -44,7 +47,6 @@ export function StorageQuota() {
   });
   const [isRequestingPersist, setIsRequestingPersist] = useState(false);
   const [summary, setSummary] = useState<OfflineSummary>(EMPTY_SUMMARY);
-
 
   const clearTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const refresh = useCallback(async () => {
@@ -264,7 +266,9 @@ export function StorageQuota() {
                   disabled={isRequestingPersist}
                   className="shrink-0 rounded-md border border-border px-2.5 py-1 font-medium text-foreground hover:bg-background-tertiary disabled:opacity-50"
                 >
-                  {isRequestingPersist ? t('storage.persistence.requesting') : t('storage.persistence.requestButton')}
+                  {isRequestingPersist
+                    ? t('storage.persistence.requesting')
+                    : t('storage.persistence.requestButton')}
                 </button>
               </div>
             )}

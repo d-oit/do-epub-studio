@@ -768,7 +768,8 @@ export const nl: Record<TranslationKeys, TranslationValue> = {
   'library.offline.retry': 'Download opnieuw proberen',
   'storage.persistence.persisted': 'Permanente opslag toegekend',
   'storage.persistence.requested': 'Permanente opslag nog niet toegekend',
-  'storage.persistence.denied': 'Permanente opslag geweigerd — de browser kan offline boeken wissen',
+  'storage.persistence.denied':
+    'Permanente opslag geweigerd — de browser kan offline boeken wissen',
   'storage.persistence.unsupported': 'Permanente opslag wordt niet ondersteund door deze browser',
   'storage.persistence.requestButton': 'Permanente opslag aanvragen',
   'storage.persistence.requesting': 'Wordt aangevraagd…',

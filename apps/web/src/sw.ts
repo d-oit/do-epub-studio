@@ -99,7 +99,6 @@ let lastFailedAt = 0;
 // LRU). Old entry-count-based cache eviction is gone; user data is never a
 // candidate (see EVICTION / ownership modules).
 
-
 const quotaGuardPlugin = {
   cacheWillUpdate: async ({ request, response }: { request: Request; response: Response }) => {
     if (typeof navigator === 'undefined' || !navigator.storage?.estimate) {

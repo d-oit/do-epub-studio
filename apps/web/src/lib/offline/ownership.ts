@@ -1,4 +1,3 @@
-
 /**
  * Storage ownership tiers (issue #1485).
  *
@@ -17,7 +16,8 @@ export const TIER_BOOK_PACKAGE = 'book-package';
 export const TIER_DERIVED = 'derived';
 export const TIER_TRANSIENT = 'transient';
 
-export type Tier = typeof TIER_USER | typeof TIER_BOOK_PACKAGE | typeof TIER_DERIVED | typeof TIER_TRANSIENT;
+export type Tier =
+  typeof TIER_USER | typeof TIER_BOOK_PACKAGE | typeof TIER_DERIVED | typeof TIER_TRANSIENT;
 
 export const STAGING_CACHE_PREFIX = 'dl-staging/';
 export const BOOK_PACKAGE_CACHE_PREFIX = 'dl/';
@@ -33,8 +33,6 @@ const DERIVED_CACHE_NAMES: Record<string, boolean> = {
 };
 /** Workbox-owned caches (app shell) — never evicted. */
 const PROTECTED_CACHE_PREFIXES = ['workbox-precache'] as const;
-
-
 
 /**
  * Classify a CacheStorage name. Returns null for caches we must never evict

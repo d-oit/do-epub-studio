@@ -60,7 +60,12 @@ async function stampStagingFailed(cacheName: string): Promise<void> {
     const manifests = await listManifests();
     const manifest = manifests.find((m) => m.bookId === bookId && m.stagingCacheName === cacheName);
     if (manifest && manifest.state === 'staging') {
-      await failDownload(bookId, manifest.attemptId, 'evicted', 'Staging cache evicted under quota pressure');
+      await failDownload(
+        bookId,
+        manifest.attemptId,
+        'evicted',
+        'Staging cache evicted under quota pressure',
+      );
     }
   } catch {
     // IDB failure must not block eviction; recovery will reconcile.
@@ -85,7 +90,12 @@ export async function evictWhile(
   deps: EvictionDeps = {},
 ): Promise<EvictionResult> {
   const cacheStorage = deps.cacheStorage ?? getCacheStorage();
-  const result: EvictionResult = { freedBytes: 0, evictedBooks: [], removedCaches: [], usageRatioAfter: null };
+  const result: EvictionResult = {
+    freedBytes: 0,
+    evictedBooks: [],
+    removedCaches: [],
+    usageRatioAfter: null,
+  };
 
   if (!cacheStorage) {
     return result;
