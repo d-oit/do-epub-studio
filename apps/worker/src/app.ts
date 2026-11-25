@@ -99,7 +99,6 @@ app.route('/api', exportRouter);
 app.route('/api/author', authorRouter);
 app.route('/api/author', authorAssetsRouter);
 
-
 // Unknown paths return the standard JSON error envelope (with traceId) instead
 // of Hono's plain-text fallback, so every API response is machine-readable.
 app.notFound((c) => apiError(c, 404, 'NOT_FOUND', 'Route not found'));

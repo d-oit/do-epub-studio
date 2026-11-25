@@ -31,7 +31,6 @@ interface RouteMatcher {
 
 let matchers: RouteMatcher[] | null = null;
 
-
 function compileMatchers(): RouteMatcher[] {
   if (matchers) return matchers;
   matchers = API_CONTRACT_ROUTES.map((entry) => {

@@ -46,7 +46,9 @@ import {
 
 import type { ApiContractEntry } from './types';
 
-const InterchangeGetResponseSchema = apiSuccessEnvelope(AnnotationInterchangeDocumentSchema.nullable());
+const InterchangeGetResponseSchema = apiSuccessEnvelope(
+  AnnotationInterchangeDocumentSchema.nullable(),
+);
 
 const CreatorFeedbackDispositionBodySchema = z.object({
   disposition: FeedbackDispositionSchema,

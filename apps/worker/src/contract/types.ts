@@ -13,13 +13,7 @@ import type { ZodType } from 'zod';
 
 export type ContractMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
-export type ContractAuth =
-  | 'public'
-  | 'reader'
-  | 'author'
-  | 'admin'
-  | 'admin-step-up'
-  | 'admin-mfa';
+export type ContractAuth = 'public' | 'reader' | 'author' | 'admin' | 'admin-step-up' | 'admin-mfa';
 
 export type ContractResponseKind = 'json' | 'binary' | 'hybrid';
 
