@@ -26,6 +26,8 @@ interface RouteMatcher {
   paramSegments: boolean[];
   /** Literal segment values (only for non-param positions). */
   literalSegments: (string | undefined)[];
+  /** True when the pattern ends in a multi-segment wildcard (`:param{.+}`). */
+  multiSegmentWildcard: boolean;
   entry: ApiContractEntry;
 }
 
@@ -39,7 +41,16 @@ function compileMatchers(): RouteMatcher[] {
     const literalSegments = segments.map((segment, index) =>
       paramSegments[index] ? undefined : segment,
     );
-    return { method: entry.method, paramSegments, literalSegments, entry };
+    const lastPatternSegment = segments[segments.length - 1] ?? '';
+    const multiSegmentWildcard =
+      paramSegments[paramSegments.length - 1] === true && lastPatternSegment.endsWith('{.+}');
+    return {
+      method: entry.method,
+      paramSegments,
+      literalSegments,
+      multiSegmentWildcard,
+      entry,
+    };
   });
   return matchers;
 }
@@ -47,8 +58,15 @@ function compileMatchers(): RouteMatcher[] {
 /** Compare a request path (without query string) against a compiled matcher. */
 function matchesPath(requestPath: string, matcher: RouteMatcher): boolean {
   const segments = requestPath.replace(/\/+$/, '').split('/').filter(Boolean);
-  if (segments.length !== matcher.paramSegments.length) return false;
-  for (let i = 0; i < segments.length; i++) {
+  if (matcher.multiSegmentWildcard) {
+    // A trailing multi-segment wildcard absorbs every remaining segment, so
+    // the request path only needs to cover the pattern's preceding segments.
+    if (segments.length < matcher.paramSegments.length) return false;
+  } else if (segments.length !== matcher.paramSegments.length) {
+    return false;
+  }
+  const limit = matcher.multiSegmentWildcard ? matcher.paramSegments.length : segments.length;
+  for (let i = 0; i < limit; i++) {
     if (matcher.paramSegments[i]) continue;
     if (matcher.literalSegments[i] !== segments[i]) return false;
   }

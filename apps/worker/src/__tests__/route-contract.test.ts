@@ -5,6 +5,7 @@ import { makeEnv, makePassThroughContext } from './fixtures';
 import { app } from '../app';
 import { buildApiContract, readApiContractSnapshot } from '../contract/api-contract.generate';
 import { enforceContractResponse } from '../middleware/contract';
+import { matchContractRoute } from '../contract/registry';
 import type { ApiContractEntry } from '../contract/types';
 
 type ApiBody = {
@@ -29,6 +30,23 @@ describe('API contract snapshot', () => {
       version: committed.version,
       routes: committed.routes,
     });
+  });
+});
+
+describe('Contract registry path matching', () => {
+  it('multi-segment wildcard patterns match nested request paths', () => {
+    const nested = matchContractRoute('GET', '/api/files/b1/revisions/rev2/file.epub');
+    expect(nested).toBeDefined();
+    expect(nested?.path).toBe('/api/files/:bookId/:remainder{.+}');
+  });
+
+  it('multi-segment wildcard patterns still require their fixed segments', () => {
+    expect(matchContractRoute('GET', '/api/files/b1')).toBeUndefined();
+    expect(matchContractRoute('GET', '/api/other/b1/rev2/file.epub')).toBeUndefined();
+  });
+
+  it('single-segment wildcard routes do not absorb additional segments', () => {
+    expect(matchContractRoute('GET', '/api/catalog/extra')).toBeUndefined();
   });
 });
 

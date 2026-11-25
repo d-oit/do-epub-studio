@@ -141,4 +141,60 @@ describe('processEpubValidationQueue', () => {
 
     vi.unstubAllGlobals();
   });
+
+  it('acks a malformed message on terminal failure without touching the reports table', async () => {
+    const env = makeEnv();
+    const message = {
+      id: 'msg-bad',
+      timestamp: new Date(),
+      attempts: 5,
+      body: { noRevisionId: true },
+      ack: vi.fn(),
+      retry: vi.fn(),
+    };
+    mockExecute.mockClear();
+
+    const batch = {
+      queue: 'validation-queue',
+      messages: [message],
+      ackAll: vi.fn(),
+      retryAll: vi.fn(),
+    } as unknown as MessageBatch<EpubValidationMessage>;
+
+    await processEpubValidationQueue(batch, env);
+
+    expect(message.ack).toHaveBeenCalled();
+    expect(message.retry).not.toHaveBeenCalled();
+    expect(mockExecute).not.toHaveBeenCalled();
+  });
+
+  it('marks the report failed on terminal failure for a well-formed message', async () => {
+    const env = makeEnv();
+    mockExecute.mockClear();
+    mockQueryFirst.mockRejectedValueOnce(new Error('runner_unavailable'));
+
+    const message = {
+      id: 'msg-term',
+      timestamp: new Date(),
+      attempts: 5,
+      body: { bookId: 'b1', revisionId: 'rev1' },
+      ack: vi.fn(),
+      retry: vi.fn(),
+    };
+    const batch = {
+      queue: 'validation-queue',
+      messages: [message],
+      ackAll: vi.fn(),
+      retryAll: vi.fn(),
+    } as unknown as MessageBatch<EpubValidationMessage>;
+
+    await processEpubValidationQueue(batch, env);
+
+    expect(message.ack).toHaveBeenCalled();
+    expect(mockExecute).toHaveBeenCalledWith(
+      env,
+      expect.stringContaining("SET status = 'failed', failure_code = 'RUNNER_UNAVAILABLE'"),
+      [expect.any(String), 'rev1'],
+    );
+  });
 });
