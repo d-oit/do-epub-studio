@@ -11,8 +11,11 @@ bookmarks, comments), per-book reading progress, and reader preferences.
 ## Scope and guarantees
 
 - Export is **deterministic**: items are sorted by book id and annotation id,
-  and JSON key order is fixed, so identical input produces byte-identical
-  archives.
+  JSON key order is fixed, and envelope/item ids are content-derived (never
+  random), so the same input state at the same `exportedAt` produces
+  byte-identical archives. `exportedAt` records the export time, so archives
+  created at different times differ only in that timestamp and the ids
+  derived from it.
 - The envelope is a **documented interchange format**, not a dump of internal
   tables. Values mirror public API DTOs or the W3C/EPUB Annotations model;
   hidden database shapes are never exported. No email addresses or internal

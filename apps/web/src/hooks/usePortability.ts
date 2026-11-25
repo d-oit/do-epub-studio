@@ -59,18 +59,23 @@ export function usePortability() {
   const [state, setState] = useState<PortabilityDialogState>(initialState);
   const controllerRef = useRef<AbortController | null>(null);
 
-  const open = useCallback((scope: 'book' | 'account', book?: { id: string; title: string | null; slug: string }) => {
-    controllerRef.current?.abort();
-    setState(() => ({
-      ...initialState,
-      isOpen: true,
-      scope,
-      bookId: book?.id ?? null,
-      bookTitle: book?.title ?? null,
-      bookSlug: book?.slug ?? null,
-      includeBookFiles: scope === 'book',
-    }));
-  }, []);
+  const open = useCallback(
+    (scope: 'book' | 'account', book?: { id: string; title: string | null; slug: string }) => {
+      controllerRef.current?.abort();
+      setState(() => ({
+        ...initialState,
+        isOpen: true,
+        scope,
+        bookId: book?.id ?? null,
+        bookTitle: book?.title ?? null,
+        bookSlug: book?.slug ?? null,
+        // Bundling EPUB files is an explicit opt-in shown only for account
+        // scope; it must never default on (book scopes have no toggle).
+        includeBookFiles: false,
+      }));
+    },
+    [],
+  );
 
   const close = useCallback(() => {
     controllerRef.current?.abort();
@@ -81,44 +86,56 @@ export function usePortability() {
     setState((prev) => ({ ...prev, includeBookFiles }));
   }, []);
 
-  const exportArchive = useCallback(
-    async () => {
-      if (!token) {
-        setState((prev) => ({ ...prev, error: t('portability.signInRequired') }));
+  const exportArchive = useCallback(async () => {
+    if (!token) {
+      setState((prev) => ({ ...prev, error: t('portability.signInRequired') }));
+      return;
+    }
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setState((prev) => ({ ...prev, error: null, lastResult: null }));
+    try {
+      const books = await fetchLibraryBooks(token, controller.signal);
+      const scope = state.scope;
+      const targets = scope === 'account' ? books : books.filter((b) => b.id === state.bookId);
+      if (targets.length === 0 && scope === 'book') {
+        setState((prev) => ({ ...prev, error: t('portability.bookNotFound') }));
         return;
       }
-      const controller = new AbortController();
-      controllerRef.current = controller;
-      setState((prev) => ({ ...prev, error: null, lastResult: null }));
-      try {
-        const books = await fetchLibraryBooks(token, controller.signal);
-        const scope = state.scope;
-        const targets = scope === 'account' ? books : books.filter((b) => b.id === state.bookId);
-        if (targets.length === 0 && scope === 'book') {
-          setState((prev) => ({ ...prev, error: t('portability.bookNotFound') }));
-          return;
-        }
-        const states: Record<string, BookStateData> = {};
-        for (const book of targets) {
-          states[book.id] = await fetchBookState(book.id, token, controller.signal);
-        }
-        const archive = await exportPortabilityArchive({
-          token,
-          scope,
-          books: targets,
-          states,
-          includeBookFiles: state.includeBookFiles,
-          signal: controller.signal,
-        });
-        downloadBlob(archive.bytes, archive.filename, archive.mimeType);
-        setState((prev) => ({ ...prev, lastResult: t('portability.exportDone') }));
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-        setState((prev) => ({ ...prev, error: t('portability.exportFailed') }));
+      const states: Record<string, BookStateData> = {};
+      for (const book of targets) {
+        states[book.id] = await fetchBookState(book.id, token, controller.signal);
       }
-    },
-    [token, state.scope, state.bookId, state.includeBookFiles, t],
-  );
+      const readerPrefs = usePreferencesStore.getState().reader;
+      const preferences =
+        scope === 'account'
+          ? {
+              theme: readerPrefs.theme,
+              fontFamily: readerPrefs.fontFamily,
+              fontSize: readerPrefs.fontSize,
+              lineHeight: readerPrefs.lineHeight as 1 | 2 | 3,
+              pageWidth: readerPrefs.pageWidth,
+              direction: readerPrefs.direction,
+              writingMode: readerPrefs.writingMode,
+              aiEnabled: readerPrefs.aiEnabled,
+            }
+          : undefined;
+      const archive = await exportPortabilityArchive({
+        token,
+        scope,
+        books: targets,
+        states,
+        preferences,
+        includeBookFiles: state.includeBookFiles,
+        signal: controller.signal,
+      });
+      downloadBlob(archive.bytes, archive.filename, archive.mimeType);
+      setState((prev) => ({ ...prev, lastResult: t('portability.exportDone') }));
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
+      setState((prev) => ({ ...prev, error: t('portability.exportFailed') }));
+    }
+  }, [token, state.scope, state.bookId, state.includeBookFiles, t]);
 
   const importFile = useCallback(
     async (file: File) => {
@@ -143,7 +160,10 @@ export function usePortability() {
             highlights: reader.highlights,
             comments: reader.comments,
             bookmarks: reader.bookmarks,
-            progress: reader.progress,
+            progress: {
+              ...reader.progress,
+              revision: reader.progress.revision ?? 0,
+            },
           };
         } else {
           const books = await fetchLibraryBooks(token, controller.signal);
@@ -153,7 +173,10 @@ export function usePortability() {
               highlights: data.highlights,
               comments: data.comments,
               bookmarks: data.bookmarks,
-              progress: data.progress,
+              progress: {
+                ...data.progress,
+                revision: data.progress.revision ?? 0,
+              },
             };
           }
         }
@@ -174,52 +197,49 @@ export function usePortability() {
     [token, state.scope, state.bookId, t],
   );
 
-  const confirmImport = useCallback(
-    async () => {
-      if (!token || !state.preview) return;
-      const controller = new AbortController();
-      controllerRef.current = controller;
-      setState((prev) => ({ ...prev, isApplying: true, error: null }));
-      try {
-        const plan = await planImport(state.preview);
-        const result = await applyImportPlan({
-          token,
-          preview: state.preview,
-          plan,
-          signal: controller.signal,
-        });
+  const confirmImport = useCallback(async () => {
+    if (!token || !state.preview) return;
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setState((prev) => ({ ...prev, isApplying: true, error: null }));
+    try {
+      const plan = await planImport(state.preview);
+      const result = await applyImportPlan({
+        token,
+        preview: state.preview,
+        plan,
+        signal: controller.signal,
+      });
 
-        // Restore account-level preferences (user metadata) when present.
-        if (state.scope === 'account') {
-          const prefsItem = state.preview.envelope.items.find((i) => i.type === 'preferences');
-          if (prefsItem && prefsItem.type === 'preferences') {
-            const p = prefsItem.preferences;
-            usePreferencesStore.getState().setTheme(p.theme);
-            usePreferencesStore.getState().setFontFamily(p.fontFamily);
-            usePreferencesStore.getState().setFontSize(p.fontSize);
-            usePreferencesStore.getState().setPageWidth(p.pageWidth);
-            usePreferencesStore.getState().setDirection(p.direction);
-            usePreferencesStore.getState().setWritingMode(p.writingMode);
-            usePreferencesStore.getState().setAiEnabled(p.aiEnabled);
-          }
+      // Restore account-level preferences (user metadata) when present.
+      if (state.scope === 'account') {
+        const prefsItem = state.preview.envelope.items.find((i) => i.type === 'preferences');
+        if (prefsItem && prefsItem.type === 'preferences') {
+          const p = prefsItem.preferences;
+          usePreferencesStore.getState().setTheme(p.theme);
+          usePreferencesStore.getState().setFontFamily(p.fontFamily);
+          usePreferencesStore.getState().setFontSize(p.fontSize);
+          usePreferencesStore.getState().setPageWidth(p.pageWidth);
+          usePreferencesStore.getState().setDirection(p.direction);
+          usePreferencesStore.getState().setWritingMode(p.writingMode);
+          usePreferencesStore.getState().setAiEnabled(p.aiEnabled);
         }
-
-        setState((prev) => ({
-          ...prev,
-          isApplying: false,
-          preview: null,
-          lastResult: t('portability.importDone', {
-            applied: result.applied,
-            progress: result.progressApplied,
-          }),
-        }));
-      } catch (err) {
-        if ((err as Error)?.name === 'AbortError') return;
-        setState((prev) => ({ ...prev, isApplying: false, error: t('portability.applyFailed') }));
       }
-    },
-    [token, state.preview, state.scope, t],
-  );
+
+      setState((prev) => ({
+        ...prev,
+        isApplying: false,
+        preview: null,
+        lastResult: t('portability.importDone', {
+          applied: result.applied,
+          progress: result.progressApplied,
+        }),
+      }));
+    } catch (err) {
+      if ((err as Error)?.name === 'AbortError') return;
+      setState((prev) => ({ ...prev, isApplying: false, error: t('portability.applyFailed') }));
+    }
+  }, [token, state.preview, state.scope, t]);
 
   return {
     state,

@@ -33,6 +33,8 @@ export function buildAnnotationInterchange(params: {
     kind: 'highlight' | 'bookmark' | 'comment';
     id: string;
   }) => Record<string, unknown> | undefined;
+  /** Stable collection id (no `urn:uuid:` prefix) for deterministic exports. */
+  collectionId?: string;
 }): AnnotationInterchangeDocument {
   const source = publicationIdentity(params.bookId);
   const items: InterchangeAnnotation[] = [
@@ -88,7 +90,7 @@ export function buildAnnotationInterchange(params: {
     format: ANNOTATION_INTERCHANGE_FORMAT,
     version: ANNOTATION_INTERCHANGE_VERSION,
     type: 'AnnotationCollection',
-    id: `urn:uuid:${crypto.randomUUID()}`,
+    id: `urn:uuid:${params.collectionId ?? crypto.randomUUID()}`,
     label: params.bookTitle,
     source,
     items,
@@ -177,7 +179,9 @@ export function parseAnnotationInterchange(
   return { document, state };
 }
 
-export function interchangeDocumentToState(document: AnnotationInterchangeDocument): InterchangeState {
+export function interchangeDocumentToState(
+  document: AnnotationInterchangeDocument,
+): InterchangeState {
   const state: InterchangeState = { highlights: [], comments: [], bookmarks: [] };
   for (const item of document.items) {
     if (

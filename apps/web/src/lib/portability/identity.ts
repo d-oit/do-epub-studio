@@ -43,6 +43,11 @@ export async function stableUuid(namespace: string, name: string): Promise<strin
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
+/** Stable UUID v5 using the same Web Crypto implementation as import IDs. */
+export function deterministicUuid(name: string): Promise<string> {
+  return stableUuid(DNS_NAMESPACE, `do-epub-studio:portability:${name}`);
+}
+
 /** v5 id for an imported entity, stable per source entity. */
 export function importMutationId(envelopeId: string, sourceId: string): Promise<string> {
   return stableUuid(DNS_NAMESPACE, `do-epub-studio:import:${envelopeId}:${sourceId}`);

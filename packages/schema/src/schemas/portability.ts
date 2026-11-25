@@ -18,8 +18,7 @@ import { ProgressLocatorSchema } from './annotation';
 
 export const PORTABILITY_FORMAT = 'do-epub-studio.portability' as const;
 export const PORTABILITY_VERSION = 1 as const;
-export const PORTABILITY_PROFILE =
-  'https://do-epub-studio.org/profiles/portability/v1' as const;
+export const PORTABILITY_PROFILE = 'https://do-epub-studio.org/profiles/portability/v1' as const;
 
 /** Hard cap on envelope items (a library with more needs multiple archives). */
 export const PORTABILITY_MAX_ITEMS = 10_000;

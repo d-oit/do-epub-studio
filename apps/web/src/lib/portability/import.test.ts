@@ -37,7 +37,11 @@ const source = {
   bookmarks: [
     {
       id: 'b-1',
-      locator: { cfi: 'epubcfi(/6/4)', chapterRef: 'chapter.xhtml', selectedText: 'bookmark quote' },
+      locator: {
+        cfi: 'epubcfi(/6/4)',
+        chapterRef: 'chapter.xhtml',
+        selectedText: 'bookmark quote',
+      },
       label: 'bookmark',
       createdAt: '2026-01-01T00:00:00.000Z',
     },
@@ -50,8 +54,8 @@ const source = {
   },
 };
 
-function buildEnvelopeText() {
-  const envelope = buildPortabilityEnvelope({ scope: 'book', publications: [source] });
+async function buildEnvelopeText() {
+  const envelope = await buildPortabilityEnvelope({ scope: 'book', publications: [source] });
   return stringifyPortabilityEnvelope(envelope);
 }
 
@@ -61,7 +65,7 @@ const emptyCurrent: Record<string, ReadinessBookState | null> = {
 
 describe('portability import analysis', () => {
   it('round-trips a built envelope into preview + plan', async () => {
-    const text = buildEnvelopeText();
+    const text = await buildEnvelopeText();
     const preview = analyzeImport(text, emptyCurrent);
     expect(preview.summary.books).toBe(1);
     expect(preview.summary.totalAnnotations).toBe(3); // 2 highlights + 1 bookmark
@@ -77,15 +81,15 @@ describe('portability import analysis', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('never mutates its inputs (non-mutating preview guarantee)', () => {
-    const text = buildEnvelopeText();
+  it('never mutates its inputs (non-mutating preview guarantee)', async () => {
+    const text = await buildEnvelopeText();
     const snapshot = JSON.stringify(JSON.parse(text));
     analyzeImport(text, emptyCurrent);
     expect(JSON.stringify(JSON.parse(text))).toBe(snapshot);
   });
 
   it('detects duplicates against existing state and replans idempotently', async () => {
-    const text = buildEnvelopeText();
+    const text = await buildEnvelopeText();
     const plan = await planImport(analyzeImport(text, emptyCurrent));
     const ops = plan.operations;
     expect(ops.length).toBe(3);
@@ -122,7 +126,11 @@ describe('portability import analysis', () => {
       bookmarks: [
         {
           id: b0.targetId,
-          locator: { cfi: 'epubcfi(/6/4)', chapterRef: 'chapter.xhtml', selectedText: 'bookmark quote' },
+          locator: {
+            cfi: 'epubcfi(/6/4)',
+            chapterRef: 'chapter.xhtml',
+            selectedText: 'bookmark quote',
+          },
           label: 'bookmark',
           createdAt: '2026-01-01T00:00:00.000Z',
         },
@@ -140,9 +148,9 @@ describe('portability import analysis', () => {
     expect(nonProgress).toHaveLength(0);
   });
 
-  it('rejects tampered/invalid envelopes', () => {
+  it('rejects tampered/invalid envelopes', async () => {
     expect(() => analyzeImport('{', emptyCurrent)).toThrow(/Invalid JSON/);
-    const bad = buildEnvelopeText().replace(
+    const bad = (await buildEnvelopeText()).replace(
       '"format":"do-epub-studio.portability"',
       '"format":"evil"',
     );
@@ -195,11 +203,59 @@ describe('portability import analysis', () => {
   });
 
   it('derives stable mutation ids for idempotency', async () => {
-    const text = buildEnvelopeText();
+    const text = await buildEnvelopeText();
     const planA = await planImport(analyzeImport(text, emptyCurrent));
     const planB = await planImport(analyzeImport(text, emptyCurrent));
     expect(planA.operations.map((o) => o.mutationId)).toEqual(
       planB.operations.map((o) => o.mutationId),
     );
+  });
+
+  it('reports archive books absent from the library as skipped, never writes them', async () => {
+    const envelope = await buildPortabilityEnvelope({
+      scope: 'account',
+      publications: [
+        source,
+        { ...source, bookId: 'book-missing', slug: 'gone', title: 'Gone Book' },
+      ],
+    });
+    const preview = analyzeImport(stringifyPortabilityEnvelope(envelope), emptyCurrent);
+
+    expect(preview.summary.skippedBooks).toBe(1);
+    expect(preview.missingBooks).toEqual([{ bookId: 'book-missing', title: 'Gone Book' }]);
+    expect(preview.publications.map((p) => p.bookId)).toEqual(['book-1']);
+    expect(preview.summary.books).toBe(1);
+
+    const plan = await planImport(preview);
+    expect(plan.operations.every((op) => op.bookId !== 'book-missing')).toBe(true);
+  });
+
+  it('uses the current progress revision as baseRevision for updates', async () => {
+    const text = await buildEnvelopeText();
+    const current: ReadinessBookState = {
+      highlights: [],
+      comments: [],
+      bookmarks: [],
+      progress: {
+        locator: { cfi: 'epubcfi(/6/4!/4/2:3)' },
+        progressPercent: 40,
+        updatedAt: '2026-11-18T00:00:00.000Z',
+        revision: 4,
+      },
+    };
+    const preview = analyzeImport(text, { 'book-1': current });
+    expect(preview.publications[0]?.progressStatus).toBe('update');
+    expect(preview.publications[0]?.currentProgressRevision).toBe(4);
+
+    const plan = await planImport(preview);
+    const progressOp = plan.operations.find((op) => op.kind === 'progress');
+    expect(progressOp?.payload.baseRevision).toBe(4);
+  });
+
+  it('uses baseRevision 0 when the book has no progress yet', async () => {
+    const text = await buildEnvelopeText();
+    const plan = await planImport(analyzeImport(text, emptyCurrent));
+    const progressOp = plan.operations.find((op) => op.kind === 'progress');
+    expect(progressOp?.payload.baseRevision).toBe(0);
   });
 });

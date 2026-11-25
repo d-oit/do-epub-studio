@@ -23,6 +23,7 @@ export {
   CommentUpdateSchema,
   CspReportSchema,
   AuditQuerySchema,
+  LoginSchema,
   PaginationQuerySchema,
   ValidateQuerySchema,
   SignedUrlSchema,

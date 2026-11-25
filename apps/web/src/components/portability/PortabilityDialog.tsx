@@ -26,20 +26,16 @@ export function PortabilityDialog({
   onClose,
 }: PortabilityDialogProps) {
   const { t } = useTranslation();
-  const {
-    state,
-    open,
-    close,
-    setIncludeBookFiles,
-    exportArchive,
-    importFile,
-    confirmImport,
-  } = usePortability();
+  const { state, open, close, setIncludeBookFiles, exportArchive, importFile, confirmImport } =
+    usePortability();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      open(scope, bookId ? { id: bookId, title: bookTitle ?? null, slug: bookSlug ?? '' } : undefined);
+      open(
+        scope,
+        bookId ? { id: bookId, title: bookTitle ?? null, slug: bookSlug ?? '' } : undefined,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open is stable enough; re-open only on visibility change
   }, [isOpen, scope, bookId, bookTitle, bookSlug]);
@@ -72,13 +68,19 @@ export function PortabilityDialog({
                 </span>
               </label>
             )}
-            <Button className="mt-3" onClick={() => void exportArchive()} isLoading={state.isAnalyzing}>
+            <Button
+              className="mt-3"
+              onClick={() => void exportArchive()}
+              isLoading={state.isAnalyzing}
+            >
               {t('portability.exportAll')}
             </Button>
           </div>
 
           <div className="rounded-lg border border-border bg-background-secondary p-4">
-            <h3 className="text-sm font-semibold text-foreground">{t('portability.importTitle')}</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              {t('portability.importTitle')}
+            </h3>
             <Button
               variant="secondary"
               className="mt-3"

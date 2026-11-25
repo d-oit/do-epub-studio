@@ -915,7 +915,7 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'portability.description':
     'Annotations, highlights, bookmarks, reading progress, and your reader preferences can be exported as a versioned JSON archive (optionally bundled with your book files) and restored later. Export does not include any hidden internal data.',
   'portability.exportAll': 'Export everything',
-  'portability.exportBook': 'Export this book\'s data',
+  'portability.exportBook': "Export this book's data",
   'portability.exportInProgress': 'Preparing export…',
   'portability.exportDone': 'Export ready — download started',
   'portability.exportFailed': 'Export failed. Please try again.',
@@ -927,7 +927,8 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'portability.importBook': 'Import archive for this book',
   'portability.importInvalid': 'This file is not a valid portability archive.',
   'portability.applyFailed': 'Import failed. No changes were applied.',
-  'portability.importDone': 'Import finished: {applied} annotations added, {progress} progress records restored.',
+  'portability.importDone':
+    'Import finished: {applied} annotations added, {progress} progress records restored.',
   'portability.signInRequired': 'Sign in to export or import data.',
   'portability.bookNotFound': 'This book is not in your library.',
   'portability.previewTitle': 'Review import',
@@ -947,5 +948,6 @@ export const ko: Record<TranslationKeys, TranslationValue> = {
   'portability.applying': 'Importing…',
   'portability.confirmImport': 'Confirm import',
   'portability.helpLink': 'Data portability help',
-
+  'portability.skippedBooks': '건너뛴 책',
+  'portability.skippedBookBadge': '내 라이브러리에 없음',
 };

@@ -2,7 +2,12 @@ import JSZip from 'jszip';
 import { apiRequest } from '../api/core';
 import type { LibraryBookResponse } from '@do-epub-studio/shared';
 import type { Bookmark, Comment, Highlight, ReadingProgress } from '../../stores/reader';
-import type { PortabilityProgress, PortabilityScope } from '@do-epub-studio/schema';
+import type {
+  PortabilityEnvelope,
+  PortabilityPreferences,
+  PortabilityProgress,
+  PortabilityScope,
+} from '@do-epub-studio/schema';
 import {
   buildPortabilityEnvelope,
   stringifyPortabilityEnvelope,
@@ -41,6 +46,30 @@ export async function fetchLibraryBooks(
   }
   return books;
 }
+/** Reader-state list endpoints page in fixed chunks; fetch every page. */
+export const BOOK_STATE_PAGE_SIZE = 1000;
+
+/**
+ * Collect all pages of a paginated list endpoint. The endpoint returns a flat
+ * array capped at `pageSize`; a short page (or empty one) means we have them
+ * all. Without this, large libraries would silently drop later items.
+ */
+export async function collectPaged<T>(
+  pageFetcher: (limit: number, offset: number, signal?: AbortSignal) => Promise<T[]>,
+  pageSize: number,
+  signal?: AbortSignal,
+): Promise<T[]> {
+  const items: T[] = [];
+  let offset = 0;
+  while (true) {
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    const page = await pageFetcher(pageSize, offset, signal);
+    items.push(...page);
+    if (page.length < pageSize) break;
+    offset += page.length;
+  }
+  return items;
+}
 
 /** Fetch one book's reader state (annotations + progress), paged, cancelable. */
 export async function fetchBookState(
@@ -51,25 +80,42 @@ export async function fetchBookState(
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   const [highlights, comments, bookmarks, progress] = await Promise.all([
-    apiRequest<Highlight[]>(`/api/books/${bookId}/highlights?limit=1000&offset=0`, {
-      method: 'GET',
-      token,
+    collectPaged(
+      (limit, offset, sig) =>
+        apiRequest<Highlight[]>(`/api/books/${bookId}/highlights?limit=${limit}&offset=${offset}`, {
+          method: 'GET',
+          token,
+          signal: sig,
+        }),
+      BOOK_STATE_PAGE_SIZE,
       signal,
-    }),
-    apiRequest<Comment[]>(`/api/books/${bookId}/comments?limit=1000&offset=0`, {
-      method: 'GET',
-      token,
-      signal,
-    }),
-    apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks?limit=1000&offset=0`, {
-      method: 'GET',
-      token,
-      signal,
-    }),
-    apiRequest<{ locator: { cfi?: string; chapterRef?: string; selectedText?: string } | null; progressPercent: number; updatedAt?: string; revision?: number }>(
-      `/api/books/${bookId}/progress`,
-      { method: 'GET', token, signal },
     ),
+    collectPaged(
+      (limit, offset, sig) =>
+        apiRequest<Comment[]>(`/api/books/${bookId}/comments?limit=${limit}&offset=${offset}`, {
+          method: 'GET',
+          token,
+          signal: sig,
+        }),
+      BOOK_STATE_PAGE_SIZE,
+      signal,
+    ),
+    collectPaged(
+      (limit, offset, sig) =>
+        apiRequest<Bookmark[]>(`/api/books/${bookId}/bookmarks?limit=${limit}&offset=${offset}`, {
+          method: 'GET',
+          token,
+          signal: sig,
+        }),
+      BOOK_STATE_PAGE_SIZE,
+      signal,
+    ),
+    apiRequest<{
+      locator: { cfi?: string; chapterRef?: string; selectedText?: string } | null;
+      progressPercent: number;
+      updatedAt?: string;
+      revision?: number;
+    }>(`/api/books/${bookId}/progress`, { method: 'GET', token, signal }),
   ]);
 
   return {
@@ -87,7 +133,13 @@ export async function fetchBookState(
 
 function toPortabilityProgress(p: ReadingProgress): PortabilityProgress | null {
   return {
-    locator: p.locator ? { cfi: p.locator.cfi ?? '', chapterRef: p.locator.chapterRef, selectedText: p.locator.selectedText } : null,
+    locator: p.locator
+      ? {
+          cfi: p.locator.cfi ?? '',
+          chapterRef: p.locator.chapterRef,
+          selectedText: p.locator.selectedText,
+        }
+      : null,
     progressPercent: p.progressPercent,
     updatedAt: p.updatedAt,
   };
@@ -101,7 +153,12 @@ export interface AccountExportSource {
 /** Assemble a full-account export source from the library + per-book state. */
 export function accountExportSource(data: AccountExportSource): PublicationExportSource[] {
   return data.books.map((book) => {
-    const state = data.states[book.id] ?? { highlights: [], comments: [], bookmarks: [], progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 } };
+    const state = data.states[book.id] ?? {
+      highlights: [],
+      comments: [],
+      bookmarks: [],
+      progress: { locator: null, progressPercent: 0, updatedAt: null, revision: 0 },
+    };
     return {
       bookId: book.id,
       slug: book.slug,
@@ -120,10 +177,36 @@ export interface ExportOptions {
   /** for book scope: the single book; for account scope: all library books */
   books: LibraryBookResponse[];
   states: Record<string, BookStateData>;
+  /** Reader preferences to embed (account scope only; ignored for book scope). */
+  preferences?: PortabilityPreferences;
   includeBookFiles?: boolean;
   signal?: AbortSignal;
   /** optional per-book progress override (e.g. from store) */
   progressOverride?: Record<string, ReadingProgress>;
+}
+
+export interface ExportEnvelopeOptions {
+  scope: PortabilityScope;
+  books: LibraryBookResponse[];
+  states: Record<string, BookStateData>;
+  /** Reader preferences to embed (account scope only; ignored for book scope). */
+  preferences?: PortabilityPreferences;
+}
+
+/**
+ * Assemble the export envelope (library sources + optional account-scope
+ * reader preferences). Book-scope exports never embed preferences, even when
+ * one is supplied, matching the restore flow (preferences are account-level).
+ */
+export async function buildExportEnvelope(
+  options: ExportEnvelopeOptions,
+): Promise<PortabilityEnvelope> {
+  const sources = accountExportSource({ books: options.books, states: options.states });
+  return buildPortabilityEnvelope({
+    scope: options.scope,
+    publications: sources,
+    preferences: options.scope === 'account' ? options.preferences : undefined,
+  });
 }
 
 export async function exportPortabilityArchive(options: ExportOptions): Promise<{
@@ -133,11 +216,11 @@ export async function exportPortabilityArchive(options: ExportOptions): Promise<
 }> {
   if (options.signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
-  const sources = accountExportSource({ books: options.books, states: options.states });
-  const envelope = buildPortabilityEnvelope({
+  const envelope = await buildExportEnvelope({
     scope: options.scope,
-    publications: sources,
-    preferences: options.scope === 'account' ? undefined : undefined,
+    books: options.books,
+    states: options.states,
+    preferences: options.preferences,
   });
   const json = stringifyPortabilityEnvelope(envelope);
 
@@ -152,14 +235,26 @@ export async function exportPortabilityArchive(options: ExportOptions): Promise<
       zip.file(`${book.slug}.epub`, fileBytes);
     }
     const blob = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' });
-    return { filename: `do-epub-studio-export-${envelope.exportedAt.slice(0, 10)}.zip`, mimeType: 'application/zip', bytes: blob };
+    return {
+      filename: `do-epub-studio-export-${envelope.exportedAt.slice(0, 10)}.zip`,
+      mimeType: 'application/zip',
+      bytes: blob,
+    };
   }
 
   const bytes = new TextEncoder().encode(json);
-  return { filename: `do-epub-studio-export-${envelope.exportedAt.slice(0, 10)}.json`, mimeType: 'application/json', bytes };
+  return {
+    filename: `do-epub-studio-export-${envelope.exportedAt.slice(0, 10)}.json`,
+    mimeType: 'application/json',
+    bytes,
+  };
 }
 
-async function getBookFileUrl(bookId: string, token: string, signal?: AbortSignal): Promise<string | null> {
+async function getBookFileUrl(
+  bookId: string,
+  token: string,
+  signal?: AbortSignal,
+): Promise<string | null> {
   try {
     const data = await apiRequest<{ url: string }>(`/api/books/${bookId}/file-url`, {
       method: 'POST',
@@ -181,7 +276,9 @@ async function fetchBytes(url: string, signal?: AbortSignal): Promise<Uint8Array
 }
 
 /** Parse an imported file: either a raw JSON envelope or a ZIP bundle. */
-export async function parsePortabilityFile(file: File | { name: string; bytes: Uint8Array }): Promise<{
+export async function parsePortabilityFile(
+  file: File | { name: string; bytes: Uint8Array },
+): Promise<{
   json: string;
   bookFiles: Map<string, Uint8Array>;
 }> {
@@ -194,7 +291,7 @@ export async function parsePortabilityFile(file: File | { name: string; bytes: U
   }
 
   const name = file.name ?? '';
-  if (name.endsWith('.zip') || bytes.slice(0, 2)[0] === 0x50 && bytes[1] === 0x4b) {
+  if (name.endsWith('.zip') || (bytes.slice(0, 2)[0] === 0x50 && bytes[1] === 0x4b)) {
     const zip = await JSZip.loadAsync(bytes);
     const manifest = zip.file('portability.json');
     if (!manifest) throw new Error('ZIP archive is missing portability.json');

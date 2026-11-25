@@ -26,44 +26,45 @@ bookmarksRouter.get(
   readerAuth,
   zValidator('query', PaginationQuerySchema),
   async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(
-    c.env,
-    auth,
-    bookId,
-    c.executionCtx,
-    getRequestTraceId(c),
-  );
-  if (mismatch) return mismatch.response;
-  const { limit, offset } = c.req.valid('query');
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
+    const { limit, offset } = c.req.valid('query');
 
-  const bookmarks = await queryAll<BookmarkRow>(
-    c.env,
-    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
-    [bookId, auth.email, limit, offset],
-  );
+    const bookmarks = await queryAll<BookmarkRow>(
+      c.env,
+      `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+      [bookId, auth.email, limit, offset],
+    );
 
-  const parsedBookmarks = await Promise.all(
-    bookmarks.map(async (bm) => ({
-      id: bm.id,
-      locator: await parseLocatorRow(
-        c.env,
-        bm.locator_json,
-        { entityType: 'bookmark', entityId: bm.id, bookId },
-        c.executionCtx,
-      ),
-      label: bm.label,
-      createdAt: bm.created_at,
-    })),
-  );
+    const parsedBookmarks = await Promise.all(
+      bookmarks.map(async (bm) => ({
+        id: bm.id,
+        locator: await parseLocatorRow(
+          c.env,
+          bm.locator_json,
+          { entityType: 'bookmark', entityId: bm.id, bookId },
+          c.executionCtx,
+        ),
+        label: bm.label,
+        createdAt: bm.created_at,
+      })),
+    );
 
-  return c.json({
-    ok: true,
-    data: parsedBookmarks.filter((bm) => bm.locator !== null),
-  });
-});
+    return c.json({
+      ok: true,
+      data: parsedBookmarks.filter((bm) => bm.locator !== null),
+    });
+  },
+);
 
 bookmarksRouter.post(
   '/:bookId/bookmarks',

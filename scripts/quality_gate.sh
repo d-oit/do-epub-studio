@@ -30,6 +30,8 @@ fi
 # shellcheck source=scripts/lib/colors.sh
 source "$REPO_ROOT/scripts/lib/colors.sh"
 
+# shellcheck source=scripts/lib/quality_gate_language_detection.sh
+source "$REPO_ROOT/scripts/lib/quality_gate_language_detection.sh"
 # FAILED acts as an error accumulator
 FAILED=0
 
@@ -118,13 +120,13 @@ if [ -f "go.mod" ]; then
 fi
 
 # Shell script detection via file existence
-if find . -name "*.sh" -not -path "./.git/*" | grep -q .; then
+if quality_gate_has_file "*.sh"; then
     echo -e "  ${GREEN}✓${NC} Shell scripts detected"
     DETECTED_LANGUAGES+=("shell")
 fi
 
 # Markdown detection via file existence
-if find . -name "*.md" -not -path "./.git/*" | grep -q .; then
+if quality_gate_has_file "*.md"; then
     echo -e "  ${GREEN}✓${NC} Markdown files detected"
     DETECTED_LANGUAGES+=("markdown")
 fi

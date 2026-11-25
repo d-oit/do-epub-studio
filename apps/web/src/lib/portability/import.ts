@@ -4,7 +4,10 @@ import {
   type PortabilityItem,
   type PortabilityPublicationItem,
 } from '@do-epub-studio/schema';
-import { interchangeDocumentToState, type InterchangeState } from '../../features/reader/lib/annotation-interchange';
+import {
+  interchangeDocumentToState,
+  type InterchangeState,
+} from '../../features/reader/lib/annotation-interchange';
 import { anchorIdentityKey, importMutationId } from './identity';
 
 /**
@@ -37,6 +40,8 @@ export interface PreviewPublication {
   bookId: string;
   title: string;
   progressStatus: 'new' | 'update' | 'identical' | 'skip';
+  /** Current server revision of the book's progress (0 when there is none). */
+  currentProgressRevision: number;
   annotations: PreviewAnnotation[];
   reanchorReport: ReanchorReport;
 }
@@ -46,6 +51,7 @@ export interface ReadinessBookState extends InterchangeState {
     locator: { cfi?: string } | null;
     progressPercent: number;
     updatedAt: string | null;
+    revision: number;
   } | null;
 }
 
@@ -53,6 +59,8 @@ export interface PortabilityPreview {
   envelope: PortabilityEnvelope;
   scope: 'book' | 'account';
   publications: PreviewPublication[];
+  /** Books in the archive that are absent from the current library (skipped). */
+  missingBooks: Array<{ bookId: string; title: string }>;
   preferences: { present: boolean; identical: boolean } | null;
   summary: {
     totalAnnotations: number;
@@ -112,16 +120,23 @@ interface CurrentAnnotations {
 }
 
 function currentAnchorKeys(state: InterchangeState): CurrentAnnotations {
-  const keyFn = (kind: 'highlight' | 'bookmark' | 'comment') => (params: {
-    cfi: string | null | undefined;
-    selectedText: string | null | undefined;
-    chapterRef: string | null | undefined;
-    body?: string | null;
-  }) => anchorIdentityKey({ kind, ...params });
+  const keyFn =
+    (kind: 'highlight' | 'bookmark' | 'comment') =>
+    (params: {
+      cfi: string | null | undefined;
+      selectedText: string | null | undefined;
+      chapterRef: string | null | undefined;
+      body?: string | null;
+    }) =>
+      anchorIdentityKey({ kind, ...params });
 
   const highlights = new Set(
     state.highlights.map((h) =>
-      keyFn('highlight')({ cfi: h.cfiRange, selectedText: h.selectedText, chapterRef: h.chapterRef }),
+      keyFn('highlight')({
+        cfi: h.cfiRange,
+        selectedText: h.selectedText,
+        chapterRef: h.chapterRef,
+      }),
     ),
   );
   const comments = new Set(
@@ -152,7 +167,10 @@ function progressStatus(
 ): PreviewPublication['progressStatus'] {
   if (!incoming) return 'skip';
   if (!current) return 'new';
-  if (current.progressPercent === incoming.progressPercent && current.updatedAt === incoming.updatedAt) {
+  if (
+    current.progressPercent === incoming.progressPercent &&
+    current.updatedAt === incoming.updatedAt
+  ) {
     return 'identical';
   }
   return 'update';
@@ -209,14 +227,23 @@ function analyzePublication(
   }
 
   const annotations: PreviewAnnotation[] = [];
-  const push = (kind: PreviewAnnotation['kind'], sourceId: string, params: {
-    cfi: string | null | undefined;
-    selectedText: string | null | undefined;
-    chapterRef: string | null | undefined;
-    body?: string | null;
-  }) => {
+  const push = (
+    kind: PreviewAnnotation['kind'],
+    sourceId: string,
+    params: {
+      cfi: string | null | undefined;
+      selectedText: string | null | undefined;
+      chapterRef: string | null | undefined;
+      body?: string | null;
+    },
+  ) => {
     const key = anchorIdentityKey({ kind, ...params });
-    const anchors = kind === 'highlight' ? anchorKeys.highlights : kind === 'comment' ? anchorKeys.comments : anchorKeys.bookmarks;
+    const anchors =
+      kind === 'highlight'
+        ? anchorKeys.highlights
+        : kind === 'comment'
+          ? anchorKeys.comments
+          : anchorKeys.bookmarks;
     const status: PreviewAnnotation['status'] = anchors.has(key) ? 'duplicate' : 'new';
     annotations.push({
       kind,
@@ -228,13 +255,26 @@ function analyzePublication(
   };
 
   for (const h of incomingState.highlights) {
-    push('highlight', h.id, { cfi: h.cfiRange, selectedText: h.selectedText, chapterRef: h.chapterRef });
+    push('highlight', h.id, {
+      cfi: h.cfiRange,
+      selectedText: h.selectedText,
+      chapterRef: h.chapterRef,
+    });
   }
   for (const b of incomingState.bookmarks) {
-    push('bookmark', b.id, { cfi: b.locator.cfi, selectedText: b.locator.selectedText, chapterRef: b.locator.chapterRef });
+    push('bookmark', b.id, {
+      cfi: b.locator.cfi,
+      selectedText: b.locator.selectedText,
+      chapterRef: b.locator.chapterRef,
+    });
   }
   for (const c of incomingState.comments) {
-    push('comment', c.id, { cfi: c.cfiRange, selectedText: c.selectedText, chapterRef: c.chapterRef, body: c.body });
+    push('comment', c.id, {
+      cfi: c.cfiRange,
+      selectedText: c.selectedText,
+      chapterRef: c.chapterRef,
+      body: c.body,
+    });
   }
 
   // Sources that exactly match an existing entity id are conflicts (same id,
@@ -254,6 +294,7 @@ function analyzePublication(
     bookId: item.bookId,
     title: item.title,
     progressStatus: progressStatus(item.progress, current?.progress ?? null),
+    currentProgressRevision: current?.progress?.revision ?? 0,
     annotations,
     reanchorReport: buildReanchorReport(annotations),
   };
@@ -276,25 +317,43 @@ export function analyzeImport(
   const envelope = PortabilityEnvelopeSchema.parse(input);
 
   const publications: PreviewPublication[] = [];
+  const missingBooks: Array<{ bookId: string; title: string }> = [];
   for (const item of envelope.items) {
-    if (item.type === 'publication') {
-      publications.push(analyzePublication(item, currentByBook[item.bookId] ?? null));
+    if (item.type !== 'publication') continue;
+    // A book absent from the current library cannot be imported into; it is
+    // reported as skipped and never scheduled for writes.
+    if (!Object.prototype.hasOwnProperty.call(currentByBook, item.bookId)) {
+      missingBooks.push({ bookId: item.bookId, title: item.title });
+      continue;
     }
+    publications.push(analyzePublication(item, currentByBook[item.bookId] ?? null));
   }
 
-  const preferencesItem = envelope.items.find((i): i is Extract<PortabilityItem, { type: 'preferences' }> => i.type === 'preferences');
+  const preferencesItem = envelope.items.find(
+    (i): i is Extract<PortabilityItem, { type: 'preferences' }> => i.type === 'preferences',
+  );
   const preferences = preferencesItem ? { present: true, identical: false } : null;
 
   const totalAnnotations = publications.reduce((n, p) => n + p.annotations.length, 0);
-  const newAnnotations = publications.reduce((n, p) => n + p.annotations.filter((a) => a.status === 'new').length, 0);
-  const duplicateAnnotations = publications.reduce((n, p) => n + p.annotations.filter((a) => a.status === 'duplicate').length, 0);
-  const conflictAnnotations = publications.reduce((n, p) => n + p.annotations.filter((a) => a.status === 'conflict').length, 0);
-  const skippedBooks = publications.filter((p) => p.progressStatus === 'skip').length;
+  const newAnnotations = publications.reduce(
+    (n, p) => n + p.annotations.filter((a) => a.status === 'new').length,
+    0,
+  );
+  const duplicateAnnotations = publications.reduce(
+    (n, p) => n + p.annotations.filter((a) => a.status === 'duplicate').length,
+    0,
+  );
+  const conflictAnnotations = publications.reduce(
+    (n, p) => n + p.annotations.filter((a) => a.status === 'conflict').length,
+    0,
+  );
+  const skippedBooks = missingBooks.length;
 
   return {
     envelope,
     scope: envelope.scope,
     publications,
+    missingBooks,
     preferences,
     summary: {
       totalAnnotations,
@@ -312,9 +371,7 @@ export function analyzeImport(
  * to deterministic v5 UUIDs derived from the envelope id + source id, so
  * re-importing the same archive replays identical ids (idempotent).
  */
-export async function planImport(
-  preview: PortabilityPreview,
-): Promise<ImportPlan> {
+export async function planImport(preview: PortabilityPreview): Promise<ImportPlan> {
   const operations: ImportEntityOperation[] = [];
   const perBook: ImportPlan['perBook'] = {};
   const envelopeId = preview.envelope.id;
@@ -322,19 +379,27 @@ export async function planImport(
   for (const publication of preview.publications) {
     const bookOps: { annotations: number; progress: boolean } = { annotations: 0, progress: false };
     const item = preview.envelope.items.find(
-      (i): i is PortabilityPublicationItem => i.type === 'publication' && i.bookId === publication.bookId,
+      (i): i is PortabilityPublicationItem =>
+        i.type === 'publication' && i.bookId === publication.bookId,
     );
     if (!item) continue;
     const state = interchangeDocumentToState(item.annotations);
 
     for (const annotation of publication.annotations) {
       if (annotation.status !== 'new') continue;
-      const mutationId = await importMutationId(envelopeId, `${publication.bookId}:${annotation.sourceId}`);
-      const targetId = await importMutationId(envelopeId, `entity:${publication.bookId}:${annotation.sourceId}`);
+      const mutationId = await importMutationId(
+        envelopeId,
+        `${publication.bookId}:${annotation.sourceId}`,
+      );
+      const targetId = await importMutationId(
+        envelopeId,
+        `entity:${publication.bookId}:${annotation.sourceId}`,
+      );
       annotation.targetId = targetId;
-      const source = state.highlights.find((h) => h.id === annotation.sourceId)
-        ?? state.comments.find((c) => c.id === annotation.sourceId)
-        ?? state.bookmarks.find((b) => b.id === annotation.sourceId);
+      const source =
+        state.highlights.find((h) => h.id === annotation.sourceId) ??
+        state.comments.find((c) => c.id === annotation.sourceId) ??
+        state.bookmarks.find((b) => b.id === annotation.sourceId);
       if (!source) continue;
 
       // Locator-less orphans cannot be created through the API (create
@@ -342,12 +407,12 @@ export async function planImport(
       // as unanchored and left for the reader's re-anchor flow.
       const hasCfi =
         annotation.kind === 'bookmark'
-          ? Boolean((source as typeof state.bookmarks[number]).locator?.cfi)
-          : Boolean((source as typeof state.highlights[number]).cfiRange);
+          ? Boolean((source as (typeof state.bookmarks)[number]).locator?.cfi)
+          : Boolean((source as (typeof state.highlights)[number]).cfiRange);
       if (!hasCfi) continue;
       let payload: Record<string, unknown>;
       if (annotation.kind === 'highlight') {
-        const h = source as typeof state.highlights[number];
+        const h = source as (typeof state.highlights)[number];
         payload = {
           mutationId,
           locator: {
@@ -359,7 +424,7 @@ export async function planImport(
           color: h.color,
         };
       } else if (annotation.kind === 'comment') {
-        const c = source as typeof state.comments[number];
+        const c = source as (typeof state.comments)[number];
         payload = {
           mutationId,
           locator: {
@@ -372,7 +437,7 @@ export async function planImport(
           parentCommentId: c.parentCommentId ?? undefined,
         };
       } else {
-        const b = source as typeof state.bookmarks[number];
+        const b = source as (typeof state.bookmarks)[number];
         payload = {
           mutationId,
           locator: {
@@ -383,11 +448,22 @@ export async function planImport(
           label: b.label ?? undefined,
         };
       }
-      operations.push({ kind: annotation.kind, bookId: publication.bookId, sourceId: annotation.sourceId, targetId, mutationId, payload });
+      operations.push({
+        kind: annotation.kind,
+        bookId: publication.bookId,
+        sourceId: annotation.sourceId,
+        targetId,
+        mutationId,
+        payload,
+      });
       bookOps.annotations += 1;
     }
 
-    if (item.progress && publication.progressStatus !== 'skip' && publication.progressStatus !== 'identical') {
+    if (
+      item.progress &&
+      publication.progressStatus !== 'skip' &&
+      publication.progressStatus !== 'identical'
+    ) {
       const mutationId = await importMutationId(envelopeId, `progress:${publication.bookId}`);
       operations.push({
         kind: 'progress',
@@ -397,7 +473,10 @@ export async function planImport(
         mutationId,
         payload: {
           mutationId,
-          baseRevision: 0,
+          // The worker's progress endpoint rejects writes whose baseRevision is
+          // stale; use the revision observed at analysis time (0 when the book
+          // has no progress yet) so updates don't 409 mid-import.
+          baseRevision: publication.currentProgressRevision,
           locator: item.progress.locator ?? {},
           progressPercent: item.progress.progressPercent,
         },

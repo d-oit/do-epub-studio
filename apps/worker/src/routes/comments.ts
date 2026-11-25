@@ -5,7 +5,11 @@ import type { AuthContext } from '../auth/middleware';
 import { queryFirst, queryAll, execute } from '../db/client';
 import { logAudit } from '../audit';
 import { getGrantByBookAndSession, computeCapabilities } from '../auth/password';
-import { CommentCreateSchema, CommentUpdateSchema, PaginationQuerySchema } from '@do-epub-studio/shared';
+import {
+  CommentCreateSchema,
+  CommentUpdateSchema,
+  PaginationQuerySchema,
+} from '@do-epub-studio/shared';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { getRequestTraceId } from '../lib/api-error';
 import { readerAuth } from '../middleware/auth';
@@ -75,37 +79,38 @@ commentsRouter.get(
   readerAuth,
   zValidator('query', PaginationQuerySchema),
   async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(
-    c.env,
-    auth,
-    bookId,
-    c.executionCtx,
-    getRequestTraceId(c),
-  );
-  if (mismatch) return mismatch.response;
-  const { limit, offset } = c.req.valid('query');
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
+    const { limit, offset } = c.req.valid('query');
 
-  const anchorStatus = c.req.query('anchorStatus');
-  let query = `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?)`;
-  const params: (string | number | null)[] = [bookId, auth.email];
+    const anchorStatus = c.req.query('anchorStatus');
+    let query = `SELECT * FROM comments WHERE book_id = ? AND status != 'deleted' AND (visibility = 'shared' OR user_email = ?)`;
+    const params: (string | number | null)[] = [bookId, auth.email];
 
-  if (anchorStatus) {
-    query += ` AND anchor_status = ?`;
-    params.push(anchorStatus);
-  }
+    if (anchorStatus) {
+      query += ` AND anchor_status = ?`;
+      params.push(anchorStatus);
+    }
 
-  query += ` ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?`;
-  params.push(limit, offset);
-  const comments = await queryAll<CommentRow>(c.env, query, params);
+    query += ` ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?`;
+    params.push(limit, offset);
+    const comments = await queryAll<CommentRow>(c.env, query, params);
 
-  return c.json({
-    ok: true,
-    data: comments.map((cm) => toCommentDTO(cm, auth.email)),
-  });
-});
+    return c.json({
+      ok: true,
+      data: comments.map((cm) => toCommentDTO(cm, auth.email)),
+    });
+  },
+);
 
 commentsRouter.post(
   '/books/:bookId/comments',

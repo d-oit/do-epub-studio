@@ -8,6 +8,7 @@ import {
   type PortabilityProgress,
 } from '@do-epub-studio/schema';
 import { buildAnnotationInterchange } from '../../features/reader/lib/annotation-interchange';
+import { deterministicUuid } from './identity';
 import type { Bookmark, Comment, Highlight } from '../../stores/reader';
 import { APP_VERSION_LABEL } from '../../config/app-identity';
 export const EXT_NS = 'https://do-epub-studio.org/extensions/v1';
@@ -40,14 +41,13 @@ export interface PortabilityBuildOptions {
   };
 }
 
-
 /**
  * Confirm a single publication identity losslessly (including internal anchor
  * bookkeeping) as an EPUB Annotations document. The `extensionsFor` callback
  * receives the source record kind and id and returns HTTPS-namespaced JSON
  * keys; those keys are preserved verbatim through round-trips.
  */
-function buildPublicationDocument(source: PublicationExportSource) {
+async function buildPublicationDocument(source: PublicationExportSource) {
   return buildAnnotationInterchange({
     bookId: source.bookId,
     bookTitle: source.title,
@@ -56,6 +56,7 @@ function buildPublicationDocument(source: PublicationExportSource) {
       bookmarks: source.bookmarks,
       comments: source.comments,
     },
+    collectionId: await deterministicUuid(`collection:${source.bookId}`),
     extensionsFor: (item) => {
       if (item.kind === 'highlight') {
         const highlight = source.highlights.find((h) => h.id === item.id);
@@ -94,78 +95,81 @@ function buildPublicationDocument(source: PublicationExportSource) {
 }
 
 /**
- * Deterministic envelope builder. Items are sorted by book id, and each
- * publication's annotation items are sorted by annotation id, so identical
- * input bytes produce byte-identical archives (JSON key order is stable).
+ * Deterministic envelope builder. Items are sorted by book id, each
+ * publication's annotation items are sorted by annotation id, JSON key order
+ * is fixed, and envelope/item ids are content-derived (no randomness), so the
+ * same input state at the same `exportedAt` produces byte-identical archives.
  */
-export function buildPortabilityEnvelope(options: PortabilityBuildOptions): PortabilityEnvelope {
-  const publications = [...options.publications].sort((a, b) =>
-    a.bookId.localeCompare(b.bookId),
-  );
+export async function buildPortabilityEnvelope(
+  options: PortabilityBuildOptions,
+): Promise<PortabilityEnvelope> {
+  const publications = [...options.publications].sort((a, b) => a.bookId.localeCompare(b.bookId));
 
-  const items: PortabilityEnvelope['items'] = publications.map((source) => {
-    const hasLocator = (h: Highlight) => Boolean(h.cfiRange && h.chapterRef && h.selectedText);
-    const completeState = {
-      highlights: source.highlights.filter(hasLocator),
-      bookmarks: source.bookmarks.filter(
-        (b) => Boolean(b.locator.cfi && b.locator.chapterRef && b.locator.selectedText),
-      ),
-      comments: source.comments.filter(
-        (c) => Boolean(c.cfiRange && c.chapterRef && c.selectedText),
-      ),
-    };
-    const document = buildPublicationDocument({ ...source, ...completeState });
-    const sortedItems = [...document.items].sort((a, b) => a.id.localeCompare(b.id));
-
-    const orphanHighlights = source.highlights.filter((h) => !hasLocator(h));
-    const orphanBookmarks = source.bookmarks.filter(
-      (b) => !(b.locator.cfi && b.locator.chapterRef && b.locator.selectedText),
-    );
-    const orphanComments = source.comments.filter(
-      (c) => !(c.cfiRange && c.chapterRef && c.selectedText),
-    );
-    const publication: PortabilityPublicationItem = {
-      type: 'publication',
-      id: crypto.randomUUID(),
-      bookId: source.bookId,
-      slug: source.slug,
-      title: source.title,
-      annotations: { ...document, items: sortedItems },
-      progress: source.progress,
-    };
-    if (orphanHighlights.length > 0 || orphanBookmarks.length > 0 || orphanComments.length > 0) {
-      publication.orphans = {
-        highlights: orphanHighlights.map((h) => ({
-          id: h.id,
-          note: h.note,
-          color: h.color,
-          createdAt: h.createdAt,
-          updatedAt: h.updatedAt,
-        })),
-        bookmarks: orphanBookmarks.map((b) => ({
-          id: b.id,
-          label: b.label,
-          createdAt: b.createdAt,
-        })),
-        comments: orphanComments.map((c) => ({
-          id: c.id,
-          body: c.body,
-          status: c.status,
-          visibility: c.visibility,
-          parentCommentId: c.parentCommentId,
-          createdAt: c.createdAt,
-          updatedAt: c.updatedAt,
-          resolvedAt: c.resolvedAt,
-        })),
+  const items: PortabilityEnvelope['items'] = await Promise.all(
+    publications.map(async (source) => {
+      const hasLocator = (h: Highlight) => Boolean(h.cfiRange && h.chapterRef && h.selectedText);
+      const completeState = {
+        highlights: source.highlights.filter(hasLocator),
+        bookmarks: source.bookmarks.filter((b) =>
+          Boolean(b.locator.cfi && b.locator.chapterRef && b.locator.selectedText),
+        ),
+        comments: source.comments.filter((c) =>
+          Boolean(c.cfiRange && c.chapterRef && c.selectedText),
+        ),
       };
-    }
-    return publication;
-  });
+      const document = await buildPublicationDocument({ ...source, ...completeState });
+      const sortedItems = [...document.items].sort((a, b) => a.id.localeCompare(b.id));
+
+      const orphanHighlights = source.highlights.filter((h) => !hasLocator(h));
+      const orphanBookmarks = source.bookmarks.filter(
+        (b) => !(b.locator.cfi && b.locator.chapterRef && b.locator.selectedText),
+      );
+      const orphanComments = source.comments.filter(
+        (c) => !(c.cfiRange && c.chapterRef && c.selectedText),
+      );
+      const publication: PortabilityPublicationItem = {
+        type: 'publication',
+        id: await deterministicUuid(`publication:${source.bookId}`),
+        bookId: source.bookId,
+        slug: source.slug,
+        title: source.title,
+        annotations: { ...document, items: sortedItems },
+        progress: source.progress,
+      };
+      if (orphanHighlights.length > 0 || orphanBookmarks.length > 0 || orphanComments.length > 0) {
+        publication.orphans = {
+          highlights: orphanHighlights.map((h) => ({
+            id: h.id,
+            note: h.note,
+            color: h.color,
+            createdAt: h.createdAt,
+            updatedAt: h.updatedAt,
+          })),
+          bookmarks: orphanBookmarks.map((b) => ({
+            id: b.id,
+            label: b.label,
+            createdAt: b.createdAt,
+          })),
+          comments: orphanComments.map((c) => ({
+            id: c.id,
+            body: c.body,
+            status: c.status,
+            visibility: c.visibility,
+            parentCommentId: c.parentCommentId,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+            resolvedAt: c.resolvedAt,
+          })),
+        };
+      }
+      return publication;
+    }),
+  );
 
   if (options.preferences) {
     items.push({
       type: 'preferences',
-      id: crypto.randomUUID(),
+      id: await deterministicUuid('preferences:account'),
       preferences: {
         theme: options.preferences.theme as 'light' | 'dark' | 'sepia' | 'system',
         fontFamily: options.preferences.fontFamily as 'serif' | 'sans-serif' | 'monospace',
@@ -174,21 +178,23 @@ export function buildPortabilityEnvelope(options: PortabilityBuildOptions): Port
         pageWidth: options.preferences.pageWidth as 'narrow' | 'normal' | 'wide' | 'full',
         direction: options.preferences.direction as 'default' | 'ltr' | 'rtl',
         writingMode: options.preferences.writingMode as
-          | 'horizontal-tb'
-          | 'vertical-rl'
-          | 'vertical-lr',
+          'horizontal-tb' | 'vertical-rl' | 'vertical-lr',
         aiEnabled: options.preferences.aiEnabled,
       },
     });
   }
 
+  const exportedAt = options.exportedAt ?? new Date().toISOString();
+  const envelopeId = await deterministicUuid(
+    `envelope:${options.scope}:${exportedAt}:${JSON.stringify(items)}`,
+  );
   const envelope: PortabilityEnvelope = {
     format: PORTABILITY_FORMAT,
     version: PORTABILITY_VERSION,
     profile: PORTABILITY_PROFILE,
-    id: crypto.randomUUID(),
-    idempotencyKey: crypto.randomUUID(),
-    exportedAt: options.exportedAt ?? new Date().toISOString(),
+    id: envelopeId,
+    idempotencyKey: await deterministicUuid(`idempotency:${envelopeId}`),
+    exportedAt,
     scope: options.scope,
     app: {
       name: 'do-epub-studio',

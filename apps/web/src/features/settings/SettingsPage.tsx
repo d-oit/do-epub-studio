@@ -199,9 +199,7 @@ export function SettingsPage() {
         </section>
         {/* Data portability */}
         <section className="bg-background-secondary rounded-xl border border-border p-4 sm:p-6 shadow-sm min-w-0">
-          <h2 className="text-lg font-semibold text-foreground mb-2">
-            {t('portability.title')}
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground mb-2">{t('portability.title')}</h2>
           <p className="text-sm text-foreground-muted mb-4">{t('portability.subtitle')}</p>
           <button
             type="button"
