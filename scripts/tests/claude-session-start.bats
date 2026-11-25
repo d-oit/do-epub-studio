@@ -12,13 +12,18 @@ setup() {
     REPO_ROOT="$BATS_TEST_DIRNAME/../.."
     WORKDIR="$BATS_TEST_TMPDIR/repo"
     mkdir -p "$WORKDIR/scripts/hooks"
+    (unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR; git -C "$WORKDIR" init -q)
     cp "$SCRIPT" "$WORKDIR/scripts/hooks/claude-session-start.sh"
     chmod +x "$WORKDIR/scripts/hooks/claude-session-start.sh"
 }
 
 # Run the hook inside the isolated workdir and print its stdout.
 run_hook() {
-    (cd "$WORKDIR" && ./scripts/hooks/claude-session-start.sh </dev/null)
+    (
+        unset GIT_DIR GIT_WORK_TREE GIT_COMMON_DIR
+        cd "$WORKDIR"
+        ./scripts/hooks/claude-session-start.sh </dev/null
+    )
 }
 
 # Print the additionalContext string of the hook's JSON output.

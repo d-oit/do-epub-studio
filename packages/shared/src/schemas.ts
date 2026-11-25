@@ -24,6 +24,7 @@ export {
   CspReportSchema,
   AuditQuerySchema,
   LoginSchema,
+  PaginationQuerySchema,
   ValidateQuerySchema,
   SignedUrlSchema,
   UploadCompleteSchema,

@@ -32,6 +32,12 @@ Guidance specific to authoring and testing scripts in `scripts/`.
 
 - **`quality_gate.sh` takes an exclusive `flock`** on `${TMPDIR:-/tmp}/do-epub-studio-quality-gate.lock` and exits 2 when another instance holds it: concurrent gates share `<pkg>/coverage/.tmp` (vitest `ENOENT coverage-*.json`, "Something removed the coverage directory") and sibling tasks get SIGTERM'd (`Terminated`, exit 143) — failures that read as lint/test errors but are environmental.
 - **A section failure does not stop the gate**: it keeps running the remaining phases and reports at the end, so a mid-run tail showing `✗ Workflow validation FAILED` is _not_ completion — wait for the process to exit (or the final `All Quality Gates PASSED` / `Quality Gate FAILED` banner) before starting another run, or the two runs race.
+- **First-match file detection must stop `find` itself**: under `set -o
+pipefail`, `find ... | grep -q .` can emit `find: standard output: Broken
+pipe` after `grep` exits on the first match. Use `find -print -quit`.
+- **CI must install Bats before the full gate**: `quality_gate_secondary.sh`
+  runs `tests/` and `scripts/tests/` only if `bats` is on `PATH`; otherwise it
+  warns and skips them. The workflow pins `bats@1.13.0`.
 
 ## Dependabot SHA-allowlist dogfooding
 

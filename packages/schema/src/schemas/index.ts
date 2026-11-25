@@ -16,3 +16,4 @@ export * from './epub-validation';
 export * from './annotation-interchange';
 export * from './manuscript';
 export * from './api';
+export * from './portability';

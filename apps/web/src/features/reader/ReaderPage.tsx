@@ -36,11 +36,11 @@ const MediaOverlayBar = lazy(() =>
   import('./components/toolbar/MediaOverlayBar').then((m) => ({ default: m.MediaOverlayBar })),
 );
 import { AnnotationInterchangeBar } from './components/toolbar/AnnotationInterchangeBar';
-import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
+import { PortabilityDialog } from '../../components/portability/PortabilityDialog';
 import { NotificationPanel } from './components/notifications/NotificationPanel';
-import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
 import { initAiPlugins } from '../../lib/ai-plugins';
-
+import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
 // Reader route owns AI features (GOAP-262, issue #318): registering here keeps the
 // reader-core extension point out of the shared entry graph, honoring the
 // ADR-107 route boundary rules (catalog/admin/auth must not import
@@ -182,6 +182,7 @@ export function ReaderPage() {
       setChapter,
     );
   const [isMediaOverlayOpen, setIsMediaOverlayOpen] = useState(false);
+  const [isPortabilityOpen, setIsPortabilityOpen] = useState(false);
   const mediaOverlay = useMediaOverlay({
     book: bookRef.current,
     rendition: renditionRef.current,
@@ -253,6 +254,7 @@ export function ReaderPage() {
       <ScrollProgressBar />
       <ReaderToolbar
         bookTitle={bookTitle}
+        onOpenPortability={() => setIsPortabilityOpen(true)}
         bookSlug={bookSlug ?? ''}
         comments={optimisticState.comments}
         bookmarks={optimisticState.bookmarks}
@@ -280,6 +282,14 @@ export function ReaderPage() {
         onSelectRendition={(fullPath) => void switchRendition(fullPath)}
       />
       <AnnotationInterchangeBar bookId={bookId} bookTitle={bookTitle} onError={setError} />
+      <PortabilityDialog
+        isOpen={isPortabilityOpen}
+        scope="book"
+        bookId={bookId}
+        bookTitle={bookTitle}
+        bookSlug={bookSlug ?? null}
+        onClose={() => setIsPortabilityOpen(false)}
+      />
       {mediaOverlay.hasMediaOverlays && (isMediaOverlayOpen || mediaOverlay.isPlaying) && (
         <Suspense fallback={null}>
           <MediaOverlayBar

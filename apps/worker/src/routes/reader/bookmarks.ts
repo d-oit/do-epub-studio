@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator';
 import type { Env } from '../../lib/env';
 import type { AuthContext } from '../../auth/middleware';
 import { queryAll, queryFirst, execute } from '../../db/client';
-import { BookmarkCreateSchema } from '@do-epub-studio/shared';
+import { BookmarkCreateSchema, PaginationQuerySchema } from '@do-epub-studio/shared';
 import { readerAuth } from '../../middleware/auth';
 import { parseLocatorRow, assertBookAccess } from '../../lib/tenant-isolation';
 import { getRequestTraceId } from '../../lib/api-error';
@@ -21,44 +21,50 @@ interface BookmarkRow {
   created_at: string;
 }
 
-bookmarksRouter.get('/:bookId/bookmarks', readerAuth, async (c) => {
-  const bookId = c.req.param('bookId');
-  const auth = c.get('auth');
+bookmarksRouter.get(
+  '/:bookId/bookmarks',
+  readerAuth,
+  zValidator('query', PaginationQuerySchema),
+  async (c) => {
+    const bookId = c.req.param('bookId');
+    const auth = c.get('auth');
 
-  const mismatch = await assertBookAccess(
-    c.env,
-    auth,
-    bookId,
-    c.executionCtx,
-    getRequestTraceId(c),
-  );
-  if (mismatch) return mismatch.response;
+    const mismatch = await assertBookAccess(
+      c.env,
+      auth,
+      bookId,
+      c.executionCtx,
+      getRequestTraceId(c),
+    );
+    if (mismatch) return mismatch.response;
+    const { limit, offset } = c.req.valid('query');
 
-  const bookmarks = await queryAll<BookmarkRow>(
-    c.env,
-    `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC LIMIT 1000`,
-    [bookId, auth.email],
-  );
+    const bookmarks = await queryAll<BookmarkRow>(
+      c.env,
+      `SELECT * FROM bookmarks WHERE book_id = ? AND user_email = ? ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`,
+      [bookId, auth.email, limit, offset],
+    );
 
-  const parsedBookmarks = await Promise.all(
-    bookmarks.map(async (bm) => ({
-      id: bm.id,
-      locator: await parseLocatorRow(
-        c.env,
-        bm.locator_json,
-        { entityType: 'bookmark', entityId: bm.id, bookId },
-        c.executionCtx,
-      ),
-      label: bm.label,
-      createdAt: bm.created_at,
-    })),
-  );
+    const parsedBookmarks = await Promise.all(
+      bookmarks.map(async (bm) => ({
+        id: bm.id,
+        locator: await parseLocatorRow(
+          c.env,
+          bm.locator_json,
+          { entityType: 'bookmark', entityId: bm.id, bookId },
+          c.executionCtx,
+        ),
+        label: bm.label,
+        createdAt: bm.created_at,
+      })),
+    );
 
-  return c.json({
-    ok: true,
-    data: parsedBookmarks.filter((bm) => bm.locator !== null),
-  });
-});
+    return c.json({
+      ok: true,
+      data: parsedBookmarks.filter((bm) => bm.locator !== null),
+    });
+  },
+);
 
 bookmarksRouter.post(
   '/:bookId/bookmarks',

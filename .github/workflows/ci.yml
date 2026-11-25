@@ -438,6 +438,15 @@ jobs:
       - name: Check agent-adapter sync
         run: node scripts/check-agent-sync.mjs
 
+      # The hardened gate fails closed when a required tool is missing
+      # (GOAP-315): quality_gate_secondary.sh declares the shell's bats phase
+      # required whenever tests/ or scripts/tests/ exists. GitHub runners ship
+      # shellcheck but not bats, so CI provisions the official npm
+      # distribution at a pinned version the same way do-harness is pinned
+      # above.
+      - name: Install bats (shell-test runner, pinned)
+        run: npm install -g bats@1.13.0
+
       - name: Validate gate parity manifest
         run: bash scripts/validate-gate-parity.sh
 

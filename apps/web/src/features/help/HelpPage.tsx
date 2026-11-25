@@ -53,6 +53,19 @@ export function HelpPage() {
             </ul>
           </div>
         </section>
+        <div className="rounded-lg border border-border bg-background-secondary p-5 shadow-md sm:p-7">
+          <h2 className="text-lg font-semibold text-foreground">{t('portability.title')}</h2>
+          <p className="mt-2 text-sm text-foreground-muted">{t('portability.subtitle')}</p>
+          <p className="mt-2 text-sm text-foreground">{t('portability.description')}</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link to="/settings" /* eslint-disable-line i18next/no-literal-string -- route path */>
+              <Button variant="secondary">{t('portability.exportAll')}</Button>
+            </Link>
+            <Link to="/settings" /* eslint-disable-line i18next/no-literal-string -- route path */>
+              <Button variant="secondary">{t('portability.importTitle')}</Button>
+            </Link>
+          </div>
+        </div>
 
         <div className="mt-10 flex flex-col items-center gap-3">
           <Link to="/login" /* eslint-disable-line i18next/no-literal-string -- route path */>
