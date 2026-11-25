@@ -1,4 +1,10 @@
-import { beginDownload, commitDownload, failDownload, getManifest } from './manifest-store';
+import {
+  beginDownload,
+  commitDownload,
+  failDownload,
+  getManifest,
+  removeManifest,
+} from './manifest-store';
 import { getCacheStorage, isQuotaError, type CacheStorageLike } from './cache';
 import { sha256Hex } from './integrity';
 import { prepareSpaceFor } from './eviction';
@@ -174,16 +180,27 @@ export async function downloadBookForOffline(options: DownloadOptions): Promise<
       throw new OfflineDownloadError('integrity', message);
     }
 
-    // Promote the verified copy into the serving cache.
-    options.onProgress?.(bytes, expectedBytes || bytes);
-    const finalCache = await cacheStorage.open(cacheName);
-    await finalCache.put(resolved.url, canned);
-
     const resource: DownloadResourceSpec = { url: resolved.url, bytes, sha256 };
     const committed = await commitDownload(bookId, attemptId, [resource], bytes);
     if (!committed) {
       await scrubStaging();
       throw new OfflineDownloadError('race', 'Download superseded by a newer attempt');
+    }
+
+    // Promote the verified copy only after the CAS commit, so a superseded
+    // attempt never leaves its bytes in the serving cache.
+    options.onProgress?.(bytes, expectedBytes || bytes);
+    try {
+      const finalCache = await cacheStorage.open(cacheName);
+      await finalCache.put(resolved.url, canned);
+    } catch (err) {
+      await scrubStaging();
+      try {
+        await removeManifest(bookId);
+      } catch {
+        // Recovery quarantines a complete manifest with a missing resource.
+      }
+      throw new OfflineDownloadError(errorCodeOf(err), errorMessageOf(err));
     }
 
     await scrubStaging();

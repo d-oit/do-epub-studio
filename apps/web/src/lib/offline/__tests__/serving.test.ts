@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { serveBookResource } from '../serving';
 import { isBookOfflineReady, getOfflineStorageSummary } from '../offline-state';
-import { beginDownload, commitDownload } from '../manifest-store';
+import { beginDownload, commitDownload, getManifest } from '../manifest-store';
 import { InMemoryCacheStorage } from './mem-cache';
 import { resetIndexedDb } from './reset-idb';
 
@@ -58,6 +58,25 @@ describe('manifest-aware serving (issue #1485)', () => {
     expect(response?.status).toBe(206);
     expect(await response?.text()).toBe('2345');
     expect(response?.headers.get('Content-Range')).toBe(`bytes 2-5/${BODY.length}`);
+  });
+
+  it('serves the last N bytes for a suffix range request', async () => {
+    await completeBook();
+    const request = new Request(URL_A, { headers: { Range: 'bytes=-4' } });
+    const response = await serveBookResource(request, { cacheStorage: caches });
+    expect(response?.status).toBe(206);
+    expect(await response?.text()).toBe('6789');
+    expect(response?.headers.get('Content-Range')).toBe(`bytes 6-9/${BODY.length}`);
+  });
+
+  it('refreshes lastAccess for Range requests too (LRU heat)', async () => {
+    await completeBook();
+    const before = await getManifest('book-1');
+    await new Promise((r) => setTimeout(r, 5));
+    const request = new Request(URL_A, { headers: { Range: 'bytes=0-1' } });
+    await serveBookResource(request, { cacheStorage: caches });
+    const after = await getManifest('book-1');
+    expect(after?.lastAccess).toBeGreaterThan(before?.lastAccess ?? 0);
   });
 
   it('isBookOfflineReady is false when a resource is missing from the cache', async () => {

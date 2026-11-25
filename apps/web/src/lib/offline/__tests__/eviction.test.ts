@@ -139,6 +139,27 @@ describe('storage eviction (issue #1485)', () => {
     expect(result.evictedBooks).toContain('book-old');
   });
 
+  it('prepareSpaceFor stops before evicting books when cleared caches free enough', async () => {
+    await makeCompleteBook('book-old', 20 * MB, 1000);
+    const oldCache = await caches.open('dl/book-old');
+    await oldCache.put(`${SIGNED_URL}/book-old`, new Response('old'));
+    await caches.open('images');
+    await caches.open('external-assets');
+    usage = makeUsage(80 * MB, 100 * MB, {
+      'dl/book-old': 20 * MB,
+      images: 10 * MB,
+      'external-assets': 15 * MB,
+    });
+
+    const result = await prepareSpaceFor(20 * MB, {
+      cacheStorage: caches,
+      estimate: usage.estimate,
+    });
+
+    expect(result.evictedBooks).toEqual([]);
+    expect(await caches.keys()).toContain('dl/book-old');
+  });
+
   it('leaves storage alone when there is enough headroom', async () => {
     await makeCompleteBook('book-old', 20 * MB, 1000);
     const oldCache = await caches.open('dl/book-old');
