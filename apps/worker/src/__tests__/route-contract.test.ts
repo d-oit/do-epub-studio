@@ -7,7 +7,6 @@ import { buildApiContract, readApiContractSnapshot } from '../contract/api-contr
 import { enforceContractResponse } from '../middleware/contract';
 import type { ApiContractEntry } from '../contract/types';
 
-
 type ApiBody = {
   ok: boolean;
   data?: Record<string, unknown>;

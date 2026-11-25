@@ -28,10 +28,12 @@ export const ApiErrorEnvelopeSchema = z.object({
   error: ApiErrorSchema.passthrough(),
 });
 /** Health reports its payload at the envelope top level (`service`), not under `data`. */
-export const HealthResponseSchema = z.object({
-  ok: z.literal(true),
-  service: z.literal('do-epub-studio-worker'),
-}).passthrough();
+export const HealthResponseSchema = z
+  .object({
+    ok: z.literal(true),
+    service: z.literal('do-epub-studio-worker'),
+  })
+  .passthrough();
 /**
  * Wrap a data schema in the success envelope. Extra top-level keys are
  * allowed: several routes (e.g. GET /api/books/:bookId/annotation-interchange,
@@ -324,7 +326,6 @@ export const SearchResponseSchema = apiSuccessEnvelope(
     message: z.string().optional(),
   }),
 );
-
 
 export const NotificationsListResponseSchema = apiSuccessEnvelope(
   z.object({

@@ -1,6 +1,10 @@
 import { execute, queryFirst } from '../db/client';
 import type { Env } from './env';
-import { EpubValidationMessageSchema, EpubRunnerResultSchema, EPUBCHECK_VERSION } from '@do-epub-studio/schema';
+import {
+  EpubValidationMessageSchema,
+  EpubRunnerResultSchema,
+  EPUBCHECK_VERSION,
+} from '@do-epub-studio/schema';
 
 export interface EpubValidationMessage {
   bookId: string;

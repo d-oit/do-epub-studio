@@ -17,10 +17,15 @@ import { fileURLToPath } from 'node:url';
 const workerDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 try {
-  execFileSync('pnpm', ['exec', 'vitest', 'run', 'src/contract/api-contract.generate.runner.test.ts'], {
-    cwd: workerDir,
-    stdio: 'inherit',
-  });
+  execFileSync(
+    'pnpm',
+    ['exec', 'vitest', 'run', 'src/contract/api-contract.generate.runner.test.ts'],
+    {
+      cwd: workerDir,
+      stdio: 'inherit',
+      env: { ...process.env, API_CONTRACT_REGENERATE: '1' },
+    },
+  );
   console.log('api-contract.json written.');
 } catch (error) {
   process.exitCode = 1;

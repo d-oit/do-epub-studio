@@ -62,7 +62,12 @@ interchangeRouter.put(
     if (mismatch) return mismatch.response;
     const document = c.req.valid('json');
     if (document.source !== `urn:do-epub-studio:publication:${encodeURIComponent(bookId)}`) {
-      return apiError(c, 400, 'PUBLICATION_MISMATCH', 'Publication identity does not match this book');
+      return apiError(
+        c,
+        400,
+        'PUBLICATION_MISMATCH',
+        'Publication identity does not match this book',
+      );
     }
     const annotationIds = new Set<string>();
     for (const annotation of document.items) {
@@ -71,7 +76,12 @@ interchangeRouter.put(
         annotation.target.source !== document.source ||
         annotation.target.selector.value !== annotation.target.selector.locator.cfi
       ) {
-        return apiError(c, 400, 'INVALID_ANNOTATION', 'Annotation IDs must be unique and targets must be consistent');
+        return apiError(
+          c,
+          400,
+          'INVALID_ANNOTATION',
+          'Annotation IDs must be unique and targets must be consistent',
+        );
       }
       annotationIds.add(annotation.id);
       if (

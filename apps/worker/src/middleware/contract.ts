@@ -6,7 +6,6 @@ import { matchContractRoute } from '../contract/registry';
 import { apiError, getRequestTraceId } from '../lib/api-error';
 import { logAppError } from '../lib/observability';
 
-
 /**
  * Runtime response-boundary enforcement (issue #1489).
  *
@@ -31,7 +30,6 @@ export const contractEnforcement: MiddlewareHandler<{ Bindings: Env }> = async (
   const entry = matchContractRoute(c.req.method, c.req.path);
   if (!entry || entry.responseKind === 'binary') return;
 
-
   await enforceContractResponse(c, entry);
 };
 
@@ -39,10 +37,7 @@ export const contractEnforcement: MiddlewareHandler<{ Bindings: Env }> = async (
  * Enforce the contract for a matched route. Split from the middleware so the
  * enforcement branches are unit-testable against a fabricated registry entry.
  */
-export async function enforceContractResponse(
-  c: Context,
-  entry: ApiContractEntry,
-): Promise<void> {
+export async function enforceContractResponse(c: Context, entry: ApiContractEntry): Promise<void> {
   const traceId = getRequestTraceId(c);
   const res = c.res;
   const contentType = res.headers.get('content-type') ?? '';
@@ -106,8 +101,7 @@ export async function enforceContractResponse(
 
   if (envelope.ok === false) {
     const error = envelope.error as
-      | { code?: unknown; message?: unknown; traceId?: unknown }
-      | undefined;
+      { code?: unknown; message?: unknown; traceId?: unknown } | undefined;
     // Keep the response when it already carries a machine-readable error code —
     // some internal paths (tenant isolation) hand back compact error objects,
     // and replacing them with 500 would break established client contracts.

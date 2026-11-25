@@ -1,6 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { EpubValidationMessageSchema, EpubRunnerResultSchema, EPUBCHECK_VERSION } from '@do-epub-studio/schema';
-import { enqueueEpubValidation, processEpubValidationQueue, type EpubValidationMessage } from '../lib/epub-validation-queue';
+import {
+  EpubValidationMessageSchema,
+  EpubRunnerResultSchema,
+  EPUBCHECK_VERSION,
+} from '@do-epub-studio/schema';
+import {
+  enqueueEpubValidation,
+  processEpubValidationQueue,
+  type EpubValidationMessage,
+} from '../lib/epub-validation-queue';
 import { makeEnv } from './fixtures';
 
 describe('EPUB validation queue contract', () => {
