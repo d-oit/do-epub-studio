@@ -9,7 +9,7 @@ import type { AuthContext } from '../../auth/middleware';
 import { queryFirst, execute } from '../../db/client';
 import { readerAuth } from '../../middleware/auth';
 import { assertBookAccess } from '../../lib/tenant-isolation';
-import { getRequestTraceId } from '../../lib/api-error';
+import { apiError, getRequestTraceId } from '../../lib/api-error';
 
 export const interchangeRouter = new Hono<{ Bindings: Env; Variables: { auth: AuthContext } }>();
 
@@ -42,19 +42,9 @@ interchangeRouter.get('/:bookId/annotation-interchange', readerAuth, async (c) =
       updatedAt: row.updated_at,
     });
   } catch {
-    return c.json(
-      {
-        ok: false,
-        error: {
-          code: 'INVALID_STORED_DOCUMENT',
-          message: 'Stored interchange document is invalid',
-        },
-      },
-      500,
-    );
+    return apiError(c, 500, 'INVALID_STORED_DOCUMENT', 'Stored interchange document is invalid');
   }
 });
-
 interchangeRouter.put(
   '/:bookId/annotation-interchange',
   readerAuth,
@@ -72,15 +62,11 @@ interchangeRouter.put(
     if (mismatch) return mismatch.response;
     const document = c.req.valid('json');
     if (document.source !== `urn:do-epub-studio:publication:${encodeURIComponent(bookId)}`) {
-      return c.json(
-        {
-          ok: false,
-          error: {
-            code: 'PUBLICATION_MISMATCH',
-            message: 'Publication identity does not match this book',
-          },
-        },
+      return apiError(
+        c,
         400,
+        'PUBLICATION_MISMATCH',
+        'Publication identity does not match this book',
       );
     }
     const annotationIds = new Set<string>();
@@ -90,15 +76,11 @@ interchangeRouter.put(
         annotation.target.source !== document.source ||
         annotation.target.selector.value !== annotation.target.selector.locator.cfi
       ) {
-        return c.json(
-          {
-            ok: false,
-            error: {
-              code: 'INVALID_ANNOTATION',
-              message: 'Annotation IDs must be unique and targets must be consistent',
-            },
-          },
+        return apiError(
+          c,
           400,
+          'INVALID_ANNOTATION',
+          'Annotation IDs must be unique and targets must be consistent',
         );
       }
       annotationIds.add(annotation.id);
@@ -106,13 +88,7 @@ interchangeRouter.put(
         new TextEncoder().encode(JSON.stringify(annotation.extensions ?? {})).byteLength >
         ANNOTATION_INTERCHANGE_MAX_EXTENSION_BYTES
       ) {
-        return c.json(
-          {
-            ok: false,
-            error: { code: 'EXTENSION_TOO_LARGE', message: 'Annotation extension exceeds limit' },
-          },
-          413,
-        );
+        return apiError(c, 413, 'EXTENSION_TOO_LARGE', 'Annotation extension exceeds limit');
       }
     }
     const serialized = JSON.stringify(document);

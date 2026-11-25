@@ -11,6 +11,7 @@
     "build": "wrangler deploy --dry-run --env=\"\" --outdir=dist",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts --max-warnings 0",
+    "generate-api-contract": "node scripts/generate-api-contract.mjs",
     "test:unit": "vitest --run",
     "test": "echo \"Use test:unit\"",
     "test:coverage": "pnpm test:unit --coverage"
