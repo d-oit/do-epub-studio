@@ -12,3 +12,4 @@ export {
   MULTILINGUAL_FIXTURES,
   type MultilingualFixtureId,
 } from './multilingual-epub-factory';
+export * from './epub-corpus';

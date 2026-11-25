@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- feat(test): add durable, externally reproducible EPUB corpus (#1483): shared manifest with provenance/expectations, deterministic in-repo generators (no network/binaries), Layer-1 Vitest coverage (archive validation, worker parse, sanitization, metadata), Layer-2 Playwright reader-engine suite parametrized from the same manifest, an optional EPUBCheck differential job with triaged known-diffs, and a regression policy doc.
 - refactor(quality): split five existing 450–500 LOC files into focused modules without changing behavior.
 - feat(authoring): add deterministic EPUB 3 packaging, book-scoped asset validation and immutable publishing, atomic versioned drafts, and a full production-reader preview for admins and explicit book authors.
 - feat(export): add bounded EPUB annotation re-export with navigable source links and fail-closed archive-safety and EPUBCheck validation; Markdown/HTML downloads and JSON interchange remain separate.
