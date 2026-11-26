@@ -4,8 +4,8 @@ This guide walks you through setting up d.o.EPUB Studio for local development.
 
 ## 1. Prerequisites
 
-- **Node.js** v22.x (LTS)
-- **pnpm** >= 10 (the project uses `pnpm@10.33.0` -- configured in `package.json`)
+- **Node.js** v22.13+ or v24.x (CI tests both supported LTS lines)
+- **pnpm** 10.34.9 (the exact version is pinned in `package.json`)
 - **Git**
 
 Wrangler ships as a devDependency and is invoked through `pnpm` — no global
@@ -14,7 +14,7 @@ install is needed.
 Install pnpm globally if you do not have it:
 
 ```bash
-npm install -g pnpm@latest
+npm install -g pnpm@10.34.9
 ```
 
 ## 2. Clone and Install
@@ -48,6 +48,13 @@ Required variables in `apps/worker/.dev.vars`:
 The worker's runtime database is D1 and needs no connection secret. The
 `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` entries in `.dev.vars.example` are
 only for the optional demo-account seed (see §4, "Demo accounts").
+
+Optional: `EPUBCHECK_RUNNER_URL` + `EPUBCHECK_RUNNER_TOKEN` (both or neither).
+They gate the synchronous EPUBCheck boundary for `GET /api/books/:id/export?format=epub`
+and the asynchronous validation report queued on revision finalize. Without
+them, EPUB re-export fails closed with `503 EXPORT_VALIDATION_UNAVAILABLE` and
+no EPUBCheck report is produced (the local structural validator still runs on
+upload); Markdown/HTML export and reading are unaffected.
 
 For production deployments, these values are set as Wrangler secrets (not committed to git).
 

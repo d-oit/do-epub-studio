@@ -39,13 +39,14 @@ In `ReaderPage.tsx`, the EPUB is rendered into a `div` via `book.renderTo(viewer
 
 ### Blank Reader (White Screen)
 
-| Cause                          | Symptom                                         | Fix                                           |
-| ------------------------------ | ----------------------------------------------- | --------------------------------------------- |
-| Missing/expired signed URL     | `epubUrl` is null, viewer shows "not available" | Re-fetch file-url                             |
-| EPUB file corrupt              | `book.opened` rejects                           | Re-upload EPUB                                |
-| iframe sandbox too restrictive | iframe loads but content blank                  | Ensure `allow-same-origin` in `sandbox` array |
-| CORS on R2/signed URL          | `No 'Access-Control-Allow-Origin'` in console   | Check worker CORS config                      |
-| JS error in epub-js            | Uncaught TypeError in epub-js internals         | Check @intity/epub-js version compatibility   |
+| Cause                          | Symptom                                                                      | Fix                                                                                                                                                                                        |
+| ------------------------------ | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Missing/expired signed URL     | `epubUrl` is null, viewer shows "not available"                              | Re-fetch file-url                                                                                                                                                                          |
+| EPUB file corrupt              | `book.opened` rejects                                                        | Re-upload EPUB                                                                                                                                                                             |
+| iframe sandbox too restrictive | iframe loads but content blank                                               | Ensure `allow-same-origin` in `sandbox` array                                                                                                                                              |
+| CORS on R2/signed URL          | `No 'Access-Control-Allow-Origin'` in console                                | Check worker CORS config                                                                                                                                                                   |
+| JS error in epub-js            | Uncaught TypeError in epub-js internals                                      | Check @intity/epub-js version compatibility                                                                                                                                                |
+| Sanitizer replaced `<body>`    | Chapter measures 0×0 and the view collapses; markup looks correct in the DOM | `sanitizeEpubDocument` must splice the clone's children into the live `<head>`/`<body>`, never replace those elements — epub.js captured `document.body` in `Contents` before the hook ran |
 
 ### Missing Chapters in TOC
 
@@ -62,6 +63,32 @@ In `ReaderPage.tsx`, the EPUB is rendered into a `div` via `book.renderTo(viewer
 | rendition `spread` config misaligned | Check `spread: 'auto'` in renderTo options         |
 | Viewer div has zero height           | Verify viewerRef container has CSS height          |
 | Locator CFI navigation fails         | `rendition.display(cfi)` throws — CFI may be stale |
+
+### Author preview iframe collapses after a viewport change
+
+The EPUB.js default manager reuses existing views, so calling `rendition.resize()`
+alone leaves the old frame dimensions in place; clearing first is what makes the
+re-layout land.
+
+| Symptom                                          | Fix                                                                                          |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Preview iframe 0×0 after rotating/resizing       | `AuthorEpubPreview` must observe its container and call the rendition handle `resize()`      |
+| Chapter text blank though iframe has size        | `EpubRenditionHandle.resize()` must call `rendition.clear()` **before** `rendition.resize()` |
+| Iframe has no accessible name after a re-display | The `displayed` listener must re-apply `author.preview.frameLabel` to the new iframe         |
+
+### Annotation export returns an error instead of a file
+
+| Status / code                       | Cause                                                                  |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| `503 EXPORT_VALIDATION_UNAVAILABLE` | `EPUBCHECK_RUNNER_URL` / `EPUBCHECK_RUNNER_TOKEN` unset or unreachable |
+| `409 EXPORT_SOURCE_UNAVAILABLE`     | Latest revision is not stored in R2                                    |
+| `413 EXPORT_SOURCE_TOO_LARGE`       | Source EPUB > 8 MiB or > 24 MiB expanded                               |
+| `413 EXPORT_ANNOTATIONS_TOO_LARGE`  | > 1000 annotations or > 1 MiB serialized annotations                   |
+| `422 EXPORT_VALIDATION_FAILED`      | EPUBCheck reported error findings for the generated bytes              |
+| `502 EXPORT_VALIDATION_MISMATCH`    | Runner validated different bytes than were generated (SHA-256)         |
+
+Markdown/HTML export uses the same route without these bounds and does not touch
+the runner, so it is the quickest way to confirm annotation data itself is fine.
 
 ## Console Pattern Reference
 

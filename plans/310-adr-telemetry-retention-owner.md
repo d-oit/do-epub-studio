@@ -74,3 +74,5 @@ open`, and the reason it reopened is recorded rather than erased.
   maintenance concern.
 - **Baseline the cron in a plan only** — plan files were among the deleted
   artefacts, so a plan-only record cannot be the control.
+
+**Index disposition (2026-11-16):** Accepted (2026-10-06: a window promised in docs must name its deleting module, the runtime entry point and the deploy config; the worker suite asserts the cron wiring, and deleting any of the three reopens the finding. Window/cadence unchanged)

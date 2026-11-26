@@ -57,6 +57,8 @@ export const EpubRunnerResultSchema = z.object({
   validatorVersion: z.literal(EPUBCHECK_VERSION),
   sha256: z.string().refine(isSha256),
   epubVersion: z.string().max(10).nullable(),
+  safetyStatus: z.enum(['accepted', 'rejected']),
+  conformanceStatus: z.enum(['completed', 'failed']),
   findings: z.array(EpubFindingSchema).max(1000),
   accessibility: z.object({
     metadata: z.array(EpubAccessibilityMetadataItemSchema).max(100),

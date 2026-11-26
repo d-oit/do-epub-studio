@@ -28,6 +28,7 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, relative, join, extname } from 'node:path';
+import { listWorkspaceManifestPaths } from './lib/workspace-manifests.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(__dirname, '..');
@@ -259,22 +260,18 @@ function assertVersionParity(version) {
 }
 
 function assertPerPackageVersions(version) {
-  const dirs = ['apps', 'packages'];
-  for (const top of dirs) {
-    const full = resolve(REPO_ROOT, top);
-    if (!existsSync(full)) continue;
-    for (const entry of readdirSync(full)) {
-      const sub = resolve(full, entry);
-      if (!statSync(sub).isDirectory()) continue;
-      const pkgPath = join(sub, 'package.json');
-      if (!existsSync(pkgPath)) continue;
-      const pkg = JSON.parse(readText(pkgPath));
-      if (pkg.version !== version.raw) {
-        err(
-          relative(REPO_ROOT, pkgPath).split('\\').join('/'),
-          `version "${pkg.version}" must equal VERSION "${version.raw}"`,
-        );
-      }
+  for (const manifestPath of listWorkspaceManifestPaths(REPO_ROOT).slice(1)) {
+    const pkgPath = resolve(REPO_ROOT, manifestPath);
+    const pkg = JSON.parse(readText(pkgPath));
+    if (!pkg || typeof pkg !== 'object' || Array.isArray(pkg)) {
+      err(manifestPath, 'manifest must contain a JSON object');
+      continue;
+    }
+    if (pkg.version !== version.raw) {
+      err(
+        relative(REPO_ROOT, pkgPath).split('\\').join('/'),
+        `version "${pkg.version}" must equal VERSION "${version.raw}"`,
+      );
     }
   }
 }

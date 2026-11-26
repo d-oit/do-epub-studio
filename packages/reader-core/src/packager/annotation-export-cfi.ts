@@ -72,9 +72,13 @@ function parseCfiPath(value: string): boolean {
   return stepCount > 0;
 }
 
-function parseSpineStep(packagePath: string): number | null {
-  if (!packagePath.startsWith('/6/')) return null;
-  let index = 3;
+function parseSpineStep(
+  packagePath: string,
+  spineStep: number,
+): { index: number; assertion: string | null } | null {
+  const prefix = `/${spineStep}/`;
+  if (!packagePath.startsWith(prefix)) return null;
+  let index = prefix.length;
   const start = index;
   let value = 0;
   while (index < packagePath.length) {
@@ -84,15 +88,27 @@ function parseSpineStep(packagePath: string): number | null {
     index += 1;
   }
   if (index === start || value < 2 || value % 2 !== 0) return null;
-  if (index < packagePath.length) {
-    if (packagePath[index] !== '[') return null;
+  let assertion: string | null = null;
+  if (packagePath[index] === '[') {
     const afterAssertion = parseAssertion(packagePath, index);
-    if (afterAssertion !== packagePath.length) return null;
+    if (afterAssertion === null) return null;
+    assertion = packagePath.slice(index + 1, afterAssertion - 1);
+    index = afterAssertion;
   }
-  return value / 2 - 1;
+  if (index !== packagePath.length) return null;
+  return { index: value / 2 - 1, assertion };
 }
 
-export function parseCfiSpineIndex(cfi: string | null | undefined): number | null {
+export interface CfiSpineParse {
+  /** Zero-based index of the targeted spine item. */
+  index: number;
+  /** CFI assertion on the spine item step, if present (`[id]`). */
+  assertion: string | null;
+  /** CFI text after the spine item step, including a leading `!` when present. */
+  remainder: string;
+}
+
+export function parseCfiSpine(cfi: string | null | undefined, spineStep = 6): CfiSpineParse | null {
   if (!cfi || cfi.length > 2048 || !cfi.startsWith('epubcfi(') || !cfi.endsWith(')')) return null;
   const body = cfi.slice(8, -1);
   let bracketDepth = 0;
@@ -130,23 +146,30 @@ export function parseCfiSpineIndex(cfi: string | null | undefined): number | nul
       commas.push(index);
     }
   }
-  if (escaped || bracketDepth !== 0 || bang < 0 || (commas.length !== 0 && commas.length !== 2)) {
+  if (escaped || bracketDepth !== 0 || (commas.length !== 0 && commas.length !== 2)) {
     return null;
   }
+  if (commas.length !== 0 && bang < 0) return null;
 
-  const packagePath = body.slice(0, bang);
-  const spineIndex = parseSpineStep(packagePath);
-  if (spineIndex === null || !parseCfiPath(packagePath)) return null;
-  const firstRange = commas.length > 0 ? (commas[0] as number) : body.length;
-  if (!parseCfiPath(body.slice(bang + 1, firstRange))) return null;
-  if (commas.length === 2) {
-    const secondRange = commas[1] as number;
-    if (!parseCfiPath(body.slice(firstRange + 1, secondRange))) return null;
-    if (!parseCfiPath(body.slice(secondRange + 1))) return null;
+  const packagePath = bang >= 0 ? body.slice(0, bang) : body;
+  const parsed = parseSpineStep(packagePath, spineStep);
+  if (parsed === null || !parseCfiPath(packagePath)) return null;
+  if (bang >= 0) {
+    const firstRange = commas.length > 0 ? (commas[0] as number) : body.length;
+    if (!parseCfiPath(body.slice(bang + 1, firstRange))) return null;
+    if (commas.length === 2) {
+      const secondRange = commas[1] as number;
+      if (!parseCfiPath(body.slice(firstRange + 1, secondRange))) return null;
+      if (!parseCfiPath(body.slice(secondRange + 1))) return null;
+    }
   }
-  return spineIndex;
+  return {
+    index: parsed.index,
+    assertion: parsed.assertion,
+    remainder: bang >= 0 ? body.slice(bang) : '',
+  };
 }
 
-export function encodeCfiFragment(cfi: string): string {
-  return encodeURI(cfi);
+export function parseCfiSpineIndex(cfi: string | null | undefined, spineStep = 6): number | null {
+  return parseCfiSpine(cfi, spineStep)?.index ?? null;
 }

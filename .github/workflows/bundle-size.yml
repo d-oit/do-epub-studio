@@ -16,6 +16,8 @@ on:
       # them and the baseline drifts until the next source PR fails.
       - 'pnpm-lock.yaml'
       - 'scripts/check-bundle-budget.mjs'
+      - 'scripts/lib/bundle-routes.mjs'
+      - 'scripts/bundle-baseline.mjs'
       - 'apps/web/vite.config.ts'
       # The gate's own inputs: a PR that only edits the budget thresholds or
       # the committed baseline must still be validated, otherwise a budget

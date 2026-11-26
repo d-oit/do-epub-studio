@@ -10,7 +10,6 @@ import {
   useReaderEpub,
   useAnnotationHandlers,
   useBookmarkHandlers,
-  useExportNotes,
   useReadingTimer,
   useOptimisticAnnotationStore,
   useReaderDataLoader,
@@ -31,6 +30,7 @@ import {
   InfoPanel,
   FixedLayoutControls,
   ScrollProgressBar,
+  ExportNotesPanel,
 } from './components';
 const MediaOverlayBar = lazy(() =>
   import('./components/toolbar/MediaOverlayBar').then((m) => ({ default: m.MediaOverlayBar })),
@@ -41,17 +41,13 @@ import { NotificationPanel } from './components/notifications/NotificationPanel'
 import { ConflictResolutionPanel } from './components/conflicts/ConflictResolutionPanel';
 import { initAiPlugins } from '../../lib/ai-plugins';
 import { useAuthStore, useReaderStore, usePreferencesStore } from '../../stores';
+import { READER_PAGE_WIDTH_CLASSES } from '../../lib/reader-page-width';
+
 // Reader route owns AI features (GOAP-262, issue #318): registering here keeps the
 // reader-core extension point out of the shared entry graph, honoring the
 // ADR-107 route boundary rules (catalog/admin/auth must not import
 // reader-core). Idempotent.
 initAiPlugins();
-const WIDTHS: Record<string, string> = {
-  narrow: 'max-w-xl',
-  normal: 'max-w-3xl',
-  wide: 'max-w-5xl',
-  full: 'max-w-full',
-};
 
 export function ReaderPage() {
   const { bookSlug } = useParams<{ bookSlug: string }>();
@@ -123,7 +119,6 @@ export function ReaderPage() {
   } = useAnnotationHandlers();
   const { handleCreateBookmark, handleDeleteBookmark } = useBookmarkHandlers();
   const feedback = useFeedbackComposer(bookId);
-  const { handleExportNotes } = useExportNotes();
   const {
     markLoaded: markInsightsLoaded,
     markPageRead,
@@ -246,7 +241,7 @@ export function ReaderPage() {
       setActivePanel(null);
     }
   };
-  const pageWidthClass = WIDTHS[readerPageWidth] ?? 'max-w-3xl';
+  const pageWidthClass = READER_PAGE_WIDTH_CLASSES[readerPageWidth] ?? 'max-w-3xl';
   const tFn = t as (key: string) => string;
 
   return (
@@ -269,7 +264,7 @@ export function ReaderPage() {
         onToggleSettings={() => togglePanel('settings')}
         onToggleInfo={openInfoPanel}
         onToggleNotifications={() => togglePanel('notifications')}
-        onExportNotes={() => handleExportNotes(bookTitle)}
+        onToggleExport={() => togglePanel('export')}
         onLogout={() => void handleLogout()}
         t={tFn}
         isFixedLayout={isFixedLayout}
@@ -365,6 +360,7 @@ export function ReaderPage() {
           t={tFn}
         />
       )}
+      {activePanel === 'export' && <ExportNotesPanel onClose={() => setActivePanel(null)} />}
       <ReaderViewer
         isLoading={isLoading}
         epubUrl={epubUrl}

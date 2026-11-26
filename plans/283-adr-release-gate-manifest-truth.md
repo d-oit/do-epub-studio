@@ -3,7 +3,7 @@
 **Date:** 2026-09-24
 **Status:** Accepted (deferral decision only — implementation is GOAP-283)
 **Deciders:** Project maintainer
-**Related:** GOAP-283 (`plans/283-goap-release-gate-manifest-truth.md`), GOAP-277, ADR-277 (fail-closed skip visibility), ADR-247 (SHA pinning), ADR-083 (numbering), AGENTS.md Tier 1 (surfaced-issue policy)
+**Related:** GOAP-283 (`plans/archive/283-goap-release-gate-manifest-truth.md`), GOAP-277, ADR-277 (fail-closed skip visibility), ADR-247 (SHA pinning), ADR-083 (numbering), AGENTS.md Tier 1 (surfaced-issue policy)
 
 ## Context
 

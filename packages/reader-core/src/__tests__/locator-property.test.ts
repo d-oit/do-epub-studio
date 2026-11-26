@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { createLocator, parseLocator, locatorToString } from '../locator';
-import { isValidCfi } from '../epub-loader';
+import { isValidCfi } from '../cfi-validation';
 
 describe('isValidCfi (property)', () => {
   it('never throws for any string input', () => {

@@ -1,241 +1,86 @@
 ---
-version: "1.0.0"
 name: impeccable
-description: >
-  Design guidance for AI coding agents. 23 commands, 44 deterministic detector rules,
-  and live browser iteration for AI-generated frontend design. Activate for UI/UX design
-  work, anti-pattern detection, or design quality audits.
-category: quality
-allowed-tools: Read Write Edit Grep Glob Bash
-license: Apache-2.0
+description: "Use when the user wants to design, redesign, shape, critique, audit, polish, simplify, harden, animate, or otherwise improve a frontend interface: websites, landing pages, dashboards, product UI, components, forms, settings, onboarding, empty states, and native iOS or Android screens. Handles UX review, hierarchy, layout, typography, color, motion, UX copy, accessibility, responsive behavior, edge cases, and capturing or documenting design systems (DESIGN.md, tokens). Also for making bland UI bolder, loud UI quieter, or ambitious visual effects. Not for backend-only or non-UI tasks."
+metadata:
+  version: 4.8.1
 ---
 
-# Impeccable — Design Quality Skill
+This skill gives you the tools and permission to make design that earns the name out-of-distribution craft. Work as an award-winning design director would: production-grade code, a clear POV, a deep grasp of what the client and its users need, and exceptional craft.
 
-Design guidance system with 23 commands and 44 deterministic detector rules for catching AI-generated frontend design anti-patterns.
+Core principles:
+- Finish the job. No hedging, no shortcuts: the deliverable is complete, except assets the user must provide.
+- Scale ambition to the surface's mode (see Modes). Persuade and Experience get full commitment: bold, distinct work with a point of view. On Operate and Read, ambition shows as precision and restraint, and patterns the visitor already knows earn their place.
+- Verify by looking at the rendered result at the sizes it ships at, and batch the checks: fix what one look shows before looking again, rather than screenshotting after every tweak.
 
-## Project Integration
+## Setup
 
-This project installs Impeccable as a git submodule at `.impeccable/` (pinned to `cli-v3.1.0`). The detector runs in CI via `scripts/run-impeccable.sh` and is integrated into the quality gate.
+1. Run `<skill-base-dir>/scripts/impeccable context` once per session, where `<skill-base-dir>` is the directory that contains this SKILL.md (the skill folder, not a plugin root two levels above it); keep cwd at the user's project. That base directory resolves every `.agents/skills/impeccable/scripts/impeccable <verb>` command in this skill and its references, and `.agents/skills/impeccable/scripts` is the fallback only when the runtime reports no base directory. On a Windows shell without `sh`, call `.agents/skills/impeccable/scripts/impeccable.cmd` instead. The launcher runs a self-contained binary that ships next to it or is downloaded once on first run; no Node or other runtime is required. Pass a named source file or route as `--target <path>`. It loads PRODUCT.md, DESIGN.md, the matching surface brief, and native-platform guidance when applicable; follow its directives and do not rerun it.
+2. Load the request's playbook: its Commands-table reference for an explicit/implied sub-command, or [reference/new-work.md](reference/new-work.md) for a new surface or replacement visual world. Inspect target and incumbent visual truth before editing. When the app cannot run, start with committed visual-regression goldens or screenshot fixtures; verify target and freshness against current tokens, CSS, components, or assets, resolve conflicts, and compare theme/variant captures.
+3. After resolving analysis and direction, read [reference/craft-floor.md](reference/craft-floor.md) immediately before any UI edit, including small refinements. It carries the quality floor, the absolute bans, and the reflexes no detector catches. Do not load it for planning-only work.
 
-| Resource | Location |
-|----------|----------|
-| Config | `.impeccable/config.json` |
-| CI Script | `scripts/run-impeccable.sh` |
-| Design Language | `DESIGN.md` |
-| Quality Gate | `scripts/quality_gate.sh` |
+**Launcher unavailable:** On refusal or failure, send a separate message **before the next tool call**: “Context loading did not run; I’ll read the existing project context directly.” Then read existing PRODUCT.md and DESIGN.md without inventing missing context, follow applicable steps 2–3, including reading [reference/craft-floor.md](reference/craft-floor.md) immediately before any UI edit, and continue through permitted tools. This applies to planning and editing; launcher failure alone does not block either.
 
-## Quick Start
+## How to design
 
-```bash
-# Run detector (CI-friendly JSON output)
-npx impeccable detect --json .
+- **The brief wins.** Honor pinned aesthetics, eras, materials, fonts, and palettes even when they conflict with a saturated-pattern warning. Redirecting a clear brief toward your taste is failure.
+- **Refinement preserves; redesign replaces.** Refinement keeps the incumbent identity, behavior, copy, and everything outside scope. Ask before replacing factual copy or adding claims. Redesign keeps product truth, content, function, native affordances, and constraints, but treats the old look as evidence and anti-reference; choose a replacement world in new-work and replace DESIGN.md. Never split the difference into polish on the discarded look.
+- **Loaded symbols stay out of the decoration.** A subject's world does not license emblems tied to militarism, supremacy, or hate movements as motifs, badges, or ornament, such as the Rising Sun flag's rays, the Confederate battle flag, or Nazi-era insignia and their stylised variants; reach for that world's neutral forms instead. Content that documents such a symbol as fact stays as it is.
+- **Visual authority is evidence, not a filename.** Missing DESIGN.md alone does not make a project greenfield; new-work decides whether to preserve, expand, or replace the incumbent world.
 
-# Run detector with verbose output
-npx impeccable detect .
+## Modes
 
-# Check specific directory
-npx impeccable detect apps/web/src/
-```
+The mode names what the visitor's success looks like on this surface.
+
+- **Persuade:** the visitor decides and acts; design is the product. Landing pages, marketing, campaigns, pricing. Earn attention and action. Ship real imagery when the brief needs it; follow the committed world, not category habit.
+- **Operate:** the visitor completes a task. App UI, dashboards, editors, admin, settings, tools. Scanability, consistency, native expectations, and the real usage scene outrank expression. Brand lives in precise details.
+- **Read:** the visitor understands something. Docs, articles, guides, help, changelogs. Structure for comprehension, then make the reading experience worth staying in.
+- **Experience:** the visitor is inside the work itself. Portfolios, galleries, showcases. Let the artifact lead from the first viewport; the interface recedes.
+
+Choose the mode from the requested surface, not the product, and persist it only in that surface brief. A tool's landing page is still Persuade; a fashion house's documentation is still Read; a docs index is Read, not Persuade. See [new-work.md](reference/new-work.md) for new surfaces and [operate.md](reference/operate.md) for deeper Operate/Read guidance.
 
 ## Commands
 
-### Core Workflow
+| Command | Category | Description | Reference |
+|---|---|---|---|
+| `craft [feature]` | Build | Deprecated alias for an ordinary new-work request | [reference/craft.md](reference/craft.md) |
+| `shape [feature]` | Build | Plan UX/UI before writing code | [reference/shape.md](reference/shape.md) |
+| `init` | Build | Capture durable product context in PRODUCT.md | [reference/init.md](reference/init.md) |
+| `document` | Build | Generate DESIGN.md from existing project code | [reference/document.md](reference/document.md) |
+| `extract [target]` | Build | Pull reusable tokens and components into design system | [reference/extract.md](reference/extract.md) |
+| `critique [target]` | Evaluate | UX design review with heuristic scoring | [reference/critique.md](reference/critique.md) |
+| `audit [target]` | Evaluate | Technical quality checks (a11y, perf, responsive) | [reference/audit.md](reference/audit.md) · native: [reference/audit.native.md](reference/audit.native.md) |
+| `polish [target]` | Refine | Final quality pass before shipping | [reference/polish.md](reference/polish.md) |
+| `bolder [target]` | Refine | Amplify safe or bland designs | [reference/bolder.md](reference/bolder.md) |
+| `quieter [target]` | Refine | Tone down aggressive or overstimulating designs | [reference/quieter.md](reference/quieter.md) |
+| `distill [target]` | Refine | Strip to essence, remove complexity | [reference/distill.md](reference/distill.md) |
+| `harden [target]` | Refine | Production-ready: errors, i18n, edge cases | [reference/harden.md](reference/harden.md) |
+| `onboard [target]` | Refine | Design first-run flows, empty states, activation | [reference/onboard.md](reference/onboard.md) |
+| `animate [target]` | Enhance | Add purposeful animations and motion | [reference/animate.md](reference/animate.md) |
+| `colorize [target]` | Enhance | Add strategic color to monochromatic UIs | [reference/colorize.md](reference/colorize.md) |
+| `typeset [target]` | Enhance | Improve typography hierarchy and fonts | [reference/typeset.md](reference/typeset.md) |
+| `layout [target]` | Enhance | Fix spacing, rhythm, and visual hierarchy | [reference/layout.md](reference/layout.md) |
+| `delight [target]` | Enhance | Add personality and memorable touches | [reference/delight.md](reference/delight.md) |
+| `overdrive [target]` | Enhance | Push past conventional limits | [reference/overdrive.md](reference/overdrive.md) |
+| `clarify [target]` | Fix | Improve UX copy, labels, and error messages | [reference/clarify.md](reference/clarify.md) |
+| `adapt [target]` | Fix | Adapt for different devices and screen sizes | [reference/adapt.md](reference/adapt.md) · native: [reference/adapt.native.md](reference/adapt.native.md) |
+| `optimize [target]` | Fix | Diagnose and fix UI performance | [reference/optimize.md](reference/optimize.md) |
+| `live` | Iterate | Visual variant mode: pick elements in the browser, iterate on alternatives | [reference/live.md](reference/live.md) |
+| `generate [n] [action] [element]` | Iterate | Variants, versions, or alternatives of a named element to choose from in the live browser; no manual picking | [reference/generate.md](reference/generate.md) |
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/impeccable craft <Comp>` | Full shape-then-build flow with visual iteration | Building new UI components |
-| `/impeccable shape <area>` | Plan UX/UI before writing code | Before implementing features |
-| `/impeccable build <area>` | Execute from shape plan | After shaping |
-| `/impeccable iterate <area>` | Refine existing implementation | Improving current UI |
+Routing:
 
-### Quality & Review
+- **No argument:** read [routing.md](reference/routing.md) and present its context-aware menu; never auto-run a command.
+- **Explicit or clearly implied request to run a command:** load its reference (native variant on native platforms) and follow it. Ask once if two commands fit.
+- **Workflow or command-selection question:** read [Workflow questions](reference/routing.md#workflow-questions).
+- **Otherwise:** treat the request as general design work. Missing PRODUCT.md routes a new surface or replacement world through init, then new-work; a narrow refinement of existing code proceeds on the incumbent implementation as `impeccable context` directs, offering init afterward rather than blocking on it.
+- `teach` aliases `init`. `craft` is a deprecated alias for ordinary new-work and adds nothing. `shape` owns task discovery, then enters new-work only for visual-world and surface-concept decisions.
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/impeccable audit <area>` | Technical quality: a11y, performance, responsive | Pre-merge checks |
-| `/impeccable critique <area>` | UX review: hierarchy, clarity, emotion | Design review |
-| `/impeccable polish <area>` | Final pass before shipping | Release prep |
-| `/impeccable distill <area>` | Strip to essence | Simplifying complex UI |
+After init writes PRODUCT.md, resume without rerunning `impeccable context`; init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
 
-### Refinement
+**Pin / Unpin:** `.agents/skills/impeccable/scripts/impeccable pin <pin|unpin> <command>` creates or removes a standalone `$<command>` shortcut. Report the script's result concisely; relay stderr verbatim on error.
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/impeccable bolder <area>` | Amplify boring designs | Adding visual interest |
-| `/impeccable quieter <area>` | Tone down overly bold designs | Reducing visual noise |
-| `/impeccable colorize <area>` | Introduce strategic color | Adding color accents |
-| `/impeccable typeset <area>` | Fix font choices, hierarchy, sizing | Typography improvements |
-| `/impeccable layout <area>` | Fix layout, spacing, visual rhythm | Layout refinements |
+**Hooks:** `$impeccable hooks <on|off|status|ignore-rule|ignore-file|ignore-value|reset>` manages the design detector hook for this project (auto-runs the detector after UI file edits and surfaces findings). Load [reference/hooks.md](reference/hooks.md) when the user invokes it with any argument.
 
-### Polish & Edge Cases
+**Doctor:** `$impeccable doctor` reports and repairs drift between this project's Impeccable artifacts (PRODUCT.md, DESIGN.md and its sidecar, config, surface briefs, the hook) and what this version reads. Load [reference/doctor.md](reference/doctor.md) when the user invokes it, or when they ask what is out of date, stale, or needs refreshing. A `CONTEXT_STALE` directive in Setup's output is the cheap subset of the same report; act on it there per its own instructions rather than running doctor unasked.
 
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/impeccable harden <area>` | Error handling, i18n, text overflow | Production readiness |
-| `/impeccable animate <area>` | Add purposeful motion | Adding transitions |
-| `/impeccable delight <area>` | Add moments of joy | Micro-interactions |
-| `/impeccable clarify <area>` | Improve unclear UX copy | UX writing fixes |
-| `/impeccable adapt <area>` | Adapt for different devices | Responsive design |
-| `/impeccable optimize <area>` | Performance improvements | Speed optimization |
-
-### Setup & Documentation
-
-| Command | Purpose | When to Use |
-|---------|---------|-------------|
-| `/impeccable init` | One-time setup: gather design context | Project onboarding |
-| `/impeccable document` | Generate root DESIGN.md from existing code | Documentation |
-| `/impeccable extract` | Pull reusable components into design system | Component extraction |
-| `/impeccable live` | Visual variant mode in browser | Live iteration |
-
-## Detector (44 Rules)
-
-The deterministic detector catches AI slop patterns without LLM calls:
-
-### Slop Rules
-
-- **side-tab**: Side-stripe borders (most recognizable AI tell)
-- **purple-gradient**: Purple-to-blue gradients
-- **bounce-easing**: Bounce/elastic animations
-- **dark-glow**: Dark mode with purple glow
-- **overused-font**: Inter/system defaults as primary font
-- **icon-tile-stack**: Rounded-square icon tile above headings
-- **nested-cards**: Cards inside cards
-- **gray-on-color**: Gray text on colored backgrounds
-- **small-touch**: Touch targets under 44px
-- **cramped-padding**: Insufficient spacing
-
-### Quality Rules
-
-- **line-length**: Text lines exceeding 75ch
-- **skipped-headings**: Missing heading levels (h1 → h3)
-- **low-contrast**: Insufficient color contrast
-- **pure-black**: Using #000000 or #ffffff without tinting
-- And 30+ more rules covering typography, spacing, color, and layout
-
-## Configuration
-
-### `.impeccable/config.json`
-
-```json
-{
-  "detector": {
-    "designSystem": { "enabled": true },
-    "ignoreFiles": [
-      ".impeccable/**",
-      "**/coverage/**",
-      "**/node_modules/**"
-    ],
-    "ignoreRules": [],
-    "ignoreValues": []
-  }
-}
-```
-
-This project excludes:
-- `.impeccable/**` — the detector's own code
-- `**/coverage/**` — generated test coverage reports
-- `**/node_modules/**` — dependencies
-
-### Inline Waivers
-
-Add to any file to suppress specific findings:
-
-```html
-<!-- impeccable-disable overused-font: exported brand doc -->
-```
-
-Or for a single line:
-
-```html
-<!-- impeccable-disable-line purple-gradient -->
-```
-
-## CI Integration
-
-### Quality Gate
-
-```bash
-# Default: warnings only
-./scripts/quality_gate.sh
-
-# Skip design checks
-SKIP_DESIGN=1 ./scripts/quality_gate.sh
-
-# Promote findings to errors
-IMPECCABLE_REQUIRED=1 ./scripts/quality_gate.sh
-```
-
-### Direct Script Usage
-
-```bash
-# Warnings only (default)
-./scripts/run-impeccable.sh
-
-# Required mode (exits non-zero on findings)
-./scripts/run-impeccable.sh --required
-```
-
-## Workflow Integration
-
-### Before UI Work
-
-1. `/impeccable shape <area>` — Plan the UX/UI
-2. Implement the component
-3. `/impeccable audit <area>` — Check quality
-4. `/impeccable polish <area>` — Final pass
-
-### In PR Reviews
-
-1. Run `npx impeccable detect --json .` to check for findings
-2. Review any flagged anti-patterns
-3. Apply fixes or document suppressions
-
-### Pre-Commit
-
-```bash
-./scripts/quality_gate.sh  # includes impeccable check
-```
-
-## Related Skills
-
-| Skill | Relationship |
-|-------|--------------|
-| `anti-ai-slop` | LLM-based critique (this skill = deterministic backbone) |
-| `code-quality` | Code smells (this skill = design anti-patterns) |
-| `reader-ui-ux` | Reader-specific UI work (uses this skill's commands) |
-| `accessibility-auditor` | A11y audit (this skill catches design issues) |
-
-## Anti-Pattern Quick Reference
-
-| Pattern | Why It's Bad | Fix |
-|---------|--------------|-----|
-| Purple gradient | Default AI palette | Use project color tokens |
-| Inter font | Overused since 2025 | Choose contextual fonts |
-| Nested cards | Visual clutter | Flat hierarchy |
-| Gray on color | Poor contrast | Use semantic tokens |
-| Bounce easing | Feels dated | Use ease-out curves |
-| Side borders | Most recognizable AI tell | Full borders or icons |
-
-## Rationalizations
-
-| Rationalization | Reality |
-|-----------------|---------|
-| "This purple gradient is intentional, so I'll silence the rule." | `purple-gradient` fires on the default AI palette — use the project OKLCH tokens first. A genuine brand exception gets a scoped `impeccable-disable` with a reason, never an `ignoreRules` entry. |
-| "CI runs the detector, so I don't need to." | The detector is part of the quality gate and the PR-review step: run `npx impeccable detect --json .` before opening the PR so findings are fixed at the source. |
-| "The gate is warnings-only, so leftover findings can merge." | `IMPECCABLE_REQUIRED=1` promotes findings to errors. Each one must be fixed or explicitly waived with a reason — not left untriaged. |
-| "`Inter` is just the OS default, not a choice I made." | `overused-font` flags Inter/system defaults as the primary font regardless of where they came from. Choose contextual fonts per `DESIGN.md`. |
-| "I'll skip `/impeccable shape` — the design is obvious." | The workflow is shape → build → audit → polish; `/impeccable build` executes from the shape plan. |
-
-## Red Flags
-
-- [ ] Detector findings left untriaged on a PR because the gate is "warnings only".
-- [ ] `ignoreRules`/`ignoreValues` widened in `.impeccable/config.json` instead of a scoped inline waiver.
-- [ ] `impeccable-disable` comment with no rule name or no stated reason.
-- [ ] `.impeccable/` submodule revision diverging from the pinned `cli-v3.1.0`.
-- [ ] `SKIP_DESIGN=1` used without a documented reason.
-- [ ] UI shipped without the `/impeccable audit` → `/impeccable polish` steps.
-
-## Summary
-
-Impeccable provides deterministic design quality checks that catch AI-generated anti-patterns. Use the 23 commands for design workflow, the 44 detector rules for automated checks, and the CI integration for quality gates. Project tokens in `globals.css` remain authoritative.
+**Never repair drift as a side effect of a design task.** A `CONTEXT_STALE` finding is reported, not acted on, unless the user asks. The one exception is a finding marked `auto`, which the next write to that file performs anyway.

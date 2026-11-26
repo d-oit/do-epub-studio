@@ -82,3 +82,5 @@ merge commit's subject line.
   without a privacy review" rule are unchanged.
 - No new telemetry, schema or migration is introduced.
 - No claim of production enforcement is made from a local test pass.
+
+**Index disposition (2026-11-16):** DONE — deployment acceptance OPEN (2026-10-06): restored after the first merge (PR #1287) was clobbered by a stale-branch squash (`46d7a98f` re-deleted the module, handler, cron, suite, runbook contract and plan). Worker suite asserts the `triggers.crons` wiring; Pages-only releases still run no cron, so enforcement needs the standalone Worker deploy

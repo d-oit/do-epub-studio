@@ -19,11 +19,25 @@
       "dora-report",
       "profiles-consistency",
       "standards-matrix",
-      "gate-parity"
+      "gate-parity",
+      "validate-git-hooks.sh",
+      "validate-workflows.sh",
+      "validate-skills.sh",
+      "check-agent-sync.mjs",
+      "check-app-identity.mjs",
+      "check-adr-index.mjs",
+      "check-plan-references.mjs",
+      "validate-skill-format.sh",
+      "validate-links.sh",
+      "markdownlint",
+      "dead-code-check.sh",
+      "check-bundle-budget",
+      "harness-version",
+      "skills-catalog"
     ]
   },
   "pr": {
-    "description": "PR-gating checks (ci.yml + auxiliary workflows + external apps). Names are the exact `name:` values GitHub reports as check contexts, or the check name published by an external app (Codacy).",
+    "description": "PR-gating checks. Job-level entries are the exact check contexts GitHub reports: each workflow job's `name:` value (or its job id when no name is set), with `${{ matrix.* }}` tokens expanded to their real per-node contexts (e.g. `Lint (Node 22)`). Step names, comments, and other workflow text are never valid evidence for a job check. `external` lists checks published by external GitHub Apps with no workflow file (Codacy).",
     "checks": [
       "pr-title",
       "commit-range",
@@ -31,31 +45,41 @@
       "Full Quality Gate",
       "Pre-commit Hooks",
       "Fast Check (Changed Packages)",
-      "Lint (Node ${{ matrix.node-version }})",
-      "Typecheck (Node ${{ matrix.node-version }})",
-      "Unit Tests (Node ${{ matrix.node-version }})",
-      "Build (Node ${{ matrix.node-version }})",
+      "Lint (Node 22)",
+      "Lint (Node 24)",
+      "Typecheck (Node 22)",
+      "Typecheck (Node 24)",
+      "Unit Tests (Node 22)",
+      "Unit Tests (Node 24)",
+      "Build (Node 22)",
+      "Build (Node 24)",
       "Gate Visibility Sensor",
       "Setup & Diagnostics",
       "CodeQL Alert Check",
       "E2E Smoke Tests",
       "Gzipped bundle budget (ADR-107 §3)",
       "Lighthouse audit",
-      "Worker Build Validation",
-      "Codacy Static Code Analysis"
-    ]
+      "Worker Build Validation"
+    ],
+    "external": ["Codacy Static Code Analysis"]
   },
   "release": {
-    "description": "Required release readiness checks (release.yml)",
+    "description": "Required release readiness checks (release.yml). `checks` are exact job-level check contexts reported by release.yml jobs (matrix-expanded). `readinessJob` names the job that carries the readiness steps; `requiredSteps` are obligations implemented as steps of that job and are validated against its step list only — a comment or step with the same name elsewhere cannot satisfy them.",
     "checks": [
       "Release Readiness Gate",
-      "Verify tag matches VERSION file",
-      "Verify tag is on main branch",
+      "Verify (Node 22)",
+      "Verify (Node 24)",
+      "Lighthouse Performance Gate",
       "Coverage Gate",
-      "Verify CI checks passed",
       "Cross-Browser E2E",
       "Performance Budgets",
       "Security Checks"
+    ],
+    "readinessJob": "release-readiness",
+    "requiredSteps": [
+      "Verify tag matches VERSION file",
+      "Verify tag is on main branch",
+      "Verify CI checks passed"
     ]
   }
 }

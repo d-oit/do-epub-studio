@@ -18,6 +18,7 @@ export type ReaderPanel =
   | 'bookmarks'
   | 'info'
   | 'search'
+  | 'export'
   | 'fl-controls'
   | 'notifications'
   | null;

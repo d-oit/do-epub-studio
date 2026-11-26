@@ -59,8 +59,8 @@ export function createThemeApplier({
   readerLineHeight: number;
   readerFontFamily: FontFamily;
   readerWritingMode: WritingMode;
-}): (rendition: Rendition) => void {
-  return (rendition: Rendition) => {
+}): (rendition: Pick<Rendition, 'themes'>) => void {
+  return (rendition: Pick<Rendition, 'themes'>) => {
     const container = rootRef.current;
     if (!container) return;
     const style = getComputedStyle(container);

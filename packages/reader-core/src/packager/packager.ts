@@ -126,7 +126,7 @@ function assetName(asset: PackagedAsset): string {
   return `${asset.id}.${ASSET_EXTENSIONS[asset.mediaType]}`;
 }
 
-function collectImageAssetIds(publication: AuthorPublication): Set<string> {
+function collectImageAssetIds(publication: Pick<AuthorPublication, 'chapters'>): Set<string> {
   const referenced = new Set<string>();
   for (const chapter of publication.chapters) {
     const pending = [...parseAuthorContent(chapter.contentHtml)];
@@ -141,6 +141,31 @@ function collectImageAssetIds(publication: AuthorPublication): Set<string> {
     }
   }
   return referenced;
+}
+
+type AuthorPublicationAssetReferences = Pick<
+  AuthorPublication,
+  'chapters' | 'coverImageAssetId' | 'stylesheetAssetIds'
+>;
+
+function collectAssetReferences(publication: AuthorPublicationAssetReferences): {
+  imageAssetIds: Set<string>;
+  requiredAssetIds: Set<string>;
+} {
+  const imageAssetIds = collectImageAssetIds(publication);
+  const requiredAssetIds = new Set(imageAssetIds);
+  if (publication.coverImageAssetId) requiredAssetIds.add(publication.coverImageAssetId);
+  for (const stylesheetId of publication.stylesheetAssetIds) {
+    requiredAssetIds.add(stylesheetId);
+  }
+  return { imageAssetIds, requiredAssetIds };
+}
+
+/** Returns the image, cover and stylesheet assets needed to render a publication. */
+export function collectRequiredAuthorAssetIds(
+  publication: AuthorPublicationAssetReferences,
+): Set<string> {
+  return collectAssetReferences(publication).requiredAssetIds;
 }
 
 function normalizeModifiedAt(value: string): string {
@@ -194,16 +219,12 @@ function createPackageEntries(
   }
 
   const assetsById = new Map<string, PackagedAsset>();
+  const { imageAssetIds, requiredAssetIds: usedAssetIds } = collectAssetReferences(publication);
   for (const asset of packageAssets) {
     if (assetsById.has(asset.id)) throw new TypeError(`Duplicate author asset ID: ${asset.id}`);
     assetName(asset);
     assetsById.set(asset.id, asset);
   }
-
-  const imageAssetIds = collectImageAssetIds(publication);
-  const usedAssetIds = new Set(imageAssetIds);
-  if (publication.coverImageAssetId) usedAssetIds.add(publication.coverImageAssetId);
-  for (const stylesheetId of publication.stylesheetAssetIds) usedAssetIds.add(stylesheetId);
 
   const resolvedAssets = new Map<string, PackagedAsset>();
   for (const id of usedAssetIds) {

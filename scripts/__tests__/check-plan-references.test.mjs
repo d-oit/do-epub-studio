@@ -62,12 +62,90 @@ describe('check-plan-references.mjs (ADR-083)', () => {
   it('accepts a plan-record ADR, a legacy ADR-<n> filename and a matching GOAP plan', () => {
     const root = writeTree({
       'plans/ADR-INDEX.md': ADR_INDEX,
-      'plans/300-adr-scoped-config.md': '# ADR-300: scoped config\n',
+      'plans/300-adr-scoped-config.md': '# ADR-300: scoped config\n', // plan-refs: ignore
       'plans/ADR-201-webkit-smoke-ci.md': '# ADR-201: WebKit smoke CI\n',
-      'plans/302-goap-annotation-slice.md': '# GOAP-302\n',
-      'apps/web/src/some-file.ts': '// ADR-300 governs this; GOAP-302 delivered it.\n',
+      'plans/302-goap-annotation-slice.md': '# GOAP-302\n', // plan-refs: ignore
+      'apps/web/src/some-file.ts': '// ADR-300 governs this; GOAP-302 delivered it.\n', // plan-refs: ignore
     });
 
+    const result = runScript(root);
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
+  // Rule 4: local record-to-record links inside plans/ must resolve, because a
+  // bulk archive pass is exactly what breaks them silently.
+  it('accepts same-directory and parent-directory record links', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/320-goap-linking.md': [
+        '# GOAP-320', // plan-refs: ignore
+        '',
+        'Sibling: [peer](320-adr-peer.md).',
+        'Parent: [index](ADR-INDEX.md#accepted).',
+        'Nested: [child](archive/002-adr-old.md).',
+      ].join('\n'),
+      'plans/320-adr-peer.md': '# ADR-320\n', // plan-refs: ignore
+      'plans/archive/002-adr-old.md': '# ADR-002\n',
+      'plans/sub/325-goap-nested.md': '# GOAP-325\n\nSee [peer](../320-adr-peer.md).\n', // plan-refs: ignore
+    });
+    const result = runScript(root);
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
+  });
+
+  it('fails on a local record link whose target does not exist', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/321-goap-linking.md': '# GOAP-321\n\nSee [gone](321-adr-gone.md).\n', // plan-refs: ignore
+    });
+    const result = runScript(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'plans/321-goap-linking.md:3: linked record not found: 321-adr-gone.md',
+    );
+  });
+
+  it('resolves angle-bracket targets and ignores remote, absolute and fragment links', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/322-goap-linking.md': [
+        '# GOAP-322', // plan-refs: ignore
+        '',
+        'Exists: [peer](<322-adr-peer.md>).',
+        'Missing but angle-wrapped: [gone](<322-adr-gone.md>).',
+      ].join('\n'),
+      'plans/322-adr-peer.md': '# ADR-322\n', // plan-refs: ignore
+      'plans/323-goap-remote.md': [
+        '# GOAP-323', // plan-refs: ignore
+        '',
+        'Remote: [site](https://example.com/notes.md).',
+        'Absolute: [root](/plans/404-adr-absent.md).',
+        'Anchor only: [top](#purpose).',
+        'Mailto: [mail](mailto:someone@example.com).',
+      ].join('\n'),
+    });
+    const result = runScript(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('linked record not found: 322-adr-gone.md');
+    expect(result.stderr).not.toContain('404-adr-absent.md');
+    expect(result.stderr).not.toContain('example.com');
+    expect(result.stderr).not.toContain('323-goap-remote.md');
+  });
+
+  it('ignores link-shaped text inside fences and inline code', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/324-goap-examples.md': [
+        '# GOAP-324', // plan-refs: ignore
+        '',
+        '```markdown',
+        '[example](324-adr-in-fence.md)',
+        '```',
+        '',
+        'Inline: `[example](324-adr-inline.md)` and `plans/324-adr-absent.md`.',
+      ].join('\n'),
+    });
     const result = runScript(root);
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
@@ -132,5 +210,53 @@ describe('check-plan-references.mjs (ADR-083)', () => {
     const result = runScript(root);
     expect(result.stderr).toBe('');
     expect(result.status).toBe(0);
+  });
+  it('preserves diagnostic line numbers across fenced code blocks', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/327-goap-fenced-lines.md': [
+        '# GOAP-327', // plan-refs: ignore
+        '',
+        '```markdown',
+        '[gone](327-adr-fence.md)',
+        '```',
+        '',
+        'See [missing](327-adr-gone.md).',
+      ].join('\n'),
+    });
+    const result = runScript(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'plans/327-goap-fenced-lines.md:7: linked record not found: 327-adr-gone.md',
+    );
+    expect(result.stderr).not.toContain('327-adr-fence.md');
+  });
+
+  it('honors the ignore marker only on its own line', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/328-goap-ignore-line.md': [
+        '# GOAP-328', // plan-refs: ignore
+        '',
+        'Broken [link](328-adr-absent.md). <!-- plan-refs: ignore -->',
+        'Still broken [link](328-adr-gone.md).',
+      ].join('\n'),
+    });
+    const result = runScript(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain(
+      'plans/328-goap-ignore-line.md:4: linked record not found: 328-adr-gone.md',
+    );
+    expect(result.stderr).not.toContain('328-adr-absent.md');
+  });
+
+  it('reports malformed URI escapes without crashing', () => {
+    const root = writeTree({
+      'plans/ADR-INDEX.md': ADR_INDEX,
+      'plans/329-goap-bad-escape.md': '# GOAP-329\n\nSee [bad](foo%zz.md).\n', // plan-refs: ignore
+    });
+    const result = runScript(root);
+    expect(result.stderr).toContain('malformed URI escape: foo%zz.md');
+    expect(result.stderr).not.toContain('URIError');
   });
 });

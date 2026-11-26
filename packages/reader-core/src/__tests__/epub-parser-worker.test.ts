@@ -150,11 +150,12 @@ describe('worker error recovery (GOAP-224 A8/A6)', () => {
     await Promise.resolve();
 
     const worker = getWorker();
-    expect(worker.posted).toHaveLength(2);
+    expect(worker.posted).toHaveLength(0);
 
     // The worker loaded successfully (ready handshake) — the onerror below is
     // therefore a RUNTIME crash, which must reject in-flight parses (A8).
     worker.onmessage?.({ data: { type: 'ready' } as WorkerToMainMessage });
+    expect(worker.posted).toHaveLength(2);
 
     const reject1 = expect(p1).rejects.toThrow('worker crashed');
     const reject2 = expect(p2).rejects.toThrow('worker crashed');
@@ -212,12 +213,14 @@ describe('worker error recovery (GOAP-224 A8/A6)', () => {
 describe('worker LOAD failure (GOAP-226 — issue #957)', () => {
   beforeEach(() => {
     vi.stubGlobal('Worker', FakeWorker);
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
+    terminateParserWorker();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     FakeWorker.instances = [];
-    terminateParserWorker();
   });
 
   function getWorker(): FakeWorker {
@@ -250,28 +253,42 @@ describe('worker LOAD failure (GOAP-226 — issue #957)', () => {
     expect(worker.terminated).toBe(true);
   });
 
-  it('does not reject pending parses on a load failure that arrives after one result', async () => {
-    const p1 = parseEpubInWorker(new Uint8Array([1, 2, 3]));
+  it('dispatches queued parses only after the worker sends ready', async () => {
+    const source = new Uint8Array([1, 2, 3]);
+    const pending = parseEpubInWorker(source);
     await Promise.resolve();
     const worker = getWorker();
 
-    // Worker started and answered one parse...
-    const settled = expect(p1).resolves.toMatchObject({ valid: true });
+    expect(worker.posted).toHaveLength(0);
+    worker.onmessage?.({ data: { type: 'ready' } as WorkerToMainMessage });
+    expect(worker.posted).toHaveLength(1);
+
+    const message = worker.posted[0] as { id: string };
+    const settled = expect(pending).resolves.toMatchObject({ valid: true });
     worker.onmessage?.({
       data: {
         type: 'result',
-        id: (worker.posted[0] as { id: string }).id,
+        id: message.id,
         result: { valid: true, data: new ArrayBuffer(4) },
       } as unknown as WorkerToMainMessage,
     });
     await settled;
+  });
 
-    // ...but then a second parse finds the worker had never sent 'ready' (the
-    // ready message was lost) and errors — still degrade, never reject.
-    const p2 = parseEpubInWorker(new Uint8Array([7, 8, 9]));
+  it('falls back when the worker never sends ready or error', async () => {
+    vi.useFakeTimers();
+    const { validateArchive } = await import('../archive-validator');
+    const source = new Uint8Array([1, 2, 3]);
+    const pending = parseEpubInWorker(source);
     await Promise.resolve();
-    const settled2 = expect(p2).resolves.toMatchObject({ valid: true });
-    worker.onerror?.({ message: 'Worker initialization failed' });
-    await settled2;
+    const worker = getWorker();
+
+    expect(worker.posted).toHaveLength(0);
+    const settled = expect(pending).resolves.toMatchObject({ valid: true });
+    await vi.advanceTimersByTimeAsync(5_000);
+    await settled;
+
+    expect(worker.terminated).toBe(true);
+    expect(vi.mocked(validateArchive).mock.calls[0]?.[0]).toBe(source);
   });
 });

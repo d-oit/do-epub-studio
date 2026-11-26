@@ -61,6 +61,8 @@ describe('EPUB validation queue contract', () => {
       validatorVersion: EPUBCHECK_VERSION,
       sha256: 'a'.repeat(64),
       epubVersion: '3.0',
+      safetyStatus: 'accepted',
+      conformanceStatus: 'completed',
       findings: [],
       accessibility: {
         metadata: [],

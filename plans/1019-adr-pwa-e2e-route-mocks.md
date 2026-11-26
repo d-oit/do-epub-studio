@@ -30,3 +30,5 @@ Playwright's official Service Workers guide documents the distinction: `browserC
 - Context-level routes cover both ordinary frame requests and worker-owned network requests; route order must be kept intentional when a test overrides a shared mock.
 - The offline-reader suite continues to test the real service worker, including activation, cache behavior, offline rendering, and reconnect.
 - Playwright evaluation probes remain serializable without tripping the repository's Codacy Biome rule.
+
+**Index disposition (2026-11-16):** Accepted (keep service workers enabled; `BrowserContext.route()` captures worker-owned network requests; page-evaluation probes use named functions without suppressions)

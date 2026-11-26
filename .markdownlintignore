@@ -6,3 +6,7 @@ target/
 dist/
 build/
 *.min.js
+
+# Agent scratch directories (gitignored; not repository documentation)
+.mimocode/plans/
+.impeccable/

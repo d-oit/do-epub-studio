@@ -50,6 +50,14 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
 
         expect(passwordBox, `${errorCtx}: password field has bounding box`).not.toBeNull();
         expect(toggleBox, `${errorCtx}: toggle has bounding box`).not.toBeNull();
+        expect(
+          toggleBox!.width,
+          `${errorCtx}: toggle meets 44px target width`,
+        ).toBeGreaterThanOrEqual(44);
+        expect(
+          toggleBox!.height,
+          `${errorCtx}: toggle meets 44px target height`,
+        ).toBeGreaterThanOrEqual(44);
 
         // Toggle button must be contained inside password input field bounds
         expect(
@@ -101,6 +109,18 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
 
         expect(themeBox, `${errorCtx}: theme toggle bounding box`).not.toBeNull();
         expect(localeBox, `${errorCtx}: locale selector bounding box`).not.toBeNull();
+        expect(
+          themeBox!.width,
+          `${errorCtx}: theme toggle meets 44px target width`,
+        ).toBeGreaterThanOrEqual(44);
+        expect(
+          themeBox!.height,
+          `${errorCtx}: theme toggle meets 44px target height`,
+        ).toBeGreaterThanOrEqual(44);
+        expect(
+          localeBox!.height,
+          `${errorCtx}: locale selector meets 44px target height`,
+        ).toBeGreaterThanOrEqual(44);
 
         // Header controls must not intersect each other
         expect(
@@ -170,6 +190,10 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         expect(cardBox, `${errorCtx}: login card bounding box`).not.toBeNull();
         expect(passwordBox, `${errorCtx}: password input bounding box`).not.toBeNull();
         expect(submitBox, `${errorCtx}: submit button bounding box`).not.toBeNull();
+        expect(
+          submitBox!.height,
+          `${errorCtx}: submit button meets 44px target height`,
+        ).toBeGreaterThanOrEqual(44);
 
         // Horizontal viewport containment
         expect(
@@ -190,16 +214,15 @@ test.describe('Responsive Login Controls & Layout Matrix', () => {
         // Header controls do not intersect password field or submit button
         const headerContainer = page.locator('[data-testid="login-header-controls"]');
         const headerBox = await headerContainer.boundingBox();
-        if (headerBox) {
-          expect(
-            rectanglesIntersect(headerBox, passwordBox!),
-            `${errorCtx}: header controls must not intersect password input`,
-          ).toBe(false);
-          expect(
-            rectanglesIntersect(headerBox, submitBox!),
-            `${errorCtx}: header controls must not intersect submit button`,
-          ).toBe(false);
-        }
+        expect(headerBox, `${errorCtx}: header controls have geometry`).not.toBeNull();
+        expect(
+          rectanglesIntersect(headerBox!, passwordBox!),
+          `${errorCtx}: header controls must not intersect password input`,
+        ).toBe(false);
+        expect(
+          rectanglesIntersect(headerBox!, submitBox!),
+          `${errorCtx}: header controls must not intersect submit button`,
+        ).toBe(false);
       });
 
       test('Long-label locale (French) rendering & geometry', async ({ page }) => {

@@ -29,3 +29,5 @@
 - Workflow validation: all 17 workflows passed.
 - Final-head CI verification is enforced by the PR merge checks; local evidence does not replace it.
 - `pnpm verify:fast`: lint/typecheck 15/15 tasks passed; unit 8/8 tasks executed uncached and passed, including shared redaction 31/31 cases. No root task duplicated the suites. The E2E no-artifact task also passed a forced direct run without an output warning.
+
+**Index disposition (2026-11-16):** DONE (benchmark workload parity, pinned harness prerequisite, and offline-comment sequencing repaired; full local benchmark comparison and 16/16 PWA smoke passed; final CI remains the PR merge prerequisite)

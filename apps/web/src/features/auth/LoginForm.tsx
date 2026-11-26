@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode, RefObject } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useTranslation } from '../../hooks/useTranslation';
 import { Button, Input } from '../../components/ui';
@@ -8,8 +8,8 @@ export interface FormAction {
 }
 
 export interface LoginFormRefs {
-  emailRef: React.RefObject<HTMLInputElement | null>;
-  passwordRef: React.RefObject<HTMLInputElement | null>;
+  emailRef: RefObject<HTMLInputElement | null>;
+  passwordRef: RefObject<HTMLInputElement | null>;
 }
 
 function SubmitButton({
@@ -17,7 +17,7 @@ function SubmitButton({
   loadingLabel,
   disabled,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   loadingLabel: string;
   disabled?: boolean;
 }) {

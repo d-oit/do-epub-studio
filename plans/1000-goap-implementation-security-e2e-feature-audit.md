@@ -13,10 +13,10 @@ cited as historical evidence, not re-executed here. _Note 2026-10-05:_ upstream
 this audit's own inventory below is the surviving record.
 **Owned follow-ups:**
 
-- `plans/1001-goap-reader-integration-gaps.md` — GOAP-1001 (M1–M3)
+- `plans/archive/1001-goap-reader-integration-gaps.md` — GOAP-1001 (M1–M3)
 - `plans/1002-goap-security-control-validation.md` — GOAP-1002 (S1–S4)
-- `plans/1003-goap-e2e-behavior-proof-gaps.md` — GOAP-1003 (E1–E4)
-- `plans/1004-goap-reading-insights-feature-roadmap.md` — GOAP-1004 (N1–N3)
+- `plans/archive/1003-goap-e2e-behavior-proof-gaps.md` — GOAP-1003 (E1–E4)
+- `plans/archive/1004-goap-reading-insights-feature-roadmap.md` — GOAP-1004 (N1–N3)
 
 ## Purpose
 
@@ -37,9 +37,9 @@ certification appear anywhere in this record.
 <!-- prettier-ignore -->
 | ID | Priority and evidence class | Impact and exact source anchor | Owning plan and concrete acceptance |
 | - | - | - | - |
-| M1 | P1, source-only | Online bookmark create/delete mutate Zustand only, so the server list reload overwrites acknowledged state. `apps/web/src/features/reader/hooks/useBookmarkHandlers.ts:27–90`; `useReaderDataLoader.ts:107–112,159–163,273–277`; server routes exist at `apps/worker/src/routes/reader/bookmarks.ts:63–125`. | [GOAP-1001](1001-goap-reader-integration-gaps.md) — create online → create a highlight → reload → bookmark survives; delete → reload → absent; offline create/reload/reconnect yields one durable bookmark and a 403 leaves no successful state. |
-| M2 | P1, source-only | Notification badge/panel have test-only consumers, so unread comment-reply state is unreachable in the reader. `apps/web/src/features/reader/components/notifications/NotificationBadge.tsx`, `NotificationPanel.tsx`; producer routes `apps/worker/src/routes/notifications.ts`, `routes/comments.ts:177–181`. | [GOAP-1001](1001-goap-reader-integration-gaps.md) — reader B replies → A sees an unread notification → opens the referenced comment → marks read → count decreases; empty state and failed fetch are distinguishable. |
-| M3 | P2, source-only lifecycle gap | Server FTS reads `book_search_index`/`book_content_fts` with no production writer, so server-side search has no index owner. `apps/worker/src/routes/search.ts:45–62,89–103`; indexer removal at `plans/archive/206-goap-wave6-dead-code-and-circular-dep-cleanup.md:49`. | [GOAP-1001](1001-goap-reader-integration-gaps.md) — uploaded fixture with a unique phrase → real index completion → authenticated search returns that chapter; replacement upload drops the old phrase; wrong-book access refused; an unindexed book reads as unindexed, not "no matches". |
+| M1 | P1, source-only | Online bookmark create/delete mutate Zustand only, so the server list reload overwrites acknowledged state. `apps/web/src/features/reader/hooks/useBookmarkHandlers.ts:27–90`; `useReaderDataLoader.ts:107–112,159–163,273–277`; server routes exist at `apps/worker/src/routes/reader/bookmarks.ts:63–125`. | [GOAP-1001](archive/1001-goap-reader-integration-gaps.md) — create online → create a highlight → reload → bookmark survives; delete → reload → absent; offline create/reload/reconnect yields one durable bookmark and a 403 leaves no successful state. |
+| M2 | P1, source-only | Notification badge/panel have test-only consumers, so unread comment-reply state is unreachable in the reader. `apps/web/src/features/reader/components/notifications/NotificationBadge.tsx`, `NotificationPanel.tsx`; producer routes `apps/worker/src/routes/notifications.ts`, `routes/comments.ts:177–181`. | [GOAP-1001](archive/1001-goap-reader-integration-gaps.md) — reader B replies → A sees an unread notification → opens the referenced comment → marks read → count decreases; empty state and failed fetch are distinguishable. |
+| M3 | P2, source-only lifecycle gap | Server FTS reads `book_search_index`/`book_content_fts` with no production writer, so server-side search has no index owner. `apps/worker/src/routes/search.ts:45–62,89–103`; indexer removal at `plans/archive/206-goap-wave6-dead-code-and-circular-dep-cleanup.md:49`. | [GOAP-1001](archive/1001-goap-reader-integration-gaps.md) — uploaded fixture with a unique phrase → real index completion → authenticated search returns that chapter; replacement upload drops the old phrase; wrong-book access refused; an unindexed book reads as unindexed, not "no matches". |
 
 ## Security
 
@@ -88,23 +88,23 @@ not database integration.
 <!-- prettier-ignore -->
 | ID | Priority and evidence class | Impact and exact source anchor | Owning plan and concrete acceptance |
 | - | - | - | - |
-| E1 | P1, source-only assertion shape | Named behaviors pass on vacuous or guarded assertions, so a real regression would not fail the test. `apps/tests/edge-cases.spec.ts:144–151`; `apps/tests/catalog-admin-flows.spec.ts:392–495`; `apps/tests/in-book-search.spec.ts:61–65`; `apps/tests/app-identity-responsive.spec.ts:38–52`. | [GOAP-1003](1003-goap-e2e-behavior-proof-gaps.md) — toolbar stays operable after a failed save; revoke completes its visible transition; entity filter changes returned rows; the CSV action downloads a file with fixture records; pagination moves between distinct fixture pages; search closes; manifest fetch/parse errors fail the named test. |
-| E2 | P2, source-only | RTL/overflow proof injects `lang`/`dir` instead of selecting a real application locale, and coverage is login-concentrated. `apps/tests/viewport-regression.spec.ts:93–114`. | [GOAP-1003](1003-goap-e2e-behavior-proof-gaps.md) — real app locale selection en→ar→de with reload on reader and admin routes: applied language/direction asserted before overflow measurement, a translated control present, keyboard focus through usable controls, no horizontal overflow at 320×568, 812×375 and 1440×900. |
-| E3 | P2, source-only coverage gap | No browser navigation to the shipped creator workspace was found. Existing component tests and attributed live acceptance remain valid. | [GOAP-1003](1003-goap-e2e-behavior-proof-gaps.md) — mocked spec covers assignment-gated navigation, direct workspace reload, feedback provenance labels and a visible 403/auth-loss state; a separate real-stack journey proves submitter-only/private feedback visibility and assigned-creator review. |
-| E4 | P2, source-only coverage gap | No test drives bookmark create/delete persistence or asserts reader-notes download content. `apps/web/src/features/reader/hooks/useExportNotes.ts:274–290` implements an intentionally local Markdown export surface. | [GOAP-1003](1003-goap-e2e-behavior-proof-gaps.md) — bookmark persistence is M1's acceptance; clicking the actual export action yields a download event whose parsed Markdown includes the selected book's note and excludes another book's. |
+| E1 | P1, source-only assertion shape | Named behaviors pass on vacuous or guarded assertions, so a real regression would not fail the test. `apps/tests/edge-cases.spec.ts:144–151`; `apps/tests/catalog-admin-flows.spec.ts:392–495`; `apps/tests/in-book-search.spec.ts:61–65`; `apps/tests/app-identity-responsive.spec.ts:38–52`. | [GOAP-1003](archive/1003-goap-e2e-behavior-proof-gaps.md) — toolbar stays operable after a failed save; revoke completes its visible transition; entity filter changes returned rows; the CSV action downloads a file with fixture records; pagination moves between distinct fixture pages; search closes; manifest fetch/parse errors fail the named test. |
+| E2 | P2, source-only | RTL/overflow proof injects `lang`/`dir` instead of selecting a real application locale, and coverage is login-concentrated. `apps/tests/viewport-regression.spec.ts:93–114`. | [GOAP-1003](archive/1003-goap-e2e-behavior-proof-gaps.md) — real app locale selection en→ar→de with reload on reader and admin routes: applied language/direction asserted before overflow measurement, a translated control present, keyboard focus through usable controls, no horizontal overflow at 320×568, 812×375 and 1440×900. |
+| E3 | P2, source-only coverage gap | No browser navigation to the shipped creator workspace was found. Existing component tests and attributed live acceptance remain valid. | [GOAP-1003](archive/1003-goap-e2e-behavior-proof-gaps.md) — mocked spec covers assignment-gated navigation, direct workspace reload, feedback provenance labels and a visible 403/auth-loss state; a separate real-stack journey proves submitter-only/private feedback visibility and assigned-creator review. |
+| E4 | P2, source-only coverage gap | No test drives bookmark create/delete persistence or asserts reader-notes download content. `apps/web/src/features/reader/hooks/useExportNotes.ts:274–290` implements an intentionally local Markdown export surface. | [GOAP-1003](archive/1003-goap-e2e-behavior-proof-gaps.md) — bookmark persistence is M1's acceptance; clicking the actual export action yields a download event whose parsed Markdown includes the selected book's note and excludes another book's. |
 
 ## New features
 
 These are optional opportunities formalized for execution planning, not missing
 requirements and not implementation defects. Detailed acceptance lives in
-[GOAP-1004](1004-goap-reading-insights-feature-roadmap.md).
+[GOAP-1004](archive/1004-goap-reading-insights-feature-roadmap.md).
 
 <!-- prettier-ignore -->
 | ID | Priority and evidence class | Impact and exact source anchor | Owning plan and concrete acceptance |
 | - | - | - | - |
-| N1 | Option; opportunity formalized from GOAP-298 | Synced reading history has no user-visible surface beside device-local insights. Reuse `apps/web/src/features/reader/components/info/InfoPanel.tsx:52–65`, `InsightsSection` and `GET /api/books/:bookId/insights` (`apps/worker/src/routes/reader/insights.ts:26–67`). | [GOAP-1004](1004-goap-reading-insights-feature-roadmap.md) — fresh local store plus a server summary of 120 minutes / 60 pages / 3-day streak renders those synced values separately labelled and never summed; another book never appears; a network failure leaves populated local metrics intact. |
-| N2 | Option; opportunity formalized from GOAP-298 | The admin dashboard has no book-level aggregate view despite an existing insights route. `GET /api/admin/insights` (`apps/worker/src/routes/admin/insights.ts:32–65`) and the existing dashboard section pattern; no new route or migration. | [GOAP-1004](1004-goap-reading-insights-feature-roadmap.md) — two seeded books render correct aggregates; the next page holds a different fixture book set; no reader email or timeline in response or UI; a non-admin gets no aggregates; empty and API-failure states are distinct. |
-| N3 | Option; opportunity promoted from documented future work | The selected book's local insight summary cannot be exported offline. `computeInsightSummary(bookId, progressPercent)` at `apps/web/src/lib/offline/reading-insights.ts:224–254`; existing Blob/download idiom at `useExportNotes.ts:274–290`; export already listed as future work at `docs/reading-insights.md:139–142`. | [GOAP-1004](1004-goap-reading-insights-feature-roadmap.md) — a book at 25 minutes / 12 pages / 50% exports parseable JSON containing those metrics and estimated 25 minutes remaining; a second book's 99-minute record is absent; an offline export succeeds with no network request. |
+| N1 | Option; opportunity formalized from GOAP-298 | Synced reading history has no user-visible surface beside device-local insights. Reuse `apps/web/src/features/reader/components/info/InfoPanel.tsx:52–65`, `InsightsSection` and `GET /api/books/:bookId/insights` (`apps/worker/src/routes/reader/insights.ts:26–67`). | [GOAP-1004](archive/1004-goap-reading-insights-feature-roadmap.md) — fresh local store plus a server summary of 120 minutes / 60 pages / 3-day streak renders those synced values separately labelled and never summed; another book never appears; a network failure leaves populated local metrics intact. |
+| N2 | Option; opportunity formalized from GOAP-298 | The admin dashboard has no book-level aggregate view despite an existing insights route. `GET /api/admin/insights` (`apps/worker/src/routes/admin/insights.ts:32–65`) and the existing dashboard section pattern; no new route or migration. | [GOAP-1004](archive/1004-goap-reading-insights-feature-roadmap.md) — two seeded books render correct aggregates; the next page holds a different fixture book set; no reader email or timeline in response or UI; a non-admin gets no aggregates; empty and API-failure states are distinct. |
+| N3 | Option; opportunity promoted from documented future work | The selected book's local insight summary cannot be exported offline. `computeInsightSummary(bookId, progressPercent)` at `apps/web/src/lib/offline/reading-insights.ts:224–254`; existing Blob/download idiom at `useExportNotes.ts:274–290`; export already listed as future work at `docs/reading-insights.md:139–142`. | [GOAP-1004](archive/1004-goap-reading-insights-feature-roadmap.md) — a book at 25 minutes / 12 pages / 50% exports parseable JSON containing those metrics and estimated 25 minutes remaining; a second book's 99-minute record is absent; an offline export succeeds with no network request. |
 
 ## Existing backlog (not new findings)
 
@@ -158,8 +158,8 @@ Recorded results from this documentation deliverable, on 2026-10-04:
 - Touched-file inspection and working-tree reconciliation:
   - Documentation deliverable: 6 `plans/` markdown files created (ADR-1000 and
     GOAP-1000–1004) and 7 modified (`plans/ADR-INDEX.md`,
-    `plans/298-goap-comprehensive-gap-audit.md` and
-    `plans/300-goap-offline-reading-proof.md` — both later deleted by upstream
+    `plans/archive/298-goap-comprehensive-gap-audit.md` and
+    `plans/archive/300-goap-offline-reading-proof.md` — both later deleted by upstream
     `7e0cbd6c` — `plans/999-goap-codebase-improvements-uiux-e2e-audit.md`, and
     archived ADR-063, ADR-111 and Plan 199).
   - Ambient working-tree state: concurrent/ambient edits outside the docs-only

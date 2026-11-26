@@ -4,10 +4,12 @@ import type { ZipEntry } from './zip';
 
 const MIMETYPE = 'application/epub+zip';
 export const SOURCE_MAX_COMPRESSED_BYTES = 8 * 1024 * 1024;
-export const SOURCE_MAX_UNCOMPRESSED_BYTES = 16 * 1024 * 1024;
-export const OUTPUT_MAX_COMPRESSED_BYTES = 10 * 1024 * 1024;
+export const SOURCE_MAX_UNCOMPRESSED_BYTES = 24 * 1024 * 1024;
+export const OUTPUT_MAX_COMPRESSED_BYTES = 12 * 1024 * 1024;
 export const OUTPUT_MAX_UNCOMPRESSED_BYTES = 24 * 1024 * 1024;
-export const MAX_ARCHIVE_ENTRIES = 2_000;
+export const MAX_ARCHIVE_ENTRIES = 10_000;
+export const MAX_CONTAINER_XML_BYTES = 64 * 1024;
+export const MAX_ENCRYPTION_XML_BYTES = 256 * 1024;
 const MAX_XML_BYTES = 2 * 1024 * 1024;
 
 export const EPUB_ANNOTATION_EXPORT_LIMITS = {
@@ -16,8 +18,10 @@ export const EPUB_ANNOTATION_EXPORT_LIMITS = {
   maxOutputCompressedBytes: OUTPUT_MAX_COMPRESSED_BYTES,
   maxOutputUncompressedBytes: OUTPUT_MAX_UNCOMPRESSED_BYTES,
   maxArchiveEntries: MAX_ARCHIVE_ENTRIES,
-  maxAnnotations: 500,
+  maxAnnotations: 1000,
   maxAnnotationTextBytes: 1024 * 1024,
+  maxContainerXmlBytes: MAX_CONTAINER_XML_BYTES,
+  maxEncryptionXmlBytes: MAX_ENCRYPTION_XML_BYTES,
 } as const;
 
 export type EpubAnnotationExportErrorCode =
@@ -26,7 +30,9 @@ export type EpubAnnotationExportErrorCode =
   | 'SOURCE_INVALID'
   | 'ANNOTATIONS_TOO_LARGE'
   | 'ANNOTATIONS_INVALID'
-  | 'OUTPUT_TOO_LARGE';
+  | 'OUTPUT_TOO_LARGE'
+  | 'SIGNATURES_UNSUPPORTED'
+  | 'ENCRYPTION_UNSUPPORTED';
 
 export class EpubAnnotationExportError extends Error {
   constructor(
@@ -129,11 +135,39 @@ export async function validateSourceArchive(bytes: Uint8Array): Promise<void> {
     throw archiveFailure(error);
   }
 }
+export async function validateOutputArchive(bytes: Uint8Array): Promise<void> {
+  if (bytes.byteLength > OUTPUT_MAX_COMPRESSED_BYTES) {
+    throw new EpubAnnotationExportError(
+      'OUTPUT_TOO_LARGE',
+      'The generated EPUB exceeds the 12 MiB limit',
+    );
+  }
+  try {
+    await validateArchive(bytes, {
+      limits: {
+        maxCompressedBytes: OUTPUT_MAX_COMPRESSED_BYTES,
+        maxExpandedBytes: OUTPUT_MAX_UNCOMPRESSED_BYTES,
+        maxEntryCount: MAX_ARCHIVE_ENTRIES,
+        maxCompressionRatio: 10,
+      },
+    });
+  } catch (error) {
+    const mapped = archiveFailure(error);
+    if (mapped.code === 'SOURCE_TOO_LARGE') {
+      throw new EpubAnnotationExportError(
+        'OUTPUT_TOO_LARGE',
+        'The generated EPUB exceeds an archive limit',
+      );
+    }
+    throw mapped;
+  }
+}
 
 export async function unzipSource(bytes: Uint8Array): Promise<UnzippedArchive> {
   return new Promise((resolve, reject) => {
     const entries: SourceEntry[] = [];
     const names = new Set<string>();
+    const namesLower = new Set<string>();
     const active = new Set<UnzipFile>();
     const unzip = new Unzip();
     let entryCount = 0;
@@ -179,16 +213,18 @@ export async function unzipSource(bytes: Uint8Array): Promise<UnzippedArchive> {
         );
         return;
       }
-      if (names.has(file.name)) {
+      const lowerName = file.name.toLowerCase();
+      if (namesLower.has(lowerName)) {
         fail(
           new EpubAnnotationExportError(
             'SOURCE_UNSAFE',
-            'The source EPUB contains duplicate entry paths',
+            'The source EPUB contains duplicate or case-conflicting entry paths',
           ),
         );
         return;
       }
       names.add(file.name);
+      namesLower.add(lowerName);
       if (file.compression !== 0 && file.compression !== 8) {
         fail(
           new EpubAnnotationExportError(
@@ -204,7 +240,7 @@ export async function unzipSource(bytes: Uint8Array): Promise<UnzippedArchive> {
           fail(
             new EpubAnnotationExportError(
               'SOURCE_TOO_LARGE',
-              'The source EPUB expands beyond 16 MiB',
+              'The source EPUB expands beyond 24 MiB',
             ),
           );
           return;
@@ -233,7 +269,7 @@ export async function unzipSource(bytes: Uint8Array): Promise<UnzippedArchive> {
             fail(
               new EpubAnnotationExportError(
                 'SOURCE_TOO_LARGE',
-                'The source EPUB expands beyond 16 MiB',
+                'The source EPUB expands beyond 24 MiB',
               ),
             );
             return;
@@ -339,8 +375,8 @@ function normalizeXmlDeclaration(xml: string): string {
   return `${xml.slice(0, valueStart)}UTF-8${xml.slice(valueEnd)}`;
 }
 
-export function decodeXml(bytes: Uint8Array, fileName: string): string {
-  if (bytes.byteLength > MAX_XML_BYTES) {
+export function decodeXml(bytes: Uint8Array, fileName: string, maxBytes = MAX_XML_BYTES): string {
+  if (bytes.byteLength > maxBytes) {
     throw new EpubAnnotationExportError(
       'SOURCE_TOO_LARGE',
       `${fileName} exceeds the XML size limit`,

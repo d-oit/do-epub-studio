@@ -5,22 +5,24 @@
 
 ## Budget Model
 
-One authoritative model, defined in `.performance-budgets.json` under
-`gzipBudgets` (main JS 180 KB, main CSS 30 KB, lazy chunks 165 KB — bumped
-from 100 KB by GOAP-273 B1 for the lazily-imported on-device engine chunk),
-enforced by
-`scripts/check-bundle-budget.mjs`. There is **no** separate raw-byte budget —
-gzip is the single source of truth (ADR-218 D4).
+`.performance-budgets.json` is the single source for bundle limits:
+`gzipBudgets` caps each compressed JS/CSS file, while
+`routeBudgets.*.maxSize` caps the raw bytes in each route's initial static graph:
+the route entry, its transitive Vite `imports`, and each chunk's linked CSS. It
+excludes Vite `dynamicImports`, which are fetched after route entry; every
+dynamic JS/CSS file still receives its per-file gzip budget. There is no
+separate raw per-file `bundleSize` budget.
 
 Two enforcement layers:
 
-1. **Absolute budgets** — every build must stay under `gzipBudgets` or the
-   enforced CI step fails (`BUNDLE_BUDGET_FAIL_ON_VIOLATION=1`). Wired in
-   `.github/workflows/bundle-size.yml` ("Enforce gzipped bundle budget") and
-   the release gate (`.github/workflows/release.yml`).
+1. **Absolute budgets** — every build must stay under the per-file gzip limits,
+   route aggregate byte limits, and the deploy-platform per-file cap. The
+   enforced CI step fails when any ceiling is exceeded
+   (`BUNDLE_BUDGET_FAIL_ON_VIOLATION=1`). Wired in
+   `.github/workflows/bundle-size.yml` and the release gate.
 2. **Baseline delta** — growth relative to a committed `bundle-baseline.json`
    (ADR-218 D5): an entry chunk growing **>10 KB gzip** or a route total
-   growing **>3%** fails CI. The comparison runs inside the same enforcement
+   growing **>3% gzip** fails CI. The comparison runs in the same enforcement
    step once a `bundle-baseline.json` exists at the repo root.
 
 ## Regenerating the Baseline
