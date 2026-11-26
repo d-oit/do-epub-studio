@@ -1,6 +1,6 @@
 # GOAP-315: Land the studio workflow modernization with all CI green
 
-**Status:** IN PROGRESS — rebased onto `main`; full gate and PR delivery remain.
+**Status:** DONE (2026-11-26) — merged via PR #1522 (squash `44e98461`); all required checks green. Plan/index close-out tracked by PR #1523.
 **Date:** 2026-11-19 (rebased 2026-11-26)
 **Related:** issue #1014, GOAP-314, GOAP-1433, PR #1481 (closed unmerged), ADR-1022
 
@@ -39,13 +39,13 @@ cannot run (required phase)` → exit 2; the gate declares bats a required
    complete manifest, and all 17 tests pass without weakening assertions.
 2. **WP2 — CI fix — DONE on `main`:** `e251138d` already installs pinned
    `bats@1.13.0` before the gate; the rebase keeps main's step.
-3. **WP3 — Verification — IN PROGRESS:** rebase onto `d76f89c5` resolved 12
-   conflicts; typecheck and the targeted reader/worker/runner suites pass.
-   Full `./scripts/quality_gate.sh` remains.
+3. **WP3 — Verification — DONE (2026-11-26):** rebase onto `d76f89c5`
+   resolved 12 conflicts; full `./scripts/quality_gate.sh` passed, and the
+   targeted reader/worker/runner suites pass.
 4. **WP4 — Plan upkeep — DONE:** ADR-INDEX row added; GOAP-1433 remains
    blocked upstream.
-5. **WP5 — Delivery:** atomic commit ≤72-char subject, PR to main, all
-   required checks green.
+5. **WP5 — Delivery — DONE:** PR #1522 merged with the required checks
+   green (squash `44e98461`).
 
 ## Session 2026-11-26 — rebase record
 
