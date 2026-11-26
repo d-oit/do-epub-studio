@@ -1,6 +1,6 @@
 # GOAP-315: Land the studio workflow modernization with all CI green
 
-**Status:** DONE (2026-11-26) — merged via PR #1522 (squash `44e98461`); all required checks green.
+**Status:** DONE (2026-11-26) — merged via PR #1522 (squash `44e98461`); all required checks green. Plan/index close-out tracked by PR #1523.
 **Date:** 2026-11-19 (rebased 2026-11-26)
 **Related:** issue #1014, GOAP-314, GOAP-1433, PR #1481 (closed unmerged), ADR-1022
 
