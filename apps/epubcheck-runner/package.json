@@ -10,7 +10,7 @@
   "dependencies": {
     "@do-epub-studio/reader-core": "workspace:*",
     "@do-epub-studio/shared": "workspace:*",
-    "fflate": "^0.8.2",
+    "fflate": "0.8.3",
     "tsx": "^4.20.6"
   }
 }

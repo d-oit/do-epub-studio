@@ -4,6 +4,7 @@ import { LocaleSwitcher } from '../../../../components/LocaleSwitcher';
 import type { ReaderPanel } from '../../hooks/useReaderUi';
 import type { RenditionItem } from '@do-epub-studio/reader-core';
 import { NotificationBadge } from '../notifications/NotificationBadge';
+import { READER_EXPORT_PANEL_ID } from '../ExportNotesPanel';
 import type { TFn } from './toolbar-types';
 import {
   ToolbarIconButton,
@@ -35,7 +36,7 @@ interface ToolbarActionsProps {
   onToggleBookmarks: () => void;
   onToggleInfo: () => void;
   onToggleFixedLayoutControls?: () => void;
-  onExportNotes: () => void;
+  onToggleExport: () => void;
   onToggleSettings: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
@@ -59,7 +60,7 @@ export function ToolbarActions({
   onToggleBookmarks,
   onToggleInfo,
   onToggleFixedLayoutControls,
-  onExportNotes,
+  onToggleExport,
   onToggleSettings,
   onLogout,
   onToggleNotifications,
@@ -116,8 +117,12 @@ export function ToolbarActions({
         />
       )}
       <ToolbarIconButton
+        id="reader-export-trigger"
+        ariaControls={READER_EXPORT_PANEL_ID}
         label={t('reader.exportNotes')}
-        onClick={onExportNotes}
+        onClick={onToggleExport}
+        isExpanded={activePanel === 'export'}
+        hasPopup="dialog"
         svgPath={PATH_EXPORT}
       />
       <ToolbarIconButton

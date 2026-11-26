@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { createEpubLoader, extractCfi, isValidCfi } from '../epub-loader';
+import { createEpubLoader, extractCfi } from '../epub-loader';
+import { isValidCfi } from '../cfi-validation';
 
 const mockArrayBuffer = new ArrayBuffer(0);
 vi.stubGlobal(
@@ -22,6 +23,8 @@ vi.mock('@intity/epub-js', () => {
     display: vi.fn().mockResolvedValue(undefined),
     prev: vi.fn().mockResolvedValue(undefined),
     next: vi.fn().mockResolvedValue(undefined),
+    clear: vi.fn(),
+    resize: vi.fn(),
     getContents: vi.fn().mockReturnValue(null),
     destroy: vi.fn<() => void>(),
     hooks: {
@@ -94,6 +97,8 @@ const epubjsMock = vi.mocked((await import('@intity/epub-js')) as unknown) as {
     display: ReturnType<typeof vi.fn>;
     prev: ReturnType<typeof vi.fn>;
     next: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+    resize: ReturnType<typeof vi.fn>;
     getContents: ReturnType<typeof vi.fn>;
     destroy: ReturnType<typeof vi.fn>;
   };
@@ -485,6 +490,23 @@ describe('createEpubLoader', () => {
     expect(handle).not.toBeNull();
   });
 
+  it('clears current views before resizing the rendition', async () => {
+    const loader = createEpubLoader();
+    await loader.load('test.epub');
+
+    const handle = loader.createRendition(document.createElement('div'));
+    handle.resize(390, 844);
+
+    const rendition = epubjsMock.__mockRendition;
+    expect(rendition.clear).toHaveBeenCalledOnce();
+    expect(rendition.resize).toHaveBeenCalledWith(390, 844);
+    const clearCallOrder = rendition.clear.mock.invocationCallOrder[0];
+    const resizeCallOrder = rendition.resize.mock.invocationCallOrder[0];
+    if (clearCallOrder === undefined || resizeCallOrder === undefined) {
+      throw new Error('Expected clear and resize call order');
+    }
+    expect(clearCallOrder).toBeLessThan(resizeCallOrder);
+  });
   it('returns defensive copies of arrays', async () => {
     const loader = createEpubLoader();
     await loader.load('test.epub');

@@ -3,7 +3,7 @@
 **Status:** Accepted
 **Date:** 2026-09-24
 **Supersedes:** none
-**Related:** Plan `plans/280-goap-nested-agents-thin-adapter.md`, GOAP-276 Phase 0 item 7 (`plans/276-goap-external-harness-benchmark-adoption.md`), plans/068 + issue #445 (guard origin), AGENTS.md Tier 2 #9/#12, ADR-083 (numbering)
+**Related:** Plan `plans/archive/280-goap-nested-agents-thin-adapter.md`, GOAP-276 Phase 0 item 7 (`plans/276-goap-external-harness-benchmark-adoption.md`), plans/068 + issue #445 (guard origin), AGENTS.md Tier 2 #9/#12, ADR-083 (numbering)
 
 ---
 
@@ -71,7 +71,7 @@ with zero enforcement.
 | 9   | "Before Any Implementation" (pnpm outdated / no CVEs / minimal deps)                                      | Drop as duplicate                           | `.agents/skills/security-code-auditor/references/security-checklist.md` ("Before adding dependencies…", A06 "Remove unused dependencies")                                                                    |
 | 10  | Dependency Overrides — pnpm 10 ignores `package.json` `pnpm.overrides`                                    | Drop as duplicate                           | `agents-docs/LEARNINGS.md` L382 + the `overrides:` block itself in `pnpm-workspace.yaml` (migrated 2026-09-10)                                                                                               |
 | 11  | OWASP Top-10 EPUB adaptations + 3 key guardrails (A01/A03/A10)                                            | Drop as duplicate                           | `.agents/skills/security-code-auditor/references/owasp-top10.md` — A01 permission check, A03 DOMPurify sanitize, A10 block-external-URLs sections all verified present                                       |
-| 12  | Test Guardrails — demo-account seed + live e2e recipe                                                     | Relocate as pointer (1-line pointer kept)   | `plans/256-goap-demo-login-e2e-vertical.md` (D1 sqlite seed, `E2E_LIVE_DEMO=1` command) + `scripts/seed-demo-accounts.mjs` header (usage, fail-closed guards)                                                |
+| 12  | Test Guardrails — demo-account seed + live e2e recipe                                                     | Relocate as pointer (1-line pointer kept)   | `plans/archive/256-goap-demo-login-e2e-vertical.md` (D1 sqlite seed, `E2E_LIVE_DEMO=1` command) + `scripts/seed-demo-accounts.mjs` header (usage, fail-closed guards)                                        |
 | 13  | Test Guardrails — vitest config snippet (`pool: 'forks'`, no `singleFork`)                                | Drop as duplicate                           | `plans/216-adr-vitest-pool-policy.md` + root AGENTS.md Tier 3                                                                                                                                                |
 | 14  | Test Isolation Rules 1–4 (separate fork, mock before render, `beforeEach` clear, `waitFor`)               | Drop as duplicate                           | ADR-216 (isolation default, reset explicit) + `.agents/skills/testing-strategy/references/test-patterns.md` ("Mock Timing", DO/DON'T list)                                                                   |
 | 15  | Common Test Failures & Fixes table                                                                        | Drop as duplicate                           | `test-patterns.md` (singleFork/mocking/waitFor) — all three rows covered                                                                                                                                     |

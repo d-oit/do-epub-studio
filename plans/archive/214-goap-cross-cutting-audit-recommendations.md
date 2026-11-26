@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-03
 **Status:** Completed (non-gated recommendations via GOAP-216; R1/R12 remain gated behind private email triage per ADR-214 D4)
-**Decision:** [ADR-214](214-adr-audit-recommendation-governance.md)
+**Decision:** [ADR-214](../214-adr-audit-recommendation-governance.md)
 **Goal:** Convert the current codebase audit into a compact, testable backlog
 for security, performance, lint/build/test, i18n, product features, responsive
 UI/UX, test harness, tracing, and email sending.

@@ -30,6 +30,8 @@ describe('epub-validation schemas', () => {
       validatorVersion: EPUBCHECK_VERSION,
       sha256: 'a'.repeat(64),
       epubVersion: '3.0',
+      safetyStatus: 'accepted' as const,
+      conformanceStatus: 'completed' as const,
       findings: [
         {
           severity: 'warning' as const,

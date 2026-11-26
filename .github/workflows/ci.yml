@@ -413,6 +413,8 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      DO_HARNESS_AUTO_REPORT: 'off'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -422,10 +424,14 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install do-harness (pinned)
-        env:
-          DO_HARNESS_VERSION: v0.4.2
+
         run: |
           set -euo pipefail
+          DO_HARNESS_VERSION="$(cat .do-harness-version)"
+          if [[ ! "$DO_HARNESS_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::.do-harness-version must contain a v-prefixed stable version" >&2
+            exit 1
+          fi
           target=x86_64-unknown-linux-musl
           base="https://github.com/d-o-hub/do-harness/releases/download/${DO_HARNESS_VERSION}"
           cd "$RUNNER_TEMP"
@@ -446,6 +452,11 @@ jobs:
       # above.
       - name: Install bats (shell-test runner, pinned)
         run: npm install -g bats@1.13.0
+
+      # markdownlint is a required gate phase (ADR-112), and GitHub runners do
+      # not ship the CLI. Pin the classic CLI that reads .markdownlint.json.
+      - name: Install markdownlint (Markdown gate, pinned)
+        run: npm install -g markdownlint-cli@0.50.1
 
       - name: Validate gate parity manifest
         run: bash scripts/validate-gate-parity.sh
@@ -469,6 +480,8 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      DO_HARNESS_AUTO_REPORT: 'off'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -477,10 +490,14 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
 
       - name: Install do-harness (pinned)
-        env:
-          DO_HARNESS_VERSION: v0.4.2
+
         run: |
           set -euo pipefail
+          DO_HARNESS_VERSION="$(cat .do-harness-version)"
+          if [[ ! "$DO_HARNESS_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::.do-harness-version must contain a v-prefixed stable version" >&2
+            exit 1
+          fi
           target=x86_64-unknown-linux-musl
           base="https://github.com/d-o-hub/do-harness/releases/download/${DO_HARNESS_VERSION}"
           cd "$RUNNER_TEMP"
@@ -489,6 +506,9 @@ jobs:
           grep " do-harness-${DO_HARNESS_VERSION}-${target}.tar.gz\$" checksums.txt | sha256sum -c -
           tar -xzf "do-harness-${DO_HARNESS_VERSION}-${target}.tar.gz"
           echo "$RUNNER_TEMP/do-harness-${DO_HARNESS_VERSION}-${target}" >> "$GITHUB_PATH"
+
+      - name: Verify pinned harness identity
+        run: node scripts/check-harness-version.mjs
 
       - name: Verify completion contract (strict, recorded, evidence)
         run: |

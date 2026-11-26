@@ -1,4 +1,5 @@
 export * from './annotation-adapter';
+export * from './cfi-validation';
 export * from './epub-loader';
 export { parseEpubInWorker } from './epub-parser-worker';
 export * from './locator';

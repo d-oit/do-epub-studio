@@ -1,6 +1,6 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export function ReaderToolbar({ children }: { children: React.ReactNode }) {
+export function ReaderToolbar({ children }: { children: ReactNode }) {
   return (
     <div
       role="toolbar"

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   makeEnv,
   makeAuthContext,
@@ -11,9 +11,28 @@ import {
 import { app } from '../app';
 import { assertBookAccess } from '../lib/tenant-isolation';
 import { defined } from './helpers';
+import { EpubAnnotationExportError } from '@do-epub-studio/reader-core/packager';
+import {
+  EpubAnnotationExportFailure,
+  createValidatedAnnotationEpub,
+} from '../lib/epub-annotation-export';
 
 vi.mock('../lib/tenant-isolation', () => ({ parseLocatorRow: vi.fn(), assertBookAccess: vi.fn() }));
-const mockAssertBookAccess = assertBookAccess as ReturnType<typeof vi.fn>;
+
+vi.mock('../lib/epub-annotation-export', () => ({
+  EpubAnnotationExportFailure: class EpubAnnotationExportFailure extends Error {
+    constructor(
+      readonly code: string,
+      message: string,
+    ) {
+      super(message);
+      this.name = 'EpubAnnotationExportFailure';
+    }
+  },
+  createValidatedAnnotationEpub: vi.fn(),
+}));
+const mockCreateValidatedAnnotationEpub = vi.mocked(createValidatedAnnotationEpub);
+const mockAssertBookAccess = vi.mocked(assertBookAccess);
 
 describe('Export Routes', () => {
   const env = makeEnv();
@@ -284,5 +303,245 @@ describe('Export Routes', () => {
       makePassThroughContext(),
     );
     expect(res.status).toBe(400);
+  });
+});
+describe('EPUB Export Routes', () => {
+  const env = makeEnv();
+  const fetchMock = vi.fn();
+
+  const EPUB_BYTES = new TextEncoder().encode('fake-generated-epub-bytes');
+
+  function enableRunner(): void {
+    env.EPUBCHECK_RUNNER_URL = 'https://runner.example';
+    env.EPUBCHECK_RUNNER_TOKEN = 'runner-token';
+  }
+
+  function disableRunner(): void {
+    delete env.EPUBCHECK_RUNNER_URL;
+    delete env.EPUBCHECK_RUNNER_TOKEN;
+  }
+
+  function mockBookTitle(title: string): void {
+    mockQueryFirst.mockResolvedValueOnce({ title });
+  }
+
+  function epubRequest(): Request {
+    return new Request('http://localhost/api/books/b1/export?format=epub', {
+      headers: { Authorization: 'Bearer valid' },
+    });
+  }
+
+  function mockHappyPath(): void {
+    mockBookTitle('My Book');
+    mockCreateValidatedAnnotationEpub.mockResolvedValue(EPUB_BYTES);
+  }
+
+  function rejectExport(failure: Error): void {
+    mockCreateValidatedAnnotationEpub.mockRejectedValue(failure);
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+    mockCreateValidatedAnnotationEpub.mockReset();
+    fetchMock.mockReset();
+    mockAssertBookAccess.mockResolvedValue(null);
+    mockRequireAuth.mockResolvedValue(makeAuthContext());
+    enableRunner();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('returns the validated EPUB attachment with a safe filename', async () => {
+    mockHappyPath();
+
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/epub+zip');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    expect(res.headers.get('content-length')).toBe(String(EPUB_BYTES.byteLength));
+    const disposition = res.headers.get('content-disposition') ?? '';
+    expect(disposition).toContain('attachment');
+    expect(disposition).toContain('filename="My Book-annotations.epub"');
+    expect(disposition).toContain("filename*=UTF-8''My%20Book-annotations.epub");
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(EPUB_BYTES);
+  });
+
+  it('bounds filename scanning when a title consists of stripped separators', async () => {
+    mockBookTitle(`${'/'.repeat(256)}Safe`);
+    mockCreateValidatedAnnotationEpub.mockResolvedValue(EPUB_BYTES);
+
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-disposition')).toContain('filename="Safe-annotations.epub"');
+  });
+
+  it('uses an ASCII fallback stem and UTF-8 filename* for non-ASCII titles', async () => {
+    mockBookTitle('Букварик');
+    mockCreateValidatedAnnotationEpub.mockResolvedValue(EPUB_BYTES);
+
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(200);
+    const disposition = res.headers.get('content-disposition') ?? '';
+    expect(disposition).toContain('filename="book-annotations.epub"');
+    expect(disposition).toContain(
+      "filename*=UTF-8''%D0%91%D1%83%D0%BA%D0%B2%D0%B0%D1%80%D0%B8%D0%BA-annotations.epub",
+    );
+  });
+
+  it('sanitizes adversarial titles and RFC5987-escapes filename*', async () => {
+    mockBookTitle("O'Brien (Vol. 1)* \u0000\u001F");
+    mockCreateValidatedAnnotationEpub.mockResolvedValue(EPUB_BYTES);
+
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(200);
+    const disposition = res.headers.get('content-disposition') ?? '';
+    expect(disposition).toContain('filename="O\'Brien (Vol. 1)-annotations.epub"');
+    expect(disposition).toContain("filename*=UTF-8''O%27Brien%20%28Vol.%201%29-annotations.epub");
+    for (const char of disposition) {
+      expect(char.charCodeAt(0)).toBeGreaterThanOrEqual(0x20);
+    }
+    expect(disposition).not.toContain('\\');
+    expect(disposition).not.toContain('\u0000');
+    expect(disposition).not.toContain('\u001F');
+  });
+
+  it('keeps markdown exports independent of R2 and the validator', async () => {
+    const getSpy = vi.spyOn(env.BOOKS_BUCKET, 'get');
+    mockQueryAll.mockResolvedValueOnce([
+      {
+        id: 'h1',
+        selected_text: 'Legacy',
+        color: 'yellow',
+        note: null,
+        chapter_ref: null,
+        cfi_range: null,
+        created_at: '2026-07-18',
+      },
+    ]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    mockQueryAll.mockResolvedValueOnce([]);
+    mockQueryFirst.mockResolvedValueOnce({ title: 'Legacy Book' });
+
+    const res = await app.fetch(
+      new Request('http://localhost/api/books/b1/export?format=markdown', {
+        headers: { Authorization: 'Bearer valid' },
+      }),
+      env,
+      makePassThroughContext(),
+    );
+    expect(res.status).toBe(200);
+    const body = await parseBody(res);
+    expect(body.data.format).toBe('markdown');
+    expect(body.data.content as string).toContain('Legacy');
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(getSpy).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when unauthenticated', async () => {
+    mockRequireAuth.mockResolvedValue(null);
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(401);
+  });
+
+  it('denies the export without book access', async () => {
+    mockAssertBookAccess.mockResolvedValue({
+      ok: false,
+      response: new Response(JSON.stringify({ ok: false }), { status: 403 }),
+    });
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(403);
+    expect(mockCreateValidatedAnnotationEpub).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 NOT_FOUND when the book has no revision', async () => {
+    rejectExport(new EpubAnnotationExportFailure('SOURCE_NOT_FOUND', 'no revision'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(404);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('NOT_FOUND');
+  });
+
+  it('returns 409 for a local-only source', async () => {
+    rejectExport(new EpubAnnotationExportFailure('SOURCE_UNAVAILABLE', 'local-only'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(409);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_SOURCE_UNAVAILABLE');
+  });
+
+  it('returns 409 when the R2 object is missing', async () => {
+    rejectExport(new EpubAnnotationExportFailure('SOURCE_UNAVAILABLE', 'missing object'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(409);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_SOURCE_UNAVAILABLE');
+  });
+
+  it('returns 409 when R2 size does not match D1', async () => {
+    rejectExport(new EpubAnnotationExportFailure('SOURCE_UNAVAILABLE', 'size mismatch'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(409);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_SOURCE_UNAVAILABLE');
+  });
+
+  it.each([
+    ['SOURCE_TOO_LARGE', 'EXPORT_SOURCE_TOO_LARGE', 413],
+    ['ANNOTATIONS_TOO_LARGE', 'EXPORT_ANNOTATIONS_TOO_LARGE', 413],
+    ['OUTPUT_TOO_LARGE', 'EXPORT_OUTPUT_TOO_LARGE', 413],
+    ['SOURCE_INVALID', 'EXPORT_SOURCE_INVALID', 422],
+    ['SOURCE_UNSAFE', 'EXPORT_SOURCE_INVALID', 422],
+    ['SIGNATURES_UNSUPPORTED', 'EXPORT_UNSUPPORTED_SIGNATURE', 422],
+    ['ENCRYPTION_UNSUPPORTED', 'EXPORT_UNSUPPORTED_ENCRYPTION', 422],
+  ] as const)('maps EpubAnnotationExportError %s to %s', async (code, expectedCode, status) => {
+    rejectExport(new EpubAnnotationExportError(code, 'boom'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(status);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe(expectedCode);
+  });
+
+  it('returns 503 when the runner is not configured', async () => {
+    disableRunner();
+    rejectExport(new EpubAnnotationExportFailure('EPUBCHECK_UNAVAILABLE', 'not configured'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(503);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_VALIDATION_UNAVAILABLE');
+  });
+
+  it('returns 503 on runner network failure', async () => {
+    rejectExport(new EpubAnnotationExportFailure('EPUBCHECK_UNAVAILABLE', 'network'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(503);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_VALIDATION_UNAVAILABLE');
+  });
+
+  it('returns 504 when the runner times out', async () => {
+    rejectExport(new EpubAnnotationExportFailure('EPUBCHECK_TIMEOUT', 'timeout'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(504);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe('EXPORT_VALIDATION_TIMEOUT');
+  });
+
+  it.each([
+    ['EPUBCHECK_INVALID_RESPONSE', 'EXPORT_VALIDATION_INVALID', 502],
+    ['EPUBCHECK_INTEGRITY_ERROR', 'EXPORT_VALIDATION_MISMATCH', 502],
+    ['EPUBCHECK_SAFETY_REJECTED', 'EXPORT_OUTPUT_UNSAFE', 422],
+    ['EPUBCHECK_CONFORMANCE_FAILED', 'EXPORT_VALIDATION_FAILED', 422],
+  ] as const)('maps EpubAnnotationExportFailure %s to %s', async (code, expectedCode, status) => {
+    rejectExport(new EpubAnnotationExportFailure(code, 'boom'));
+    const res = await app.fetch(epubRequest(), env, makePassThroughContext());
+    expect(res.status).toBe(status);
+    const body = await parseBody(res);
+    expect(body.error?.code).toBe(expectedCode);
   });
 });

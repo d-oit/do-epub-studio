@@ -10,15 +10,17 @@ import { getValidatedRunnerUrl } from './epub-validation-queue';
 import type { Env, JsonRow } from './env';
 
 const MAX_RUNNER_RESPONSE_BYTES = 300_000;
-const RUNNER_TIMEOUT_MS = 125_000;
+const RUNNER_TIMEOUT_MS = 130_000;
 
 export type EpubAnnotationExportFailureCode =
   | 'SOURCE_NOT_FOUND'
   | 'SOURCE_UNAVAILABLE'
   | 'EPUBCHECK_UNAVAILABLE'
+  | 'EPUBCHECK_TIMEOUT'
   | 'EPUBCHECK_INVALID_RESPONSE'
   | 'EPUBCHECK_INTEGRITY_ERROR'
-  | 'EPUBCHECK_REJECTED';
+  | 'EPUBCHECK_SAFETY_REJECTED'
+  | 'EPUBCHECK_CONFORMANCE_FAILED';
 
 export class EpubAnnotationExportFailure extends Error {
   constructor(
@@ -30,9 +32,17 @@ export class EpubAnnotationExportFailure extends Error {
   }
 }
 
+function runnerTimeoutFailure(): EpubAnnotationExportFailure {
+  return new EpubAnnotationExportFailure(
+    'EPUBCHECK_TIMEOUT',
+    'The EPUBCheck runner did not finish in time',
+  );
+}
+
 interface SourceRevisionRow extends JsonRow {
   id: string;
   storage_key: string;
+  storage_provider: string;
   file_size_bytes: number;
 }
 
@@ -43,7 +53,11 @@ async function sha256Hex(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   return value;
 }
 
-async function readRunnerResponse(response: Response): Promise<Uint8Array> {
+async function readRunnerResponse(
+  response: Response,
+  timeoutSignal: AbortSignal,
+): Promise<Uint8Array> {
+  if (timeoutSignal.aborted) throw runnerTimeoutFailure();
   if (!response.body) return new Uint8Array();
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
@@ -65,6 +79,9 @@ async function readRunnerResponse(response: Response): Promise<Uint8Array> {
     }
   } catch (error) {
     if (error instanceof EpubAnnotationExportFailure) throw error;
+    if (timeoutSignal.aborted || (error instanceof Error && error.name === 'TimeoutError')) {
+      throw runnerTimeoutFailure();
+    }
     throw new EpubAnnotationExportFailure(
       'EPUBCHECK_UNAVAILABLE',
       'The EPUBCheck runner response could not be read',
@@ -111,6 +128,7 @@ async function validateWithEpubCheck(env: Env, epub: Uint8Array<ArrayBuffer>): P
     );
   }
 
+  const timeoutSignal = AbortSignal.timeout(RUNNER_TIMEOUT_MS);
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -121,35 +139,46 @@ async function validateWithEpubCheck(env: Env, epub: Uint8Array<ArrayBuffer>): P
         'content-length': String(epub.byteLength),
       },
       body: epub,
-      signal: AbortSignal.timeout(RUNNER_TIMEOUT_MS),
+      redirect: 'error',
+      signal: timeoutSignal,
     });
-  } catch {
+  } catch (error) {
+    if (timeoutSignal.aborted || (error instanceof Error && error.name === 'TimeoutError')) {
+      throw runnerTimeoutFailure();
+    }
     throw new EpubAnnotationExportFailure(
       'EPUBCHECK_UNAVAILABLE',
       'The EPUBCheck runner could not be reached',
     );
   }
 
+  if (response.status === 504) throw runnerTimeoutFailure();
   if (!response.ok && response.status !== 422) {
     throw new EpubAnnotationExportFailure(
       'EPUBCHECK_UNAVAILABLE',
       'The EPUBCheck runner did not accept the request',
     );
   }
-  const raw = parseRunnerJson(await readRunnerResponse(response));
+  const raw = parseRunnerJson(await readRunnerResponse(response, timeoutSignal));
   if (raw.safetyStatus === 'rejected') {
     throw new EpubAnnotationExportFailure(
-      'EPUBCHECK_REJECTED',
+      'EPUBCHECK_SAFETY_REJECTED',
       'The generated EPUB failed archive safety validation',
     );
   }
-  if (raw.conformanceStatus !== 'completed') {
+  if (!response.ok) {
     throw new EpubAnnotationExportFailure(
-      raw.conformanceStatus === 'failed' ? 'EPUBCHECK_REJECTED' : 'EPUBCHECK_INVALID_RESPONSE',
-      'The EPUBCheck runner did not report successful conformance',
+      'EPUBCHECK_INVALID_RESPONSE',
+      'The EPUBCheck runner returned an unexpected validation status',
     );
   }
-  if (!response.ok || raw.safetyStatus !== 'accepted') {
+  if (raw.conformanceStatus === 'failed') {
+    throw new EpubAnnotationExportFailure(
+      'EPUBCHECK_CONFORMANCE_FAILED',
+      'The generated EPUB failed EPUBCheck conformance validation',
+    );
+  }
+  if (raw.conformanceStatus !== 'completed' || raw.safetyStatus !== 'accepted') {
     throw new EpubAnnotationExportFailure(
       'EPUBCHECK_INVALID_RESPONSE',
       'The EPUBCheck runner returned an unexpected validation status',
@@ -171,7 +200,7 @@ async function validateWithEpubCheck(env: Env, epub: Uint8Array<ArrayBuffer>): P
   }
   if (result.data.findings.some((finding) => finding.severity === 'error')) {
     throw new EpubAnnotationExportFailure(
-      'EPUBCHECK_REJECTED',
+      'EPUBCHECK_CONFORMANCE_FAILED',
       'The generated EPUB has EPUBCheck error findings',
     );
   }
@@ -184,7 +213,7 @@ export async function createValidatedAnnotationEpub(
 ): Promise<Uint8Array<ArrayBuffer>> {
   const revision = await queryFirst<SourceRevisionRow>(
     env,
-    `SELECT id, storage_key, file_size_bytes FROM book_files
+    `SELECT id, storage_key, storage_provider, file_size_bytes FROM book_files
      WHERE book_id = ? ORDER BY created_at DESC LIMIT 1`,
     [bookId],
   );
@@ -197,6 +226,7 @@ export async function createValidatedAnnotationEpub(
   if (
     !revision.id ||
     !revision.storage_key ||
+    revision.storage_provider !== 'r2' ||
     !Number.isSafeInteger(revision.file_size_bytes) ||
     revision.file_size_bytes <= 0
   ) {

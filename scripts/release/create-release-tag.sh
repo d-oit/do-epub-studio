@@ -6,11 +6,11 @@
 #   version — optional; defaults to content of VERSION file (e.g. "0.1.0")
 #
 # Steps performed:
-#   1. Verify working tree is clean and on main
-#   2. Run the quality gate (./scripts/quality_gate.sh)
-#   3. Verify VERSION file matches all package.json versions
-#   4. Create and push the annotated tag vX.Y.Z
-#   5. The push triggers .github/workflows/release.yml automatically
+#   1. Verify main/clean state and pull the latest main
+#   2. Verify VERSION against root + immediate apps/packages manifests
+#   3. Verify release notes and the pinned harness identity
+#   4. Run the full quality gate and mandatory release signal set
+#   5. Create and push the annotated tag vX.Y.Z, triggering release.yml
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,15 +62,27 @@ if [[ "$FILE_VERSION" != "$VERSION" ]]; then
     exit 1
 fi
 
-# 5. Verify all package.json files match
-echo "Verifying package versions..."
+echo "Verifying workspace package versions..."
+if ! PKG_FILES="$(node "$REPO_ROOT/scripts/lib/workspace-manifests.mjs" "$REPO_ROOT")"; then
+    echo -e "${RED}✗ Failed to enumerate workspace package manifests${NC}" >&2
+    exit 1
+fi
+
 MISMATCHED=()
 while IFS= read -r pkg; do
-    PKG_VERSION=$(node -e "console.log(require('$pkg').version)" 2>/dev/null || echo "")
-    if [[ "$PKG_VERSION" != "$VERSION" ]]; then
+    [[ -n "$pkg" ]] || continue
+    if ! PKG_VERSION="$(node - "$pkg" <<'NODE'
+const fs = require("node:fs");
+const pkg = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+if (!pkg || typeof pkg !== "object" || Array.isArray(pkg)) process.exit(2);
+console.log(pkg.version ?? "");
+NODE
+    )"; then
+        MISMATCHED+=("$pkg (invalid JSON)")
+    elif [[ "$PKG_VERSION" != "$VERSION" ]]; then
         MISMATCHED+=("$pkg (has $PKG_VERSION)")
     fi
-done < <(find . -name 'package.json' -not -path '*/node_modules/*' -not -path '*/.turbo/*' | sort)
+done <<< "$PKG_FILES"
 
 if [[ ${#MISMATCHED[@]} -gt 0 ]]; then
     echo -e "${RED}✗ Version mismatch in:${NC}" >&2
@@ -86,6 +98,13 @@ if ! ./scripts/release/check-release-notes.sh "$VERSION"; then
     exit 1
 fi
 
+# The release gate cannot be skipped for a missing or mismatched local binary.
+echo "Checking pinned do-harness identity..."
+if ! node "$REPO_ROOT/scripts/check-harness-version.mjs"; then
+    echo -e "${RED}✗ Required do-harness version is unavailable or mismatched${NC}" >&2
+    exit 1
+fi
+
 # 6. Run quality gate
 echo "Running quality gate..."
 if ! ./scripts/quality_gate.sh; then
@@ -93,13 +112,24 @@ if ! ./scripts/quality_gate.sh; then
     exit 1
 fi
 
-# 6b. Verify release signal set via do-harness (GOAP-276 Phase 1)
-if command -v do-harness >/dev/null 2>&1; then
-    echo "Verifying release signal set with do-harness..."
-    if ! do-harness verify --set release --strict; then
-        echo -e "${RED}✗ do-harness release verification failed — fix issues before releasing${NC}" >&2
-        exit 1
-    fi
+# 6b. Verify release signal set via do-harness (mandatory, recorded evidence)
+echo "Verifying release signal set with do-harness..."
+if ! DO_HARNESS_AUTO_REPORT=off do-harness verify --set release --strict --record; then
+    echo -e "${RED}✗ do-harness release verification failed — fix issues before releasing${NC}" >&2
+    exit 1
+fi
+
+if ! RELEASE_STATUS="$(DO_HARNESS_AUTO_REPORT=off do-harness status --set release --format json)"; then
+    echo -e "${RED}✗ Could not read do-harness release evidence status${NC}" >&2
+    exit 1
+fi
+if ! node - "$RELEASE_STATUS" <<'NODE'
+const status = JSON.parse(process.argv[2]);
+if (status.state !== "green" || status.reason !== "current") process.exit(1);
+NODE
+then
+    echo -e "${RED}✗ do-harness release evidence is not current and green${NC}" >&2
+    exit 1
 fi
 
 # 7. Create annotated tag and push (RELEASE_SCRIPT_PUSH bypasses pre-push hook)

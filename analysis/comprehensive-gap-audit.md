@@ -401,7 +401,7 @@ probes.
 **Publication verification:** `node scripts/check-adr-index.mjs` and a
 throwaway read-only artifact smoke (section headings, A1–A14 uniqueness, eight
 domain entries, links, scoped DONE status) are recorded in
-`plans/298-goap-comprehensive-gap-audit.md`. That smoke proves report
+`plans/archive/298-goap-comprehensive-gap-audit.md`. That smoke proves report
 integrity, not product correctness.
 
 No browser, application test suite, build, formatter, migration, installation,
@@ -444,7 +444,7 @@ A14 was rejected during revalidation — the Turbo `test` task graph runs the
 unit suites — so no corrective work is specified for it.
 
 **Corrective follow-up (same day):** GOAP-299
-(`plans/299-goap-logging-privacy-slice.md`) implemented **A6** and **A7** with
+(`plans/archive/299-goap-logging-privacy-slice.md`) implemented **A6** and **A7** with
 their published acceptance criteria: `packages/shared/src/redact.ts` is now
 the single sanitizer (sensitive-key normalization fixed; closed
 correlation-field contract), the Worker log boundary and the client

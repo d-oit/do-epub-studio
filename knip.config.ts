@@ -23,7 +23,7 @@ const config: KnipConfig = {
     enumMembers: 'warn',
     duplicates: 'warn',
   },
-  ignoreBinaries: ['java'],
+  ignoreBinaries: ['java', 'do-harness'],
 
   // Exports that are also referenced in the same file (e.g. DEFAULT_EXPIRY_DAYS
   // used inside the same module it is exported from) are not dead code.
@@ -60,8 +60,7 @@ const config: KnipConfig = {
     'apps/worker': {
       // @libsql/client is imported in src/db/ which is a barrel not traced
       // from the worker entry point (pre-existing baseline).
-      // @cloudflare/vitest-pool-workers is consumed by vitest config only.
-      ignoreDependencies: ['@libsql/client', '@cloudflare/vitest-pool-workers'],
+      ignoreDependencies: ['@libsql/client'],
     },
 
     // ---- packages/schema -------------------------------------------------

@@ -9,7 +9,7 @@ import {
 import { createEpubLoader } from '../epub-loader';
 import { createLocator, parseLocator, locatorToString } from '../locator';
 import { flattenToc } from '../toc';
-import { isValidCfi } from '../epub-loader';
+import { isValidCfi } from '../cfi-validation';
 import { sanitizeEpubDocument } from '../sanitizer';
 import { readZipEntries } from './fixtures/epub-helpers';
 import type { Book } from '@intity/epub-js';

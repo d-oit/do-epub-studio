@@ -80,9 +80,11 @@ test.describe('Reader annotations', () => {
     });
     await loginAsReader(page);
 
-    // Trigger export notes and observe download event
-    const downloadPromise = page.waitForEvent('download');
+    // Trigger export notes: opening the panel, then confirming the format.
     await clickToolbarButton(page, 'Export Notes');
+    await expect(page.getByRole('dialog', { name: /Export annotations/i })).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download' }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename()).toContain('.md');
 

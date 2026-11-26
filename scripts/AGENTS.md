@@ -47,8 +47,8 @@ pipe` after `grep` exits on the first match. Use `find -print -quit`.
 ## Fresh-container recovery (hooks + do-harness)
 
 - **`.git/hooks` is not versioned — a fresh container ships with NO pre-commit/commit-msg/pre-push**, so every hook-based gate is silently inert. Run `./scripts/install-hooks.sh` (symlinks from `scripts/hooks/`) and verify with `./scripts/validate-git-hooks.sh` before trusting hook enforcement.
-- **The `do-harness` binary is container-local too**: reinstall pinned via `curl -fsSL https://raw.githubusercontent.com/d-o-hub/do-harness/main/scripts/install.sh | sh -s -- --version <tag>` (SHA-256 verified, lands in `~/.local/bin`), then `do-harness init-db` + `do-harness explain --set verification --changed`. NEVER run `do-harness hook install` here — it would clobber the scripts/hooks symlinks (ADR-246: repo hooks stay authoritative; its doctor WARNs about unmanaged hooks are expected).
-- **The pinned tag is `v0.2.1`** — the same version `.github/workflows/ci.yml` installs for the `harness-contract` job (`DO_HARNESS_VERSION`). Use that tag, not "latest": a newer harness changes `do-harness compliance`'s output and the `dora` policy schema, and the repo's committed artifacts then no longer match. The symptom is two BATS failures that look like content drift but are not: `compliance document is up to date with the harness output` (the harness reworded a heading) and `dora report shows the measured metrics` (the newer schema rejects `plans/dora.json` for a missing `max_rework_rate`). Check `do-harness --version` against the CI pin before debugging either failure.
+- **The `do-harness` binary is container-local too**: install the pinned release with `curl -fsSL "https://raw.githubusercontent.com/d-o-hub/do-harness/$(cat .do-harness-version)/scripts/install.sh" | sh -s -- --version "$(cat .do-harness-version)"` (SHA-256 verified, lands in `~/.local/bin`), then run `DO_HARNESS_AUTO_REPORT=off do-harness init-db` and `DO_HARNESS_AUTO_REPORT=off do-harness explain --set verification --since origin/main --changed`. Never run `do-harness init --force` or `do-harness hook install`; the checked-in scripts/hooks remain authoritative.
+- **The pin is `.do-harness-version` (`v0.4.6`)**. `scripts/check-harness-version.mjs` and CI require JSON `name === "do-harness"` and an exact version match. Repository-owned compliance/DORA/release and CI harness commands force `DO_HARNESS_AUTO_REPORT=off`; upstream submissions stay explicit.
 
 ## check-bundle-budget.mjs covers more than the budget table
 
@@ -68,11 +68,13 @@ pipe` after `grep` exits on the first match. Use `find -print -quit`.
 
 - **The index validator proves the index is internally sound; it says nothing about citations pointing at it** (ADR-083). `check-plan-references.mjs` closes that gap: every `ADR-<n>` must resolve to `<n>-adr-*.md` (or the legacy `ADR-<n>-*.md`, e.g. `plans/ADR-201-webkit-smoke-ci.md`) or an index row, and every `GOAP-<n>` in `apps/`, `packages/`, `scripts/`, `docs/`, `analysis/` must resolve to a `plans/**/<n>-*.md` file. Three real defects motivated it: `GOAP-318` in six source files was an _issue_ number (the plan is `plans/archive/262-goap-issue-318.md`); `ADR-124` and `ADR-219` were cited but never written; `ADR-008` in the jules-delegator skill pointed at nothing. <!-- plan-refs: ignore -->
 - **Two deliberate blind spots, both learned from real false positives**: `plans/` is exempt from the GOAP rule (archived records are _titled_ by issue number — `262-goap-issue-318.md` is "GOAP-318" — which is a name, not a citation), and an `ADR-<n>` that appears as a heading (`## ADR-042: …`) or an anchor link to one (`[ADR-042](#adr-042-…)`) is a definition, not a citation. Anything else that must quote a broken reference carries the inline marker `plan-refs: ignore` on that line — the test fixtures do, since they assert the failure path.
+- **Local record-to-record links are checked too (rule 4)**: `plans/**/*.md` inline links whose target is a local `.md` must exist beside the linking file (fragments stripped; remote, absolute, anchor-only targets and code examples are ignored). A bulk archive move is exactly what breaks these, so this rule is the regression net for `plans/archive/` restructuring.
 - **A repo-wide scan must survive a moving tree**: the walk collects paths and then reads them, so a concurrently-running test fixture (or a build) that creates and removes files crashes it with `ENOENT`. The per-file read is wrapped and skips vanished paths — the same fixture churn happens inside the `scripts/__tests__` lane, where this checker's own test runs beside `check-bundle-budget.test.mjs`.
 
-## check-adr-index.mjs counts ADR rows only
+## check-adr-index.mjs validates paths, not just counts
 
-- **`Numbers tracked: N` is not the number of index rows, and cannot prove every plan is indexed**: `addNumber()` is gated on `filePath.includes('-adr-')` (ADR-083 §2 shares one numeric space between `*-goap-*` and `*-adr-*`), so adding a GOAP-only row leaves the count unchanged — row 276 was added and the count stayed at 92. A plan with no row at all is invisible to the validator: `plans/276-goap-external-harness-benchmark-adoption.md` sat unindexed while rows 279–283 all pointed back at it, and CI stayed green. Audit index coverage by row prefix (`^\| [0-9]`), never by this count.
+- **`Numbers tracked: N` is not the number of index rows**: `addNumber()` is gated on `filePath.includes('-adr-')` (ADR-083 §2 shares one numeric space between `*-goap-*` and `*-adr-*`), so adding a GOAP-only row leaves the count unchanged. Never audit coverage by this count.
+- **Coverage is now enforced by path**: every root `plans/<n>-adr-*.md` / `plans/<n>-goap-*.md` must appear in some row's File cell, every backticked File-cell path must exist (multi-file cells split first), and a finished record parked under `## Proposed` fails. Add fixtures (`--root`) rather than eyeballing the index; `plans/276-goap-external-harness-benchmark-adoption.md` is the historical case that motivated it.
 
 ## gh resolves the repository from your cwd
 
@@ -114,3 +116,9 @@ pipe` after `grep` exits on the first match. Use `find -print -quit`.
 - `@intity/epub-js` is pinned to `0.3.96` in both consuming manifests and the
   lockfile. A range (`^0.3.96`) let a Dependabot lock refresh select `0.3.103`,
   whose missing declarations failed the Cloudflare preview build.
+
+### ADR-index row invariants (ADR-083)
+
+- `check-adr-index.mjs` accepts at most **one ADR row per base number**; a second row with the same leading number fails with `Exact duplicate: ADR <n>` even when both files are real. Sibling records (ADR + GOAP pair, or a second ADR sharing a number) are expressed as a **multi-file File cell**: `` `plans/250-adr-a.md`, `plans/250-adr-b.md` `` — row-level duplicate detection counts rows, not backticked paths.
+- GOAP-only rows (File cell without `-adr-`) never enter the duplicate map, which is what lets a numbered plan pair coexist with its ADR row.
+- Root `plans/*.md` records must be reachable from some File cell; a plan renamed into `plans/archive/` needs its index row's path updated in the same change or the `File not found` check fires.

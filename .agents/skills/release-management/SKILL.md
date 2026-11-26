@@ -1,5 +1,5 @@
 ---
-version: "1.0.0"
+version: "1.0.1"
 name: release-management
 description: >
   Cut releases, bump versions, sync changelog, and publish GitHub Releases.
@@ -48,7 +48,7 @@ Apply semantic versioning per Conventional Commits since last release:
 
 ### Step 2 — Bump Version
 
-Run the automated version propagation script to update `VERSION`, all package manifests, and internal workspace dependencies:
+Run the automated propagation script to update `VERSION`, root `package.json`, and the immediate pnpm workspaces matched by `apps/*` and `packages/*`; internal workspace dependency ranges in those same manifests are updated too. Nested fixture, build, tool, and submodule manifests are outside release scope:
 
 ```bash
 ./scripts/release/version-propagation.sh X.Y.Z
@@ -99,12 +99,13 @@ the tag — the version is only publishable after Step 6.
 ### Step 6 — Cut the Tag
 
 The tag is the release trigger, and `create-release-tag.sh` is the only
-sanctioned way to push it — it verifies you are on an up-to-date `main`
-with a clean tree, checks `VERSION` against every `package.json`, validates
-the `CHANGELOG.md` release section shape with
-`scripts/release/check-release-notes.sh <version>` (dated header, sections,
-non-empty Breaking Changes, no draft placeholders), runs the full quality
-gate, then pushes the annotated tag:
+sanctioned way to push it. It verifies an up-to-date `main` and clean tree,
+checks `VERSION` against root `package.json` and immediate `apps/*` and
+`packages/*` workspace manifests, validates the `CHANGELOG.md` release
+section with `scripts/release/check-release-notes.sh <version>`, verifies
+the installed do-harness identity against `.do-harness-version`, runs the
+full quality gate and mandatory recorded `release` signal set, then requires
+current green release evidence before it pushes the annotated tag:
 
 ```bash
 ./scripts/release/create-release-tag.sh
@@ -139,11 +140,12 @@ gh attestation verify do-epub-studio-web.zip --repo d-oit/do-epub-studio
 
 ## Hard Rules
 
-- **NEVER push a `v*` tag manually** — always use `scripts/release/create-release-tag.sh <version>`. The pre-push hook blocks direct tag pushes; the script runs the quality gate and version checks first.
+- **NEVER push a `v*` tag manually** — always use `scripts/release/create-release-tag.sh <version>`. The script checks scoped versions and release notes, validates the pinned do-harness identity, runs the full quality gate, and requires current green `do-harness verify --set release --strict --record` evidence before tagging.
 - **NEVER tag `main` directly** — always use the release PR path, then `create-release-tag.sh`
 - **NEVER edit a published release's CHANGELOG section** — release sections are written once, in the release PR (Step 3)
 - **NEVER merge a release PR without CI passing** — the tag push triggers `release.yml` which requires all checks to pass
 - **NEVER skip the quality gate** — a failing gate blocks the entire workflow
+- **NEVER bypass the release signal set or accept stale evidence** — the tag script requires recorded verification and current green status.
 
 ## Dry-Run Mode
 
@@ -167,7 +169,9 @@ git diff
 | Release notes shape check fails | Fix the `## [X.Y.Z] - YYYY-MM-DD` section in `CHANGELOG.md` (sections present, Breaking Changes stated or `None.`, no `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>`) and re-run `scripts/release/check-release-notes.sh <version>` |
 | Tag push did not trigger a release | Tags must come from `create-release-tag.sh`; check `gh run list --workflow=release.yml`. A tag pushed with the default `GITHUB_TOKEN` (e.g. by a bot inside CI) triggers nothing — the push must come from a human/agent identity |
 | CHANGELOG section missing entries | The release PR must move every `[Unreleased]` bullet (Step 3) |
-| Version mismatch in package.json drift | Run `./scripts/release/version-propagation.sh <version>` to synchronize all manifests |
+| Version mismatch in a root or immediate workspace manifest | Run `./scripts/release/version-propagation.sh <version>`; nested package manifests are intentionally outside the release scope |
+| Pinned harness identity fails | Install the checksum-verified release named by `.do-harness-version`, then run `node scripts/check-harness-version.mjs` |
+| Release signal set fails or is stale | Run `DO_HARNESS_AUTO_REPORT=off do-harness verify --set release --strict --record`, fix failing sensors, then confirm `DO_HARNESS_AUTO_REPORT=off do-harness status --set release` is green/current before retrying |
 | Quality gate fails | Fix issues before proceeding — never bypass |
 | A tag run used the workflow from before your fix | A tag run executes `release.yml` **from the tagged commit**, so fixing the workflow on a later commit changes nothing for an existing tag. To ship the fix on that version: delete the GitHub Release, re-point the tag to the corrected commit, push it again — the commit must be on `main` with green CI (the readiness gate refuses a commit whose CI it cannot verify), and `concurrency: cancel-in-progress: false` queues the new run behind any in-flight run for the same tag |
 | Release job failed after the release was created | Re-run failed jobs (`gh run rerun <run-id> --failed`) instead of re-tagging: the re-run keeps the original tag/SHA, the `release` job rebuilds, re-signs and re-attests everything itself (no dependency on the previous attempt's artifacts), and `softprops/action-gh-release` updates the existing release (`overwrite_files` defaults to true). The usual culprit is the fail-closed Pages API health check — fix the Pages deployment/bindings, then re-run. Reruns work for 30 days, up to 50 per run |
@@ -186,7 +190,7 @@ git diff
 | Rationalization | Reality |
 |-----------------|---------|
 | "CI is green, so the version is published." | Merging the release PR does **not** create the tag — the version is only publishable after `./scripts/release/create-release-tag.sh` (Step 6). |
-| "I'll just push the tag myself — the script is a formality." | The pre-push hook blocks direct `v*` tag pushes; `create-release-tag.sh` is the only sanctioned path and it verifies clean up-to-date `main`, `VERSION` vs every `package.json`, and the release-notes shape first. |
+| "I'll just push the tag myself — the script is a formality." | The pre-push hook blocks direct `v*` tag pushes; `create-release-tag.sh` is the only sanctioned path and requires root/immediate workspace version parity, release-note shape, exact harness identity, the full quality gate, and current green release-signal evidence. |
 | "I'll tidy the CHANGELOG section after the release publishes." | The section is written exactly once, inside the release PR — never edited after the tag publishes (AGENTS.md Tier 2: no direct CHANGELOG edits). |
 | "A bare `git commit -m` is fine for the release PR." | The commit-msg hook rejects a commit with no body — commit through `./scripts/atomic-commit/run.sh --message … --body …`, which also pushes the branch and opens the PR. |
 | "This release has no breaking changes, so I can omit that part." | `scripts/release/check-release-notes.sh <version>` requires a dated header, sections, a non-empty Breaking Changes statement, and no `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>` draft text. |
@@ -194,7 +198,7 @@ git diff
 ## Red Flags
 
 - [ ] A `v*` tag pushed by hand instead of via `create-release-tag.sh`
-- [ ] `VERSION` disagreeing with any `package.json` at tag time
+- [ ] `VERSION` disagreeing with root `package.json` or any immediate `apps/*` / `packages/*` workspace at tag time
 - [ ] Release notes with `TODO`/`TBD`/`FIXME`/`XXX`/`<placeholder>` or no Breaking Changes statement
 - [ ] `[Unreleased]` bullets left behind after the release PR merges
 - [ ] `release:cut` label expected to trigger anything (`release.yml` fires only on a `v*` tag push)

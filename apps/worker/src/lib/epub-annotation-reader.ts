@@ -58,7 +58,8 @@ function annotationBudgetSql(
   return `SELECT COUNT(*) AS row_count, COALESCE(SUM(text_bytes), 0) AS text_bytes
     FROM (
       SELECT ${byteLengths} AS text_bytes FROM ${table}
-      WHERE book_id = ? AND user_email = ?${extraFilter} LIMIT ?
+      WHERE book_id = ? AND user_email = ?${extraFilter}
+      ORDER BY created_at ASC, id ASC LIMIT ?
     ) AS bounded_annotations`;
 }
 
@@ -192,7 +193,7 @@ export async function readUserAnnotations(
       env,
       `SELECT id, selected_text, note, chapter_ref, cfi_range, revision_id, original_cfi,
               original_chapter_ref, original_selected_text, anchor_status
-       FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+       FROM highlights WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC, id ASC LIMIT ?`,
       [bookId, userEmail, rowLimit],
     ),
     queryAll<CommentExportRow>(
@@ -200,13 +201,13 @@ export async function readUserAnnotations(
       `SELECT id, body, selected_text, chapter_ref, cfi_range, parent_comment_id, revision_id,
               original_cfi, original_chapter_ref, original_selected_text, anchor_status
        FROM comments WHERE book_id = ? AND user_email = ? AND status != 'deleted'
-       ORDER BY created_at ASC LIMIT ?`,
+       ORDER BY created_at ASC, id ASC LIMIT ?`,
       [bookId, userEmail, rowLimit],
     ),
     queryAll<BookmarkExportRow>(
       env,
       `SELECT id, label, locator_json FROM bookmarks
-       WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC LIMIT ?`,
+       WHERE book_id = ? AND user_email = ? ORDER BY created_at ASC, id ASC LIMIT ?`,
       [bookId, userEmail, rowLimit],
     ),
   ]);

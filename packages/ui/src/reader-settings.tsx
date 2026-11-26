@@ -1,6 +1,6 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 
-export function ReaderSettings({ children }: { children: React.ReactNode }) {
+export function ReaderSettings({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col gap-4 p-4 bg-[var(--color-paper)] text-[var(--color-foreground)] rounded-[var(--radius-paper)] border border-[var(--color-rule)] shadow-[var(--elevation-1)]">
       {children}

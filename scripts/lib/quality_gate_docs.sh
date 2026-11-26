@@ -49,28 +49,35 @@ printf '%sValidating coverage threshold parity...%s\n' "${BLUE}" "${NC}"
 if ! "$REPO_ROOT/scripts/validate-coverage-parity.sh"; then FAILED=1; fi
 echo ""
 
-# --- Gate parity manifest (ADR-283/ADR-287) ---
-# Runs here too (not only in the CI jobs): this validator greps the gate for
-# every phase id the manifest claims, so a phase moved into a sourced lib used
-# to fail only in CI. Keeping it local makes the gate self-consistent.
+# Run here as well as in CI so local and CI gate claims stay aligned. The shell
+# wrapper checks local phases against the gate and its sourced phase libraries;
+# the Node validator parses workflow YAML for real PR/release job contexts and
+# checks readiness steps only within the configured release job.
 printf '%sValidating gate parity manifest...%s\n' "${BLUE}" "${NC}"
 if ! bash "$REPO_ROOT/scripts/validate-gate-parity.sh"; then FAILED=1; fi
 echo ""
 
 # --- Validate SKILL.md format ---
 printf '%sValidating SKILL.md format...%s\n' "${BLUE}" "${NC}"
-if [ -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then
-    if ! "$REPO_ROOT/scripts/validate-skill-format.sh"; then
-        FAILED=1
-    fi
+if [ ! -f "$REPO_ROOT/scripts/validate-skill-format.sh" ]; then
+    printf '%s  ✗ scripts/validate-skill-format.sh not found — skill format check cannot run (required phase)%s\n' "${RED}" "${NC}"
+    FAILED=1
+elif ! "$REPO_ROOT/scripts/validate-skill-format.sh"; then
+    FAILED=1
 fi
 echo ""
 
 # --- Validate reference links in SKILL.md files ---
 printf '%sValidating reference links in SKILL.md files...%s\n' "${BLUE}" "${NC}"
-if [ -f "$REPO_ROOT/scripts/validate-links.sh" ]; then
-    if ! "$REPO_ROOT/scripts/validate-links.sh"; then
-        FAILED=1
-    fi
+if [ ! -f "$REPO_ROOT/scripts/validate-links.sh" ]; then
+    printf '%s  ✗ scripts/validate-links.sh not found — reference check cannot run (required phase)%s\n' "${RED}" "${NC}"
+    FAILED=1
+elif ! "$REPO_ROOT/scripts/validate-links.sh"; then
+    FAILED=1
 fi
+echo ""
+
+# --- skills-catalog freshness ---
+printf '%sValidating skills-catalog freshness...%s\n' "${BLUE}" "${NC}"
+if ! python3 "$REPO_ROOT/scripts/generate-available-skills.py" --check; then FAILED=1; fi
 echo ""

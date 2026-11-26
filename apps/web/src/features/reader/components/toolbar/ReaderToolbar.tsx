@@ -9,8 +9,6 @@ import type { TranslationKeys } from '../../../../i18n';
 
 import type { ReaderPanel } from '../../hooks/useReaderUi';
 import type { TocItem } from '../../lib/epub-init';
-import { ExportFormatDialog, type ReaderExportFormat } from './ExportFormatDialog';
-import { useExportOnlineFile } from '../../hooks/useExportOnlineFile';
 
 interface ReaderToolbarProps {
   bookTitle: string | null;
@@ -29,7 +27,7 @@ interface ReaderToolbarProps {
   onToggleSettings: () => void;
   onToggleInfo: () => void;
   onToggleFixedLayoutControls?: () => void;
-  onExportNotes: () => void;
+  onToggleExport: () => void;
   onOpenPortability?: () => void;
   onLogout: () => void;
   onToggleNotifications?: () => void;
@@ -202,7 +200,7 @@ export function ReaderToolbar({
   onToggleSettings,
   onToggleInfo,
   onToggleFixedLayoutControls,
-  onExportNotes,
+  onToggleExport,
   onOpenPortability,
   onLogout,
   onToggleNotifications,
@@ -225,20 +223,6 @@ export function ReaderToolbar({
     isHeaderVisible,
     chapterProgressLabel,
   } = useReaderToolbarState(comments, toc, currentChapter, t);
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const { isExporting, hasError, clearError, downloadOnlineExport } = useExportOnlineFile();
-  const openExportDialog = () => {
-    clearError();
-    setIsExportDialogOpen(true);
-  };
-  const handleExportFormat = async (format: ReaderExportFormat) => {
-    if (format === 'markdown') {
-      onExportNotes();
-      setIsExportDialogOpen(false);
-      return;
-    }
-    if (await downloadOnlineExport(format)) setIsExportDialogOpen(false);
-  };
 
   const sharedActionProps = {
     capabilities,
@@ -250,7 +234,7 @@ export function ReaderToolbar({
     onToggleBookmarks,
     onToggleInfo,
     onToggleFixedLayoutControls,
-    onExportNotes: openExportDialog,
+    onToggleExport,
     onOpenPortability,
     onToggleSettings,
     onLogout,
@@ -288,6 +272,7 @@ export function ReaderToolbar({
             <ToolbarActions activePanel={activePanel} {...sharedActionProps} />
             <OverflowMenu
               isMenuOpen={isMenuOpen}
+              isExportOpen={activePanel === 'export'}
               menuRef={menuRef}
               onToggleMenu={() => {
                 const opening = !isMenuOpen;
@@ -316,17 +301,6 @@ export function ReaderToolbar({
           />
         </div>
       </Header>
-      <ExportFormatDialog
-        isOpen={isExportDialogOpen}
-        isOffline={isOffline}
-        isExporting={isExporting}
-        hasError={hasError}
-        onClose={() => setIsExportDialogOpen(false)}
-        onSelect={(format) => {
-          void handleExportFormat(format);
-        }}
-        t={t}
-      />
     </>
   );
 }

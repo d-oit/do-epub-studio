@@ -47,8 +47,15 @@ that delivers signed R2 URLs).
    with `sandbox: ['allow-same-origin']` (no scripts).
 5. **Annotations**: Highlights + comments are stored in D1 with
    multi-signal locators (CFI + selectedText + chapterRef) per ADR-006.
+   `GET /api/books/:id/export` returns them as Markdown/HTML JSON, or as a
+   bounded EPUB re-export (current revision + one XHTML annotation appendix,
+   synchronous EPUBCheck-gated, never persisted).
 6. **Offline**: Service worker caches the library + most-recent EPUB; queued
    mutations are reconciled on reconnect via the `sync-reader-state` tag.
+7. **Authoring**: `POST /api/author/books/:id/publish` packages the manuscript
+   with `packageEpub3`, validates the archive, stores an immutable
+   `application/epub+zip` revision in R2, and previews it through the production
+   reader in an iframe.
 
 ## 3. Anti-Patterns (BANNED)
 
@@ -121,10 +128,21 @@ that delivers signed R2 URLs).
 
 ## 7. Quality Gates
 
-- `./scripts/quality_gate.sh` — full gate (lint + typecheck + test + build + e2e smoke)
-- `./scripts/minimal_quality_gate.sh` — fast gate (lint + typecheck only)
+- `./scripts/quality_gate.sh` — the only gate that may precede a commit. Runs:
+  `do-harness` version pin (`check-harness-version.mjs`), git-hook check,
+  `validate-workflows.sh` (actionlint + zizmor), skill symlinks, agent-adapter
+  sync, app identity/version governance, ADR index + plan references + 500-line
+  source cap + Prettier `format:check` + coverage parity + gate parity +
+  SKILL.md format/links/catalog, then `lint` → `typecheck` → `test:coverage` →
+  `test:e2e:smoke` → `build`, markdownlint, impeccable, dead-code/circular check.
+  Exit 0 only when every required phase ran; any `SKIP_*` makes it exit 3.
+- `./scripts/minimal_quality_gate.sh` — fast local loop (lint + typecheck +
+  shellcheck); never a substitute before commit.
 - `./scripts/validate-workflows.sh` — workflow YAML + actionlint + zizmor
 - Coverage thresholds per `vitest.config.ts` (web 55%, worker 55%, reader-core 72%, etc.)
+- Playwright projects: `chromium`, `firefox`, `iphone`, `pixel`, `pwa-chromium`.
+  `webkit` exists only when `PLAYWRIGHT_INCLUDE_WEBKIT=1`; `@mobile` specs run on
+  `iphone`/`pixel`, `@pwa` on `pwa-chromium` only.
 
 ## 8. Local Dev
 

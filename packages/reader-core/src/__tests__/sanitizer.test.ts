@@ -615,6 +615,37 @@ describe('sanitizeEpubDocument', () => {
     expect(firstPass).toBe(secondPass);
     expect(doc.querySelector('script')).toBeNull();
   });
+
+  // epub.js constructs `Contents(document, document.body, section)` in the
+  // view's onLoad, before content hooks run, and later measures that exact
+  // node via `Contents.textSize()`. Replacing <html>'s children detaches it:
+  // textSize() reports 0x0 and expand() reframes the view to zero.
+  it('keeps the live <head> and <body> elements by identity', () => {
+    const doc = createDoc(
+      '<html lang="en"><head><title>Ch</title></head><body class="page"><p>Hello</p><script>alert(1)</script></body></html>',
+    );
+    const head = doc.head;
+    const body = doc.body;
+
+    sanitizeEpubDocument(doc);
+
+    expect(doc.head).toBe(head);
+    expect(doc.body).toBe(body);
+    expect(body.isConnected).toBe(true);
+    expect(doc.body.querySelector('script')).toBeNull();
+    expect(doc.body.textContent).toContain('Hello');
+  });
+
+  it('syncs body and head attributes from the sanitized clone', () => {
+    const doc = createDoc('<html><head><title>Ch</title></head><body class="old"></body></html>');
+    const body = doc.body;
+
+    sanitizeEpubDocument(doc);
+
+    expect(doc.body).toBe(body);
+    expect(doc.body.getAttribute('class')).toBe('old');
+    expect(doc.head?.querySelector('title')?.textContent).toBe('Ch');
+  });
 });
 
 describe('createEpubSanitizerHook', () => {
@@ -688,6 +719,30 @@ describe('createEpubSanitizerHook', () => {
   // GOAP-224 B18 + C14: the cache-HIT path must reproduce the MISS output
   // byte-for-byte (including the DOMPurify 3-pass result) and sync the live
   // <html> attributes — otherwise re-rendering a cached chapter drops lang/dir.
+  it('keeps the live <head> and <body> elements by identity on a cache HIT', () => {
+    const { hook } = createEpubSanitizerHook();
+    const first = new DOMParser().parseFromString(
+      '<html><head><title>Ch</title></head><body><p>clean</p></body></html>',
+      'text/html',
+    );
+    hook({ document: first, href: 'chapter1.xhtml' });
+
+    const second = new DOMParser().parseFromString(
+      '<html><head><title>Ch</title></head><body><p>dirty</p><script>alert(1)</script></body></html>',
+      'text/html',
+    );
+    const head = second.head;
+    const body = second.body;
+
+    hook({ document: second, href: 'chapter1.xhtml' });
+
+    expect(second.head).toBe(head);
+    expect(second.body).toBe(body);
+    expect(body.isConnected).toBe(true);
+    expect(second.querySelector('script')).toBeNull();
+    expect(second.body.textContent).toContain('clean');
+  });
+
   it('produces byte-identical output on cache HIT and syncs html attributes (B18/C14)', () => {
     const { hook } = createEpubSanitizerHook();
     const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize');

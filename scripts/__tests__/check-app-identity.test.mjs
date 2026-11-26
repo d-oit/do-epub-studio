@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { listWorkspaceManifestPaths } from '../lib/workspace-manifests.mjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -38,13 +39,12 @@ describe('VERSION ↔ package.json parity (ADR-104)', () => {
     expect(rootPkg.version).toBe(versionFile);
   });
 
-  it('every per-package package.json matches VERSION', () => {
-    const appsPkg = JSON.parse(readFileSync(resolve(repoRoot, 'apps/web/package.json'), 'utf8'));
-    const workerPkg = JSON.parse(
-      readFileSync(resolve(repoRoot, 'apps/worker/package.json'), 'utf8'),
-    );
-    expect(appsPkg.version).toBe(versionFile);
-    expect(workerPkg.version).toBe(versionFile);
+  it('every root and immediate workspace manifest matches VERSION', () => {
+    const manifestPaths = listWorkspaceManifestPaths(repoRoot);
+    for (const manifestPath of manifestPaths) {
+      const pkg = JSON.parse(readFileSync(resolve(repoRoot, manifestPath), 'utf8'));
+      expect(pkg.version, manifestPath).toBe(versionFile);
+    }
   });
 });
 

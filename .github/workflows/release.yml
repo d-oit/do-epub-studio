@@ -401,7 +401,8 @@ jobs:
             fi
             echo "All Lighthouse assertions passed"
           else
-            echo "::warning::No Lighthouse assertion results found"
+            echo "::error::No Lighthouse assertion results found; blocking release"
+            exit 1
           fi
 
       - name: Upload Lighthouse artifacts
